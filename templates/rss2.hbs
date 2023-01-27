@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>{{site.title}}</title>
+    <description>{{site.description}}</description>
+    <link>{{site.homePageLink}}</link>
+    <feed>{{site.feedLink}}</feed>
+    {{#each categories}}
+    <category>{{this}}</category>
+    {{/each}}
+    {{#each result}}
+    <item>
+      <title>{{this.title}}</title>
+      <link>{{this.link}}</link>
+      <description>{{this.description}}</description>
+      <pubDate>{{this.pubDate}}</pubDate>
+      {{#each this.categories}}
+      <category>{{this}}</category>
+      {{/each}}
+      <g:availability>{{this.stockStatus}}</g:availability>
+      <g:image_link>{{this.coverUrl}}</g:image_link>
+      <g:price>{{this.listPrice}}</g:price>
+      <g:sale_price>{{this.salePrice}}</g:sale_price>
+      <g:id>{{this.skuId}}</g:id>
+    </item>
+    {{/each}}
+  </channel>
+</rss>
