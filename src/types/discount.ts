@@ -1,4 +1,4 @@
-export type OrderDiscountType =
+export type Discount =
   | 'Coupon'
   | 'Voucher'
   | 'Card'

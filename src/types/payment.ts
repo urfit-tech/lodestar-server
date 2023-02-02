@@ -1,11 +1,11 @@
-export type PaymentGatewayType =
-  | 'spgateway'
-  | 'tappay'
-  | 'paypal'
-  | 'cw'
-  | 'atome';
+export type PaymentGateway =
+  | 'SPGateway'
+  | 'TapPay'
+  | 'PayPal'
+  | 'CW'
+  | 'Atome';
 
-export type PaymentType =
-  | 'subscription'
-  | 'perpetual'
-  | 'groupBuying';
+export type Payment =
+  | 'Subscription'
+  | 'Perpetual'
+  | 'GroupBuying';
