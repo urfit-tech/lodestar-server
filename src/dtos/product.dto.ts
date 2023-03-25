@@ -1,8 +1,8 @@
-import { ProductType } from '~/types/product';
+import { ProductType } from '~/types';
 
-import { BaseDTO } from './base.dto';
+import { DTO } from './dto';
 
-export class BaseProductDTO extends BaseDTO {
+export class BaseProductDTO extends DTO {
   public readonly id: string;
   public readonly type: ProductType;
   public readonly target: string;
