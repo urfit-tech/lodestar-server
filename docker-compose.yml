@@ -1,0 +1,50 @@
+version: "3.6"
+
+x-postgres: &postgres
+  image: postgres:latest
+  ports:
+    - 127.0.0.1:5432:5432
+
+x-pgadmin: &pgadmin
+  image: dpage/pgadmin4
+  ports:
+    - 127.0.0.1:5050:80
+  environment:
+    PGADMIN_DEFAULT_EMAIL: admin@admin.com
+    PGADMIN_DEFAULT_PASSWORD: root
+
+services:
+  postgres-test:
+    <<: *postgres
+    profiles: ["test", "all"]
+    environment:
+      POSTGRES_DB: 'test'
+      POSTGRES_USER: 'user'
+      POSTGRES_PASSWORD: '1234'
+
+  postgres-dev:
+    <<: *postgres
+    profiles: ["dev", "all"]
+    environment:
+      POSTGRES_DB: 'dev'
+      POSTGRES_USER: 'user'
+      POSTGRES_PASSWORD: '1234'
+      PGDATA: '/var/lib/postgresql/data/pgdata'
+    volumes:
+      - postgresdb:/var/lib/postgresql/data
+
+  pgadmin-test:
+    <<: *pgadmin
+    profiles: ["test", "all"]
+    depends_on:
+      - postgres-test
+
+  pgadmin-dev:
+    <<: *pgadmin
+    profiles: ["dev", "all"]
+    depends_on:
+      - postgres-dev
+
+volumes:
+  postgresdb:
+    driver: local
