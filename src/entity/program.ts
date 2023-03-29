@@ -1,192 +1,164 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  OneToOne,
-  JoinColumn,
-  Column,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { App } from './App'
+import { PackageItem } from './PackageItem'
+import { ProgramAnnouncement } from './ProgramAnnouncement'
+import { ProgramApproval } from './ProgramApproval'
+import { ProgramCategory } from './ProgramCategory'
+import { ProgramContentSection } from './ProgramContentSection'
+import { ProgramPackageProgram } from './ProgramPackageProgram'
+import { ProgramPlan } from './ProgramPlan'
+import { ProgramRelatedItem } from './ProgramRelatedItem'
+import { ProgramRole } from './ProgramRole'
+import { ProgramTag } from './ProgramTag'
+import { ProgramTimetable } from './ProgramTimetable'
 
-import { App } from './app';
-import { BaseEntity } from './base';
-
-@Entity()
-export class Program extends BaseEntity {
+@Index('program_app_id', ['appId'], {})
+@Index('program_pkey', ['id'], { unique: true })
+@Index('program_is_private', ['isPrivate'], {})
+@Index('program_position_published_at_updated_at_index', ['position', 'publishedAt', 'updatedAt'], {})
+@Index('program_updated_at_desc', ['updatedAt'], {})
+@Entity('program', { schema: 'public' })
+export class Program {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id: string
 
-  @OneToOne(() => App, (a) => a.id)
-  @JoinColumn({ name: 'app_id' })
-  appId!: string;
+  @Column('text', { name: 'app_id' })
+  appId: string
 
-  @Column({ type: 'text', nullable: false })
-  title!: string;
+  @Column('text', { name: 'title' })
+  title: string
 
-  @Column({ type: 'text', nullable: true })
-  abstract!: string | null;
+  @Column('text', { name: 'abstract', nullable: true })
+  abstract: string | null
 
-  @Column({ type: 'text', nullable: true })
-  description!: string | null;
+  @Column('text', { name: 'description', nullable: true })
+  description: string | null
 
-  @Column({
-    name: 'cover_url',
-    type: 'text',
+  @Column('text', { name: 'cover_url', nullable: true })
+  coverUrl: string | null
+
+  @Column('timestamp with time zone', {
+    name: 'created_at',
+    default: () => 'now()',
+  })
+  createdAt: Date
+
+  @Column('timestamp with time zone', { name: 'published_at', nullable: true })
+  publishedAt: Date | null
+
+  @Column('boolean', { name: 'is_subscription', default: () => false })
+  isSubscription: boolean
+
+  @Column('timestamp with time zone', { name: 'sold_at', nullable: true })
+  soldAt: Date | null
+
+  @Column('numeric', { name: 'list_price', nullable: true })
+  listPrice: number | null
+
+  @Column('numeric', { name: 'sale_price', nullable: true })
+  salePrice: number | null
+
+  @Column('integer', { name: 'position', nullable: true })
+  position: number | null
+
+  @Column('boolean', { name: 'in_advance', default: () => false })
+  inAdvance: boolean
+
+  @Column('text', { name: 'cover_video_url', nullable: true })
+  coverVideoUrl: string | null
+
+  @Column('boolean', { name: 'is_sold_out', nullable: true })
+  isSoldOut: boolean | null
+
+  @Column('jsonb', { name: 'support_locales', nullable: true })
+  supportLocales: object | null
+
+  @Column('boolean', { name: 'is_deleted', default: () => false })
+  isDeleted: boolean
+
+  @Column('boolean', { name: 'is_private', default: () => false })
+  isPrivate: boolean
+
+  @Column('timestamp with time zone', {
+    name: 'updated_at',
     nullable: true,
+    default: () => 'now()',
   })
-  coverUrl!: string | null;
+  updatedAt: Date | null
 
-  @Column({
-    name: 'published_at',
-    type: 'timestamp with time zone',
-    nullable: true,
-  })
-  publishedAt!: Date | null;
+  @Column('boolean', { name: 'is_issues_open', default: () => true })
+  isIssuesOpen: boolean
 
-  @Column({
-    name: 'is_subscription',
-    type: 'boolean',
-    nullable: false,
-    default: false,
-  })
-  isSubscription!: boolean;
-
-  @Column({
-    name: 'sold_at',
-    type: 'timestamp with time zone',
-    nullable: true,
-  })
-  soldAt!: Date | null;
-
-  @Column({
-    name: 'list_price',
-    type: 'numeric',
-    nullable: true,
-  })
-  listPrice!: number | null;
-
-  @Column({
-    name: 'sale_price',
-    type: 'numeric',
-    nullable: true,
-  })
-  salePrice!: number | null;
-
-  @Column({
-    name: 'position',
-    type: 'int4',
-    nullable: true,
-  })
-  position!: number | null;
-
-  @Column({
-    name: 'in_advance',
-    type: 'boolean',
-    nullable: false,
-    default: false,
-  })
-  inAdvance!: boolean;
-
-  @Column({
-    name: 'cover_video_url',
-    type: 'text',
-    nullable: true,
-  })
-  coverVideoUrl!: string | null;
-
-  @Column({
-    name: 'is_sold_out',
-    type: 'boolean',
-    nullable: true,
-  })
-  isSoldOut!: boolean;
-
-  @Column({
-    name: 'support_locales',
-    type: 'jsonb',
-    nullable: true,
-  })
-  supportLocales!: any | null;
-
-  @Column({
-    name: 'is_deleted',
-    type: 'boolean',
-    nullable: false,
-    default: false,
-  })
-  isDeleted!: boolean;
-
-  @Column({
-    name: 'is_private',
-    type: 'boolean',
-    nullable: false,
-    default: false,
-  })
-  isPrivate!: boolean;
-
-  @Column({
-    name: 'is_issues_open',
-    type: 'boolean',
-    nullable: false,
-    default: true,
-  })
-  isIssuesOpen!: boolean;
-
-  @Column({
+  @Column('boolean', {
     name: 'is_countdown_timer_visible',
-    type: 'boolean',
-    nullable: false,
-    default: false,
+    default: () => false,
   })
-  isCountdownTimerVisible!: boolean;
+  isCountdownTimerVisible: boolean
 
-  @Column({
+  @Column('boolean', {
     name: 'is_introduction_section_visible',
-    type: 'boolean',
-    nullable: false,
-    default: true,
+    default: () => true,
   })
-  isIntroductionSectionVisible!: boolean;
+  isIntroductionSectionVisible: boolean
 
-  @Column({
-    name: 'meta_tag',
-    type: 'jsonb',
-    nullable: true,
-  })
-  metaTag!: any | null;
+  @Column('jsonb', { name: 'meta_tag', nullable: true })
+  metaTag: object | null
 
-  @Column({
+  @Column('boolean', {
     name: 'is_enrolled_count_visible',
-    type: 'boolean',
-    nullable: false,
-    default: true,
+    default: () => true,
   })
-  isEnrolledCountVisible!: boolean;
+  isEnrolledCountVisible: boolean
 
-  @Column({
-    name: 'cover_mobile_url',
-    type: 'text',
-    nullable: true,
-  })
-  coverMobileUrl!: string | null;
+  @Column('text', { name: 'cover_mobile_url', nullable: true })
+  coverMobileUrl: string | null
 
-  @Column({
-    name: 'cover_thumbnail_url',
-    type: 'text',
-    nullable: true,
-  })
-  coverThumbnailUrl!: string | null;
+  @Column('text', { name: 'cover_thumbnail_url', nullable: true })
+  coverThumbnailUrl: string | null
 
-  @Column({
-    name: 'metadata',
-    type: 'jsonb',
-    nullable: true,
-  })
-  metadata!: any | null;
+  @Column('jsonb', { name: 'metadata', nullable: true })
+  metadata: object | null
 
-  @Column({
-    name: 'views',
-    type: 'numeric',
-    nullable: false,
-    default: 0,
+  @Column('numeric', { name: 'views', default: () => 0 })
+  views: number
+
+  @OneToMany(() => PackageItem, packageItem => packageItem.program)
+  packageItems: PackageItem[]
+
+  @ManyToOne(() => App, app => app.programs, {
+    onDelete: 'RESTRICT',
+    onUpdate: 'RESTRICT',
   })
-  views!: number | null;
+  @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
+  app: App
+
+  @OneToMany(() => ProgramAnnouncement, programAnnouncement => programAnnouncement.program)
+  programAnnouncements: ProgramAnnouncement[]
+
+  @OneToMany(() => ProgramApproval, programApproval => programApproval.program)
+  programApprovals: ProgramApproval[]
+
+  @OneToMany(() => ProgramCategory, programCategory => programCategory.program)
+  programCategories: ProgramCategory[]
+
+  @OneToMany(() => ProgramContentSection, programContentSection => programContentSection.program)
+  programContentSections: ProgramContentSection[]
+
+  @OneToMany(() => ProgramPackageProgram, programPackageProgram => programPackageProgram.program)
+  programPackagePrograms: ProgramPackageProgram[]
+
+  @OneToMany(() => ProgramPlan, programPlan => programPlan.program)
+  programPlans: ProgramPlan[]
+
+  @OneToMany(() => ProgramRelatedItem, programRelatedItem => programRelatedItem.program)
+  programRelatedItems: ProgramRelatedItem[]
+
+  @OneToMany(() => ProgramRole, programRole => programRole.program)
+  programRoles: ProgramRole[]
+
+  @OneToMany(() => ProgramTag, programTag => programTag.program)
+  programTags: ProgramTag[]
+
+  @OneToMany(() => ProgramTimetable, programTimetable => programTimetable.program)
+  programTimetables: ProgramTimetable[]
 }

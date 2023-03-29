@@ -2,8 +2,6 @@ import 'reflect-metadata'
 import { config } from 'dotenv';
 import { DataSourceOptions, DataSource } from 'typeorm'
 
-import { App, AppPlan, Currency, Product, Program, ProgramContentSection, ProgramPlan } from './entity';
-
 config({ path: `.env.${process.env.NODE_ENV === 'production' ? 'development' : 'development'}`});
 
 export const AppDataSourceConfig: DataSourceOptions = {
@@ -11,11 +9,7 @@ export const AppDataSourceConfig: DataSourceOptions = {
   url: process.env.DB_URI,
   synchronize: false,
   logging: false,
-  entities: [
-    App, AppPlan, Currency, Product, Program, ProgramContentSection, ProgramPlan,
-  ],
-  migrations: [],
-  subscribers: [],
+  entities: [`${__dirname}/../entities/*`],
 };
 const AppDataSource = new DataSource(AppDataSourceConfig);
 
