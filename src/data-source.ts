@@ -8,8 +8,8 @@ export const AppDataSourceConfig: DataSourceOptions = {
   type: "postgres",
   url: process.env.DB_URI,
   synchronize: false,
-  logging: false,
-  entities: [`${__dirname}/../entities/*`],
+  logging: true,
+  entities: [`${__dirname}/entity/*`],
 };
 const AppDataSource = new DataSource(AppDataSourceConfig);
 
