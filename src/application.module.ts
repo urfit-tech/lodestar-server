@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
+import { ApplicationController } from './application.controller'
+import { ApplicationService } from './application.service'
 import { AuthModule } from './auth/auth.module'
 import { CheckoutModule } from './checkout/checkout.module'
 import { AppDataSourceConfig } from './data-source'
@@ -13,8 +13,8 @@ import { VendorModule } from './vendor/vendor.module'
 import { WorkerModule } from './worker/worker.module'
 
 @Module({
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [ApplicationController],
+  providers: [ApplicationService],
   imports: [
     TypeOrmModule.forRoot(AppDataSourceConfig),
     ConfigModule.forRoot(),
@@ -26,4 +26,4 @@ import { WorkerModule } from './worker/worker.module'
     CheckoutModule,
   ],
 })
-export class AppModule {}
+export class ApplicationModule {}
