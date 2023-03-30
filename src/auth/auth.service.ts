@@ -9,6 +9,7 @@ import { MemberService } from '~/member/member.service'
 import { MemberRole, PublicMember } from '~/member/member.type'
 import { AppService } from '~/app/app.service'
 import { PermissionService } from '~/permission/permission.service'
+import { APIException } from '~/api.excetion';
 
 import { CrossServerTokenDTO } from './auth.type'
 
@@ -30,10 +31,15 @@ export class AuthService {
     return this.entityManager.transaction(async (manager) => {
       const { clientId, key, permissions } = dto;
 
-      const { id: appId, appSecrets } = await this.appService.getAppByClientId(clientId, manager);
+      const app = await this.appService.getAppByClientId(clientId, manager);
+      if (!app) {
+        throw new APIException({ code: 'E_NOT_FOUND', message: "client ID doesn't exist" });
+      }
+
+      const { id: appId, appSecrets } = app;
       const authServiceKeySecret = appSecrets.find(({ key }) => key === 'auth.service.key');
       if (!authServiceKeySecret || authServiceKeySecret.value !== key) {
-        throw new Error();
+        throw new APIException({ code: 'E_AUTH_TOKEN', message: 'key is not authenticated' });
       }
 
       return this.signJWT({

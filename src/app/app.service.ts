@@ -6,9 +6,9 @@ import { AppSetting } from "~/entity/AppSetting";
 
 @Injectable()
 export class AppService {
-  async getAppByClientId(clientId: string, manager: EntityManager): Promise<App> {
+  async getAppByClientId(clientId: string, manager: EntityManager): Promise<App | null> {
     const appRepo = manager.getRepository(App);
-    const found = await appRepo.findOneOrFail({
+    const found = await appRepo.findOne({
       where: {
         appSettings: {
           key: 'auth.service.client_id',
