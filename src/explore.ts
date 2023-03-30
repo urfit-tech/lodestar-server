@@ -1,10 +1,10 @@
 import { NestFactory } from '@nestjs/core'
 import { writeFileSync } from 'fs'
 import { SpelunkerModule } from 'nestjs-spelunker'
-import { AppModule } from './app.module'
+import { ApplicationModule } from './application.module'
 
 ;(async () => {
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(ApplicationModule)
   const tree = SpelunkerModule.explore(app)
   const root = SpelunkerModule.graph(tree)
   const edges = SpelunkerModule.findGraphEdges(root)
