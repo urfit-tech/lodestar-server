@@ -17,7 +17,9 @@ import { WorkerModule } from './worker/worker.module'
   providers: [ApplicationService],
   imports: [
     TypeOrmModule.forRoot(AppDataSourceConfig),
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     UtilityModule,
     MemberModule,
     AuthModule,
