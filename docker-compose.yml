@@ -13,6 +13,12 @@ x-pgadmin: &pgadmin
     PGADMIN_DEFAULT_EMAIL: admin@admin.com
     PGADMIN_DEFAULT_PASSWORD: root
 
+x-hasura: &hasura
+  image: hasura/graphql-engine:v2.22.0
+  ports:
+    - 127.0.0.1:8080:8080
+  restart: always
+
 services:
   postgres-test:
     <<: *postgres
@@ -42,6 +48,26 @@ services:
   pgadmin-dev:
     <<: *pgadmin
     profiles: ["dev", "all"]
+    depends_on:
+      - postgres-dev
+
+  hasura-test:
+    <<: *hasura
+    profiles: ["test", "all"]
+    environment:
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DATABASE_URL: postgres://user:1234@postgres-test:5432/test
+      PG_DATABASE_URL: postgres://user:1234@postgres-test:5432/test
+    depends_on:
+      - postgres-test
+
+  hasura-dev:
+    <<: *hasura
+    profiles: ["dev", "all"]
+    environment:
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DATABASE_URL: postgres://user:1234@postgres-test:5432/dev
+      PG_DATABASE_URL: postgres://user:1234@postgres-test:5432/dev
     depends_on:
       - postgres-dev
 
