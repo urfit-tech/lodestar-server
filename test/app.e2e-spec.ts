@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { ApplicationModule } from '~/application.module';
+
 import { ApiExceptionFilter } from '~/api.filter';
+
+import { ApplicationModule } from '~/application.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
