@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
+import { App } from './app'
 import { Setting } from './Setting'
 
 @Index('app_setting_app_id_key_key', ['appId', 'key'], { unique: true })

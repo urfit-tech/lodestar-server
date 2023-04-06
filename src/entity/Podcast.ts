@@ -1,5 +1,5 @@
 import { Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
+import { App } from './app'
 import { Member } from './Member'
 import { PodcastPlan } from './PodcastPlan'
 import { PodcastProgram } from './PodcastProgram'

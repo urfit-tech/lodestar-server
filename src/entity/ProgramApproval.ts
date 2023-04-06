@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Program } from './Program'
+import { Program } from './program'
 
 @Index('program_approval_pkey', ['id'], { unique: true })
 @Entity('program_approval', { schema: 'public' })

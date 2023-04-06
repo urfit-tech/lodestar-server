@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Currency } from './Currency'
-import { Program } from './Program'
+import { Currency } from './currency'
+import { Program } from './program'
 import { ProgramContentPlan } from './ProgramContentPlan'
 
 @Index('program_plan_pkey', ['id'], { unique: true })

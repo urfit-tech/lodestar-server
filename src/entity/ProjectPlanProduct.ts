@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Product } from './Product'
+import { Product } from './product'
 import { ProjectPlan } from './ProjectPlan'
 
 @Index('project_plan_product_pkey', ['id'], { unique: true })

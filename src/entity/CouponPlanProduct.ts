@@ -1,6 +1,6 @@
 import { Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { CouponPlan } from './CouponPlan'
-import { Product } from './Product'
+import { Product } from './product'
 
 @Index('coupon_plan_product_pkey', ['id'], { unique: true })
 @Entity('coupon_plan_product', { schema: 'public' })

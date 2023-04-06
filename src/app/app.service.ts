@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { EntityManager } from "typeorm";
 
-import { App } from "~/entity/App";
+import { App } from "~/entity/app";
 import { AppSetting } from "~/entity/AppSetting";
 
 @Injectable()

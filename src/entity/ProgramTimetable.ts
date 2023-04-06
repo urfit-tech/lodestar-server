@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Member } from './Member'
-import { Program } from './Program'
+import { Program } from './program'
 
 @Index('program_timetable_pkey', ['id'], { unique: true })
 @Entity('program_timetable', { schema: 'public' })

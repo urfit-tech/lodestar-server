@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Member } from './Member'
-import { Program } from './Program'
+import { Program } from './program'
 
 @Index('program_role_pkey', ['id'], { unique: true })
 @Index('program_role_name_program_id_member_id_key', ['memberId', 'name', 'programId'], { unique: true })

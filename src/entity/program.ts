@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
+import { App } from './app'
 import { PackageItem } from './PackageItem'
 import { ProgramAnnouncement } from './ProgramAnnouncement'
 import { ProgramApproval } from './ProgramApproval'

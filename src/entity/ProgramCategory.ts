@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Category } from './Category'
-import { Program } from './Program'
+import { Program } from './program'
 
 @Index('program_category_pkey', ['id'], { unique: true })
 @Index('program_category_program_id', ['programId'], {})
