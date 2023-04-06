@@ -54,6 +54,11 @@ jobs:
       - name: Build Docker Stack
         run: docker-compose --profile test -f docker-compose.yml up -d
 
+      - name: Docker status
+        run: |
+          sleep 5s
+          docker ps -a
+
       - name: Dump DB structure from hasura migrations
         run: hasura migrate apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
 
