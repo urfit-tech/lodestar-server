@@ -21,7 +21,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./jest-e2e.config.ts",
-    "typeorm": "npx ts-node node_modules/.bin/typeorm -d src/data-source.ts"
+    "typeorm": "npx ts-node node_modules/.bin/typeorm -d src/data-source.ts",
+    "hasura": "npx hasura-cli"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",
@@ -52,6 +53,7 @@
     "eslint": "^8.0.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "hasura-cli": "2.22.0",
     "husky": "^8.0.3",
     "jest": "29.3.1",
     "lint-staged": "^13.1.0",
