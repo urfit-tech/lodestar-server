@@ -38,7 +38,9 @@ jobs:
           parse_json: true
       
       - name: Install
-        run: yarn install --ignore-scripts --netwrok-timeout 100000
+        run: |
+          yarn install --ignore-scripts --netwrok-timeout 100000
+          curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
 
       - name: Output ts version
         run: yarn tsc --version
@@ -47,13 +49,13 @@ jobs:
         run: yarn list
 
       - name: Hasura Cli version
-        run: yarn hasura version
+        run: hasura version
 
       - name: Build Docker Stack
         run: docker-compose --profile test -f docker-compose.yml up -d
 
       - name: Dump DB structure from hasura migrations
-        run: yarn hasura migrate apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
+        run: hasura migrate apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
 
       - name: E2E Testing
         run: yarn run test:e2e --coverage
