@@ -1,0 +1,59 @@
+name: Test on Push
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  test:
+    name: Testing
+    strategy:
+      matrix:
+        node-version: ['lts/hydrogen']
+        os: [ubuntu-latest]
+        typescript-version: [4.2]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Install Docker
+       uses: docker-practice/actions-setup-docker@master
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
+      
+      - name: Install Yarn
+        run: npm install -g yarn
+      
+      - name: Set resolutions to correct typescript version
+        uses: jossef/action-set-json-field@v2
+        with:
+          file: package.json
+          field: resolutions
+          value: "{ \"typescript\": \"${{ matrix.typescript-version }}\"}"
+          parse_json: true
+      
+      - name: Install
+        run: yarn install --ignore-scripts --netwrok-timeout 100000
+
+      - name: Output ts version
+        run: yarn tsc --version
+
+      - name: Output packages version
+        run: yarn list
+
+      - name: Hasura Cli version
+        run: yarn hasura version
+
+      - name: Build Docker Stack
+        run: docker-compose --profile test -f docker-compose.yml up -d
+
+      - name: Dump DB structure from hasura migrations
+        run: yarn hasura migrate apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
+
+      - name: E2E Testing
+        run: yarn run test:e2e --coverage
