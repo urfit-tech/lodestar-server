@@ -26,7 +26,6 @@ import { WorkerModule } from './worker/worker.module'
     RouterModule.register([
       {
         path: 'api/v2',
-        module: ApplicationModule,
         children: [
           { path: 'auth', module: AuthModule },
         ],

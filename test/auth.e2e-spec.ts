@@ -28,10 +28,12 @@ describe('AuthController (e2e)', () => {
     await app.init();
   });
 
-  describe('/auth/token (POST)', () => {
+  describe('/token (POST)', () => {
+    const route = '/token';
+
     it('Should return E_NOT_FOUND error', async () => {
       const { body } = await request(app.getHttpServer())
-        .post('/auth/token')
+        .post(route)
         .send({
           clientId: 'not_exists',
           key: 'not_exists',
