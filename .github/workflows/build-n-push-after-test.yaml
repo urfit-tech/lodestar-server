@@ -1,0 +1,54 @@
+name: Build n Push after Test
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Test on Push"]
+    types:
+      - completed
+    branches:
+      - release
+      - master
+      - hotfix/*
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      matrix:
+        node-version: ['lts/hydrogen']
+        os: [ubuntu-latest]
+        typescript-version: [4.2]
+    runs-on: ${{ matrix.os }}
+    outputs:
+      hash: ${{ steps.commit.outputs.short }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: urfit/lodestar-server
+          tags: type=sha
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: urfit
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+        
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
