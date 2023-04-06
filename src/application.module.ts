@@ -1,5 +1,6 @@
 import { cwd, env } from 'process';
 import { Module } from '@nestjs/common'
+import { RouterModule } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -22,9 +23,18 @@ import { WorkerModule } from './worker/worker.module'
       envFilePath: `${cwd()}/.env${env.NODE_ENV ? `.${env.NODE_ENV}` : ''}`,
       isGlobal: true,
     }),
+    RouterModule.register([
+      {
+        path: 'api/v2',
+        module: ApplicationModule,
+        children: [
+          { path: 'auth', module: AuthModule },
+        ],
+      }
+    ]),
+    AuthModule,
     UtilityModule,
     MemberModule,
-    AuthModule,
     VendorModule,
     WorkerModule,
     CheckoutModule,
