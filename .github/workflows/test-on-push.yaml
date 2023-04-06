@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@main
 
       - name: Install Docker
-       uses: docker-practice/actions-setup-docker@master
+        uses: docker-practice/actions-setup-docker@master
       
       - name: Setup Node
         uses: actions/setup-node@v3
