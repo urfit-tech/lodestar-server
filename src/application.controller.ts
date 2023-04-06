@@ -3,10 +3,12 @@ import { ApplicationService } from './application.service'
 
 @Controller()
 export class ApplicationController {
-  constructor(private readonly applicationService: ApplicationService) {}
+  constructor(
+    private readonly applicationService: ApplicationService,
+  ) {}
 
-  @Get()
-  getHello(): string {
-    return this.applicationService.getHello()
+  @Get('healthz')
+  healthz(): Promise<string> {
+    return this.applicationService.healthz();
   }
 }

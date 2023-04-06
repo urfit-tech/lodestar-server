@@ -1,5 +1,11 @@
 version: "3.6"
 
+x-redis: &redis
+  image: redis:latest
+  ports:
+    - 127.0.0.1:6379:6379
+  restart: always
+
 x-postgres: &postgres
   image: postgres:latest
   ports:
@@ -20,6 +26,16 @@ x-hasura: &hasura
   restart: always
 
 services:
+  redis-test:
+    <<: *redis
+    profiles: ["test", "all"]
+    command: redis-server --requirepass test-redis-passwd
+
+  redis-dev:
+    <<: *redis
+    profiles: ["dev", "all"]
+    command: redis-server --requirepass dev-redis-passwd
+
   postgres-test:
     <<: *postgres
     profiles: ["test", "all"]

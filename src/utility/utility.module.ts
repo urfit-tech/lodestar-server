@@ -13,5 +13,6 @@ import { UtilityService } from './utility.service'
 @Module({
   imports: [FeedModule, MediaModule, MailerModule, CallerModule, SocialModule],
   providers: [UtilityService, ApolloService, QueueService, CacheService, StorageService],
+  exports: [UtilityService, CacheService],
 })
 export class UtilityModule {}

@@ -14,17 +14,25 @@ describe('AppController (e2e)', () => {
       imports: [ApplicationModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
-
-    app.useGlobalFilters(new ApiExceptionFilter());
+    app = moduleFixture
+      .createNestApplication()
+      .useGlobalFilters(new ApiExceptionFilter());
 
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  afterEach(async () => {
+    await app.close();
   });
+
+  describe('/healthz (GET)', () => {
+    const route = '/healthz';
+
+    it('Should return health check', async () => {
+      const { text } = await request(app.getHttpServer())
+        .get(route)
+        .expect(200);
+      expect(new Date(text)).not.toBeNull;
+    });
+  });  
 });
