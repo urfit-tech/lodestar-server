@@ -1,5 +1,5 @@
 import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm'
-import { App } from './app'
+import { App } from './App'
 import { AppPlanModule } from './AppPlanModule'
 
 @Index('app_plan_pkey', ['id'], { unique: true })

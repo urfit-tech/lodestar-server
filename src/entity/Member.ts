@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 import { Activity } from './Activity'
-import { App } from './app'
+import { App } from './App'
 import { AppointmentPlan } from './AppointmentPlan'
 import { AppPage } from './AppPage'
 import { AppPageTemplate } from './AppPageTemplate'

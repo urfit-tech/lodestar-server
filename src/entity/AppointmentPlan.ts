@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { AppointmentSchedule } from './AppointmentSchedule'
-import { Currency } from './currency'
+import { Currency } from './Currency'
 import { Member } from './Member'
 
 @Index('appointment_plan_pkey', ['id'], { unique: true })

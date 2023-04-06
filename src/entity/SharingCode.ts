@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './app'
+import { App } from './App'
 
 @Index('sharing_code_pkey', ['id'], { unique: true })
 @Entity('sharing_code', { schema: 'public' })

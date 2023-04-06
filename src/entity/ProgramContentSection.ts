@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Program } from './program'
+import { Program } from './Program'
 import { ProgramContent } from './ProgramContent'
 
 @Index('program_content_section_pkey', ['id'], { unique: true })

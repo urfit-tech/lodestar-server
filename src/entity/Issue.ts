@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './app'
+import { App } from './App'
 import { IssueReaction } from './IssueReaction'
 import { IssueReply } from './IssueReply'
 import { Member } from './Member'

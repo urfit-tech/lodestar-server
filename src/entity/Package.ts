@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './app'
+import { App } from './App'
 import { PackageSection } from './PackageSection'
 
 @Index('package_pkey', ['id'], { unique: true })

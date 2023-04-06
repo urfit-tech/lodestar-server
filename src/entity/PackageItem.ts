@@ -1,7 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Activity } from './Activity'
 import { PackageItemGroup } from './PackageItemGroup'
-import { Program } from './program'
+import { Program } from './Program'
 
 @Index('package_item_pkey', ['id'], { unique: true })
 @Entity('package_item', { schema: 'public' })

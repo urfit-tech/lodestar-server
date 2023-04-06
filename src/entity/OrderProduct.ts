@@ -1,9 +1,9 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { ActivityAttendance } from './ActivityAttendance'
-import { Currency } from './currency'
+import { Currency } from './Currency'
 import { OrderLog } from './OrderLog'
 import { OrderProductFile } from './OrderProductFile'
-import { Product } from './product'
+import { Product } from './Product'
 
 @Index('order_product_ended_at_desc', ['endedAt'], {})
 @Index('order_product_pkey', ['id'], { unique: true })

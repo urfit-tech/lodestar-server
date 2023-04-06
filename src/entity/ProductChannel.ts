@@ -1,7 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
-import { App } from './app';
+import { App } from './App';
 import { AppChannel } from './AppChannel';
-import { Product } from './product';
+import { Product } from './Product';
 
 @Index('product_channel_pkey', ['id'], { unique: true })
 @Index('product_channel_app_id_channel_sku_key', ['appId', 'channelSku'], { unique: true })

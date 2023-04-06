@@ -1,5 +1,5 @@
 import { Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Product } from './product'
+import { Product } from './Product'
 import { VoucherPlan } from './VoucherPlan'
 
 @Index('voucher_plan_product_pkey', ['id'], { unique: true })

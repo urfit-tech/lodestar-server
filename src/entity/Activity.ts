@@ -3,7 +3,7 @@ import { ActivityCategory } from './ActivityCategory'
 import { ActivitySession } from './ActivitySession'
 import { ActivityTag } from './ActivityTag'
 import { ActivityTicket } from './ActivityTicket'
-import { App } from './app'
+import { App } from './App'
 import { Member } from './Member'
 import { PackageItem } from './PackageItem'
 

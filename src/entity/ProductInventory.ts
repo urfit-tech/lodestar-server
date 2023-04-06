@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Product } from './product'
+import { Product } from './Product'
 
 @Index('product_inventory_pkey', ['id'], { unique: true })
 @Entity('product_inventory', { schema: 'public' })
