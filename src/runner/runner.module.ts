@@ -5,13 +5,14 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppDataSourceConfig } from '~/data-source';
-import { Runner, RunnerType } from './runner';
+import { Runner } from './runner';
 import { RunnerService } from './runner.service';
 import { ExampleRunner } from './example.runner';
+import { RunnerType } from './runner.type';
 
 @Module({})
 export class RunnerModule {
-  static getModule(workerName: string): Type<Runner> {
+  static createRunnerProvider(workerName: RunnerType): Type<Runner> {
     switch (workerName) {
       case RunnerType.EXAMPLE_RUNNER:
         return ExampleRunner;
@@ -36,7 +37,7 @@ export class RunnerModule {
       ],
       providers: [
         { provide: RunnerService, useClass: RunnerService },
-        { provide: Runner, useClass: this.getModule(workerName) },
+        { provide: Runner, useClass: this.createRunnerProvider(workerName) },
       ],
     };
   }

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { Runner, RunnerType } from './runner';
+import { Runner } from './runner';
+import { RunnerType } from './runner.type';
 
 @Injectable()
 export class ExampleRunner extends Runner {

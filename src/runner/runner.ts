@@ -1,9 +1,5 @@
 import { v4 } from 'uuid';
 
-export enum RunnerType {
-  EXAMPLE_RUNNER = 'EXAMPLE_RUNNER',
-};
-
 export abstract class Runner {
   public readonly uuid: string;
   protected readonly name: string;
