@@ -1,27 +1,43 @@
-import { cwd, env } from 'process';
-import { DynamicModule, Module } from '@nestjs/common';
+import { cwd } from 'process';
+import { DynamicModule, Module, Type } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppDataSourceConfig } from '~/data-source';
-import { ExampleRunner } from './example.runner';
+import { Runner, RunnerType } from './runner';
 import { RunnerService } from './runner.service';
+import { ExampleRunner } from './example.runner';
 
 @Module({})
 export class RunnerModule {
-  static forRoot(): DynamicModule {
+  static getModule(workerName: string): Type<Runner> {
+    switch (workerName) {
+      case RunnerType.EXAMPLE_RUNNER:
+        return ExampleRunner;
+      default:
+        throw new Error(`Given runner name is not exists: ${workerName}`);
+    }
+  }
+
+  static forRoot(options: {
+    workerName: RunnerType; nodeEnv: string;
+  }): DynamicModule {
+    const { workerName, nodeEnv } = options;
     return {
       module: RunnerModule,
       imports: [
         ScheduleModule.forRoot(),
         TypeOrmModule.forRoot(AppDataSourceConfig),
         ConfigModule.forRoot({
-          envFilePath: `${cwd()}/.env${env.NODE_ENV ? `.${env.NODE_ENV}` : ''}`,
+          envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
         }),
       ],
-      providers: [RunnerService, ExampleRunner],
+      providers: [
+        { provide: RunnerService, useClass: RunnerService },
+        { provide: Runner, useClass: this.getModule(workerName) },
+      ],
     };
   }
 }
