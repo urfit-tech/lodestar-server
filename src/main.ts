@@ -5,6 +5,8 @@ import { ApplicationModule } from './application.module'
 
 import { RunnerModule } from './runner/runner.module';
 import { RunnerType } from './runner/runner.type';
+import { TaskerModule } from './tasker/tasker.module';
+import { TaskerType } from './tasker/tasker';
 
 async function bootstrap() {
   const { env } = process;
@@ -15,6 +17,10 @@ async function bootstrap() {
     if (workerName in RunnerType) {
       app = await NestFactory.create(RunnerModule.forRoot({
         workerName: workerName as RunnerType, nodeEnv,
+      }));
+    } else if (workerName in TaskerType) {
+      app = await NestFactory.create(TaskerModule.forRoot({
+        workerName: workerName as TaskerType, nodeEnv,
       }));
     } else {
       throw new Error('Unknown WORKER_NAME env.');
