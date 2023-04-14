@@ -12,6 +12,7 @@ async function bootstrap() {
   const { env } = process;
   const { WORKER_NAME: workerName, NODE_ENV: nodeEnv } = env;
   let app: INestApplication;
+  let port: number;
 
   if (workerName !== undefined) {
     if (workerName in RunnerType) {
@@ -25,12 +26,15 @@ async function bootstrap() {
     } else {
       throw new Error('Unknown WORKER_NAME env.');
     }
-    app.listen(0);
+    port = 0;
   } else {
     app = await NestFactory.create(ApplicationModule);
 
     app.useGlobalFilters(new ApiExceptionFilter());  
-    await app.listen(8081);
+    port = 8081;
   }
+  
+  app.enableShutdownHooks();
+  await app.listen(port);
 }
 bootstrap();

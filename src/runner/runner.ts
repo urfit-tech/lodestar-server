@@ -31,6 +31,10 @@ export abstract class Runner {
     }
   }
 
+  getUuid(): string {
+    return this.uuid;
+  }
+
   getName(): string {
     return this.name;
   }

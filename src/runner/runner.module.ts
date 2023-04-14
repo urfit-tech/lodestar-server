@@ -1,10 +1,12 @@
 import { cwd } from 'process';
 import { DynamicModule, Module, Type } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppDataSourceConfig } from '~/data-source';
+import { LockModule } from '~/utility/lock/lock.module';
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
 import { ExampleRunner } from './example.runner';
@@ -34,9 +36,28 @@ export class RunnerModule {
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
         }),
+        BullModule.forRootAsync({
+          imports: [ConfigModule],
+          useFactory: (configService: ConfigService<{
+            QUEUE_REDIS_URI: string;
+          }>) => {
+            const queueRedisUri = configService.getOrThrow('QUEUE_REDIS_URI');
+            const url = new URL(queueRedisUri);
+            return {
+              redis: {
+                host: url.hostname,
+                port: Number(url.port),
+                username: url.username,
+                password: url.password,
+              },
+            };
+          },
+          inject: [ConfigService],
+        }),
+        LockModule,
       ],
       providers: [
-        { provide: RunnerService, useClass: RunnerService },
+        RunnerService,
         { provide: Runner, useClass: this.createRunnerProvider(workerName) },
       ],
     };
