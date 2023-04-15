@@ -54,7 +54,7 @@ export class RunnerModule {
           },
           inject: [ConfigService],
         }),
-        LockModule,
+        LockModule.forFeature({ key: workerName }),
       ],
       providers: [
         RunnerService,

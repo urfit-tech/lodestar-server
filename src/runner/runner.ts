@@ -25,7 +25,7 @@ export abstract class Runner {
 
   async run(): Promise<void> {
     const isAcquiredLock = await this.lockService.acquireLock(
-      this.name, this.uuid, this.interval + 60000,
+      this.uuid, this.interval + 60000,
     );
 
     if (isAcquiredLock === false) {
@@ -38,7 +38,7 @@ export abstract class Runner {
     try {
       this.isCompleted = false;
       await this.execute();
-      await this.lockService.touchLock(this.name, this.uuid);
+      await this.lockService.touchLock(this.uuid);
     } catch (err) {
       console.error(err);
     } finally {
@@ -47,7 +47,7 @@ export abstract class Runner {
   }
 
   async revoke(): Promise<void> {
-    await this.lockService.releaseLock(this.name, this.uuid);
+    await this.lockService.releaseLock(this.uuid);
   }
 
   getName(): string {
