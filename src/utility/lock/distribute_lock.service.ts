@@ -13,18 +13,19 @@ export class DistributeLockService {
   ): Promise<boolean> {
     try {
       const redisCli = this.cacheService.getClient();
-      const acquiredUuids = await redisCli.keys(`lock:${key}:*`);
+      const previousAcquired = await redisCli.get(`lock:${key}`);
 
-      if (acquiredUuids.length === 0) {
+      if (previousAcquired === null) {
         if (expireTime === undefined) {
-          await redisCli.set(`lock:${key}:${acquirerUuid}`, acquirerUuid);
+          await redisCli.set(`lock:${key}`, acquirerUuid, 'NX');
         } else {
           await redisCli.set(
-            `lock:${key}:${acquirerUuid}`, acquirerUuid, 'PX', expireTime,
+            `lock:${key}`, acquirerUuid, 'PX', expireTime, 'NX',
           );
         }
         return true;
-      } else if (acquiredUuids.includes(`lock:${key}:${acquirerUuid}`)) {
+      } else if (previousAcquired === acquirerUuid) {
+        await this.touchLock(key, acquirerUuid);
         return true;
       }
       return false;
@@ -36,8 +37,13 @@ export class DistributeLockService {
   async touchLock(key: string, toucherUuid: string): Promise<boolean> {
     try {
       const redisCli = this.cacheService.getClient();
-      const touchedLocks = await redisCli.touch(`lock:${key}:${toucherUuid}`);
-      return touchedLocks > 0;
+      const acquirerUuid = await redisCli.get(`lock:${key}`);
+      if (acquirerUuid === toucherUuid) {
+        const touchedLocks = await redisCli.touch(`lock:${key}`);
+        return touchedLocks > 0;
+      } else {
+        return false;
+      }
     } catch {
       return false;
     }
@@ -46,8 +52,13 @@ export class DistributeLockService {
   async releaseLock(key: string, releaserUuid: string): Promise<boolean> {
     try {
       const redisCli = this.cacheService.getClient();
-      const releasedLocks = await redisCli.del(`lock:${key}:${releaserUuid}`);
-      return releasedLocks > 0;
+      const acquirerUuid = await redisCli.get(`lock:${key}`);
+      if (acquirerUuid === releaserUuid) {
+        const releasedLocks = await redisCli.del(`lock:${key}`);
+        return releasedLocks > 0;
+      } else {
+        return false;
+      }
     } catch {
       return false;
     }
