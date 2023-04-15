@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 
-import { DistributeLockService } from '~/utility/lock/distribute_lock.service';
+import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 
 import { Runner } from './runner';
 
 @Injectable()
 export class ExampleRunner extends Runner {
   constructor(
-    private readonly distributeLockService: DistributeLockService,
+    private readonly distributedLockService: DistributedLockService,
   ) {
-    super(ExampleRunner.name, 1000, distributeLockService);
+    super(ExampleRunner.name, 1000, distributedLockService);
   }
 
   async execute(): Promise<void> {

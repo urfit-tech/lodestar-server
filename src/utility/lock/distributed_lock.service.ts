@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CacheService } from '../cache/cache.service';
 
 @Injectable()
-export class DistributeLockService {
+export class DistributedLockService {
   constructor(
     @Inject('KEY') private readonly key: string,
     private readonly cacheService: CacheService,

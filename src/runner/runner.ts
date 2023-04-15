@@ -1,18 +1,18 @@
 import { v4 } from 'uuid';
 
-import { DistributeLockService } from '~/utility/lock/distribute_lock.service';
+import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 
 export abstract class Runner {
   public readonly uuid: string;
   protected readonly name: string;
   protected isCompleted: boolean;
   protected readonly interval: number;
-  protected readonly lockService: DistributeLockService;
+  protected readonly lockService: DistributedLockService;
 
   constructor(
     name: string,
     interval: number,
-    lockService: DistributeLockService,
+    lockService: DistributedLockService,
   ) {
     this.uuid = v4();
     this.name = name;

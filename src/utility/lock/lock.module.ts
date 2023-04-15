@@ -2,7 +2,7 @@ import { DynamicModule, Module } from '@nestjs/common';
 
 import { CacheService } from '../cache/cache.service';
 
-import { DistributeLockService } from './distribute_lock.service';
+import { DistributedLockService } from './distributed_lock.service';
 
 @Module({})
 export class LockModule {
@@ -14,13 +14,13 @@ export class LockModule {
       module: LockModule,
       providers: [
         CacheService,
-        DistributeLockService,
+        DistributedLockService,
         {
           provide: 'KEY',
           useValue: key,
         },
       ],
-      exports: [DistributeLockService],
+      exports: [DistributedLockService],
     };
   }
 }
