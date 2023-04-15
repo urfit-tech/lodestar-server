@@ -1,9 +1,7 @@
 import { Job } from 'bull';
 import { Process, Processor } from '@nestjs/bull';
 
-import { TaskerType } from './tasker';
-
-@Processor(TaskerType.EXAMPLE_TASKER)
+@Processor(ExampleTasker.name)
 export class ExampleTasker {
   @Process()
   async process(job: Job<unknown>): Promise<void> {

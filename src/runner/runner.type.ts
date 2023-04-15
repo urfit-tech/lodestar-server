@@ -1,3 +1,5 @@
-export enum RunnerType {
-  EXAMPLE_RUNNER = 'EXAMPLE_RUNNER',
+import { ExampleRunner } from './example.runner';
+
+export const RunnerType = {
+  ExampleRunner
 };

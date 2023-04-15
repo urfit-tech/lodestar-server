@@ -1,26 +1,21 @@
 import { cwd } from 'process';
-import { DynamicModule, Module, Type } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
 import { AppDataSourceConfig } from '~/data-source';
-import { ExampleTasker } from './example.tasker';
-import { BullModule } from '@nestjs/bull';
 import { TaskerType } from './tasker';
 
 @Module({})
 export class TaskerModule {
-  static createTaskerProvider(workerName: TaskerType): Type<any> {
-    switch (workerName) {
-      case TaskerType.EXAMPLE_TASKER:
-        return ExampleTasker;
-      default:
-        throw new Error(`Given tasker name is not exists: ${workerName}`);
-    }
-  }
-
-  static forRoot(options: { workerName: TaskerType, nodeEnv: string }): DynamicModule {
+  static forRoot(options: { workerName: string, nodeEnv: string }): DynamicModule {
     const { workerName, nodeEnv } = options;
+
+    if (TaskerType[workerName] === undefined) {
+      throw new Error(`Given tasker name is not exists: ${workerName}`);
+    }
+
     return {
       module: TaskerModule,
       imports: [
@@ -49,7 +44,7 @@ export class TaskerModule {
         }),
         BullModule.registerQueue({ name: workerName }),
       ],
-      providers: [this.createTaskerProvider(workerName)],
+      providers: [TaskerType[workerName]],
     };
   }
 }

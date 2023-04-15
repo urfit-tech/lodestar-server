@@ -1,12 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core'
-import { ApiExceptionFilter } from './api.filter'
-import { ApplicationModule } from './application.module'
 
 import { RunnerModule } from './runner/runner.module';
 import { RunnerType } from './runner/runner.type';
 import { TaskerModule } from './tasker/tasker.module';
 import { TaskerType } from './tasker/tasker';
+import { ApiExceptionFilter } from './api.filter'
+import { ApplicationModule } from './application.module'
 
 async function bootstrap() {
   const { env } = process;
@@ -15,13 +15,13 @@ async function bootstrap() {
   let port: number;
 
   if (workerName !== undefined) {
-    if (workerName in RunnerType) {
+    if (RunnerType[workerName] !== undefined) {
       app = await NestFactory.create(RunnerModule.forRoot({
-        workerName: workerName as RunnerType, nodeEnv,
+        workerName, nodeEnv,
       }));
-    } else if (workerName in TaskerType) {
+    } else if (TaskerType[workerName] !== undefined) {
       app = await NestFactory.create(TaskerModule.forRoot({
-        workerName: workerName as TaskerType, nodeEnv,
+        workerName, nodeEnv,
       }));
     } else {
       throw new Error('Unknown WORKER_NAME env.');

@@ -1,5 +1,5 @@
 import { cwd } from 'process';
-import { DynamicModule, Module, Type } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -9,24 +9,19 @@ import { AppDataSourceConfig } from '~/data-source';
 import { LockModule } from '~/utility/lock/lock.module';
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
-import { ExampleRunner } from './example.runner';
 import { RunnerType } from './runner.type';
 
 @Module({})
 export class RunnerModule {
-  static createRunnerProvider(workerName: RunnerType): Type<Runner> {
-    switch (workerName) {
-      case RunnerType.EXAMPLE_RUNNER:
-        return ExampleRunner;
-      default:
-        throw new Error(`Given runner name is not exists: ${workerName}`);
-    }
-  }
-
   static forRoot(options: {
-    workerName: RunnerType; nodeEnv: string;
+    workerName: string; nodeEnv: string;
   }): DynamicModule {
     const { workerName, nodeEnv } = options;
+
+    if (RunnerType[workerName] === undefined) {
+      throw new Error(`Given runner name is not exists: ${workerName}`);
+    }
+
     return {
       module: RunnerModule,
       imports: [
@@ -58,7 +53,7 @@ export class RunnerModule {
       ],
       providers: [
         RunnerService,
-        { provide: Runner, useClass: this.createRunnerProvider(workerName) },
+        { provide: Runner, useClass: RunnerType[workerName] },
       ],
     };
   }
