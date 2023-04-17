@@ -214,6 +214,8 @@ import { VoucherPlan } from './VoucherPlan';
 import { VoucherPlanProduct } from './VoucherPlanProduct';
 import { WebhookLog } from './WebhookLog';
 
+import { TableLog } from './TableLog.mongo';
+
 export const PostgresEntities = [
   Activity,
   ActivityAttendance,
@@ -430,4 +432,8 @@ export const PostgresEntities = [
   VoucherPlan,
   VoucherPlanProduct,
   WebhookLog,
+];
+
+export const MongoEntities = [
+  TableLog,
 ];
