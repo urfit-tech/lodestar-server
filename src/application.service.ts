@@ -9,7 +9,7 @@ import { CacheService } from './utility/cache/cache.service'
 export class ApplicationService {
   constructor(
     private cacheService: CacheService,
-    @InjectEntityManager() private entityManager: EntityManager,
+    @InjectEntityManager('phdb') private entityManager: EntityManager,
   ) {}
 
   async healthz(): Promise<string> {

@@ -7,7 +7,7 @@ import * as request from 'supertest';
 import { ApiExceptionFilter } from "~/api.filter";
 
 import { AuthModule } from "~/auth/auth.module";
-import { AppDataSourceConfig } from "~/data-source";
+import { PostgresDataSourceConfig } from "~/data-source";
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -15,7 +15,7 @@ describe('AuthController (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
-        TypeOrmModule.forRoot(AppDataSourceConfig),
+        TypeOrmModule.forRoot(PostgresDataSourceConfig),
         ConfigModule.forRoot({ isGlobal: true }),
         AuthModule,
       ],
