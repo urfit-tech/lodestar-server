@@ -14,9 +14,9 @@ export class DistributedLockService {
   ): Promise<boolean> {
     try {
       const redisCli = this.cacheService.getClient();
-      const previousAcquired = await redisCli.get(`lock:${this.key}`);
+      const previousAcquiredUuid = await redisCli.get(`lock:${this.key}`);
 
-      if (previousAcquired === null) {
+      if (previousAcquiredUuid === null) {
         if (expireTime === undefined) {
           await redisCli.set(`lock:${this.key}`, acquirerUuid, 'NX');
         } else {
@@ -25,7 +25,7 @@ export class DistributedLockService {
           );
         }
         return true;
-      } else if (previousAcquired === acquirerUuid) {
+      } else if (previousAcquiredUuid === acquirerUuid) {
         await this.touchLock(acquirerUuid);
         return true;
       }
