@@ -1,23 +1,60 @@
-import { Module } from '@nestjs/common'
-import { BackupRunnerService } from './backup-runner/backup-runner.service'
-import { ChargerRunnerService } from './charger-runner/charger-runner.service'
-import { InvoiceRunnerService } from './invoice-runner/invoice-runner.service'
-import { OrderExpireRunnerService } from './order-expire-runner/order-expire-runner.service'
-import { PaymentRenewRunnerService } from './payment-renew-runner/payment-renew-runner.service'
-import { PorterRunnerService } from './porter-runner/porter-runner.service'
-import { PortfolioProjectExpireRunnerService } from './portfolio-project-expire-runner/portfolio-project-expire-runner.service'
-import { ReminderRunnerService } from './reminder-runner/reminder-runner.service'
+import { cwd } from 'process';
+import { DynamicModule, Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BullModule } from '@nestjs/bull';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
-@Module({
-  providers: [
-    BackupRunnerService,
-    ChargerRunnerService,
-    InvoiceRunnerService,
-    OrderExpireRunnerService,
-    PaymentRenewRunnerService,
-    PorterRunnerService,
-    PortfolioProjectExpireRunnerService,
-    ReminderRunnerService,
-  ],
-})
-export class RunnerModule {}
+import { AppDataSourceConfig } from '~/data-source';
+import { LockModule } from '~/utility/lock/lock.module';
+import { Runner } from './runner';
+import { RunnerService } from './runner.service';
+import { RunnerType } from './runner.type';
+
+@Module({})
+export class RunnerModule {
+  static forRoot(options: {
+    workerName: string; nodeEnv: string;
+  }): DynamicModule {
+    const { workerName, nodeEnv } = options;
+
+    if (RunnerType[workerName] === undefined) {
+      throw new Error(`Given runner name is not exists: ${workerName}`);
+    }
+
+    return {
+      module: RunnerModule,
+      imports: [
+        ScheduleModule.forRoot(),
+        TypeOrmModule.forRoot(AppDataSourceConfig),
+        ConfigModule.forRoot({
+          envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
+          isGlobal: true,
+        }),
+        BullModule.forRootAsync({
+          imports: [ConfigModule],
+          useFactory: (configService: ConfigService<{
+            QUEUE_REDIS_URI: string;
+          }>) => {
+            const queueRedisUri = configService.getOrThrow('QUEUE_REDIS_URI');
+            const url = new URL(queueRedisUri);
+            return {
+              redis: {
+                host: url.hostname,
+                port: Number(url.port),
+                username: url.username,
+                password: url.password,
+              },
+            };
+          },
+          inject: [ConfigService],
+        }),
+        LockModule.forFeature({ key: workerName }),
+      ],
+      providers: [
+        RunnerService,
+        { provide: Runner, useClass: RunnerType[workerName] },
+      ],
+    };
+  }
+}

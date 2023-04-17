@@ -12,7 +12,6 @@ import { AppDataSourceConfig } from './data-source'
 import { MemberModule } from './member/member.module'
 import { UtilityModule } from './utility/utility.module'
 import { VendorModule } from './vendor/vendor.module'
-import { WorkerModule } from './worker/worker.module'
 
 @Module({
   controllers: [ApplicationController],
@@ -35,7 +34,6 @@ import { WorkerModule } from './worker/worker.module'
     UtilityModule,
     MemberModule,
     VendorModule,
-    WorkerModule,
     CheckoutModule,
   ],
 })
