@@ -83,19 +83,19 @@ services:
 
   pgadmin-test:
     <<: *pgadmin
-    profiles: ["test", "all"]
+    profiles: ["test-gui", "all"]
     depends_on:
       - postgres-test
 
   pgadmin-dev:
     <<: *pgadmin
-    profiles: ["dev", "all"]
+    profiles: ["dev-gui", "all"]
     depends_on:
       - postgres-dev
 
   mongo-express-test:
     <<: *mongo-express
-    profiles: ["test", "all"]
+    profiles: ["test-gui", "all"]
     depends_on:
       - mongo-test
     environment:
@@ -106,7 +106,7 @@ services:
 
   mongo-express-dev:
     <<: *mongo-express
-    profiles: ["dev", "all"]
+    profiles: ["dev-gui", "all"]
     depends_on:
       - mongo-dev
     environment:
