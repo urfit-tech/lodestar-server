@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 
-import { AppDataSourceConfig } from '~/data-source';
+import { PostgresDataSourceConfig } from '~/data-source';
 import { TaskerType } from './tasker';
 
 @Module({})
@@ -19,7 +19,7 @@ export class TaskerModule {
     return {
       module: TaskerModule,
       imports: [
-        TypeOrmModule.forRoot(AppDataSourceConfig),
+        TypeOrmModule.forRoot(PostgresDataSourceConfig),
         ConfigModule.forRoot({
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,

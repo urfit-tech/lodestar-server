@@ -8,16 +8,18 @@ import { ApplicationController } from './application.controller'
 import { ApplicationService } from './application.service'
 import { AuthModule } from './auth/auth.module'
 import { CheckoutModule } from './checkout/checkout.module'
-import { AppDataSourceConfig } from './data-source'
+import { PostgresDataSourceConfig, MongoDataSourceConfig } from './data-source'
 import { MemberModule } from './member/member.module'
 import { UtilityModule } from './utility/utility.module'
 import { VendorModule } from './vendor/vendor.module'
+import { TriggerModule } from './trigger/trigger.module';
 
 @Module({
   controllers: [ApplicationController],
   providers: [ApplicationService],
   imports: [
-    TypeOrmModule.forRoot(AppDataSourceConfig),
+    TypeOrmModule.forRoot(PostgresDataSourceConfig),
+    TypeOrmModule.forRoot(MongoDataSourceConfig),
     ConfigModule.forRoot({
       envFilePath: `${cwd()}/.env${env.NODE_ENV ? `.${env.NODE_ENV}` : ''}`,
       isGlobal: true,
@@ -25,9 +27,7 @@ import { VendorModule } from './vendor/vendor.module'
     RouterModule.register([
       {
         path: 'api/v2',
-        children: [
-          { path: 'auth', module: AuthModule },
-        ],
+        children: [AuthModule, TriggerModule],
       }
     ]),
     AuthModule,
@@ -35,6 +35,7 @@ import { VendorModule } from './vendor/vendor.module'
     MemberModule,
     VendorModule,
     CheckoutModule,
+    TriggerModule,
   ],
 })
 export class ApplicationModule {}

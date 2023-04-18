@@ -5,9 +5,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import * as request from 'supertest';
 
 import { ApiExceptionFilter } from "~/api.filter";
-
 import { AuthModule } from "~/auth/auth.module";
-import { AppDataSourceConfig } from "~/data-source";
+import { PostgresDataSourceConfig } from "~/data-source";
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -15,7 +14,7 @@ describe('AuthController (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
-        TypeOrmModule.forRoot(AppDataSourceConfig),
+        TypeOrmModule.forRoot(PostgresDataSourceConfig),
         ConfigModule.forRoot({ isGlobal: true }),
         AuthModule,
       ],
@@ -28,8 +27,8 @@ describe('AuthController (e2e)', () => {
     await app.init();
   });
 
-  describe('/token (POST)', () => {
-    const route = '/token';
+  describe('/auth/token (POST)', () => {
+    const route = '/auth/token';
 
     it('Should return E_NOT_FOUND error', async () => {
       const { body } = await request(app.getHttpServer())

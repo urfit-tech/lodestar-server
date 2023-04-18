@@ -1,8 +1,8 @@
+import { EntityManager } from 'typeorm'
+import { sign } from 'jsonwebtoken';
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm'
-import { EntityManager } from 'typeorm'
-import { sign } from 'jsonwebtoken';
 
 import { SignupProperty } from '~/entity/SignupProperty'
 import { MemberService } from '~/member/member.service'
@@ -22,7 +22,7 @@ export class AuthService {
     private readonly memberService: MemberService,
     private readonly appService: AppService,
     private readonly permissionService: PermissionService,
-    @InjectEntityManager() private readonly entityManager: EntityManager,
+    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
