@@ -5,7 +5,7 @@ import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AppDataSourceConfig } from '~/data-source';
+import { PostgresDataSourceConfig } from '~/data-source';
 import { LockModule } from '~/utility/lock/lock.module';
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
@@ -26,7 +26,7 @@ export class RunnerModule {
       module: RunnerModule,
       imports: [
         ScheduleModule.forRoot(),
-        TypeOrmModule.forRoot(AppDataSourceConfig),
+        TypeOrmModule.forRoot(PostgresDataSourceConfig),
         ConfigModule.forRoot({
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
