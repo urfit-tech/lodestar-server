@@ -13,6 +13,7 @@ import { MemberModule } from './member/member.module'
 import { UtilityModule } from './utility/utility.module'
 import { VendorModule } from './vendor/vendor.module'
 import { WorkerModule } from './worker/worker.module'
+import { TriggerModule } from './trigger/trigger.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -27,7 +28,7 @@ import { WorkerModule } from './worker/worker.module'
     RouterModule.register([
       {
         path: 'api/v2',
-        children: [AuthModule],
+        children: [AuthModule, TriggerModule],
       }
     ]),
     AuthModule,
@@ -36,6 +37,7 @@ import { WorkerModule } from './worker/worker.module'
     VendorModule,
     WorkerModule,
     CheckoutModule,
+    TriggerModule,
   ],
 })
 export class ApplicationModule {}
