@@ -23,9 +23,10 @@ export class TriggerService {
     }
 
     const { name: triggerName } = trigger;
+    if (triggerName.startsWith('table_log_') || triggerName.endsWith('_table_log')) {
+      return this.handleTriggerTableLog(data);
+    }
     switch (triggerName) {
-      case 'table_log':
-        return this.handleTriggerTableLog(event);
       default:
         throw new APIException({
           code: '400',
@@ -35,7 +36,8 @@ export class TriggerService {
     }
   }
 
-  private async handleTriggerTableLog(event: HasuraTriggerEvent): Promise<void> {
+  private async handleTriggerTableLog(triggerData: HasuraTrigger): Promise<void> {
+    const { created_at, event } = triggerData;
     const { op, data } = event;
     const { new: newData, old: oldData } = data;
     const tableLogRepo = this.ldbManager.getMongoRepository(TableLog);
@@ -44,7 +46,7 @@ export class TriggerService {
     tableLogToSave.operation = op;
     tableLogToSave.new = newData;
     tableLogToSave.old = oldData;
-    tableLogToSave.insertedAt = new Date();
+    tableLogToSave.insertedAt = new Date(created_at);
 
     await tableLogRepo.save(tableLogToSave);
   }

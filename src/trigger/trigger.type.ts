@@ -1,8 +1,17 @@
 export type HasuraTrigger = {
+  created_at: string;
+  delivery_info: {
+    current_retry: number;
+    max_retries: number;
+  };
   trigger: {
     name: string;
   };
   event: HasuraTriggerEvent | any;
+  table: {
+    name: string;
+    schema: string;
+  };
   key?: string;
 }
 
