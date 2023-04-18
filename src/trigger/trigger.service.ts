@@ -12,7 +12,6 @@ import { HasuraTrigger, HasuraTriggerEvent } from './trigger.type';
 export class TriggerService {
   constructor(
     private readonly cacheService: CacheService,
-    @InjectEntityManager() private readonly phdbManager: EntityManager,
     @InjectEntityManager('ldb') private readonly ldbManager: EntityManager,
   ) {}
 
