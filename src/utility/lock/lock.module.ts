@@ -8,17 +8,16 @@ import { DistributedLockService } from './distributed_lock.service';
 export class LockModule {
   static forFeature(options: {
     key: string;
+    maxHolderAmount: number;
   }): DynamicModule {
-    const { key } = options;
+    const { key, maxHolderAmount } = options;
     return {
       module: LockModule,
       providers: [
         CacheService,
         DistributedLockService,
-        {
-          provide: 'KEY',
-          useValue: key,
-        },
+        { provide: 'KEY', useValue: key },
+        { provide: 'MAX_HOLDER_AMOUNT', useValue: maxHolderAmount },
       ],
       exports: [DistributedLockService],
     };

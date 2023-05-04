@@ -5,7 +5,6 @@ import { DistributedLockService } from '~/utility/lock/distributed_lock.service'
 export abstract class Runner {
   public readonly uuid: string;
   protected readonly name: string;
-  protected isCompleted: boolean;
   protected readonly interval: number;
   protected readonly lockService: DistributedLockService;
 
@@ -16,7 +15,6 @@ export abstract class Runner {
   ) {
     this.uuid = v4();
     this.name = name;
-    this.isCompleted = true;
     this.interval = interval;
     this.lockService = lockService;
   }
@@ -24,30 +22,41 @@ export abstract class Runner {
   abstract execute(): Promise<void>;
 
   async run(): Promise<void> {
-    const isAcquiredLock = await this.lockService.acquireLock(
-      this.uuid, this.interval + 60000,
+    const internalKillTimeout = setTimeout(
+      async () => {
+        try {
+          await this.lockService.releaseLock(this.uuid, { subKey: this.name });
+        } catch (err) {
+          console.log(err);
+        } finally {
+          process.exit(1);
+        }
+      }, this.interval * 1.1,
     );
-
-    if (isAcquiredLock === false) {
-      console.error(`Unable to acquire lock for ${this.name}:${this.uuid}`);
-    } else if (this.isCompleted === false) {
-      console.error('Previous execution is not completed yet');
-      return;
-    }
     
     try {
-      this.isCompleted = false;
+      await this.lockService.acquireLock(
+        this.uuid,
+        new Date().getTime(),
+        this.interval * 2,
+        { subKey: this.name },
+      );
       await this.execute();
-      await this.lockService.touchLock(this.uuid);
+      await this.lockService.releaseLock(
+        this.uuid, { subKey: this.name },
+      );
+      clearTimeout(internalKillTimeout);
     } catch (err) {
       console.error(err);
-    } finally {
-      this.isCompleted = true;
     }
   }
 
   async revoke(): Promise<void> {
-    await this.lockService.releaseLock(this.uuid);
+    try {
+      await this.lockService.releaseLock(this.uuid, { subKey: this.name });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   getName(): string {
