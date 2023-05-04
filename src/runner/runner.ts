@@ -7,6 +7,7 @@ export abstract class Runner {
   protected readonly name: string;
   protected readonly interval: number;
   protected readonly lockService: DistributedLockService;
+  protected previousExecutedTime: Date;
 
   constructor(
     name: string,
@@ -46,6 +47,7 @@ export abstract class Runner {
         this.uuid, { subKey: this.name },
       );
       clearTimeout(internalKillTimeout);
+      this.previousExecutedTime = new Date();
     } catch (err) {
       console.error(err);
     }
@@ -65,5 +67,9 @@ export abstract class Runner {
 
   getInterval(): number {
     return this.interval;
+  }
+
+  getPreviousExecutedTime(): Date {
+    return this.previousExecutedTime;
   }
 }

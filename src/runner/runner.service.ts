@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 
+import { APIException } from '~/api.excetion';
 import { Runner } from './runner';
 
 @Injectable()
@@ -9,6 +10,17 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly runner: Runner,
   ) {}
+
+  async healthz(): Promise<string> {
+    const now = new Date();
+    const previousExecutedTime = this.runner.getPreviousExecutedTime();
+    const runnerInterval = this.runner.getInterval();
+
+    if (previousExecutedTime.getTime() - now.getTime() > runnerInterval) {
+      throw new APIException({ code: 'E_HEALTHZ', message: 'Runner is hang...' }, 500);
+    }
+    return new Date().toISOString();
+  }
 
   onModuleInit(): void {
     const interval = setInterval(

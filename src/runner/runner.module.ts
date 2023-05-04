@@ -10,6 +10,7 @@ import { LockModule } from '~/utility/lock/lock.module';
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
 import { RunnerType } from './runner.type';
+import { RunnerController } from './runner.controller';
 
 @Module({})
 export class RunnerModule {
@@ -24,6 +25,7 @@ export class RunnerModule {
 
     return {
       module: RunnerModule,
+      controllers: [RunnerController],
       imports: [
         ScheduleModule.forRoot(),
         TypeOrmModule.forRoot(PostgresDataSourceConfig),
