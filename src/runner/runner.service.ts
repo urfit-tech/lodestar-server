@@ -8,7 +8,7 @@ import { Runner } from './runner';
 export class RunnerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly schedulerRegistry: SchedulerRegistry,
-    private readonly runner: Runner,
+    public readonly runner: Runner,
   ) {}
 
   async healthz(): Promise<string> {
@@ -16,7 +16,9 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     const previousExecutedTime = this.runner.getPreviousExecutedTime();
     const runnerInterval = this.runner.getInterval();
 
-    if (previousExecutedTime.getTime() - now.getTime() > runnerInterval) {
+    if (!previousExecutedTime) {
+      return 'not execute yet';
+    } else if (now.getTime() - previousExecutedTime.getTime() > runnerInterval) {
       throw new APIException({ code: 'E_HEALTHZ', message: 'Runner is hang...' }, 500);
     }
     return new Date().toISOString();
@@ -30,6 +32,7 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
+    this.schedulerRegistry.deleteInterval(this.runner.getName());
     await this.runner.revoke();
   }
 }

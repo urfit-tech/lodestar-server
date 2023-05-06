@@ -7,6 +7,7 @@ import { TaskerModule } from './tasker/tasker.module';
 import { TaskerType } from './tasker/tasker';
 import { ApiExceptionFilter } from './api.filter'
 import { ApplicationModule } from './application.module'
+import { ShutdownService } from './utility/shutdown/shutdown.service';
 
 async function bootstrap() {
   const { env } = process;
@@ -17,24 +18,26 @@ async function bootstrap() {
   if (workerName !== undefined) {
     if (RunnerType[workerName] !== undefined) {
       app = await NestFactory.create(RunnerModule.forRoot({
-        workerName, nodeEnv,
+        workerName, nodeEnv, clazz: RunnerType[workerName],
       }));
     } else if (TaskerType[workerName] !== undefined) {
       app = await NestFactory.create(TaskerModule.forRoot({
         workerName, nodeEnv,
       }));
     } else {
-      throw new Error('Unknown WORKER_NAME env.');
+      throw new Error(`Unknown WORKER_NAME env: ${workerName}`);
     }
-    port = 0;
+    app.get(ShutdownService).subscribeToShutdown(async () => {
+      await app.close();
+      process.exit(1);
+    });
   } else {
     app = await NestFactory.create(ApplicationModule);
 
-    app.useGlobalFilters(new ApiExceptionFilter());  
-    port = 8081;
+    app = app.useGlobalFilters(new ApiExceptionFilter());  
   }
   
-  app.enableShutdownHooks();
-  await app.listen(port);
+  app = app.enableShutdownHooks();
+  app = await app.listen(8081);
 }
 bootstrap();

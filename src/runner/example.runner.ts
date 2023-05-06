@@ -1,21 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
+import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 
 import { Runner } from './runner';
 
 @Injectable()
 export class ExampleRunner extends Runner {
   constructor(
-    private readonly distributedLockService: DistributedLockService,
+    protected readonly logger: Logger,
+    protected readonly distributedLockService: DistributedLockService,
+    protected readonly shutdownService: ShutdownService,
   ) {
-    super(ExampleRunner.name, 1000, distributedLockService);
+    super(
+      ExampleRunner.name,
+      1000,
+      logger,
+      distributedLockService,
+      shutdownService,
+    );
   }
 
   async execute(): Promise<void> {
     await new Promise((resolve) => setTimeout(() => {
-      console.log(`Execute time: ${new Date().toISOString()}`);
+      this.logger.log(`Execute time: ${new Date().toISOString()}`);
       resolve(undefined);
-    }, 3000));
+    }, 500));
   }
 }
