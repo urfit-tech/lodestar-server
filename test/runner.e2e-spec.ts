@@ -71,7 +71,9 @@ class TestNormalRunner extends Runner {
     );
   }
 
-  async execute(): Promise<void> {}
+  async execute(): Promise<void> {
+    await new Promise((resolve) => setTimeout(() => resolve(true), 100));
+  }
 }
 
 describe('Runner (e2e)', () => {
@@ -149,14 +151,14 @@ describe('Runner (e2e)', () => {
         app.get(ShutdownService).subscribeToShutdown(async () => await app.close());
         await app.init();
 
-        await new Promise((resolve) => setTimeout(() => resolve(true), 1100));
+        await new Promise((resolve) => setTimeout(() => resolve(true), 1200));
         
         const { text: result1 } = await request(app.getHttpServer())
           .get(route)
           .expect(200);
         expect(result1).not.toBeUndefined;
 
-        await new Promise((resolve) => setTimeout(() => resolve(true), 1100));
+        await new Promise((resolve) => setTimeout(() => resolve(true), 1200));
         const { text: result2 } = await request(app.getHttpServer())
           .get(route)
           .expect(200);
