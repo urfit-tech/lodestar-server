@@ -1,5 +1,5 @@
 import { cwd } from 'process';
-import { DynamicModule, Logger, Module } from '@nestjs/common';
+import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -16,7 +16,7 @@ import { RunnerController } from './runner.controller';
 @Module({})
 export class RunnerModule {
   static forRoot(options: {
-    workerName: string; nodeEnv: string; clazz: any;
+    workerName: string; nodeEnv: string; clazz: Type<Runner>;
   }): DynamicModule {
     const { workerName, nodeEnv, clazz } = options;
 
