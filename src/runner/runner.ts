@@ -33,7 +33,8 @@ export abstract class Runner {
   async run(): Promise<void> {
     try {
       const suicideTimeout = setTimeout(
-        async () => await this.suicide(), this.interval * 1.1,
+        () => new Promise((reject) => reject(new Error('RunnerTimeout'))),
+        this.interval * 1.1,
       );
       await this.lockService.occupyLock(
         this.uuid, new Date().getTime(), this.interval * 2,
@@ -48,7 +49,7 @@ export abstract class Runner {
       this.previousExecutedTime = new Date();
     } catch (err) {
       this.logger.error(err);
-      this.shutdownService.shutdown();
+      this.suicide();
     }
   }
 
