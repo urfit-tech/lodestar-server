@@ -9,7 +9,7 @@ export class DistributedLockService {
     private readonly cacheService: CacheService,
   ) {}
 
-  async acquireLock(
+  async occupyLock(
     identityKey: string,
     value: string | number | Buffer,
     expireTime: number,
