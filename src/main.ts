@@ -11,9 +11,8 @@ import { ShutdownService } from './utility/shutdown/shutdown.service';
 
 async function bootstrap() {
   const { env } = process;
-  const { WORKER_NAME: workerName, NODE_ENV: nodeEnv } = env;
+  const { WORKER_NAME: workerName, NODE_ENV: nodeEnv, PORT: port } = env;
   let app: INestApplication;
-  let port: number;
 
   if (workerName !== undefined) {
     if (RunnerType[workerName] !== undefined) {
@@ -36,8 +35,7 @@ async function bootstrap() {
 
     app = app.useGlobalFilters(new ApiExceptionFilter());  
   }
-  
   app = app.enableShutdownHooks();
-  app = await app.listen(8081);
+  app = await app.listen(port || 8081);
 }
 bootstrap();
