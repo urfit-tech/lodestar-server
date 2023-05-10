@@ -10,9 +10,8 @@ import { ApplicationModule } from './application.module'
 
 async function bootstrap() {
   const { env } = process;
-  const { WORKER_NAME: workerName, NODE_ENV: nodeEnv } = env;
+  const { WORKER_NAME: workerName, NODE_ENV: nodeEnv, PORT: port } = env;
   let app: INestApplication;
-  let port: number;
 
   if (workerName !== undefined) {
     if (RunnerType[workerName] !== undefined) {
@@ -26,15 +25,13 @@ async function bootstrap() {
     } else {
       throw new Error('Unknown WORKER_NAME env.');
     }
-    port = 0;
   } else {
     app = await NestFactory.create(ApplicationModule);
 
     app.useGlobalFilters(new ApiExceptionFilter());  
-    port = 8081;
   }
   
   app.enableShutdownHooks();
-  await app.listen(port);
+  await app.listen(port || 8081);
 }
 bootstrap();
