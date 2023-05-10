@@ -28,12 +28,6 @@ export class DistributedLockService {
   async releaseLock(identityKey: string): Promise<void> {
     const key = `lock:${this.key}:${identityKey}`;
     const redisCli = this.cacheService.getClient();
-    const inRedisValue = await redisCli.exists(key);
-
-    if (inRedisValue === null) {
-      throw new Error(`Lock ${key} not exists.`);
-    }
-
     await redisCli.del(key);
   }
 }
