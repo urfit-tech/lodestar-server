@@ -1,5 +1,5 @@
 import { cwd } from 'process';
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -7,23 +7,22 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { PostgresDataSourceConfig } from '~/data-source';
 import { LockModule } from '~/utility/lock/lock.module';
+import { ShutdownService } from '~/utility/shutdown/shutdown.service';
+
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
-import { RunnerType } from './runner.type';
+import { RunnerController } from './runner.controller';
 
 @Module({})
 export class RunnerModule {
   static forRoot(options: {
-    workerName: string; nodeEnv: string;
+    workerName: string; nodeEnv: string; clazz: Type<Runner>;
   }): DynamicModule {
-    const { workerName, nodeEnv } = options;
-
-    if (RunnerType[workerName] === undefined) {
-      throw new Error(`Given runner name is not exists: ${workerName}`);
-    }
+    const { workerName, nodeEnv, clazz } = options;
 
     return {
       module: RunnerModule,
+      controllers: [RunnerController],
       imports: [
         ScheduleModule.forRoot(),
         TypeOrmModule.forRoot(PostgresDataSourceConfig),
@@ -52,8 +51,10 @@ export class RunnerModule {
         LockModule.forFeature({ key: workerName }),
       ],
       providers: [
+        Logger,
+        ShutdownService,
         RunnerService,
-        { provide: Runner, useClass: RunnerType[workerName] },
+        { provide: Runner, useClass: clazz },
       ],
     };
   }

@@ -9,59 +9,25 @@ export class DistributedLockService {
     private readonly cacheService: CacheService,
   ) {}
 
-  async acquireLock(
-    acquirerUuid: string, expireTime?: number,
-  ): Promise<boolean> {
-    try {
-      const redisCli = this.cacheService.getClient();
-      const previousAcquiredUuid = await redisCli.get(`lock:${this.key}`);
-
-      if (previousAcquiredUuid === null) {
-        if (expireTime === undefined) {
-          await redisCli.set(`lock:${this.key}`, acquirerUuid, 'NX');
-        } else {
-          await redisCli.set(
-            `lock:${this.key}`, acquirerUuid, 'PX', expireTime, 'NX',
-          );
-        }
-        return true;
-      } else if (previousAcquiredUuid === acquirerUuid) {
-        await this.touchLock(acquirerUuid);
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
+  async occupyLock(
+    identityKey: string,
+    value: string | number | Buffer,
+    expireTime: number,
+  ): Promise<void> {
+    const redisCli = this.cacheService.getClient();
+    const key = `lock:${this.key}:${identityKey}`;
+    
+    const setResult = await redisCli.set(key, value, 'PX', expireTime, 'NX');
+    if (setResult === null) {
+      throw new Error(
+        `Lock [${key}] with identity [${identityKey}] is unable to acquired.`
+      );
     }
   }
 
-  async touchLock(toucherUuid: string): Promise<boolean> {
-    try {
-      const redisCli = this.cacheService.getClient();
-      const acquirerUuid = await redisCli.get(`lock:${this.key}`);
-      if (acquirerUuid === toucherUuid) {
-        const touchedLocks = await redisCli.touch(`lock:${this.key}`);
-        return touchedLocks > 0;
-      } else {
-        return false;
-      }
-    } catch {
-      return false;
-    }
-  }
-
-  async releaseLock(releaserUuid: string): Promise<boolean> {
-    try {
-      const redisCli = this.cacheService.getClient();
-      const acquirerUuid = await redisCli.get(`lock:${this.key}`);
-      if (acquirerUuid === releaserUuid) {
-        const releasedLocks = await redisCli.del(`lock:${this.key}`);
-        return releasedLocks > 0;
-      } else {
-        return false;
-      }
-    } catch {
-      return false;
-    }
+  async releaseLock(identityKey: string): Promise<void> {
+    const key = `lock:${this.key}:${identityKey}`;
+    const redisCli = this.cacheService.getClient();
+    await redisCli.del(key);
   }
 }
