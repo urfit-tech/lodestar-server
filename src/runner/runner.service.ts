@@ -21,7 +21,7 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     } else if (now.getTime() - previousExecutedTime.getTime() > runnerInterval) {
       throw new APIException({ code: 'E_HEALTHZ', message: 'Runner is hang...' }, 500);
     }
-    return new Date().toISOString();
+    return previousExecutedTime.toISOString();
   }
 
   onModuleInit(): void {
