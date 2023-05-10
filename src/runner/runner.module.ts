@@ -48,7 +48,7 @@ export class RunnerModule {
           },
           inject: [ConfigService],
         }),
-        LockModule.forFeature({ key: workerName, maxHolderAmount: 1 }),
+        LockModule.forFeature({ key: workerName }),
       ],
       providers: [
         Logger,
