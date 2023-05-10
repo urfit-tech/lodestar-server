@@ -168,45 +168,55 @@ describe('Runner (e2e)', () => {
         await app.close();
       });
 
-      it('Should get dateime with only one runner when it success', async () => {
-        const moduleFixture1: TestingModule = await Test.createTestingModule({
-          imports: [RunnerModule.forRoot({
-            workerName: 'test-normal-case-4', nodeEnv: 'Test', clazz: TestNormalRunner,
-          })],
-        }).compile();
-        const moduleFixture2: TestingModule = await Test.createTestingModule({
-          imports: [RunnerModule.forRoot({
-            workerName: 'test-normal-case-4', nodeEnv: 'Test', clazz: TestNormalRunner,
-          })],
-        }).compile();
+      describe('Should get dateime with only one runner when it success', () => {
+        async function test(timeout: number) {
+          const moduleFixture1: TestingModule = await Test.createTestingModule({
+            imports: [RunnerModule.forRoot({
+              workerName: 'test-normal-case-4', nodeEnv: 'Test', clazz: TestNormalRunner,
+            })],
+          }).compile();
+          const moduleFixture2: TestingModule = await Test.createTestingModule({
+            imports: [RunnerModule.forRoot({
+              workerName: 'test-normal-case-4', nodeEnv: 'Test', clazz: TestNormalRunner,
+            })],
+          }).compile();
+  
+          const app1 = moduleFixture1
+            .createNestApplication()
+            .enableShutdownHooks();
+          const app2 = moduleFixture2
+            .createNestApplication()
+            .enableShutdownHooks();
+          app1.get(ShutdownService).subscribeToShutdown(async () => await app1.close());
+          app2.get(ShutdownService).subscribeToShutdown(async () => await app2.close());
+          await app1.init();
+          // Interleaved initialization
+          await new Promise((resolve) => setTimeout(() => resolve(true), timeout));
+          await app2.init();
+  
+          await new Promise((resolve) => setTimeout(() => resolve(true), 1000));
+          
+          const { text: result1 } = await request(app1.getHttpServer())
+            .get(route)
+            .expect(200);
+          expect(result1).not.toBeUndefined;
+          const { text: result2 } = await request(app2.getHttpServer())
+            .get(route)
+            .expect(200);
+          expect(result1).not.toBeUndefined;
+          expect(result2).toBe('not execute yet');
+          
+          await app1.close();
+          await app2.close();
+        }
 
-        const app1 = moduleFixture1
-          .createNestApplication()
-          .enableShutdownHooks();
-        const app2 = moduleFixture2
-          .createNestApplication()
-          .enableShutdownHooks();
-        app1.get(ShutdownService).subscribeToShutdown(async () => await app1.close());
-        app2.get(ShutdownService).subscribeToShutdown(async () => await app2.close());
-        await app1.init();
-        // Interleaved initialization
-        await new Promise((resolve) => setTimeout(() => resolve(true), 500));
-        await app2.init();
+        it('runner initialize at same time: 0', async () => await test(0));
 
-        await new Promise((resolve) => setTimeout(() => resolve(true), 1000));
-        
-        const { text: result1 } = await request(app1.getHttpServer())
-          .get(route)
-          .expect(200);
-        expect(result1).not.toBeUndefined;
-        const { text: result2 } = await request(app2.getHttpServer())
-          .get(route)
-          .expect(200);
-        expect(result1).not.toBeUndefined;
-        expect(result2).toBe('not execute yet');
-        
-        await app1.close();
-        await app2.close();
+        it('runner initialize at same time: 100', async () => await test(100));
+
+        it('runner initialize at same time: 500', async () => await test(500));
+
+        it('runner initialize at same time: 1000', async () => await test(1000));
       });
 
       it('Should get unhealthy return due to execution hang', async () => {
