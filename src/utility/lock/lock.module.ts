@@ -17,7 +17,6 @@ export class LockModule {
         CacheService,
         DistributedLockService,
         { provide: 'KEY', useValue: key },
-        { provide: 'MAX_HOLDER_AMOUNT', useValue: maxHolderAmount },
       ],
       exports: [DistributedLockService],
     };

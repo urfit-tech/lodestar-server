@@ -32,7 +32,7 @@ export abstract class Runner {
 
   async run(): Promise<void> {
     try {
-      await this.lockService.acquireLock(
+      await this.lockService.occupyLock(
         this.uuid,
         new Date().getTime(),
         this.interval * 2,

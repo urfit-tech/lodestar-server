@@ -6,7 +6,6 @@ import { CacheService } from '../cache/cache.service';
 export class DistributedLockService {
   constructor(
     @Inject('KEY') private readonly key: string,
-    @Inject('MAX_HOLDER_AMOUNT') private readonly maxHolderAmount: number,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -14,24 +13,20 @@ export class DistributedLockService {
     identityKey: string,
     value: string | number | Buffer,
     expireTime: number,
-    options?: { subKey: string },
   ): Promise<void> {
     const redisCli = this.cacheService.getClient();
-    const key = `lock:${this.key}${options ? `:${options.subKey}` : ''}`;
-    const inRedisKeys = await redisCli.keys(`${key}:*`);
+    const key = `lock:${this.key}:${identityKey}`;
     
-    if (inRedisKeys.length >= this.maxHolderAmount) {
+    const setResult = await redisCli.set(key, value, 'PX', expireTime, 'NX');
+    if (setResult === null) {
       throw new Error(
         `Lock [${key}] with identity [${identityKey}] is unable to acquired.`
       );
     }
-    await redisCli.set(`${key}:${identityKey}`, value, 'PX', expireTime, 'NX');
   }
 
-  async releaseLock(
-    identityKey: string, options?: { subKey: string; },
-  ): Promise<void> {
-    const key = `lock:${this.key}${options ? `:${options.subKey}` : ''}:${identityKey}`;
+  async releaseLock(identityKey: string): Promise<void> {
+    const key = `lock:${this.key}:${identityKey}`;
     const redisCli = this.cacheService.getClient();
     const inRedisValue = await redisCli.exists(key);
 
