@@ -13,6 +13,7 @@ export class CacheService {
   ) {
     this.cacheRedisUri = configService.getOrThrow('CACHE_REDIS_URI');
     this.client = new Redis(this.cacheRedisUri);
+    this.client.client('SETNAME', 'lodestar-server');
   }
 
   public getClient() {
