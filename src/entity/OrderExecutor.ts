@@ -1,6 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+
+import { OrderLog } from '~/order/entity/order_log.entity';
+
 import { Member } from './Member'
-import { OrderLog } from './OrderLog'
 
 @Index('order_executor_pkey', ['id'], { unique: true })
 @Entity('order_executor', { schema: 'public' })

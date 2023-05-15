@@ -1,6 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+
+import { OrderProduct } from '~/order/entity/order_product.entity';
+
 import { ActivitySession } from './ActivitySession'
-import { OrderProduct } from './OrderProduct'
 
 @Index('activity_attendance_order_product_id_activity_session_id_key', ['activitySessionId', 'orderProductId'], {
   unique: true,

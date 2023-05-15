@@ -1,9 +1,11 @@
 import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+
+import { OrderProduct } from '~/order/entity/order_product.entity';
+
 import { CardDiscount } from './CardDiscount'
 import { CartProduct } from './CartProduct'
 import { CouponPlanProduct } from './CouponPlanProduct'
 import { GiftPlanProduct } from './GiftPlanProduct'
-import { OrderProduct } from './OrderProduct'
 import { ProductChannel } from './ProductChannel'
 import { ProductInventory } from './ProductInventory'
 import { ProjectPlanProduct } from './ProjectPlanProduct'

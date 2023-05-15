@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { OrderProduct } from './OrderProduct'
+
+import { OrderProduct } from '~/order/entity/order_product.entity';
 
 @Index('order_product_file_pkey', ['id'], { unique: true })
 @Entity('order_product_file', { schema: 'public' })

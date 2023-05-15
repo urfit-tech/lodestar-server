@@ -1,4 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
+
+import { OrderLog } from '~/order/entity/order_log.entity';
+
 import { Activity } from './Activity'
 import { App } from './App'
 import { AppointmentPlan } from './AppointmentPlan'
@@ -40,7 +43,6 @@ import { Merchandise } from './Merchandise'
 import { Notification } from './Notification'
 import { OrderContact } from './OrderContact'
 import { OrderExecutor } from './OrderExecutor'
-import { OrderLog } from './OrderLog'
 import { Playlist } from './Playlist'
 import { Podcast } from './Podcast'
 import { PodcastAlbum } from './PodcastAlbum'
