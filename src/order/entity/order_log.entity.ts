@@ -1,12 +1,14 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Coupon } from './Coupon'
-import { Invoice } from './Invoice'
-import { Member } from './Member'
-import { OrderContact } from './OrderContact'
-import { OrderDiscount } from './OrderDiscount'
-import { OrderExecutor } from './OrderExecutor'
-import { OrderProduct } from './OrderProduct'
-import { PaymentLog } from './PaymentLog'
+
+import { Coupon } from '~/entity/Coupon'
+import { Member } from '~/entity/Member'
+import { OrderContact } from '~/entity/OrderContact'
+import { OrderDiscount } from '~/entity/OrderDiscount'
+import { OrderExecutor } from '~/entity/OrderExecutor'
+import { PaymentLog } from '~/payment/payment_log.entity'
+import { Invoice } from '~/invoice/invoice.entity';
+
+import { OrderProduct } from './order_product.entity'
 
 @Index('order_log_started_at_desc', ['createdAt'], {})
 @Index('order_log_custom_id_key', ['customId'], { unique: true })
@@ -56,7 +58,7 @@ export class OrderLog {
   deliverMessage: string | null
 
   @Column('jsonb', { name: 'shipping', nullable: true })
-  shipping: object | null
+  shipping: any | null
 
   @Column('timestamp with time zone', { name: 'retried_at', nullable: true })
   retriedAt: Date | null

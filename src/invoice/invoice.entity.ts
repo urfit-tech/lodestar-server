@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm'
-import { OrderLog } from './OrderLog'
+
+import { OrderLog } from '~/order/entity/order_log.entity';
 
 @Index('invoice_pkey', ['no'], { unique: true })
 @Index('invoice_order_id_key', ['orderId'], { unique: true })
