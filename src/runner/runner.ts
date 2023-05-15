@@ -31,33 +31,28 @@ export abstract class Runner {
   abstract execute(): Promise<void>;
 
   async run(): Promise<void> {
+    let isCompleted = false;
     try {
-      const suicideTimeout = setTimeout(
-        () => new Promise((reject) => reject(new Error('RunnerTimeout'))),
-        this.interval * 1.1,
-      );
       await this.lockService.occupyLock(
         this.uuid, new Date().getTime(), this.interval * 2,
       );
+
+      const suicideTimeout = setTimeout(
+        () => !isCompleted && this.suicide(),
+        this.interval * 1.1,
+      );
+
       try {
         await this.execute();
+        isCompleted = true;
       } catch (err) {
         this.logger.error(err);
       }
       await this.lockService.releaseLock(this.uuid);
       clearTimeout(suicideTimeout);
       this.previousExecutedTime = new Date();
-    } catch (err) {
-      this.logger.error(err);
-      this.suicide();
-    }
-  }
-
-  async revoke(): Promise<void> {
-    try {
-      await this.lockService.releaseLock(this.uuid);
-    } catch (err) {
-      this.logger.error(err);
+    } catch {
+      return;
     }
   }
 
@@ -78,8 +73,9 @@ export abstract class Runner {
       this.logger.error('Runner timeout exceed, suicide...');
       await this.lockService.releaseLock(this.uuid);
     } catch (err) {
-      this.logger.error(err);
+      this.logger.error(`SuicideError: ${err}`);
     } finally {
+      this.logger.error(`Shutdown ${this.uuid}`);
       this.shutdownService.shutdown();
     }
   }

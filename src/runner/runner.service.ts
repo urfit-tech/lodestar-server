@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 
 import { APIException } from '~/api.excetion';
+
 import { Runner } from './runner';
 
 @Injectable()
@@ -33,6 +34,5 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     this.schedulerRegistry.deleteInterval(this.runner.getName());
-    await this.runner.revoke();
   }
 }
