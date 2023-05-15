@@ -1,4 +1,6 @@
 import { cwd } from 'process';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
@@ -12,6 +14,8 @@ import { UtilityModule } from '~/utility/utility.module';
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
 import { RunnerController } from './runner.controller';
+
+dayjs.extend(utc);
 
 @Module({})
 export class RunnerModule {

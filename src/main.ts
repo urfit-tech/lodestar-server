@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc'
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core'
 
@@ -8,6 +10,8 @@ import { TaskerType } from './tasker/tasker';
 import { ApiExceptionFilter } from './api.filter'
 import { ApplicationModule } from './application.module'
 import { ShutdownService } from './utility/shutdown/shutdown.service';
+
+dayjs.extend(utc);
 
 async function bootstrap() {
   const { env } = process;

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 
@@ -13,7 +14,7 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async healthz(): Promise<string> {
-    const now = new Date();
+    const now = dayjs().toDate();
     const previousExecutedTime = this.runner.getPreviousExecutedTime();
     const runnerInterval = this.runner.getInterval();
 
