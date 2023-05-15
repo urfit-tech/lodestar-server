@@ -131,6 +131,9 @@ describe('Runner (e2e)', () => {
       const runner2 = app2.get(RunnerService).runner;
       expect(runner1.getPreviousExecutedTime()).not.toBeUndefined;
       expect(runner2.getPreviousExecutedTime()).toBeUndefined;
+
+      await app1.close();
+      await app2.close();
     });
   });
 
