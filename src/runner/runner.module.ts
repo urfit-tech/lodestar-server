@@ -10,6 +10,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PostgresDataSourceConfig } from '~/data-source';
 import { LockModule } from '~/utility/lock/lock.module';
 import { UtilityModule } from '~/utility/utility.module';
+import { PaymentService } from '~/payment/payment.service';
+import { AppService } from '~/app/app.service';
 
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
@@ -60,6 +62,8 @@ export class RunnerModule {
         RunnerService,
         { provide: 'NO_GO', useValue: noGo },
         { provide: Runner, useClass: clazz },
+        PaymentService,
+        AppService,
       ],
     };
   }
