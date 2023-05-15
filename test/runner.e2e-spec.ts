@@ -1,4 +1,4 @@
-import * as request from 'supertest';
+import request from 'supertest';
 import { Injectable, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -131,6 +131,9 @@ describe('Runner (e2e)', () => {
       const runner2 = app2.get(RunnerService).runner;
       expect(runner1.getPreviousExecutedTime()).not.toBeUndefined;
       expect(runner2.getPreviousExecutedTime()).toBeUndefined;
+
+      await app1.close();
+      await app2.close();
     });
   });
 
