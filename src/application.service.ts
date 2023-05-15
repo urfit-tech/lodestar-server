@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationShutdown } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { APIException } from './api.excetion';
@@ -6,7 +6,7 @@ import { APIException } from './api.excetion';
 import { CacheService } from './utility/cache/cache.service'
 
 @Injectable()
-export class ApplicationService implements OnApplicationShutdown {
+export class ApplicationService {
   constructor(
     private cacheService: CacheService,
     @InjectEntityManager('phdb') private entityManager: EntityManager,
@@ -22,9 +22,5 @@ export class ApplicationService implements OnApplicationShutdown {
     } catch (error) {
       throw new APIException({ code: 'E_HEALTHZ', message: null, result: error }, 500);
     }
-  }
-
-  async onApplicationShutdown(signal?: string) {
-    await this.cacheService.getClient().quit();
   }
 }

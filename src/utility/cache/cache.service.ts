@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config';
 
 import Redis from 'ioredis'
 
 @Injectable()
-export class CacheService {
+export class CacheService implements OnApplicationShutdown {
   private readonly cacheRedisUri: string;
   private client: Redis
   
@@ -18,5 +18,9 @@ export class CacheService {
 
   public getClient() {
     return this.client;
+  }
+  
+  async onApplicationShutdown() {
+    await this.client.quit();
   }
 }
