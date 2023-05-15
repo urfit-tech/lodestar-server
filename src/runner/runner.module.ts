@@ -7,7 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { PostgresDataSourceConfig } from '~/data-source';
 import { LockModule } from '~/utility/lock/lock.module';
-import { ShutdownService } from '~/utility/shutdown/shutdown.service';
+import { UtilityModule } from '~/utility/utility.module';
 
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
@@ -30,6 +30,7 @@ export class RunnerModule {
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
         }),
+        UtilityModule,
         BullModule.forRootAsync({
           imports: [ConfigModule],
           useFactory: (configService: ConfigService<{
@@ -52,7 +53,6 @@ export class RunnerModule {
       ],
       providers: [
         Logger,
-        ShutdownService,
         RunnerService,
         { provide: Runner, useClass: clazz },
       ],

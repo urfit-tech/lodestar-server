@@ -8,11 +8,12 @@ import { ApolloService } from './apollo/apollo.service'
 import { CacheService } from './cache/cache.service'
 import { QueueService } from './queue/queue.service'
 import { StorageService } from './storage/storage.service'
+import { ShutdownService } from './shutdown/shutdown.service'
 import { UtilityService } from './utility.service'
 
 @Module({
   imports: [FeedModule, MediaModule, MailerModule, CallerModule, SocialModule],
-  providers: [UtilityService, ApolloService, QueueService, CacheService, StorageService],
-  exports: [UtilityService, CacheService],
+  providers: [UtilityService, ApolloService, QueueService, CacheService, StorageService, ShutdownService],
+  exports: [UtilityService, CacheService, ShutdownService],
 })
 export class UtilityModule {}
