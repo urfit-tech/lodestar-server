@@ -20,9 +20,9 @@ dayjs.extend(utc);
 @Module({})
 export class RunnerModule {
   static forRoot(options: {
-    workerName: string; nodeEnv: string; clazz: Type<Runner>;
+    workerName: string; nodeEnv: string; clazz: Type<Runner>; noGo?: boolean;
   }): DynamicModule {
-    const { workerName, nodeEnv, clazz } = options;
+    const { workerName, nodeEnv, clazz, noGo } = options;
 
     return {
       module: RunnerModule,
@@ -58,6 +58,7 @@ export class RunnerModule {
       providers: [
         Logger,
         RunnerService,
+        { provide: 'NO_GO', useValue: noGo },
         { provide: Runner, useClass: clazz },
       ],
     };
