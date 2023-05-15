@@ -63,4 +63,4 @@ jobs:
         run: hasura migrate apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
 
       - name: E2E Testing
-        run: yarn run test:e2e --coverage --forceExit
+        run: yarn run test:e2e --coverage
