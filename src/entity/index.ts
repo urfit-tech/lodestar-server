@@ -19,8 +19,6 @@ import { AppPageSection } from './AppPageSection';
 import { AppPageTemplate } from './AppPageTemplate';
 import { AppPlan } from './AppPlan';
 import { AppPlanModule } from './AppPlanModule';
-import { AppSecret } from './AppSecret';
-import { AppSetting } from './AppSetting';
 import { AppUsage } from './AppUsage';
 import { AppWebhook } from './AppWebhook';
 import { AppointmentPlan } from './AppointmentPlan';
@@ -213,6 +211,9 @@ import { WebhookLog } from './WebhookLog';
 import { TableLog } from './TableLog.mongo';
 
 
+import { AppModule } from '~/app/entity/app_module.entity';
+import { AppSecret } from '~/app/entity/app_secret.entity';
+import { AppSetting } from '~/app/entity/app_setting.entity';
 import { Invoice } from '~/invoice/invoice.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
@@ -234,6 +235,7 @@ export const PostgresEntities = [
   AppExtendedModule,
   AppHost,
   AppLanguage,
+  AppModule,
   AppNav,
   AppPage,
   AppPageSection,

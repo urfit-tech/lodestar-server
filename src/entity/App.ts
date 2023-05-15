@@ -1,4 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm'
+
+import { AppSecret } from '~/app/entity/app_secret.entity';
+import { AppSetting } from '~/app/entity/app_setting.entity';
+
 import { Activity } from './Activity'
 import { AppAdmin } from './AppAdmin'
 import { AppChannel } from './AppChannel'
@@ -9,8 +13,6 @@ import { AppHost } from './AppHost'
 import { AppLanguage } from './AppLanguage'
 import { AppNav } from './AppNav'
 import { AppPlan } from './AppPlan'
-import { AppSecret } from './AppSecret'
-import { AppSetting } from './AppSetting'
 import { AppUsage } from './AppUsage'
 import { AppWebhook } from './AppWebhook'
 import { Card } from './Card'
