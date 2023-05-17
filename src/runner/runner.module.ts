@@ -12,6 +12,7 @@ import { LockModule } from '~/utility/lock/lock.module';
 import { UtilityModule } from '~/utility/utility.module';
 import { PaymentService } from '~/payment/payment.service';
 import { AppService } from '~/app/app.service';
+import { InvoiceModule } from '~/invoice/invoice.module';
 
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
@@ -56,6 +57,7 @@ export class RunnerModule {
           inject: [ConfigService],
         }),
         LockModule.forFeature({ key: workerName }),
+        InvoiceModule,
       ],
       providers: [
         Logger,

@@ -9,4 +9,8 @@ export class UtilityService {
     encrypted += cipher.final('hex');
     return encrypted;
   }
+
+  sleep(milliseconds: number) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds))
+  }
 }
