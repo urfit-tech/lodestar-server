@@ -59,8 +59,10 @@ jobs:
           sleep 5s
           docker ps -a
 
-      - name: Dump DB structure from hasura migrations
-        run: hasura migrate apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
+      - name: Dump DB structure from hasura migrations & seeds
+        run: |
+          hasura migrate apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
+          hasura seed apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
 
       - name: E2E Testing
         run: yarn run test:e2e --coverage
