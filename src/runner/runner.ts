@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import { v4 } from 'uuid';
+import { EntityManager } from 'typeorm';
 import { Logger } from '@nestjs/common';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
@@ -29,7 +30,7 @@ export abstract class Runner {
     this.shutdownService = shutdownService;
   }
 
-  abstract execute(): Promise<void>;
+  abstract execute(manager?: EntityManager): Promise<void>;
 
   async run(): Promise<void> {
     let isCompleted = false;
