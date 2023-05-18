@@ -36,11 +36,11 @@ export class InvoiceRunner extends Runner {
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
+    const errors: Array<{ appId: string; error: any; }> = [];
     const cb = async (manager: EntityManager) => {
       const paymentLogs = await this.paymentInfra.getShouldIssueInvoicePaymentLogs(
         this.batchSize, manager,
       );
-      const errors: Array<{ appId: string; error: any; }> = [];
 
       for(const { order, no: paymentNo, options, price } of paymentLogs) {
         const { member } = order;
@@ -89,19 +89,18 @@ export class InvoiceRunner extends Runner {
         } catch (error) {
           errors.push({ appId, error: error.message });
           this.logger.error({
-            error,
+            error: JSON.stringify(error),
             appId,
             title: '開立發票失敗',
             message: `paymentNo: ${paymentNo}`,
           })
         }
       }
-
-      if (errors.length > 0) {
-        throw new Error(JSON.stringify(errors));
-      }
     };
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));
+    if (errors.length > 0) {
+      throw new Error(JSON.stringify(errors));
+    }
   }
 
   private isAllowUseInvoiceModule(
