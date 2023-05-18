@@ -9,8 +9,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { PostgresDataSourceConfig } from '~/data-source';
 import { LockModule } from '~/utility/lock/lock.module';
+import { PaymentModule } from '~/payment/payment.module';
 import { UtilityModule } from '~/utility/utility.module';
-import { PaymentService } from '~/payment/payment.service';
 import { AppService } from '~/app/app.service';
 import { InvoiceModule } from '~/invoice/invoice.module';
 
@@ -37,6 +37,7 @@ export class RunnerModule {
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
         }),
+        PaymentModule,
         UtilityModule,
         BullModule.forRootAsync({
           imports: [ConfigModule],
@@ -64,7 +65,6 @@ export class RunnerModule {
         RunnerService,
         { provide: 'NO_GO', useValue: noGo },
         { provide: Runner, useClass: clazz },
-        PaymentService,
         AppService,
       ],
     };
