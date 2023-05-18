@@ -47,7 +47,7 @@ describe('InvoiceRunner (e2e)', () => {
       imports: [
         RunnerModule.forRoot({
           workerName: InvoiceRunner.name,
-          nodeEnv: 'Test',
+          nodeEnv: 'test',
           clazz: InvoiceRunner,
           noGo: true,
         }),
