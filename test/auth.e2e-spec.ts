@@ -1,12 +1,11 @@
-import { INestApplication } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { Test, TestingModule } from "@nestjs/testing";
-import { TypeOrmModule } from "@nestjs/typeorm";
+import { INestApplication } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 
-import { ApiExceptionFilter } from "~/api.filter";
-import { AuthModule } from "~/auth/auth.module";
-import { PostgresDataSourceConfig } from "~/data-source";
+import { PostgresModule } from '~/database/postgres.module';
+import { ApiExceptionFilter } from '~/api.filter';
+import { AuthModule } from '~/auth/auth.module';
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -14,8 +13,8 @@ describe('AuthController (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
-        TypeOrmModule.forRoot(PostgresDataSourceConfig),
         ConfigModule.forRoot({ isGlobal: true }),
+        PostgresModule.forRootAsync(),
         AuthModule,
       ],
     }).compile();
