@@ -372,10 +372,11 @@ describe('InvoiceRunner (e2e)', () => {
 
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
-        for (const each of [orderLog, paymentLog]) {
-          expect(each.invoiceIssuedAt).not.toBeNull();
-          expect(each.invoiceOptions).toMatchObject({
+        for (const { invoiceIssuedAt, invoiceOptions } of [orderLog, paymentLog]) {
+          expect(invoiceIssuedAt).not.toBeNull();
+          expect(invoiceOptions).toMatchObject({
             status: 'SUCCESS',
+            retry: 2,
             invoiceNumber: 'retry_success_invoice_number',
             invoiceTransNo: 'retry_success_invoice_trans_no',
           });
@@ -465,9 +466,10 @@ describe('InvoiceRunner (e2e)', () => {
         await invoiceRunner.execute(manager);
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
-        for (const each of [orderLog, paymentLog]) {
-          expect(each.invoiceIssuedAt).toBeNull();
-          expect(each.invoiceOptions['status']).toEqual('LIB_ANOTHER_FAIL');
+        for (const { invoiceIssuedAt, invoiceOptions} of [orderLog, paymentLog]) {
+          expect(invoiceIssuedAt).toBeNull();
+          expect(invoiceOptions['status']).toEqual('LIB_ANOTHER_FAIL');
+          expect(invoiceOptions['retry']).toEqual(5);
         }
       });
     });
