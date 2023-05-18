@@ -4,8 +4,8 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
+import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { UtilityService } from '~/utility/utility.service';
-import { PaymentService } from '~/payment/payment.service';
 import { AppService } from '~/app/app.service';
 import { InvoiceService } from '~/invoice/invocie.service';
 
@@ -19,7 +19,7 @@ export class InvoiceRunner extends Runner {
     protected readonly logger: Logger,
     protected readonly distributedLockService: DistributedLockService,
     protected readonly shutdownService: ShutdownService,
-    private readonly paymentService: PaymentService,
+    private readonly paymentInfra: PaymentInfrastructure,
     private readonly appService: AppService,
     private readonly invoiceService: InvoiceService,
     private readonly utilityService: UtilityService,
@@ -37,7 +37,9 @@ export class InvoiceRunner extends Runner {
 
   async execute(entityManager?: EntityManager): Promise<void> {
     const cb = async (manager: EntityManager) => {
-      const paymentLogs = await this.paymentService.getIssuePaymentLogs(this.batchSize, manager);
+      const paymentLogs = await this.paymentInfra.getShouldIssueInvoicePaymentLogs(
+        this.batchSize, manager,
+      );
       const errors: Array<{ appId: string; error: any; }> = [];
 
       for(const { order, no: paymentNo, options, price } of paymentLogs) {

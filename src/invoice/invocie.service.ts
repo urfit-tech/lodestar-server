@@ -1,13 +1,14 @@
 import dayjs from 'dayjs';
-import { EntityManager, Equal } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
 import { Invoice } from '~/invoice/invoice.entity';
-import { OrderLog } from '~/order/entity/order_log.entity';
-import { PaymentLog } from '~/payment/payment_log.entity';
+import { PaymentInfrastructure } from '~/payment/payment.infra';
+import { OrderInfrastructure } from '~/order/order.infra';
 
 import { EzpayClient } from './ezpay_client';
+import { InvoiceInfrastructure } from './invoice.infra';
 
 type InvoiceOptions = {
   appId: string
@@ -30,6 +31,9 @@ export class InvoiceService {
   constructor(
     private readonly ezpayClient: EzpayClient,
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    private readonly invoiceInfra: InvoiceInfrastructure,
+    private readonly orderInfra: OrderInfrastructure,
+    private readonly paymentInfra: PaymentInfrastructure,
   ) {}
 
   async issueInvoice(
@@ -178,46 +182,39 @@ export class InvoiceService {
     entityManager?: EntityManager,
   ) {
     const cb = async (manager: EntityManager) => {
-      const orderLogRepo = manager.getRepository(OrderLog);
-      const paymentLogRepo = manager.getRepository(PaymentLog);
-      const orderLogs = await orderLogRepo.find({
-        where: { paymentLogs: { no: Equal(paymentNo) } },
-      });
-      const paymentLog = await paymentLogRepo.findOne({
-        where: { no: Equal(paymentNo) },
-      });
+      const orderLogs = await this.orderInfra.getManyByPaymentNo(paymentNo, manager);
+      const paymentLog = await this.paymentInfra.getOneByNo(paymentNo, manager);
 
       for (const orderLog of orderLogs) {
         orderLog.invoiceOptions = {
           ...orderLog.invoiceOptions,
           ...invoiceOptions,
+          retry: orderLog.invoiceOptions['retry']
+            ? parseInt(orderLog.invoiceOptions['retry']) + 1
+            : 1,
         };
         orderLog.invoiceIssuedAt = invoiceIssueAt;
       }
       paymentLog.invoiceOptions = {
         ...paymentLog.invoiceOptions,
         ...invoiceOptions,
+        retry: paymentLog.invoiceOptions['retry']
+          ? parseInt(paymentLog.invoiceOptions['retry']) + 1
+          : 1,
       };
       paymentLog.invoiceIssuedAt = invoiceIssueAt;
 
-      await paymentLogRepo.save(paymentLog);
-      return await orderLogRepo.save(orderLogs);
+      await this.paymentInfra.save(paymentLog, manager);
+      return await this.orderInfra.save(orderLogs, manager);
     };
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
   }
 
-  private insertInvoice(orderId: string, invoiceNumber: string, price: number, entityManager?: EntityManager) {
-    const cb = async (manager: EntityManager) => {
-      const invoiceRepo = manager.getRepository(Invoice);
-      
-      const invoice = new Invoice();
-      invoice.orderId = orderId;
-      invoice.no = invoiceNumber;
-      invoice.price = price;
-
-      return invoiceRepo.save(invoice);
-    };
-
-    return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
+  private async insertInvoice(orderId: string, invoiceNumber: string, price: number, manager: EntityManager): Promise<void> {
+    const invoice = new Invoice();
+    invoice.orderId = orderId;
+    invoice.no = invoiceNumber;
+    invoice.price = price;
+    await this.invoiceInfra.save(invoice, manager);
   }
 }
