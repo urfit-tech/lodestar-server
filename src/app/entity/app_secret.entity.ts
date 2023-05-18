@@ -1,6 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { Setting } from './Setting'
+
+import { App } from '~/entity/App'
+import { Setting } from '~/entity/Setting'
 
 @Index('app_secret_app_id_key_key', ['appId', 'key'], { unique: true })
 @Index('app_secret_pkey', ['id'], { unique: true })

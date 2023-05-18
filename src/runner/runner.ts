@@ -1,5 +1,7 @@
-import { Logger } from '@nestjs/common';
+import dayjs from 'dayjs';
 import { v4 } from 'uuid';
+import { EntityManager } from 'typeorm';
+import { Logger } from '@nestjs/common';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
@@ -28,13 +30,13 @@ export abstract class Runner {
     this.shutdownService = shutdownService;
   }
 
-  abstract execute(): Promise<void>;
+  abstract execute(manager?: EntityManager): Promise<void>;
 
   async run(): Promise<void> {
     let isCompleted = false;
     try {
       await this.lockService.occupyLock(
-        this.uuid, new Date().getTime(), this.interval * 2,
+        this.uuid, dayjs().toDate().getTime(), this.interval * 2,
       );
 
       const suicideTimeout = setTimeout(
@@ -50,7 +52,7 @@ export abstract class Runner {
       }
       await this.lockService.releaseLock(this.uuid);
       clearTimeout(suicideTimeout);
-      this.previousExecutedTime = new Date();
+      this.previousExecutedTime = dayjs().toDate();
     } catch {
       return;
     }

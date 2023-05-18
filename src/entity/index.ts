@@ -19,8 +19,6 @@ import { AppPageSection } from './AppPageSection';
 import { AppPageTemplate } from './AppPageTemplate';
 import { AppPlan } from './AppPlan';
 import { AppPlanModule } from './AppPlanModule';
-import { AppSecret } from './AppSecret';
-import { AppSetting } from './AppSetting';
 import { AppUsage } from './AppUsage';
 import { AppWebhook } from './AppWebhook';
 import { AppointmentPlan } from './AppointmentPlan';
@@ -60,7 +58,6 @@ import { File } from './File';
 import { GiftPlan } from './GiftPlan';
 import { GiftPlanProduct } from './GiftPlanProduct';
 import { Identity } from './Identity';
-import { Invoice } from './Invoice';
 import { Issue } from './Issue';
 import { IssueReaction } from './IssueReaction';
 import { IssueReply } from './IssueReply';
@@ -111,15 +108,12 @@ import { Notification } from './Notification';
 import { OrderContact } from './OrderContact';
 import { OrderDiscount } from './OrderDiscount';
 import { OrderExecutor } from './OrderExecutor';
-import { OrderLog } from './OrderLog';
-import { OrderProduct } from './OrderProduct';
 import { OrderProductFile } from './OrderProductFile';
 import { Org } from './Org';
 import { Package } from './Package';
 import { PackageItem } from './PackageItem';
 import { PackageItemGroup } from './PackageItemGroup';
 import { PackageSection } from './PackageSection';
-import { PaymentLog } from './PaymentLog';
 import { Permission } from './Permission';
 import { PermissionGroup } from './PermissionGroup';
 import { PermissionGroupPermission } from './PermissionGroupPermission';
@@ -216,6 +210,15 @@ import { WebhookLog } from './WebhookLog';
 
 import { TableLog } from './TableLog.mongo';
 
+
+import { AppModule } from '~/app/entity/app_module.entity';
+import { AppSecret } from '~/app/entity/app_secret.entity';
+import { AppSetting } from '~/app/entity/app_setting.entity';
+import { Invoice } from '~/invoice/invoice.entity';
+import { OrderLog } from '~/order/entity/order_log.entity';
+import { OrderProduct } from '~/order/entity/order_product.entity';
+import { PaymentLog } from '~/payment/payment_log.entity';
+
 export const PostgresEntities = [
   Activity,
   ActivityAttendance,
@@ -232,6 +235,7 @@ export const PostgresEntities = [
   AppExtendedModule,
   AppHost,
   AppLanguage,
+  AppModule,
   AppNav,
   AppPage,
   AppPageSection,

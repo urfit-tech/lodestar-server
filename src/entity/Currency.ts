@@ -1,6 +1,8 @@
 import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm'
+
+import { OrderProduct } from '~/order/entity/order_product.entity';
+
 import { AppointmentPlan } from './AppointmentPlan'
-import { OrderProduct } from './OrderProduct'
 import { ProgramPlan } from './ProgramPlan'
 
 @Index('currency_pkey', ['id'], { unique: true })

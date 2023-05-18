@@ -1,4 +1,5 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import dayjs from 'dayjs';
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 
 import { APIException } from '~/api.excetion';
@@ -8,12 +9,13 @@ import { Runner } from './runner';
 @Injectable()
 export class RunnerService implements OnModuleInit, OnModuleDestroy {
   constructor(
+    @Optional() @Inject('NO_GO') private readonly noGo: boolean | undefined,
     private readonly schedulerRegistry: SchedulerRegistry,
     public readonly runner: Runner,
   ) {}
 
   async healthz(): Promise<string> {
-    const now = new Date();
+    const now = dayjs().toDate();
     const previousExecutedTime = this.runner.getPreviousExecutedTime();
     const runnerInterval = this.runner.getInterval();
 
@@ -26,6 +28,8 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit(): void {
+    if (this.noGo) { return; }
+
     const interval = setInterval(
       async () => this.runner.run(), this.runner.getInterval(),
     );
@@ -33,6 +37,8 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    this.schedulerRegistry.deleteInterval(this.runner.getName());
+    if (!this.noGo) {
+      this.schedulerRegistry.deleteInterval(this.runner.getName());
+    }
   }
 }

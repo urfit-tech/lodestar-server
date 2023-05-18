@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm'
-import { OrderLog } from './OrderLog'
+
+import { OrderLog } from '~/order/entity/order_log.entity';
 
 @Index('payment_log_custom_no_key', ['customNo'], { unique: true })
 @Index('payment_log_no_key', ['no'], { unique: true })
@@ -29,7 +30,7 @@ export class PaymentLog {
     nullable: true,
     default: () => 'jsonb_build_object()',
   })
-  options: object | null
+  options: any | null
 
   @Column('timestamp with time zone', {
     name: 'payment_due_at',

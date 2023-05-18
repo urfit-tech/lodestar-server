@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
@@ -23,7 +24,7 @@ export class ExampleRunner extends Runner {
 
   async execute(): Promise<void> {
     await new Promise((resolve) => setTimeout(() => {
-      this.logger.log(`Execute time: ${new Date().toISOString()}`);
+      this.logger.log(`Execute time: ${dayjs().toISOString()}`);
       resolve(undefined);
     }, 500));
   }

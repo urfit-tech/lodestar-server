@@ -1,4 +1,9 @@
 import { Module } from '@nestjs/common'
 
-@Module({})
+import { OrderInfrastructure } from './order.infra';
+
+@Module({
+  providers: [OrderInfrastructure],
+  exports: [OrderInfrastructure]
+})
 export class OrderModule {}

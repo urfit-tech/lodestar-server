@@ -1,9 +1,11 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { ActivityAttendance } from './ActivityAttendance'
-import { Currency } from './Currency'
-import { OrderLog } from './OrderLog'
-import { OrderProductFile } from './OrderProductFile'
-import { Product } from './Product'
+
+import { ActivityAttendance } from '~/entity/ActivityAttendance'
+import { Currency } from '~/entity/Currency'
+import { OrderProductFile } from '~/entity/OrderProductFile'
+import { Product } from '~/entity/Product'
+
+import { OrderLog } from './order_log.entity'
 
 @Index('order_product_ended_at_desc', ['endedAt'], {})
 @Index('order_product_pkey', ['id'], { unique: true })
@@ -55,7 +57,7 @@ export class OrderProduct {
   deliverables: object | null
 
   @Column('jsonb', { name: 'options', nullable: true })
-  options: object | null
+  options: any | null
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
