@@ -1,10 +1,10 @@
 import { cwd } from 'process';
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 
-import { PostgresDataSourceConfig } from '~/data-source';
+import { PostgresModule } from '~/database/postgres.module';
+
 import { TaskerType } from './tasker';
 
 @Module({})
@@ -19,11 +19,11 @@ export class TaskerModule {
     return {
       module: TaskerModule,
       imports: [
-        TypeOrmModule.forRoot(PostgresDataSourceConfig),
         ConfigModule.forRoot({
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
         }),
+        PostgresModule.forRootAsync(),
         BullModule.forRootAsync({
           imports: [ConfigModule],
           useFactory: (configService: ConfigService<{

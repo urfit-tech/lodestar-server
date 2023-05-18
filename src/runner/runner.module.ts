@@ -5,9 +5,8 @@ import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { PostgresDataSourceConfig } from '~/data-source';
+import { PostgresModule } from '~/database/postgres.module';
 import { LockModule } from '~/utility/lock/lock.module';
 import { PaymentModule } from '~/payment/payment.module';
 import { UtilityModule } from '~/utility/utility.module';
@@ -32,11 +31,11 @@ export class RunnerModule {
       controllers: [RunnerController],
       imports: [
         ScheduleModule.forRoot(),
-        TypeOrmModule.forRoot(PostgresDataSourceConfig),
         ConfigModule.forRoot({
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
         }),
+        PostgresModule.forRootAsync(),
         PaymentModule,
         UtilityModule,
         BullModule.forRootAsync({
