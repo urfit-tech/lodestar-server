@@ -30,7 +30,6 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
   onModuleInit(): void {
     if (this.noGo) { return; }
 
-    this.runner.run();
     const interval = setInterval(
       async () => this.runner.run(), this.runner.getInterval(),
     );
