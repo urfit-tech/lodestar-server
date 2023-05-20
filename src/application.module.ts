@@ -1,7 +1,7 @@
 import { cwd, env } from 'process';
+import { LoggerModule } from 'nestjs-pino';
 import { Module } from '@nestjs/common'
-import { RouterModule } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 
 import { ApplicationController } from './application.controller'
 import { ApplicationService } from './application.service'
@@ -18,6 +18,23 @@ import { UtilityModule } from './utility/utility.module'
     ConfigModule.forRoot({
       envFilePath: `${cwd()}/.env${env.NODE_ENV ? `.${env.NODE_ENV}` : ''}`,
       isGlobal: true,
+    }),
+    LoggerModule.forRootAsync({
+      providers: [ConfigService],
+      useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
+        const nodeEnv = configService.getOrThrow('NODE_ENV');
+        return nodeEnv !== 'production' ? {
+          pinoHttp: {
+            transport: {
+              target: 'pino-pretty',
+              options: {
+                ignore: 'pid,context,hostname',
+              },
+            },
+          },
+        } : {};
+      },
+      inject: [ConfigService],
     }),
     PostgresModule.forRootAsync(),
     // TypeOrmModule.forRoot(MongoDataSourceConfig),

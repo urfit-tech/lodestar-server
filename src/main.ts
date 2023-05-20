@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'
+import { Logger } from 'nestjs-pino';
 import { INestApplication, RequestMethod, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core'
 
@@ -22,11 +23,11 @@ async function bootstrap() {
     if (RunnerType[workerName] !== undefined) {
       app = await NestFactory.create(RunnerModule.forRoot({
         workerName, nodeEnv, clazz: RunnerType[workerName],
-      }));
+      }), { bufferLogs: true });
     } else if (TaskerType[workerName] !== undefined) {
       app = await NestFactory.create(TaskerModule.forRoot({
         workerName, nodeEnv,
-      }));
+      }), { bufferLogs: true });
     } else {
       throw new Error(`Unknown WORKER_NAME env: ${workerName}`);
     }
@@ -35,7 +36,7 @@ async function bootstrap() {
       process.exit(1);
     });
   } else {
-    app = await NestFactory.create(ApplicationModule);
+    app = await NestFactory.create(ApplicationModule, { bufferLogs: true });
 
     app = app
       .useGlobalFilters(new ApiExceptionFilter())
@@ -48,6 +49,7 @@ async function bootstrap() {
   }
   app = app
     .enableShutdownHooks();
+  app.useLogger(app.get(Logger));
   app = await app.listen(port || 8081);
 }
 bootstrap();
