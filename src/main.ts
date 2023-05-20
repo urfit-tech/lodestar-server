@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'
-import { INestApplication, VersioningType } from '@nestjs/common';
+import { INestApplication, RequestMethod, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core'
 
 import { RunnerModule } from './runner/runner.module';
@@ -39,7 +39,11 @@ async function bootstrap() {
 
     app = app
       .useGlobalFilters(new ApiExceptionFilter())
-      .setGlobalPrefix('api')
+      .setGlobalPrefix('api', {
+        exclude: [
+          { path: 'healthz', method: RequestMethod.GET },
+        ],
+      })
       .enableVersioning({ type: VersioningType.URI });
   }
   app = app
