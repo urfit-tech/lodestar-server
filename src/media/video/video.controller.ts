@@ -12,7 +12,7 @@ export class VideoController {
     private readonly videoService: VideoService,
   ) {}
 
-  @Post(':videoId/tokens')
+  @Post(':videoId/token')
   async getCfToken(
     @Headers('Authorization') authorization: string,
     @Param('videoId') videoId: string,
