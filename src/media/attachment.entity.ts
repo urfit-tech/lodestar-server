@@ -1,7 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { File } from './File'
-import { Member } from './Member'
-import { ProgramContentVideo } from './ProgramContentVideo'
+
+import { File } from '~/entity/File'
+import { Member } from '~/entity/Member'
+import { ProgramContentVideo } from '~/entity/ProgramContentVideo'
 
 @Index('attachment_pkey', ['id'], { unique: true })
 @Entity('attachment', { schema: 'public' })
@@ -31,7 +32,7 @@ export class Attachment {
   updatedAt: Date
 
   @Column('jsonb', { name: 'options', nullable: true })
-  options: object | null
+  options: any | null
 
   @Column('text', { name: 'app_id' })
   appId: string

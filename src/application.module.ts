@@ -7,11 +7,9 @@ import { ApplicationController } from './application.controller'
 import { ApplicationService } from './application.service'
 import { PostgresModule } from './database/postgres.module';
 import { AuthModule } from './auth/auth.module'
-import { CheckoutModule } from './checkout/checkout.module'
 import { MemberModule } from './member/member.module'
+import { MediaModule } from './media/media.module';
 import { UtilityModule } from './utility/utility.module'
-import { VendorModule } from './vendor/vendor.module'
-import { TriggerModule } from './trigger/trigger.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -23,17 +21,10 @@ import { TriggerModule } from './trigger/trigger.module';
     }),
     PostgresModule.forRootAsync(),
     // TypeOrmModule.forRoot(MongoDataSourceConfig),
-    RouterModule.register([
-      {
-        path: 'api/v2',
-        children: [AuthModule, TriggerModule],
-      }
-    ]),
     AuthModule,
-    UtilityModule,
     MemberModule,
-    VendorModule,
-    CheckoutModule,
+    MediaModule,
+    UtilityModule,
     // TriggerModule,
   ],
 })

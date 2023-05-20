@@ -1,14 +1,15 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Exercise } from './Exercise'
-import { Practice } from './Practice'
-import { ProgramContentAudio } from './ProgramContentAudio'
-import { ProgramContentBody } from './ProgramContentBody'
-import { ProgramContentLog } from './ProgramContentLog'
-import { ProgramContentMaterial } from './ProgramContentMaterial'
-import { ProgramContentPlan } from './ProgramContentPlan'
-import { ProgramContentProgress } from './ProgramContentProgress'
-import { ProgramContentSection } from './ProgramContentSection'
-import { ProgramContentVideo } from './ProgramContentVideo'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Exercise } from '~/entity/Exercise';
+import { Practice } from '~/entity/Practice';
+import { ProgramContentAudio } from '~/entity/ProgramContentAudio';
+import { ProgramContentBody } from '~/entity/ProgramContentBody';
+import { ProgramContentLog } from '~/entity/ProgramContentLog';
+import { ProgramContentMaterial } from '~/entity/ProgramContentMaterial';
+import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
+import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
+import { ProgramContentSection } from '~/entity/ProgramContentSection';
+import { ProgramContentVideo } from '~/entity/ProgramContentVideo';
 
 @Index('program_content_content_section_id', ['contentSectionId'], {})
 @Index('program_content_pkey', ['id'], { unique: true })

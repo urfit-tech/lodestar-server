@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core'
 
 import { RunnerModule } from './runner/runner.module';
@@ -37,9 +37,13 @@ async function bootstrap() {
   } else {
     app = await NestFactory.create(ApplicationModule);
 
-    app = app.useGlobalFilters(new ApiExceptionFilter());  
+    app = app
+      .useGlobalFilters(new ApiExceptionFilter())
+      .setGlobalPrefix('api')
+      .enableVersioning({ type: VersioningType.URI });
   }
-  app = app.enableShutdownHooks();
+  app = app
+    .enableShutdownHooks();
   app = await app.listen(port || 8081);
 }
 bootstrap();

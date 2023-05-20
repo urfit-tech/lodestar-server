@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Program } from './Program'
-import { ProgramContent } from './ProgramContent'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { ProgramContent } from '~/program/entity/program_content.entity';
+
+import { Program } from './Program';
 
 @Index('program_content_section_pkey', ['id'], { unique: true })
 @Index('program_content_section_program_id', ['programId'], {})

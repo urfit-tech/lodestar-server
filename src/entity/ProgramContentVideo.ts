@@ -1,6 +1,7 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Attachment } from './Attachment'
-import { ProgramContent } from './ProgramContent'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Attachment } from '~/media/attachment.entity';
+import { ProgramContent } from '~/program/entity/program_content.entity';
 
 @Index('program_content_stream_pkey', ['id'], { unique: true })
 @Entity('program_content_video', { schema: 'public' })

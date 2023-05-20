@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
-import { ProgramContent } from './ProgramContent'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { ProgramContent } from '~/program/entity/program_content.entity';
+
+import { Member } from './Member';
 
 @Index('program_content_progress_pkey', ['id'], { unique: true })
 @Index('program_content_progress_member_id_program_content_id_key', ['memberId', 'programContentId'], { unique: true })

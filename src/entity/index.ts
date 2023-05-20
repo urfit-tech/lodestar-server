@@ -23,7 +23,6 @@ import { AppUsage } from './AppUsage';
 import { AppWebhook } from './AppWebhook';
 import { AppointmentPlan } from './AppointmentPlan';
 import { AppointmentSchedule } from './AppointmentSchedule';
-import { Attachment } from './Attachment';
 import { Attend } from './Attend';
 import { AuditLog } from './AuditLog';
 import { Bundle } from './Bundle';
@@ -148,7 +147,6 @@ import { Program } from './Program';
 import { ProgramAnnouncement } from './ProgramAnnouncement';
 import { ProgramApproval } from './ProgramApproval';
 import { ProgramCategory } from './ProgramCategory';
-import { ProgramContent } from './ProgramContent';
 import { ProgramContentAudio } from './ProgramContentAudio';
 import { ProgramContentBody } from './ProgramContentBody';
 import { ProgramContentExam } from './ProgramContentExam';
@@ -215,9 +213,11 @@ import { AppModule } from '~/app/entity/app_module.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { Invoice } from '~/invoice/invoice.entity';
+import { Attachment } from '~/media/attachment.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
+import { ProgramContent } from '~/program/entity/program_content.entity';
 
 export const PostgresEntities = [
   Activity,

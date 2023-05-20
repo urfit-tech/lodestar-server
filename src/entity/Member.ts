@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm'
 
+import { Attachment } from '~/media/attachment.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
 
 import { Activity } from './Activity'
@@ -7,7 +8,6 @@ import { App } from './App'
 import { AppointmentPlan } from './AppointmentPlan'
 import { AppPage } from './AppPage'
 import { AppPageTemplate } from './AppPageTemplate'
-import { Attachment } from './Attachment'
 import { Attend } from './Attend'
 import { CoinLog } from './CoinLog'
 import { Comment } from './Comment'
