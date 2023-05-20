@@ -72,7 +72,6 @@ export class EzpayClient {
 
   async issue(credentials: EzpayCredentials, params: EzpayIssueParams): Promise<EzpayClientResponse> {
     const { merchantId, hashKey, hashIV, options } = credentials;
-    const { payload } = params;
     const { data } = await axios.post(
       `${this.endpoint(options ? options.dryRun : true)}/invoice_issue`,
       querystring.stringify({
@@ -87,7 +86,7 @@ export class EzpayClient {
           CreateStatusTime: '',
           TaxRate: 5,
           TaxAmt: 0,
-          ...payload,
+          ...params,
         }),
       }),
       {
