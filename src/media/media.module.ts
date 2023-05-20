@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { ProgramService } from '~/program/program.service';
 import { UtilityService } from '~/utility/utility.service';
 
 import { AudioService } from './audio/audio.service';
@@ -14,6 +15,7 @@ import { MediaInfrastructure } from './media.infra';
     AudioService,
     ImageService,
     MediaInfrastructure,
+    ProgramService,
     UtilityService,
     VideoService,
   ],
