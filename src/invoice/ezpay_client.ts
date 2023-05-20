@@ -74,7 +74,7 @@ export class EzpayClient {
     const { merchantId, hashKey, hashIV, options } = credentials;
     const { payload } = params;
     const { data } = await axios.post(
-      `${this.endpoint(options ? options.dryRun : false)}/invoice_issue`,
+      `${this.endpoint(options ? options.dryRun : true)}/invoice_issue`,
       querystring.stringify({
         MerchantID_: merchantId,
         PostData_: this.buildPostParams(hashKey, hashIV, {
