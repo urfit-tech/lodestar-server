@@ -1,5 +1,6 @@
 import { subtle } from 'crypto';
 import { EntityManager } from 'typeorm';
+import jwt from 'jsonwebtoken';
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -13,13 +14,15 @@ import { CfVideoStreamOptions } from './video.type';
 
 @Injectable()
 export class VideoService {
-  private cfStreamingKeyId: string;
-  private cfStreamingJwk: string;
+  private readonly cfStreamingKeyId: string;
+  private readonly cfStreamingJwk: string;
+  private readonly hasuraJwtSecret: string;
   
   constructor(
     private readonly configService: ConfigService<{
       CF_STREAMING_KEY_ID: string;
       CF_STREAMING_JWK: string;
+      HASURA_JWT_SECRET: string;
     }>,
     private readonly mediaInfra: MediaInfrastructure,
     private readonly programService: ProgramService,
@@ -28,24 +31,17 @@ export class VideoService {
   ) {
     this.cfStreamingKeyId = configService.getOrThrow('CF_STREAMING_KEY_ID');
     this.cfStreamingJwk = configService.getOrThrow('CF_STREAMING_JWK');
+    this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
 
   async generateCfVideoToken(videoId: string, authToken?: string) {
-    const trialProgramContents = await this.programService.getTrailProgramContentByAttachmentId(videoId);
-    if (trialProgramContents.length === 0) {
-      if (authToken === undefined) {
-        throw new APIException({
-          code: 'E_SIGN_URL',
-          message: `the content is not for trial`,
-        });
-      } else {
-        /**
-         * TODO:
-         *  verify given token's owner is enrolled with given program content.
-         *  but it would be very slow, so bypass. By KK
-         */
-      }
-    } 
+    const isAbleToGenerate = await this.isAbleToGenerate(videoId, authToken);
+    if (!isAbleToGenerate) {
+      throw new APIException({
+        code: 'E_SIGN_URL',
+        message: `the content is not for trial`,
+      });
+    }
 
     const cfOptions = await this.getCfOptions(videoId);
     if (cfOptions === null) {
@@ -55,7 +51,31 @@ export class VideoService {
       });
     }
     const { uid: cfUid } = cfOptions;
-    return this.generateCfStreamingToken(cfUid);
+    const videoToken = await this.generateCfStreamingToken(cfUid);
+
+    return { videoToken, cfOptions };
+  }
+
+  /**
+   * TODO:
+   *  Different ProgramContents may overlap with same Attachment,
+   *  DisplayMode conceal, loginToTrail, payToWatch requires login, but not trail.
+   *  If ProgramContents contains both login and non-login state would not able to determines return boolean.
+   *  Thus, currently if one of ProgramContent contains trail will return true by default.
+   */
+  private async isAbleToGenerate(videoId: string, authToken?: string): Promise<boolean> {
+    const programContents = await this.programService.getProgramContentByAttachmentId(videoId);
+    if (programContents.some(({ displayMode }) => displayMode === 'trail')) {
+      return true;
+    }
+
+    let jwtToken: string;
+    try {
+      jwtToken = jwt.verify(authToken, this.hasuraJwtSecret) as string;
+    } catch {
+      return false;
+    }
+    return true;
   }
 
   private async getCfOptions(id: string): Promise<CfVideoStreamOptions | null> {

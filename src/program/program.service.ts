@@ -10,10 +10,9 @@ export class ProgramService {
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {}
 
-  public async getTrailProgramContentByAttachmentId(attachmentId: string): Promise<Array<ProgramContent>> {
+  public async getProgramContentByAttachmentId(attachmentId: string): Promise<Array<ProgramContent>> {
     const programContentRepo = this.entityManager.getRepository(ProgramContent);
     return programContentRepo.findBy({
-      displayMode: In(['trail', 'loginToTrial']),
       programContentVideos: {
         attachment: { id: attachmentId },
       },

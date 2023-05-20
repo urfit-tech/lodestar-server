@@ -1,5 +1,7 @@
-import { Controller, Param, Post } from "@nestjs/common";
-import { VideoService } from "./video.service";
+import { Controller, Headers, Param, Post } from '@nestjs/common';
+
+import { VideoService } from './video.service';
+import { VideoTokenDTO } from './video.dto';
 
 @Controller({
   path: 'videos',
@@ -11,7 +13,19 @@ export class VideoController {
   ) {}
 
   @Post(':videoId/tokens')
-  getCfToken(@Param('videoId') videoId: string): Promise<string> {
-    return this.videoService.generateCfVideoToken(videoId);
+  async getCfToken(
+    @Headers('Authorization') authorization: string,
+    @Param('videoId') videoId: string,
+  ): Promise<{ code: string; message: string; result: VideoTokenDTO }> {
+    const [_, token] = authorization ? authorization.split(' ') : [undefined, undefined];
+
+    const { videoToken, cfOptions } = await this.videoService.generateCfVideoToken(
+      videoId, token,
+    );
+    return {
+      code: 'SUCCESS',
+      message: 'successfully sign the url',
+      result: { token: videoToken, cloudflareOptions: cfOptions },
+    };
   }
 }
