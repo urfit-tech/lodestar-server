@@ -147,7 +147,6 @@ import { Program } from './Program';
 import { ProgramAnnouncement } from './ProgramAnnouncement';
 import { ProgramApproval } from './ProgramApproval';
 import { ProgramCategory } from './ProgramCategory';
-import { ProgramContent } from './ProgramContent';
 import { ProgramContentAudio } from './ProgramContentAudio';
 import { ProgramContentBody } from './ProgramContentBody';
 import { ProgramContentExam } from './ProgramContentExam';
@@ -218,6 +217,7 @@ import { Attachment } from '~/media/attachment.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
+import { ProgramContent } from '~/program/entity/program_content.entity';
 
 export const PostgresEntities = [
   Activity,

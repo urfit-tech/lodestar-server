@@ -1,5 +1,6 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { ProgramContent } from './ProgramContent'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { ProgramContent } from '~/program/entity/program_content.entity';
 
 @Index('program_content_material_pkey', ['id'], { unique: true })
 @Entity('program_content_material', { schema: 'public' })
