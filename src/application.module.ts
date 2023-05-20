@@ -1,6 +1,6 @@
 import { cwd, env } from 'process';
+import { LoggerModule } from 'nestjs-pino';
 import { Module } from '@nestjs/common'
-import { RouterModule } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config'
 
 import { ApplicationController } from './application.controller'
@@ -19,6 +19,7 @@ import { UtilityModule } from './utility/utility.module'
       envFilePath: `${cwd()}/.env${env.NODE_ENV ? `.${env.NODE_ENV}` : ''}`,
       isGlobal: true,
     }),
+    LoggerModule.forRoot(),
     PostgresModule.forRootAsync(),
     // TypeOrmModule.forRoot(MongoDataSourceConfig),
     AuthModule,
