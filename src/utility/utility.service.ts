@@ -13,4 +13,17 @@ export class UtilityService {
   sleep(milliseconds: number) {
     return new Promise((resolve) => setTimeout(resolve, milliseconds))
   }
+
+  arrayBufferToBase64Url(buffer: any): string {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+  }
+  
+  objectToBase64url(payload: any): string {
+    return this.arrayBufferToBase64Url(
+      new TextEncoder().encode(JSON.stringify(payload)),
+    )
+  }
 }
