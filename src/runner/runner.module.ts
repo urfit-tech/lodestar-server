@@ -7,10 +7,10 @@ import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { PostgresModule } from '~/database/postgres.module';
-import { LockModule } from '~/utility/lock/lock.module';
+import { AppModule } from '~/app/app.module';
 import { PaymentModule } from '~/payment/payment.module';
+import { LockModule } from '~/utility/lock/lock.module';
 import { UtilityModule } from '~/utility/utility.module';
-import { AppService } from '~/app/app.service';
 import { InvoiceModule } from '~/invoice/invoice.module';
 
 import { Runner } from './runner';
@@ -36,6 +36,7 @@ export class RunnerModule {
           isGlobal: true,
         }),
         PostgresModule.forRootAsync(),
+        AppModule,
         PaymentModule,
         UtilityModule,
         BullModule.forRootAsync({
@@ -64,7 +65,6 @@ export class RunnerModule {
         RunnerService,
         { provide: 'NO_GO', useValue: noGo },
         { provide: Runner, useClass: clazz },
-        AppService,
       ],
     };
   }
