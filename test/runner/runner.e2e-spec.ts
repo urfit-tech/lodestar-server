@@ -81,7 +81,7 @@ describe('Runner (e2e)', () => {
     it('Should suicide when runner running longer than expected interval', async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
           imports: [RunnerModule.forRoot({
-            workerName: 'test-suicide-case-1', nodeEnv: 'Test', clazz: TestSuicideRunner,
+            workerName: 'test-suicide-case-1', nodeEnv: 'test', clazz: TestSuicideRunner,
           })],
         }).compile();
         let mockShutdown = jest.fn();
@@ -103,12 +103,12 @@ describe('Runner (e2e)', () => {
     it('Should only one runner running in the time', async () => {
       const moduleFixture1: TestingModule = await Test.createTestingModule({
         imports: [RunnerModule.forRoot({
-          workerName: 'test-normal-case-2', nodeEnv: 'Test', clazz: TestNormalRunner,
+          workerName: 'test-normal-case-2', nodeEnv: 'test', clazz: TestNormalRunner,
         })],
       }).compile();
       const moduleFixture2: TestingModule = await Test.createTestingModule({
         imports: [RunnerModule.forRoot({
-          workerName: 'test-normal-case-2', nodeEnv: 'Test', clazz: TestNormalRunner,
+          workerName: 'test-normal-case-2', nodeEnv: 'test', clazz: TestNormalRunner,
         })],
       }).compile();
       
@@ -144,7 +144,7 @@ describe('Runner (e2e)', () => {
       it('Should get datetime with single runner when each execution success', async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
           imports: [RunnerModule.forRoot({
-            workerName: 'test-normal-case-3', nodeEnv: 'Test', clazz: TestNormalRunner,
+            workerName: 'test-normal-case-3', nodeEnv: 'test', clazz: TestNormalRunner,
           })],
         }).compile();
 
@@ -175,12 +175,12 @@ describe('Runner (e2e)', () => {
         async function test(timeout: number) {
           const moduleFixture1: TestingModule = await Test.createTestingModule({
             imports: [RunnerModule.forRoot({
-              workerName: 'test-normal-case-4', nodeEnv: 'Test', clazz: TestNormalRunner,
+              workerName: 'test-normal-case-4', nodeEnv: 'test', clazz: TestNormalRunner,
             })],
           }).compile();
           const moduleFixture2: TestingModule = await Test.createTestingModule({
             imports: [RunnerModule.forRoot({
-              workerName: 'test-normal-case-4', nodeEnv: 'Test', clazz: TestNormalRunner,
+              workerName: 'test-normal-case-4', nodeEnv: 'test', clazz: TestNormalRunner,
             })],
           }).compile();
   
@@ -226,7 +226,7 @@ describe('Runner (e2e)', () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
           imports: [RunnerModule.forRoot({
             workerName: 'test-suicide-second-call',
-            nodeEnv: 'Test',
+            nodeEnv: 'test',
             clazz: TestSuicideAtSecondCallRunner,
           })],
         }).compile();

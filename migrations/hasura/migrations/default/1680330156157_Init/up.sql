@@ -1321,6 +1321,27 @@ $$;
 CREATE FUNCTION public.exec(text) RETURNS text
     LANGUAGE plpgsql
     AS $_$ BEGIN EXECUTE $1; RETURN $1; END $_$;
+CREATE FUNCTION public.func_table_log() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+table_name text = TG_ARGV[0]::text;
+member_id text = COALESCE(
+    current_setting('hasura.user', TRUE),
+    'System or FromDB'
+);
+BEGIN
+INSERT INTO
+    table_log(member_id, table_name, old, new)
+VALUES
+    (
+        member_id,
+        table_name,
+        row_to_json(OLD.*),
+        row_to_json(NEW.*)
+    );
+RETURN NEW;
+END $$;
 CREATE FUNCTION public.insert_product() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1583,12 +1604,14 @@ CREATE TABLE public.product (
 );
 COMMENT ON COLUMN public.product.id IS '{type}_{target}, ex: Program_123-456, ProgramPlan_123-456';
 COMMENT ON COLUMN public.product.type IS 'ProgramPlan / ProgramContent / ProgramPackagePlan / ActivityTicket / Card / Merchandise / MerchandiseSpec / ProjectPlan / PodcastProgram / PodcastPlan / AppointmentServicePlan / VoucherPlan';
-CREATE TABLE public.coupon (
+CREATE TABLE public.app_setting (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    member_id text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    coupon_code_id uuid NOT NULL
+    app_id text NOT NULL,
+    key text NOT NULL,
+    value text NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
 );
+COMMENT ON TABLE public.app_setting IS 'app client settings';
 CREATE TABLE public.member (
     id text NOT NULL,
     app_id text NOT NULL,
@@ -1628,52 +1651,14 @@ COMMENT ON COLUMN public.member.roles_deprecated IS '["admin", "creator", "membe
 COMMENT ON COLUMN public.member.role IS 'app-owner / content-creator';
 COMMENT ON COLUMN public.member.youtube_channel_ids IS 'array of youtube channel ids';
 COMMENT ON COLUMN public.member.status IS 'invited | verified | activated | engaged';
-CREATE TABLE public.coupon_code (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    coupon_plan_id uuid NOT NULL,
-    code text NOT NULL,
-    count integer NOT NULL,
-    app_id text NOT NULL,
-    remaining integer NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT remaining CHECK ((remaining >= 0))
-);
-CREATE TABLE public.coupon_plan (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    started_at timestamp with time zone,
-    ended_at timestamp with time zone,
-    type integer DEFAULT 1 NOT NULL,
-    "constraint" numeric,
-    amount numeric NOT NULL,
-    title text NOT NULL,
-    description text,
-    scope jsonb,
-    updated_at timestamp with time zone DEFAULT now(),
-    created_at timestamp with time zone DEFAULT now(),
-    editor_id text
-);
-COMMENT ON COLUMN public.coupon_plan.type IS '1 - cash / 2 - percent';
-CREATE TABLE public.member_oauth (
+CREATE TABLE public.member_learned_log (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
-    provider text NOT NULL,
-    provider_user_id text NOT NULL,
-    options jsonb,
-    CONSTRAINT provider_constraint CHECK ((provider = ANY (ARRAY['facebook'::text, 'google'::text, 'line'::text, 'line-notify'::text, 'parenting'::text, 'commonhealth'::text, 'cw'::text])))
+    period timestamp with time zone NOT NULL,
+    duration numeric DEFAULT '0'::numeric,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
-COMMENT ON TABLE public.member_oauth IS 'relationship between member and oauth user';
-CREATE TABLE public.order_discount (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    order_id text NOT NULL,
-    name text NOT NULL,
-    description text,
-    price numeric NOT NULL,
-    type text NOT NULL,
-    target text NOT NULL,
-    options jsonb
-);
-COMMENT ON COLUMN public.order_discount.type IS 'Coupon / Voucher / Card / DownPrice';
 CREATE TABLE public.order_log (
     id text DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -1725,6 +1710,203 @@ CREATE TABLE public.order_product (
     updated_at timestamp with time zone DEFAULT now(),
     delivered_at timestamp without time zone
 );
+CREATE TABLE public.program (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    app_id text NOT NULL,
+    title text NOT NULL,
+    abstract text,
+    description text,
+    cover_url text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    published_at timestamp with time zone,
+    is_subscription boolean DEFAULT false NOT NULL,
+    sold_at timestamp with time zone,
+    list_price numeric,
+    sale_price numeric,
+    "position" integer,
+    in_advance boolean DEFAULT false NOT NULL,
+    cover_video_url text,
+    is_sold_out boolean,
+    support_locales jsonb,
+    is_deleted boolean DEFAULT false NOT NULL,
+    is_private boolean DEFAULT false NOT NULL,
+    updated_at timestamp with time zone DEFAULT now(),
+    is_issues_open boolean DEFAULT true NOT NULL,
+    is_countdown_timer_visible boolean DEFAULT false NOT NULL,
+    is_introduction_section_visible boolean DEFAULT true NOT NULL,
+    meta_tag jsonb,
+    is_enrolled_count_visible boolean DEFAULT true NOT NULL,
+    cover_mobile_url text,
+    cover_thumbnail_url text,
+    metadata jsonb,
+    views numeric DEFAULT '0'::numeric NOT NULL
+);
+CREATE TABLE public.program_content (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    content_section_id uuid NOT NULL,
+    title text NOT NULL,
+    abstract text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    published_at timestamp with time zone,
+    "position" integer NOT NULL,
+    list_price numeric,
+    content_body_id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    sale_price numeric,
+    sold_at timestamp with time zone,
+    metadata jsonb,
+    duration numeric,
+    content_type text,
+    is_notify_update boolean DEFAULT false NOT NULL,
+    notified_at timestamp with time zone,
+    display_mode text NOT NULL
+);
+COMMENT ON COLUMN public.program_content.duration IS 'sec';
+COMMENT ON COLUMN public.program_content.display_mode IS 'conceal, trial, loginToTrail, payToWatch';
+CREATE TABLE public.program_content_progress (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    program_content_id uuid NOT NULL,
+    progress numeric DEFAULT 0 NOT NULL,
+    last_progress numeric DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+CREATE TABLE public.program_content_section (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    program_id uuid NOT NULL,
+    title text NOT NULL,
+    description text,
+    "position" integer NOT NULL
+);
+CREATE TABLE public.program_package_plan (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    program_package_id uuid NOT NULL,
+    is_subscription boolean NOT NULL,
+    title text NOT NULL,
+    description text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    published_at timestamp with time zone,
+    period_amount numeric,
+    period_type text,
+    list_price numeric NOT NULL,
+    sale_price numeric,
+    sold_at timestamp with time zone,
+    discount_down_price numeric,
+    "position" numeric NOT NULL,
+    is_tempo_delivery boolean DEFAULT false NOT NULL,
+    is_participants_visible boolean DEFAULT true NOT NULL
+);
+COMMENT ON COLUMN public.program_package_plan.period_type IS 'Y / M / W / D';
+CREATE VIEW public.program_package_plan_enrollment AS
+ SELECT (product.target)::uuid AS program_package_plan_id,
+    order_log.member_id,
+    order_product.delivered_at AS product_delivered_at
+   FROM ((public.order_log
+     JOIN public.order_product ON (((order_product.delivered_at < now()) AND (order_product.order_id = order_log.id) AND ((order_product.ended_at IS NULL) OR (order_product.ended_at > now())) AND ((order_product.started_at IS NULL) OR (order_product.started_at <= now())))))
+     JOIN public.product ON (((product.id = order_product.product_id) AND (product.type = 'ProgramPackagePlan'::text))));
+CREATE TABLE public.program_package_program (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    program_package_id uuid NOT NULL,
+    program_id uuid NOT NULL,
+    "position" integer DEFAULT 0 NOT NULL
+);
+CREATE TABLE public.program_plan (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    type integer DEFAULT 1 NOT NULL,
+    program_id uuid NOT NULL,
+    title text NOT NULL,
+    description text,
+    gains jsonb,
+    sale_price numeric,
+    list_price numeric NOT NULL,
+    sold_at timestamp with time zone,
+    period_type text,
+    started_at timestamp with time zone,
+    ended_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    discount_down_price numeric DEFAULT 0 NOT NULL,
+    currency_id text DEFAULT 'TWD'::text NOT NULL,
+    period_amount numeric DEFAULT 1,
+    auto_renewed boolean DEFAULT false NOT NULL,
+    is_participants_visible boolean DEFAULT true NOT NULL,
+    published_at timestamp with time zone,
+    is_countdown_timer_visible boolean DEFAULT false NOT NULL,
+    group_buying_people numeric,
+    remind_period_amount integer,
+    remind_period_type text,
+    is_primary boolean DEFAULT false NOT NULL,
+    is_deleted boolean DEFAULT false NOT NULL
+);
+COMMENT ON COLUMN public.program_plan.type IS '1 - subscribe all / 2 - subscribe from now / 3 - all';
+CREATE VIEW public.program_plan_enrollment AS
+ SELECT (product.target)::uuid AS program_plan_id,
+    order_log.member_id,
+    order_log.updated_at,
+    order_product.started_at,
+    order_product.ended_at,
+    order_product.options,
+    order_product.delivered_at AS product_delivered_at
+   FROM ((public.order_log
+     JOIN public.order_product ON (((order_product.delivered_at < now()) AND (order_product.order_id = order_log.id) AND ((order_product.ended_at IS NULL) OR (order_product.ended_at > now())) AND ((order_product.started_at IS NULL) OR (order_product.started_at <= now())))))
+     JOIN public.product ON (((product.id = order_product.product_id) AND (product.type = 'ProgramPlan'::text))));
+CREATE TABLE public.program_tag (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    program_id uuid NOT NULL,
+    tag_name text NOT NULL,
+    "position" integer DEFAULT 0 NOT NULL
+);
+CREATE TABLE public.coupon (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    coupon_code_id uuid NOT NULL
+);
+CREATE TABLE public.coupon_code (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    coupon_plan_id uuid NOT NULL,
+    code text NOT NULL,
+    count integer NOT NULL,
+    app_id text NOT NULL,
+    remaining integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT remaining CHECK ((remaining >= 0))
+);
+CREATE TABLE public.coupon_plan (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    started_at timestamp with time zone,
+    ended_at timestamp with time zone,
+    type integer DEFAULT 1 NOT NULL,
+    "constraint" numeric,
+    amount numeric NOT NULL,
+    title text NOT NULL,
+    description text,
+    scope jsonb,
+    updated_at timestamp with time zone DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now(),
+    editor_id text
+);
+COMMENT ON COLUMN public.coupon_plan.type IS '1 - cash / 2 - percent';
+CREATE TABLE public.member_oauth (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    provider text NOT NULL,
+    provider_user_id text NOT NULL,
+    options jsonb,
+    CONSTRAINT provider_constraint CHECK ((provider = ANY (ARRAY['facebook'::text, 'google'::text, 'line'::text, 'line-notify'::text, 'parenting'::text, 'commonhealth'::text, 'cw'::text])))
+);
+COMMENT ON TABLE public.member_oauth IS 'relationship between member and oauth user';
+CREATE TABLE public.order_discount (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    order_id text NOT NULL,
+    name text NOT NULL,
+    description text,
+    price numeric NOT NULL,
+    type text NOT NULL,
+    target text NOT NULL,
+    options jsonb
+);
+COMMENT ON COLUMN public.order_discount.type IS 'Coupon / Voucher / Card / DownPrice';
 CREATE TABLE public.payment_log (
     order_id text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -1764,79 +1946,11 @@ CREATE TABLE public.post (
     meta_tag jsonb,
     pinned_at timestamp with time zone
 );
-CREATE TABLE public.program (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    app_id text NOT NULL,
-    title text NOT NULL,
-    abstract text,
-    description text,
-    cover_url text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    published_at timestamp with time zone,
-    is_subscription boolean DEFAULT false NOT NULL,
-    sold_at timestamp with time zone,
-    list_price numeric,
-    sale_price numeric,
-    "position" integer,
-    in_advance boolean DEFAULT false NOT NULL,
-    cover_video_url text,
-    is_sold_out boolean,
-    support_locales jsonb,
-    is_deleted boolean DEFAULT false NOT NULL,
-    is_private boolean DEFAULT false NOT NULL,
-    updated_at timestamp with time zone DEFAULT now(),
-    is_issues_open boolean DEFAULT true NOT NULL,
-    is_countdown_timer_visible boolean DEFAULT false NOT NULL,
-    is_introduction_section_visible boolean DEFAULT true NOT NULL,
-    meta_tag jsonb,
-    is_enrolled_count_visible boolean DEFAULT true NOT NULL,
-    cover_mobile_url text,
-    cover_thumbnail_url text,
-    metadata jsonb,
-    views numeric DEFAULT '0'::numeric NOT NULL
-);
 CREATE TABLE public.program_category (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     program_id uuid NOT NULL,
     category_id text NOT NULL,
     "position" integer NOT NULL
-);
-CREATE TABLE public.program_content (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    content_section_id uuid NOT NULL,
-    title text NOT NULL,
-    abstract text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    published_at timestamp with time zone,
-    "position" integer NOT NULL,
-    list_price numeric,
-    content_body_id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    sale_price numeric,
-    sold_at timestamp with time zone,
-    metadata jsonb,
-    duration numeric,
-    content_type text,
-    is_notify_update boolean DEFAULT false NOT NULL,
-    notified_at timestamp with time zone,
-    display_mode text NOT NULL
-);
-COMMENT ON COLUMN public.program_content.duration IS 'sec';
-COMMENT ON COLUMN public.program_content.display_mode IS 'conceal, trial, loginToTrail, payToWatch';
-CREATE TABLE public.program_content_section (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    program_id uuid NOT NULL,
-    title text NOT NULL,
-    description text,
-    "position" integer NOT NULL
-);
-CREATE TABLE public.program_content_progress (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    member_id text NOT NULL,
-    program_content_id uuid NOT NULL,
-    progress numeric DEFAULT 0 NOT NULL,
-    last_progress numeric DEFAULT 0 NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
 );
 CREATE TABLE public.program_package (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -1856,65 +1970,12 @@ CREATE TABLE public.program_package_category (
     category_id text NOT NULL,
     "position" integer NOT NULL
 );
-CREATE TABLE public.program_package_plan (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    program_package_id uuid NOT NULL,
-    is_subscription boolean NOT NULL,
-    title text NOT NULL,
-    description text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    published_at timestamp with time zone,
-    period_amount numeric,
-    period_type text,
-    list_price numeric NOT NULL,
-    sale_price numeric,
-    sold_at timestamp with time zone,
-    discount_down_price numeric,
-    "position" numeric NOT NULL,
-    is_tempo_delivery boolean DEFAULT false NOT NULL,
-    is_participants_visible boolean DEFAULT true NOT NULL
-);
-COMMENT ON COLUMN public.program_package_plan.period_type IS 'Y / M / W / D';
-CREATE TABLE public.program_package_program (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    program_package_id uuid NOT NULL,
-    program_id uuid NOT NULL,
-    "position" integer DEFAULT 0 NOT NULL
-);
 CREATE TABLE public.program_package_tag (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     program_package_id uuid NOT NULL,
     tag_name text NOT NULL,
     "position" integer DEFAULT 0 NOT NULL
 );
-CREATE TABLE public.program_plan (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    type integer DEFAULT 1 NOT NULL,
-    program_id uuid NOT NULL,
-    title text NOT NULL,
-    description text,
-    gains jsonb,
-    sale_price numeric,
-    list_price numeric NOT NULL,
-    sold_at timestamp with time zone,
-    period_type text,
-    started_at timestamp with time zone,
-    ended_at timestamp with time zone,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    discount_down_price numeric DEFAULT 0 NOT NULL,
-    currency_id text DEFAULT 'TWD'::text NOT NULL,
-    period_amount numeric DEFAULT 1,
-    auto_renewed boolean DEFAULT false NOT NULL,
-    is_participants_visible boolean DEFAULT true NOT NULL,
-    published_at timestamp with time zone,
-    is_countdown_timer_visible boolean DEFAULT false NOT NULL,
-    group_buying_people numeric,
-    remind_period_amount integer,
-    remind_period_type text,
-    is_primary boolean DEFAULT false NOT NULL,
-    is_deleted boolean DEFAULT false NOT NULL
-);
-COMMENT ON COLUMN public.program_plan.type IS '1 - subscribe all / 2 - subscribe from now / 3 - all';
 CREATE TABLE public.program_role (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     program_id uuid NOT NULL,
@@ -1923,12 +1984,6 @@ CREATE TABLE public.program_role (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 COMMENT ON COLUMN public.program_role.name IS 'instructor / assistant ';
-CREATE TABLE public.program_tag (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    program_id uuid NOT NULL,
-    tag_name text NOT NULL,
-    "position" integer DEFAULT 0 NOT NULL
-);
 CREATE TABLE public.project (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     type text NOT NULL,
@@ -2061,6 +2116,12 @@ CREATE TABLE public.attachment (
 COMMENT ON COLUMN public.attachment.type IS 'OrderProduct / MerchandiseSpec / Material/Practice/ProgramContent';
 COMMENT ON COLUMN public.attachment.target IS 'id';
 COMMENT ON COLUMN public.attachment.content_type IS 'MIME format';
+CREATE TABLE public.achievement_template (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    picture_url text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
 CREATE TABLE public.activity_attendance (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     order_product_id uuid NOT NULL,
@@ -2144,6 +2205,17 @@ CREATE TABLE public.app (
     ended_at timestamp with time zone,
     org_id text,
     CONSTRAINT "symbol rule" CHECK (((length(symbol) >= 2) AND (length(symbol) <= 3) AND (upper(symbol) = symbol)))
+);
+CREATE TABLE public.app_achievement (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    app_id text NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    countable boolean DEFAULT false NOT NULL,
+    is_public boolean DEFAULT false NOT NULL,
+    "position" numeric DEFAULT 0 NOT NULL,
+    template_id uuid
 );
 CREATE TABLE public.app_admin (
     host text DEFAULT public.gen_random_uuid() NOT NULL,
@@ -2294,14 +2366,6 @@ CREATE TABLE public.app_secret (
     value text NOT NULL
 );
 COMMENT ON TABLE public.app_secret IS 'credential secrets for kolable app';
-CREATE TABLE public.app_setting (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    app_id text NOT NULL,
-    key text NOT NULL,
-    value text NOT NULL,
-    created_at timestamp with time zone DEFAULT now()
-);
-COMMENT ON TABLE public.app_setting IS 'app client settings';
 CREATE TABLE public.member_tag (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -3448,6 +3512,13 @@ CREATE TABLE public.meet (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT started_at_ended_at_constraint CHECK ((ended_at > started_at))
 );
+CREATE TABLE public.member_achievement (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    achievement_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
 CREATE TABLE public.member_card (
     id text DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -3652,6 +3723,15 @@ UNION
    FROM ((public.member_permission_group
      JOIN public.permission_group ON ((permission_group.id = member_permission_group.permission_group_id)))
      JOIN public.permission_group_permission ON ((permission_group_permission.permission_group_id = permission_group.id)));
+CREATE VIEW public.member_phone_duplicated AS
+ SELECT member_phone.phone,
+    count(*) AS count,
+    member.app_id
+   FROM (public.member_phone
+     JOIN public.member ON ((member.id = member_phone.member_id)))
+  GROUP BY member_phone.phone, member.app_id
+ HAVING (count(*) > 1)
+  ORDER BY (count(*));
 CREATE VIEW public.member_public AS
 SELECT
     NULL::text AS id,
@@ -3670,7 +3750,8 @@ SELECT
     NULL::text AS email,
     NULL::timestamp with time zone AS created_at,
     NULL::text AS status,
-    NULL::integer AS has_backstage_enter_permission;
+    NULL::integer AS has_backstage_enter_permission,
+    NULL::text AS manager_id;
 CREATE TABLE public.member_shop (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -4487,16 +4568,20 @@ CREATE VIEW public.product_enrollment AS
  SELECT product.id AS product_id,
     order_log.member_id,
         CASE
-            WHEN (product.id ~~ 'Merchandise%'::text) THEN true
+            WHEN (merchandise_spec.is_physical = true) THEN true
             WHEN (project_plan.is_physical = true) THEN true
             ELSE false
         END AS is_physical
-   FROM (((public.order_log
+   FROM ((((public.order_log
      JOIN public.order_product ON (((order_product.delivered_at < now()) AND (order_product.order_id = order_log.id) AND ((order_product.ended_at IS NULL) OR (order_product.ended_at > now())) AND ((order_product.started_at IS NULL) OR (order_product.started_at <= now())))))
      JOIN public.product ON ((product.id = order_product.product_id)))
      FULL JOIN ( SELECT concat('ProjectPlan_', project_plan_1.id) AS product_id,
             project_plan_1.is_physical
-           FROM public.project_plan project_plan_1) project_plan ON ((product.id = project_plan.product_id)));
+           FROM public.project_plan project_plan_1) project_plan ON ((product.id = project_plan.product_id)))
+     FULL JOIN ( SELECT concat('MerchandiseSpec_', merchandise_spec_1.id) AS product_id,
+            merchandise.is_physical
+           FROM (public.merchandise_spec merchandise_spec_1
+             JOIN public.merchandise ON ((merchandise.id = merchandise_spec_1.merchandise_id)))) merchandise_spec ON ((product.id = merchandise_spec.product_id)));
 CREATE TABLE public.product_gift_plan (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     product_id text NOT NULL,
@@ -4537,24 +4622,6 @@ UNION
      JOIN public.product ON (((product.id = order_product.product_id) AND (product.type = 'Program'::text))))
      JOIN public.member ON ((member.id = order_log.member_id)));
 COMMENT ON VIEW public.program_enrollment IS 'members who "bought" the programs, not including the programs in the program package';
-CREATE VIEW public.program_package_plan_enrollment AS
- SELECT (product.target)::uuid AS program_package_plan_id,
-    order_log.member_id,
-    order_product.delivered_at AS product_delivered_at
-   FROM ((public.order_log
-     JOIN public.order_product ON (((order_product.delivered_at < now()) AND (order_product.order_id = order_log.id) AND ((order_product.ended_at IS NULL) OR (order_product.ended_at > now())) AND ((order_product.started_at IS NULL) OR (order_product.started_at <= now())))))
-     JOIN public.product ON (((product.id = order_product.product_id) AND (product.type = 'ProgramPackagePlan'::text))));
-CREATE VIEW public.program_plan_enrollment AS
- SELECT (product.target)::uuid AS program_plan_id,
-    order_log.member_id,
-    order_log.updated_at,
-    order_product.started_at,
-    order_product.ended_at,
-    order_product.options,
-    order_product.delivered_at AS product_delivered_at
-   FROM ((public.order_log
-     JOIN public.order_product ON (((order_product.delivered_at < now()) AND (order_product.order_id = order_log.id) AND ((order_product.ended_at IS NULL) OR (order_product.ended_at > now())) AND ((order_product.started_at IS NULL) OR (order_product.started_at <= now())))))
-     JOIN public.product ON (((product.id = order_product.product_id) AND (product.type = 'ProgramPlan'::text))));
 CREATE TABLE public.program_tempo_delivery (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -4728,14 +4795,12 @@ CREATE TABLE public.program_content_body (
     data jsonb,
     target uuid
 );
-CREATE TABLE public.program_content_exam (
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    program_content_id uuid NOT NULL,
-    exam_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-COMMENT ON TABLE public.program_content_exam IS 'relationship of program_content and exam';
+CREATE VIEW public.program_content_exam AS
+ SELECT exam.id AS exam_id,
+    pc.id AS program_content_id
+   FROM ((public.exam
+     JOIN public.program_content_body pcb ON ((((pcb.type = 'exam'::text) OR (pcb.type = 'exercise'::text)) AND (pcb.target = exam.id))))
+     JOIN public.program_content pc ON ((pc.content_body_id = pcb.id)));
 CREATE TABLE public.program_content_material (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     data jsonb,
@@ -4949,8 +5014,12 @@ CREATE TABLE public.project_role (
     rejected_at timestamp with time zone,
     has_sended_marked_notification boolean DEFAULT false NOT NULL,
     agreed_at timestamp with time zone,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now(),
+    marked_notification_status text DEFAULT 'unsend'::text NOT NULL,
+    CONSTRAINT marked_notification_status_check CHECK (((marked_notification_status = 'unsend'::text) OR (marked_notification_status = 'readyToSend'::text) OR (marked_notification_status = 'sended'::text)))
 );
+COMMENT ON COLUMN public.project_role.marked_notification_status IS 'unsend, readyToSend, sended';
 CREATE VIEW public.project_sales AS
  SELECT t.project_id,
     sum(t.price) AS total_sales
@@ -6004,6 +6073,15 @@ CREATE VIEW public.social_card_enrollment AS
             member_1.youtube_channel_ids,
             jsonb_array_elements_text(member_1.youtube_channel_ids) AS youtube_channel_id
            FROM public.member member_1) member ON ((member.youtube_channel_id = social_card_subscriber.member_channel_id)));
+CREATE TABLE public.table_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    table_name text NOT NULL,
+    old jsonb,
+    new jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+COMMENT ON TABLE public.table_log IS 'transaction record';
 CREATE TABLE public.tag (
     name text DEFAULT public.gen_random_uuid() NOT NULL,
     type text NOT NULL,
@@ -6089,6 +6167,20 @@ CREATE TABLE public.venue_seat (
     "position" integer NOT NULL,
     disabled boolean DEFAULT false NOT NULL,
     category text
+);
+CREATE TABLE public.voucher_category (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    voucher_plan_id uuid NOT NULL,
+    category_id text NOT NULL,
+    "position" integer DEFAULT 0 NOT NULL
+);
+CREATE TABLE public.voucher_plan_category (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    voucher_plan_id uuid NOT NULL,
+    category_id text NOT NULL,
+    "position" numeric DEFAULT '0'::numeric NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now()
 );
 CREATE TABLE public.voucher_plan_product (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -6252,6 +6344,8 @@ ALTER TABLE ONLY public.migrations
     ADD CONSTRAINT "PK_8c82d7f526340ab734260ea46be" PRIMARY KEY (id);
 ALTER TABLE ONLY public.member
     ADD CONSTRAINT "User_pkey" PRIMARY KEY (id);
+ALTER TABLE ONLY public.achievement_template
+    ADD CONSTRAINT achievement_template_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.activity_attendance
     ADD CONSTRAINT activity_attendance_order_product_id_activity_session_id_key UNIQUE (order_product_id, activity_session_id);
 ALTER TABLE ONLY public.activity_attendance
@@ -6270,6 +6364,8 @@ ALTER TABLE ONLY public.activity_tag
     ADD CONSTRAINT activity_tag_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.activity_ticket
     ADD CONSTRAINT activity_ticket_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.app_achievement
+    ADD CONSTRAINT app_achievement_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.app_admin
     ADD CONSTRAINT app_admin_pkey PRIMARY KEY (host);
 ALTER TABLE ONLY public.app_channel
@@ -6452,6 +6548,8 @@ ALTER TABLE ONLY public.media
     ADD CONSTRAINT media_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.meet
     ADD CONSTRAINT meet_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.member_achievement
+    ADD CONSTRAINT member_achievement_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.member
     ADD CONSTRAINT member_app_id_email_key UNIQUE (app_id, email);
 ALTER TABLE ONLY public.member
@@ -6478,6 +6576,10 @@ ALTER TABLE ONLY public.member_device
     ADD CONSTRAINT member_device_member_id_fingerprint_id_key UNIQUE (member_id, fingerprint_id);
 ALTER TABLE ONLY public.member_device
     ADD CONSTRAINT member_device_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.member_learned_log
+    ADD CONSTRAINT member_learned_log_member_id_period_key UNIQUE (member_id, period);
+ALTER TABLE ONLY public.member_learned_log
+    ADD CONSTRAINT member_learned_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.member
     ADD CONSTRAINT member_line_user_id_app_id_key UNIQUE (line_user_id, app_id);
 ALTER TABLE ONLY public.member_oauth
@@ -6656,8 +6758,6 @@ ALTER TABLE ONLY public.program_content_audio
     ADD CONSTRAINT program_content_audio_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_body
     ADD CONSTRAINT program_content_body_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.program_content_exam
-    ADD CONSTRAINT program_content_exam_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_log
     ADD CONSTRAINT program_content_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_material
@@ -6770,6 +6870,8 @@ ALTER TABLE ONLY public.social_card
     ADD CONSTRAINT social_card_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.social_card_subscriber
     ADD CONSTRAINT social_card_subscriber_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.table_log
+    ADD CONSTRAINT table_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.tag
     ADD CONSTRAINT tag_id_key UNIQUE (name);
 ALTER TABLE ONLY public.tag
@@ -6790,12 +6892,16 @@ ALTER TABLE ONLY public.venue
     ADD CONSTRAINT venue_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.venue_seat
     ADD CONSTRAINT venue_seat_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.voucher_category
+    ADD CONSTRAINT voucher_category_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.voucher_code
     ADD CONSTRAINT voucher_code_code_key UNIQUE (code);
 ALTER TABLE ONLY public.voucher_code
     ADD CONSTRAINT voucher_code_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.voucher
     ADD CONSTRAINT voucher_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.voucher_plan_category
+    ADD CONSTRAINT voucher_plan_category_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.voucher_plan
     ADD CONSTRAINT voucher_plan_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.voucher_plan_product
@@ -6823,6 +6929,7 @@ CREATE INDEX order_log_member_id ON public.order_log USING btree (member_id);
 CREATE INDEX order_log_started_at_desc ON public.order_log USING btree (created_at DESC);
 CREATE INDEX order_log_status ON public.order_log USING btree (status);
 CREATE INDEX order_product_ended_at_desc ON public.order_product USING btree (ended_at DESC);
+CREATE INDEX order_product_order_id ON public.order_product USING btree (order_id);
 CREATE INDEX order_product_started_at_desc_nulls_first_index ON public.order_product USING btree (started_at DESC);
 CREATE INDEX post_id_category_id_key ON public.post_category USING btree (post_id, category_id);
 CREATE INDEX post_id_member_id_key ON public.post_role USING btree (post_id, member_id);
@@ -6842,10 +6949,9 @@ CREATE INDEX program_role_program_id ON public.program_role USING btree (program
 CREATE INDEX program_updated_at_desc ON public.program USING btree (updated_at DESC);
 CREATE OR REPLACE VIEW public.member_public AS
  WITH backstage_enter_member AS (
-         SELECT member_permission_extra.id,
-            member_permission_extra.member_id
-           FROM public.member_permission_extra
-          WHERE (member_permission_extra.permission_id = 'BACKSTAGE_ENTER'::text)
+         SELECT member_permission.member_id
+           FROM public.member_permission
+          WHERE (member_permission.permission_id = 'BACKSTAGE_ENTER'::text)
         )
  SELECT member.id,
     member.name,
@@ -6867,7 +6973,8 @@ CREATE OR REPLACE VIEW public.member_public AS
             WHEN (backstage_enter_member.member_id IS NOT NULL) THEN 1
             WHEN (backstage_enter_member.member_id IS NULL) THEN 0
             ELSE NULL::integer
-        END AS has_backstage_enter_permission
+        END AS has_backstage_enter_permission,
+    member.manager_id
    FROM ((public.member
      LEFT JOIN public.member_tag ON ((member_tag.member_id = member.id)))
      LEFT JOIN backstage_enter_member ON ((backstage_enter_member.member_id = member.id)))
@@ -7111,6 +7218,23 @@ CREATE OR REPLACE VIEW public.coin_usage_export AS
   WHERE (mc.revoked_at IS NULL)
   GROUP BY m.app_id, mc.id, o.invoice_issued_at, o.invoice_options, m.id, m.email, m.name
   ORDER BY mc.agreed_at DESC;
+CREATE TRIGGER app_setting_audit_delete AFTER DELETE ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
+CREATE TRIGGER app_setting_audit_insert AFTER INSERT ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
+CREATE TRIGGER app_setting_audit_update AFTER UPDATE ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
+CREATE TRIGGER member_audit_delete AFTER DELETE ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
+CREATE TRIGGER member_audit_insert AFTER INSERT ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
+CREATE TRIGGER member_audit_update AFTER UPDATE ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
+CREATE TRIGGER member_property_audit_delete AFTER DELETE ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
+CREATE TRIGGER member_property_audit_insert AFTER INSERT ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
+CREATE TRIGGER member_property_audit_update AFTER UPDATE ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
+CREATE TRIGGER order_log_audit_delete AFTER DELETE ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
+CREATE TRIGGER order_log_audit_insert AFTER INSERT ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
+CREATE TRIGGER order_log_audit_update AFTER UPDATE ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
+CREATE TRIGGER order_product_audit_insert AFTER INSERT ON public.order_product FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_product');
+CREATE TRIGGER order_product_audit_update AFTER UPDATE ON public.order_product FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_product');
+CREATE TRIGGER payment_log_audit_delete AFTER DELETE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
+CREATE TRIGGER payment_log_audit_insert AFTER INSERT ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
+CREATE TRIGGER payment_log_audit_update AFTER UPDATE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
 CREATE TRIGGER set_activity_ticket_product AFTER INSERT ON public.activity_ticket FOR EACH ROW EXECUTE PROCEDURE public.insert_product('ActivityTicket');
 CREATE TRIGGER set_appointment_plan_product AFTER INSERT ON public.appointment_plan FOR EACH ROW EXECUTE PROCEDURE public.insert_product('AppointmentPlan');
 CREATE TRIGGER set_card_product AFTER INSERT ON public.card FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Card');
@@ -7125,8 +7249,12 @@ CREATE TRIGGER set_program_package_plan_product AFTER INSERT ON public.program_p
 CREATE TRIGGER set_program_plan_product AFTER INSERT ON public.program_plan FOR EACH ROW EXECUTE PROCEDURE public.insert_product('ProgramPlan');
 CREATE TRIGGER set_program_product AFTER INSERT ON public.program FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Program');
 CREATE TRIGGER set_project_plan_product AFTER INSERT ON public.project_plan FOR EACH ROW EXECUTE PROCEDURE public.insert_product('ProjectPlan');
+CREATE TRIGGER set_public_achievement_template_updated_at BEFORE UPDATE ON public.achievement_template FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_achievement_template_updated_at ON public.achievement_template IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_activity_updated_at BEFORE UPDATE ON public.activity FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_activity_updated_at ON public.activity IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_app_achievement_updated_at BEFORE UPDATE ON public.app_achievement FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_app_achievement_updated_at ON public.app_achievement IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_app_extended_module_updated_at BEFORE UPDATE ON public.app_extended_module FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_app_extended_module_updated_at ON public.app_extended_module IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_app_page_template_updated_at BEFORE UPDATE ON public.app_page_template FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7179,10 +7307,14 @@ CREATE TRIGGER set_public_invoice_updated_at BEFORE UPDATE ON public.invoice FOR
 COMMENT ON TRIGGER set_public_invoice_updated_at ON public.invoice IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_meet_updated_at BEFORE UPDATE ON public.meet FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_meet_updated_at ON public.meet IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_member_achievement_updated_at BEFORE UPDATE ON public.member_achievement FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_member_achievement_updated_at ON public.member_achievement IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_member_contract_updated_at BEFORE UPDATE ON public.member_contract FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_member_contract_updated_at ON public.member_contract IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_member_device_updated_at BEFORE UPDATE ON public.member_device FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_member_device_updated_at ON public.member_device IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_member_learned_log_updated_at BEFORE UPDATE ON public.member_learned_log FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_member_learned_log_updated_at ON public.member_learned_log IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_member_note_updated_at BEFORE UPDATE ON public.member_note FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_member_note_updated_at ON public.member_note IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_member_permission_group_updated_at BEFORE UPDATE ON public.member_permission_group FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7248,8 +7380,6 @@ CREATE TRIGGER set_public_program_approval_updated_at BEFORE UPDATE ON public.pr
 COMMENT ON TRIGGER set_public_program_approval_updated_at ON public.program_approval IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_program_content_audio_updated_at BEFORE UPDATE ON public.program_content_audio FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_program_content_audio_updated_at ON public.program_content_audio IS 'trigger to set value of column "updated_at" to current timestamp on row update';
-CREATE TRIGGER set_public_program_content_exam_updated_at BEFORE UPDATE ON public.program_content_exam FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
-COMMENT ON TRIGGER set_public_program_content_exam_updated_at ON public.program_content_exam IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_program_content_material_updated_at BEFORE UPDATE ON public.program_content_material FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_program_content_material_updated_at ON public.program_content_material IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_program_content_progress_updated_at BEFORE UPDATE ON public.program_content_progress FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7260,6 +7390,8 @@ CREATE TRIGGER set_public_program_timetable_updated_at BEFORE UPDATE ON public.p
 COMMENT ON TRIGGER set_public_program_timetable_updated_at ON public.program_timetable IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_program_updated_at BEFORE UPDATE ON public.program FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_program_updated_at ON public.program IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_project_role_updated_at BEFORE UPDATE ON public.project_role FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_project_role_updated_at ON public.project_role IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_property_updated_at BEFORE UPDATE ON public.property FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_property_updated_at ON public.property IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_question_group_updated_at BEFORE UPDATE ON public.question_group FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7296,6 +7428,8 @@ CREATE TRIGGER set_public_user_updated_at BEFORE UPDATE ON public."user" FOR EAC
 COMMENT ON TRIGGER set_public_user_updated_at ON public."user" IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_venue_updated_at BEFORE UPDATE ON public.venue FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_venue_updated_at ON public.venue IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_voucher_plan_category_updated_at BEFORE UPDATE ON public.voucher_plan_category FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_voucher_plan_category_updated_at ON public.voucher_plan_category IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_voucher_plan_updated_at BEFORE UPDATE ON public.voucher_plan FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_voucher_plan_updated_at ON public.voucher_plan IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_token_product AFTER INSERT ON public.token FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Token');

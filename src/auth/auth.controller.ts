@@ -3,7 +3,10 @@ import { Body, Controller, Post } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { CrossServerTokenDTO } from "./auth.type";
 
-@Controller('auth')
+@Controller({
+  path: 'auth',
+  version: ['2'],
+})
 export class AuthController {
   constructor(
     private readonly authService: AuthService,

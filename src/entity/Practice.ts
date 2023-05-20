@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
-import { ProgramContent } from './ProgramContent'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { ProgramContent } from '~/program/entity/program_content.entity';
+
+import { Member } from './Member';
 
 @Index('practice_pkey', ['id'], { unique: true })
 @Entity('practice', { schema: 'public' })

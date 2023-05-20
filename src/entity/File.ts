@@ -1,5 +1,6 @@
-import { Column, Entity, Index, OneToMany } from 'typeorm'
-import { Attachment } from './Attachment'
+import { Column, Entity, Index, OneToMany } from 'typeorm';
+
+import { Attachment } from '~/media/attachment.entity';
 
 @Index('file_pkey', ['id'], { unique: true })
 @Entity('file', { schema: 'public' })
