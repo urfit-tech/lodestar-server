@@ -1,5 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Attachment } from './Attachment'
+
+import { Attachment } from '~/media/attachment.entity';
+
 import { ProgramContent } from './ProgramContent'
 
 @Index('program_content_stream_pkey', ['id'], { unique: true })
