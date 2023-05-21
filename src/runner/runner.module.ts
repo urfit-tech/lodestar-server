@@ -2,16 +2,12 @@ import { cwd } from 'process';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BullModule } from '@nestjs/bull';
+import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { PostgresModule } from '~/database/postgres.module';
 import { LockModule } from '~/utility/lock/lock.module';
-import { PaymentModule } from '~/payment/payment.module';
 import { UtilityModule } from '~/utility/utility.module';
-import { AppService } from '~/app/app.service';
-import { InvoiceModule } from '~/invoice/invoice.module';
 
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
@@ -26,6 +22,10 @@ export class RunnerModule {
   }): DynamicModule {
     const { workerName, nodeEnv, clazz, noGo } = options;
 
+    const invokedRunnerModule = (clazz as any).forRoot
+      ? (clazz as any).forRoot()
+      : { imports: [], providers: [] };
+
     return {
       module: RunnerModule,
       controllers: [RunnerController],
@@ -36,35 +36,16 @@ export class RunnerModule {
           isGlobal: true,
         }),
         PostgresModule.forRootAsync(),
-        PaymentModule,
-        UtilityModule,
-        BullModule.forRootAsync({
-          imports: [ConfigModule],
-          useFactory: (configService: ConfigService<{
-            QUEUE_REDIS_URI: string;
-          }>) => {
-            const queueRedisUri = configService.getOrThrow('QUEUE_REDIS_URI');
-            const url = new URL(queueRedisUri);
-            return {
-              redis: {
-                host: url.hostname,
-                port: Number(url.port),
-                username: url.username,
-                password: url.password,
-              },
-            };
-          },
-          inject: [ConfigService],
-        }),
         LockModule.forFeature({ key: workerName }),
-        InvoiceModule,
+        UtilityModule,
+        ...(invokedRunnerModule.imports || []),
       ],
       providers: [
         Logger,
         RunnerService,
         { provide: 'NO_GO', useValue: noGo },
         { provide: Runner, useClass: clazz },
-        AppService,
+        ...(invokedRunnerModule.providers || []),
       ],
     };
   }
