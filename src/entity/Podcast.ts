@@ -1,8 +1,10 @@
-import { Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { Member } from './Member'
-import { PodcastPlan } from './PodcastPlan'
-import { PodcastProgram } from './PodcastProgram'
+import { Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { Member } from './Member';
+import { PodcastPlan } from './PodcastPlan';
+import { PodcastProgram } from './PodcastProgram';
 
 @Index('podcast_pkey', ['id'], { unique: true })
 @Entity('podcast', { schema: 'public' })

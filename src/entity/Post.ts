@@ -1,9 +1,11 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { PostCategory } from './PostCategory'
-import { PostMerchandise } from './PostMerchandise'
-import { PostRole } from './PostRole'
-import { PostTag } from './PostTag'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { PostCategory } from './PostCategory';
+import { PostMerchandise } from './PostMerchandise';
+import { PostRole } from './PostRole';
+import { PostTag } from './PostTag';
 
 @Index('post_pkey', ['id'], { unique: true })
 @Entity('post', { schema: 'public' })

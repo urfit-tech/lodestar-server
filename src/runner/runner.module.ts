@@ -1,16 +1,17 @@
 import { cwd } from 'process';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { LoggerModule } from 'nestjs-pino';
 import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { PostgresModule } from '~/database/postgres.module';
-import { LockModule } from '~/utility/lock/lock.module';
+import { AppModule } from '~/app/app.module';
 import { PaymentModule } from '~/payment/payment.module';
+import { LockModule } from '~/utility/lock/lock.module';
 import { UtilityModule } from '~/utility/utility.module';
-import { AppService } from '~/app/app.service';
 import { InvoiceModule } from '~/invoice/invoice.module';
 
 import { Runner } from './runner';
@@ -35,7 +36,25 @@ export class RunnerModule {
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
         }),
+        LoggerModule.forRootAsync({
+          providers: [ConfigService],
+          useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
+            const nodeEnv = configService.getOrThrow('NODE_ENV');
+            return nodeEnv !== 'production' ? {
+              pinoHttp: {
+                transport: {
+                  target: 'pino-pretty',
+                  options: {
+                    ignore: 'pid,context,hostname',
+                  },
+                },
+              },
+            } : {};
+          },
+          inject: [ConfigService],
+        }),
         PostgresModule.forRootAsync(),
+        AppModule,
         PaymentModule,
         UtilityModule,
         BullModule.forRootAsync({
@@ -64,7 +83,6 @@ export class RunnerModule {
         RunnerService,
         { provide: 'NO_GO', useValue: noGo },
         { provide: Runner, useClass: clazz },
-        AppService,
       ],
     };
   }

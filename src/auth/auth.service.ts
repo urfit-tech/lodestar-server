@@ -7,7 +7,7 @@ import { InjectEntityManager } from '@nestjs/typeorm'
 import { SignupProperty } from '~/entity/SignupProperty'
 import { MemberService } from '~/member/member.service'
 import { MemberRole, PublicMember } from '~/member/member.type'
-import { AppService } from '~/app/app.service'
+import { AppInfrastructure } from '~/app/app.infra';
 import { PermissionService } from '~/permission/permission.service'
 import { APIException } from '~/api.excetion';
 
@@ -20,8 +20,8 @@ export class AuthService {
   constructor(
     private readonly configService: ConfigService<{ HASURA_JWT_SECRET: string }>,
     private readonly memberService: MemberService,
-    private readonly appService: AppService,
     private readonly permissionService: PermissionService,
+    private readonly appInfra: AppInfrastructure,
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
@@ -31,7 +31,7 @@ export class AuthService {
     return this.entityManager.transaction(async (manager) => {
       const { clientId, key, permissions } = dto;
 
-      const app = await this.appService.getAppByClientId(clientId, manager);
+      const app = await this.appInfra.getAppByClientId(clientId, manager);
       if (!app) {
         throw new APIException({ code: 'E_NOT_FOUND', message: "client ID doesn't exist" });
       }
@@ -70,7 +70,7 @@ export class AuthService {
     expiresIn = '1 day',
     manager: EntityManager,
   ) {
-    const settings = await this.appService.getAppSettings(payload.appId, manager);
+    const settings = await this.appInfra.getAppSettings(payload.appId, manager);
     const defaultPermissionIds = JSON.parse(settings['feature.membership_default_permission'] || '[]') as Array<string>
     const permissions = await this.permissionService.getByIds(defaultPermissionIds, manager);
     const validatePermissions = permissions.map(({ id }) => id)

@@ -1,7 +1,9 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { VoucherCode } from './VoucherCode'
-import { VoucherPlanProduct } from './VoucherPlanProduct'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { VoucherCode } from './VoucherCode';
+import { VoucherPlanProduct } from './VoucherPlanProduct';
 
 @Index('voucher_plan_pkey', ['id'], { unique: true })
 @Entity('voucher_plan', { schema: 'public' })

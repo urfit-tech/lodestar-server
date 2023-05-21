@@ -6,8 +6,8 @@ import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { UtilityService } from '~/utility/utility.service';
-import { AppService } from '~/app/app.service';
 import { InvoiceService } from '~/invoice/invocie.service';
+import { AppInfrastructure } from '~/app/app.infra';
 
 import { Runner } from './runner';
 
@@ -20,9 +20,9 @@ export class InvoiceRunner extends Runner {
     protected readonly distributedLockService: DistributedLockService,
     protected readonly shutdownService: ShutdownService,
     private readonly paymentInfra: PaymentInfrastructure,
-    private readonly appService: AppService,
     private readonly invoiceService: InvoiceService,
     private readonly utilityService: UtilityService,
+    private readonly appInfra: AppInfrastructure,
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {
     super(
@@ -48,9 +48,9 @@ export class InvoiceRunner extends Runner {
         const card4No = options?.card4No;
         const invoiceComment = card4No ? `信用卡末四碼 ${card4No}` : options?.paymentType || '';
         try {
-          const appSettings = await this.appService.getAppSettings(appId, manager);
-          const appSecrets = await this.appService.getAppSecrets(appId, manager);
-          const appModules = await this.appService.getAppModules(appId, manager);
+          const appSettings = await this.appInfra.getAppSettings(appId, manager);
+          const appSecrets = await this.appInfra.getAppSecrets(appId, manager);
+          const appModules = await this.appInfra.getAppModules(appId, manager);
 
           if (!this.isAllowUseInvoiceModule(appSecrets, appModules)) {
             throw new Error('Not allowed to use invoice module.');

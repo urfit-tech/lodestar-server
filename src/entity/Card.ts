@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { CardDiscount } from './CardDiscount'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { CardDiscount } from './CardDiscount';
 
 @Index('card_pkey', ['id'], { unique: true })
 @Entity('card', { schema: 'public' })

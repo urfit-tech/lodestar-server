@@ -1,5 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
+
 import { AppChannel } from './AppChannel';
 import { Product } from './Product';
 

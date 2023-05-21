@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { Module } from './Module'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { Module } from './Module';
 
 @Index('app_extended_module_pkey', ['id'], { unique: true })
 @Entity('app_extended_module', { schema: 'public' })

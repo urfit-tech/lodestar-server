@@ -1,13 +1,15 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { Member } from './Member'
-import { MemberShop } from './MemberShop'
-import { MerchandiseCategory } from './MerchandiseCategory'
-import { MerchandiseFile } from './MerchandiseFile'
-import { MerchandiseImg } from './MerchandiseImg'
-import { MerchandiseSpec } from './MerchandiseSpec'
-import { MerchandiseTag } from './MerchandiseTag'
-import { PostMerchandise } from './PostMerchandise'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { Member } from './Member';
+import { MemberShop } from './MemberShop';
+import { MerchandiseCategory } from './MerchandiseCategory';
+import { MerchandiseFile } from './MerchandiseFile';
+import { MerchandiseImg } from './MerchandiseImg';
+import { MerchandiseSpec } from './MerchandiseSpec';
+import { MerchandiseTag } from './MerchandiseTag';
+import { PostMerchandise } from './PostMerchandise';
 
 @Index('merchandise_pkey', ['id'], { unique: true })
 @Entity('merchandise', { schema: 'public' })
