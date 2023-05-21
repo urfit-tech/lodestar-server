@@ -1,5 +1,6 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm'
-import { App } from './App'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+
+import { App } from './app.entity';
 
 @Index('app_host_pkey', ['host'], { unique: true })
 @Entity('app_host', { schema: 'public' })

@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { PackageSection } from './PackageSection'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { PackageSection } from './PackageSection';
 
 @Index('package_pkey', ['id'], { unique: true })
 @Entity('package', { schema: 'public' })

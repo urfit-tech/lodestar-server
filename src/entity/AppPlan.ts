@@ -1,6 +1,8 @@
-import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm'
-import { App } from './App'
-import { AppPlanModule } from './AppPlanModule'
+import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { AppPlanModule } from './AppPlanModule';
 
 @Index('app_plan_pkey', ['id'], { unique: true })
 @Entity('app_plan', { schema: 'public' })

@@ -1,8 +1,7 @@
 import { EntityManager } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
-import { App } from '~/entity/App';
-
+import { App } from './entity/app.entity';
 import { AppSetting } from './entity/app_setting.entity';
 import { AppSecret } from './entity/app_secret.entity';
 import { AppModule } from './entity/app_module.entity';

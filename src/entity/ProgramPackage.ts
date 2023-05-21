@@ -1,8 +1,10 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { ProgramPackageCategory } from './ProgramPackageCategory'
-import { ProgramPackagePlan } from './ProgramPackagePlan'
-import { ProgramPackageProgram } from './ProgramPackageProgram'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { ProgramPackageCategory } from './ProgramPackageCategory';
+import { ProgramPackagePlan } from './ProgramPackagePlan';
+import { ProgramPackageProgram } from './ProgramPackageProgram';
 
 @Index('program_package_app_id', ['appId'], {})
 @Index('program_package_pkey', ['id'], { unique: true })

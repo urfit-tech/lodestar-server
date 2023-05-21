@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 
-import { App } from '~/entity/App';
+import { App } from '~/app/entity/app.entity';
 import { AppPlan } from '~/entity/AppPlan';
 import { Role } from '~/entity/Role';
 

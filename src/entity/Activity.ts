@@ -1,11 +1,13 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { ActivityCategory } from './ActivityCategory'
-import { ActivitySession } from './ActivitySession'
-import { ActivityTag } from './ActivityTag'
-import { ActivityTicket } from './ActivityTicket'
-import { App } from './App'
-import { Member } from './Member'
-import { PackageItem } from './PackageItem'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { ActivityCategory } from './ActivityCategory';
+import { ActivitySession } from './ActivitySession';
+import { ActivityTag } from './ActivityTag';
+import { ActivityTicket } from './ActivityTicket';
+import { Member } from './Member';
+import { PackageItem } from './PackageItem';
 
 @Index('activity_pkey', ['id'], { unique: true })
 @Entity('activity', { schema: 'public' })

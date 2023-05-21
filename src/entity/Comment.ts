@@ -1,8 +1,10 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { CommentReaction } from './CommentReaction'
-import { CommentReply } from './CommentReply'
-import { Member } from './Member'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { CommentReaction } from './CommentReaction';
+import { CommentReply } from './CommentReply';
+import { Member } from './Member';
 
 @Index('comment_pkey', ['id'], { unique: true })
 @Entity('comment', { schema: 'public' })

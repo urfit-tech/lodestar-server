@@ -1,16 +1,18 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { PackageItem } from './PackageItem'
-import { ProgramAnnouncement } from './ProgramAnnouncement'
-import { ProgramApproval } from './ProgramApproval'
-import { ProgramCategory } from './ProgramCategory'
-import { ProgramContentSection } from './ProgramContentSection'
-import { ProgramPackageProgram } from './ProgramPackageProgram'
-import { ProgramPlan } from './ProgramPlan'
-import { ProgramRelatedItem } from './ProgramRelatedItem'
-import { ProgramRole } from './ProgramRole'
-import { ProgramTag } from './ProgramTag'
-import { ProgramTimetable } from './ProgramTimetable'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { PackageItem } from './PackageItem';
+import { ProgramAnnouncement } from './ProgramAnnouncement';
+import { ProgramApproval } from './ProgramApproval';
+import { ProgramCategory } from './ProgramCategory';
+import { ProgramContentSection } from './ProgramContentSection';
+import { ProgramPackageProgram } from './ProgramPackageProgram';
+import { ProgramPlan } from './ProgramPlan';
+import { ProgramRelatedItem } from './ProgramRelatedItem';
+import { ProgramRole } from './ProgramRole';
+import { ProgramTag } from './ProgramTag';
+import { ProgramTimetable } from './ProgramTimetable';
 
 @Index('program_app_id', ['appId'], {})
 @Index('program_pkey', ['id'], { unique: true })

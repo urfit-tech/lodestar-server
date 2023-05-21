@@ -1,6 +1,8 @@
-import { Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { Permission } from './Permission'
+import { Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+
+import { Permission } from './Permission';
 
 @Index('app_default_permission_pkey', ['id'], { unique: true })
 @Entity('app_default_permission', { schema: 'public' })
