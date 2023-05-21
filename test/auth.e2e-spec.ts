@@ -1,5 +1,6 @@
+import { LoggerModule } from 'nestjs-pino';
 import { INestApplication } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 
@@ -14,6 +15,23 @@ describe('AuthController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
+        LoggerModule.forRootAsync({
+          providers: [ConfigService],
+          useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
+            const nodeEnv = configService.getOrThrow('NODE_ENV');
+            return nodeEnv !== 'production' ? {
+              pinoHttp: {
+                transport: {
+                  target: 'pino-pretty',
+                  options: {
+                    ignore: 'pid,context,hostname',
+                  },
+                },
+              },
+            } : {};
+          },
+          inject: [ConfigService],
+        }),
         PostgresModule.forRootAsync(),
         AuthModule,
       ],

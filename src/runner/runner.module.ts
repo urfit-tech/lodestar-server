@@ -1,6 +1,7 @@
 import { cwd } from 'process';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { LoggerModule } from 'nestjs-pino';
 import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
@@ -34,6 +35,23 @@ export class RunnerModule {
         ConfigModule.forRoot({
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
+        }),
+        LoggerModule.forRootAsync({
+          providers: [ConfigService],
+          useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
+            const nodeEnv = configService.getOrThrow('NODE_ENV');
+            return nodeEnv !== 'production' ? {
+              pinoHttp: {
+                transport: {
+                  target: 'pino-pretty',
+                  options: {
+                    ignore: 'pid,context,hostname',
+                  },
+                },
+              },
+            } : {};
+          },
+          inject: [ConfigService],
         }),
         PostgresModule.forRootAsync(),
         AppModule,
