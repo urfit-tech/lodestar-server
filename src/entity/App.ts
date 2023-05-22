@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm'
 
+import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 
@@ -9,7 +10,6 @@ import { AppChannel } from './AppChannel'
 import { AppDefaultPermission } from './AppDefaultPermission'
 import { AppEmailTemplate } from './AppEmailTemplate'
 import { AppExtendedModule } from './AppExtendedModule'
-import { AppHost } from './AppHost'
 import { AppLanguage } from './AppLanguage'
 import { AppNav } from './AppNav'
 import { AppPlan } from './AppPlan'
