@@ -7,6 +7,7 @@ import { AppPlan } from '~/entity/AppPlan';
 import { App } from '~/entity/App';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
+import { AppHost } from '~/app/entity/app_host.entity';
 import { Runner } from '~/runner/runner';
 import { RunnerModule } from '~/runner/runner.module';
 import { TriggerRunner } from '~/runner/trigger.runner';
@@ -183,6 +184,69 @@ describe('TriggerRunner (e2e)', () => {
         await triggerRunner.execute(manager);
         
         const afterClearCacheValue = await cacheService.getClient().get(`app:${deletedApp.id}:secrets`);
+        expect(afterClearCacheValue).toBeNull();
+      });
+    });
+  });
+
+  describe('AppHost Handler', () => {
+    it('Should erase app host when update', async () => {
+      const triggerRunner = application.get<TriggerRunner>(Runner);
+      const updatedApp = new App();
+      updatedApp.id = 'updated-app';
+      updatedApp.symbol = 'UPD';
+      updatedApp.appPlan = appPlan;
+
+      const appHost = new AppHost();
+      appHost.app = updatedApp;
+      appHost.host = 'some_host'
+
+      await autoRollbackTransaction(manager, async (manager) => {
+        const originHost = appHost.host;
+        await manager.save(updatedApp);
+        await manager.save(appHost);
+
+        await cacheService.getClient().set(`host:${originHost}`, 'some_host');
+        const inCacheValue = await cacheService.getClient().get(`host:${originHost}`);
+        expect(inCacheValue).not.toBeNull();
+        expect(inCacheValue).toEqual('some_host');
+
+        appHost.priority = 1;
+        await manager.save(appHost);
+
+        await triggerRunner.execute(manager);
+        
+        const afterClearCacheValue = await cacheService.getClient().get(`host:${originHost}`);
+        expect(afterClearCacheValue).toBeNull();
+      });
+    });
+
+    it('Should erase app host when delete', async () => {
+      const triggerRunner = application.get<TriggerRunner>(Runner);
+      const deletedApp = new App();
+      deletedApp.id = 'deleted-app';
+      deletedApp.symbol = 'DEL';
+      deletedApp.appPlan = appPlan;
+
+      const appHost = new AppHost();
+      appHost.app = deletedApp;
+      appHost.host = 'some_host';
+
+      await autoRollbackTransaction(manager, async (manager) => {
+        const originHost = appHost.host;
+        await manager.save(deletedApp);
+        await manager.save(appHost);
+
+        await cacheService.getClient().set(`host:${originHost}`, 'some_host');
+        const inCacheValue = await cacheService.getClient().get(`host:${originHost}`);
+        expect(inCacheValue).not.toBeNull();
+        expect(inCacheValue).toEqual('some_host');
+
+        await manager.remove(appHost);
+
+        await triggerRunner.execute(manager);
+        
+        const afterClearCacheValue = await cacheService.getClient().get(`host:${originHost}`);
         expect(afterClearCacheValue).toBeNull();
       });
     });
