@@ -6,6 +6,7 @@ import { Setting } from '~/entity/Setting';
 import { AppPlan } from '~/entity/AppPlan';
 import { App } from '~/entity/App';
 import { AppSetting } from '~/app/entity/app_setting.entity';
+import { AppSecret } from '~/app/entity/app_secret.entity';
 import { Runner } from '~/runner/runner';
 import { RunnerModule } from '~/runner/runner.module';
 import { TriggerRunner } from '~/runner/trigger.runner';
@@ -22,7 +23,6 @@ describe('TriggerRunner (e2e)', () => {
   let settingRepo: Repository<Setting>;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
-  let appSettingRepo: Repository<AppSetting>;
 
   let setting: Setting;
 
@@ -45,9 +45,7 @@ describe('TriggerRunner (e2e)', () => {
     settingRepo = manager.getRepository(Setting);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
-    appSettingRepo = manager.getRepository(AppSetting);
 
-    await appSettingRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
@@ -58,7 +56,6 @@ describe('TriggerRunner (e2e)', () => {
   });
 
   afterAll(async () => {
-    await appSettingRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
@@ -123,6 +120,69 @@ describe('TriggerRunner (e2e)', () => {
         await triggerRunner.execute(manager);
         
         const afterClearCacheValue = await cacheService.getClient().get(`app:${deletedApp.id}:settings`);
+        expect(afterClearCacheValue).toBeNull();
+      });
+    });
+  });
+
+  describe('AppSecret Handler', () => {
+    it('Should erase app secret when update', async () => {
+      const triggerRunner = application.get<TriggerRunner>(Runner);
+      const updatedApp = new App();
+      updatedApp.id = 'updated-app';
+      updatedApp.symbol = 'UPD';
+      updatedApp.appPlan = appPlan;
+
+      const appSecret = new AppSecret();
+      appSecret.app = updatedApp;
+      appSecret.key = setting.key;
+      appSecret.value = 'some value';
+
+      await autoRollbackTransaction(manager, async (manager) => {
+        await manager.save(updatedApp);
+        await manager.save(appSecret);
+
+        await cacheService.getClient().set(`app:${updatedApp.id}:secrets`, 'updated something');
+        const inCacheValue = await cacheService.getClient().get(`app:${updatedApp.id}:secrets`);
+        expect(inCacheValue).not.toBeNull();
+        expect(inCacheValue).toEqual('updated something');
+
+        appSecret.value = 'updated value';
+        await manager.save(appSecret);
+
+        await triggerRunner.execute(manager);
+        
+        const afterClearCacheValue = await cacheService.getClient().get(`app:${updatedApp.id}:secrets`);
+        expect(afterClearCacheValue).toBeNull();
+      });
+    });
+
+    it('Should erase app secret when delete', async () => {
+      const triggerRunner = application.get<TriggerRunner>(Runner);
+      const deletedApp = new App();
+      deletedApp.id = 'deleted-app';
+      deletedApp.symbol = 'DEL';
+      deletedApp.appPlan = appPlan;
+
+      const appSecret = new AppSecret();
+      appSecret.app = deletedApp;
+      appSecret.key = setting.key;
+      appSecret.value = 'some value';
+
+      await autoRollbackTransaction(manager, async (manager) => {
+        await manager.save(deletedApp);
+        await manager.save(appSecret);
+
+        await cacheService.getClient().set(`app:${deletedApp.id}:secrets`, 'delete something');
+        const inCacheValue = await cacheService.getClient().get(`app:${deletedApp.id}:secrets`);
+        expect(inCacheValue).not.toBeNull();
+        expect(inCacheValue).toEqual('delete something');
+
+        await manager.remove(appSecret);
+
+        await triggerRunner.execute(manager);
+        
+        const afterClearCacheValue = await cacheService.getClient().get(`app:${deletedApp.id}:secrets`);
         expect(afterClearCacheValue).toBeNull();
       });
     });
