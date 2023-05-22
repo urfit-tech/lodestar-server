@@ -1,7 +1,9 @@
 import { EntityManager } from 'typeorm';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 
 import { TriggerModule } from '~/trigger/trigger.module';
+import { TriggerService } from '~/trigger/trigger.service';
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 
@@ -22,6 +24,8 @@ export class TriggerRunner extends Runner {
     protected readonly logger: Logger,
     protected readonly distributedLockService: DistributedLockService,
     protected readonly shutdownService: ShutdownService,
+    private readonly triggerService: TriggerService,
+    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {
     super(
       TriggerRunner.name,
@@ -33,5 +37,12 @@ export class TriggerRunner extends Runner {
     this.batchSize = 10;
   }
 
-  async execute(entityManager?: EntityManager): Promise<void> {}
+  async execute(entityManager?: EntityManager): Promise<void> {
+    const cb = async (manager: EntityManager) => {
+      return this.triggerService.processTriggerThroughTableLog(
+        this.batchSize, manager,
+      );
+    };
+    return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
+  }
 }
