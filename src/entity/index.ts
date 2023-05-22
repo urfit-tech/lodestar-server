@@ -215,7 +215,8 @@ import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { ProgramContent } from '~/program/entity/program_content.entity';
-import { TableLog } from '~/trigger/entity/table_log.entity';
+import { TableLog } from '~/table_log/table_log.entity';
+import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
 
 export const PostgresEntities = [
   Activity,
@@ -425,6 +426,7 @@ export const PostgresEntities = [
   TableLog,
   Tag,
   Token,
+  TriggerLog,
   User,
   UserOauth,
   UserPermission,

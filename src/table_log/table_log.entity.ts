@@ -5,7 +5,7 @@ export class TableLog {
   @PrimaryGeneratedColumn('uuid')
   id: ObjectId;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @Column({
