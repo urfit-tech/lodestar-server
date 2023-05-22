@@ -7,12 +7,14 @@ import { TableLog } from '~/table_log/table_log.entity';
 import { TriggerLog } from './entity/trigger_log.entity';
 import { AppSettingHandler } from './handler/app_setting.handler';
 import { AppSecretHandler } from './handler/app_secret.handler';
+import { AppHostHandler } from './handler/app_host.handler';
 
 @Injectable()
 export class TriggerService {
   constructor(
     private readonly appSettingHandler: AppSettingHandler,
     private readonly appSecretHandler: AppSecretHandler,
+    private readonly appHostHandler: AppHostHandler,
   ) {}
 
   public async processTriggerThroughTableLog(
@@ -38,6 +40,8 @@ export class TriggerService {
             return this.appSettingHandler.handler(tableLog, entityManager);
           case 'app_secret':
             return this.appSecretHandler.handler(tableLog, entityManager);
+          case 'app_host':
+            return this.appHostHandler.handler(tableLog, entityManager);
         }
       });
     }

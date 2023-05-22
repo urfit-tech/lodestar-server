@@ -9,6 +9,7 @@ import { TableLogModule } from '~/table_log/table_log.module';
 import { TriggerService } from './trigger.service';
 import { AppSettingHandler } from './handler/app_setting.handler';
 import { AppSecretHandler } from './handler/app_secret.handler';
+import { AppHostHandler } from './handler/app_host.handler';
 
 @Module({
   imports: [TableLogModule],
@@ -18,6 +19,7 @@ import { AppSecretHandler } from './handler/app_secret.handler';
     CacheService,
     AppSettingHandler,
     AppSecretHandler,
+    AppHostHandler,
   ],
   exports: [TriggerService],
 })
@@ -25,7 +27,7 @@ export class TriggerModule {
   static async initializeTriggerInDB(
     logger: Logger, tableLogService: TableLogService, manager: EntityManager,
   ): Promise<void> {
-    const tables = ['app_setting', 'app_secret'];
+    const tables = ['app_setting', 'app_secret', 'app_host'];
     for (const tableName of tables) {
       for (const operation of ['INSERT', 'UPDATE', 'DELETE']) {
         const existence = await tableLogService.isTableTriggerExists(
