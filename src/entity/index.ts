@@ -11,7 +11,6 @@ import { AppChannel } from './AppChannel';
 import { AppDefaultPermission } from './AppDefaultPermission';
 import { AppEmailTemplate } from './AppEmailTemplate';
 import { AppExtendedModule } from './AppExtendedModule';
-import { AppHost } from './AppHost';
 import { AppLanguage } from './AppLanguage';
 import { AppNav } from './AppNav';
 import { AppPage } from './AppPage';
@@ -206,9 +205,7 @@ import { VoucherPlan } from './VoucherPlan';
 import { VoucherPlanProduct } from './VoucherPlanProduct';
 import { WebhookLog } from './WebhookLog';
 
-import { TableLog } from './TableLog.mongo';
-
-
+import { AppHost } from '~/app/entity/app_host.entity';
 import { AppModule } from '~/app/entity/app_module.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
@@ -218,6 +215,8 @@ import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { ProgramContent } from '~/program/entity/program_content.entity';
+import { TableLog } from '~/table_log/table_log.entity';
+import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
 
 export const PostgresEntities = [
   Activity,
@@ -424,8 +423,10 @@ export const PostgresEntities = [
   SmsVerificationCode,
   SocialCard,
   SocialCardSubscriber,
+  TableLog,
   Tag,
   Token,
+  TriggerLog,
   User,
   UserOauth,
   UserPermission,
@@ -436,8 +437,4 @@ export const PostgresEntities = [
   VoucherPlan,
   VoucherPlanProduct,
   WebhookLog,
-];
-
-export const MongoEntities = [
-  TableLog,
 ];

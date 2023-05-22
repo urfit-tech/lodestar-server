@@ -6117,6 +6117,12 @@ CREATE TABLE public.token (
 );
 COMMENT ON TABLE public.token IS '放自定義產品，Ex: gift, service, NFT';
 COMMENT ON COLUMN public.token.price IS 'list price';
+CREATE TABLE public.trigger_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    table_log_id uuid NOT NULL,
+    result jsonb NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
 CREATE TABLE public."user" (
     id text DEFAULT public.gen_random_uuid() NOT NULL,
     org_id text NOT NULL,
@@ -6878,6 +6884,8 @@ ALTER TABLE ONLY public.tag
     ADD CONSTRAINT tag_pkey PRIMARY KEY (name);
 ALTER TABLE ONLY public.token
     ADD CONSTRAINT token_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.trigger_log
+    ADD CONSTRAINT trigger_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.user_oauth
     ADD CONSTRAINT user_oauth_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.user_oauth
@@ -7928,6 +7936,8 @@ ALTER TABLE ONLY public.social_card
     ADD CONSTRAINT social_card_member_social_id_fkey FOREIGN KEY (member_social_id) REFERENCES public.member_social(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.social_card_subscriber
     ADD CONSTRAINT social_card_subscriber_social_card_id_fkey FOREIGN KEY (social_card_id) REFERENCES public.social_card(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.trigger_log
+    ADD CONSTRAINT trigger_log_table_log_id_fkey FOREIGN KEY (table_log_id) REFERENCES public.table_log(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.user_oauth
     ADD CONSTRAINT user_oauth_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.venue_seat

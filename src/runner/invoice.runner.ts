@@ -1,19 +1,29 @@
 import { EntityManager } from 'typeorm';
-import { Injectable, Logger } from '@nestjs/common';
+import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
-import { ShutdownService } from '~/utility/shutdown/shutdown.service';
-import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
-import { PaymentInfrastructure } from '~/payment/payment.infra';
-import { UtilityService } from '~/utility/utility.service';
 import { AppService } from '~/app/app.service';
 import { InvoiceService } from '~/invoice/invocie.service';
+import { InvoiceModule } from '~/invoice/invoice.module';
+import { PaymentModule } from '~/payment/payment.module';
+import { PaymentInfrastructure } from '~/payment/payment.infra';
+import { ShutdownService } from '~/utility/shutdown/shutdown.service';
+import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
+import { UtilityService } from '~/utility/utility.service';
 
 import { Runner } from './runner';
 
 @Injectable()
 export class InvoiceRunner extends Runner {
   private readonly batchSize: number;
+
+  static forRoot(): DynamicModule {
+    return {
+      module: InvoiceRunner,
+      imports: [PaymentModule, InvoiceModule],
+      providers: [AppService],
+    };
+  }
 
   constructor(
     protected readonly logger: Logger,
