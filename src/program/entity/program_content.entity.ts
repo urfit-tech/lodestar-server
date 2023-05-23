@@ -11,6 +11,8 @@ import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
 import { ProgramContentSection } from '~/entity/ProgramContentSection';
 import { ProgramContentVideo } from '~/entity/ProgramContentVideo';
 
+import { DisplayMode } from '../program.type';
+
 @Index('program_content_content_section_id', ['contentSectionId'], {})
 @Index('program_content_pkey', ['id'], { unique: true })
 @Entity('program_content', { schema: 'public' })
@@ -64,7 +66,7 @@ export class ProgramContent {
   notifiedAt: Date | null
 
   @Column('text', { name: 'display_mode' })
-  displayMode: string
+  displayMode: DisplayMode;
 
   @OneToMany(() => Exercise, exercise => exercise.programContent)
   exercises: Exercise[]

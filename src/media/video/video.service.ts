@@ -65,7 +65,7 @@ export class VideoService {
    */
   private async isAbleToGenerate(videoId: string, authToken?: string): Promise<boolean> {
     const programContents = await this.programService.getProgramContentByAttachmentId(videoId);
-    if (programContents.some(({ displayMode }) => displayMode === 'trail')) {
+    if (programContents.some(({ displayMode }) => displayMode === 'trial')) {
       return true;
     }
 
