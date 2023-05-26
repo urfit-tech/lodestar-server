@@ -10,6 +10,11 @@ const config: Config = {
   collectCoverageFrom: [
     "**/*.ts",
   ],
+  coveragePathIgnorePatterns: [
+    "<rootDir>/src/entity/*",
+    ".spec.ts",
+    ".entity.ts"
+  ],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
