@@ -60,7 +60,8 @@ export class MemberService {
             return memberCategory;
           });
         member.memberProperties = Object.keys(eachRow.properties)
-          .filter((propertyKey) => appProperties.find(({ name }) => name === propertyKey))
+          .filter((propertyKey) => eachRow.properties[propertyKey].length > 0
+            && appProperties.find(({ name }) => name === propertyKey))
           .map((propertyKey) => {
             const memberProperty = new MemberProperty();
             memberProperty.memberId = memberId;
@@ -68,12 +69,14 @@ export class MemberService {
             memberProperty.value = eachRow.properties[propertyKey];
             return memberProperty;
           });
-        member.memberPhones = eachRow.phones.map((phone) => {
-          const memberPhone = new MemberPhone();
-          memberPhone.memberId = memberId;
-          memberPhone.phone = phone;
-          return memberPhone;
-        });
+        member.memberPhones = eachRow.phones
+          .filter((phone) => phone.length > 0)
+          .map((phone) => {
+            const memberPhone = new MemberPhone();
+            memberPhone.memberId = memberId;
+            memberPhone.phone = phone;
+            return memberPhone;
+          });
         member.memberTags = eachRow.tags
           .filter((tag) => appTags.find(({ name }) => name === tag))
           .map((tag) => {
