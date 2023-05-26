@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('notification_pkey', ['id'], { unique: true })
 @Index('notification_updated_at_desc_nulls_first_index', ['updatedAt'], {})

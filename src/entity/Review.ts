@@ -1,7 +1,9 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
-import { ReviewReaction } from './ReviewReaction'
-import { ReviewReply } from './ReviewReply'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Member } from '~/member/entity/member.entity';
+
+import { ReviewReaction } from './ReviewReaction';
+import { ReviewReply } from './ReviewReply';
 
 @Index('review_pkey', ['id'], { unique: true })
 @Entity('review', { schema: 'public' })

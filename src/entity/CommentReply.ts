@@ -1,7 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { Comment } from './Comment'
 import { CommentReplyReaction } from './CommentReplyReaction'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('comment_reply_pkey', ['id'], { unique: true })
 @Entity('comment_reply', { schema: 'public' })

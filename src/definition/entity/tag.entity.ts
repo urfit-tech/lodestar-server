@@ -1,11 +1,12 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { ActivityTag } from './ActivityTag'
-import { MemberSpeciality } from './MemberSpeciality'
-import { MemberTag } from './MemberTag'
-import { MerchandiseTag } from './MerchandiseTag'
-import { PodcastProgramTag } from './PodcastProgramTag'
-import { PostTag } from './PostTag'
-import { ProgramTag } from './ProgramTag'
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { MemberTag } from '~/member/entity/member_tag.entity';
+import { ActivityTag } from '~/entity/ActivityTag';
+import { MemberSpeciality } from '~/entity/MemberSpeciality';
+import { MerchandiseTag } from '~/entity/MerchandiseTag';
+import { PodcastProgramTag } from '~/entity/PodcastProgramTag';
+import { PostTag } from '~/entity/PostTag';
+import { ProgramTag } from '~/entity/ProgramTag';
 
 @Index('tag_id_key', ['name'], { unique: true })
 @Index('tag_pkey', ['name'], { unique: true })

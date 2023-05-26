@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
-import { Tag } from './Tag'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Tag } from '~/definition/entity/tag.entity';
+
+import { Member } from './member.entity';
 
 @Index('member_tag_pkey', ['id'], { unique: true })
 @Index('member_tag_member_id_tag_name_key', ['memberId', 'tagName'], {

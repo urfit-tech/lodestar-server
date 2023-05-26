@@ -1,7 +1,9 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
-import { Question } from './Question'
-import { QuestionLibrary } from './QuestionLibrary'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Member } from '~/member/entity/member.entity';
+
+import { Question } from './Question';
+import { QuestionLibrary } from './QuestionLibrary';
 
 @Index('question_group_pkey', ['id'], { unique: true })
 @Entity('question_group', { schema: 'public' })

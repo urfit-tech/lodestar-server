@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 import { SocialCard } from './SocialCard'
 
 @Index('member_social_type_channel_id_key', ['channelId', 'type'], {

@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 
 import { ProgramContent } from '~/program/entity/program_content.entity';
 
-import { Member } from './Member';
+import { Member } from '~/member/entity/member.entity';;
 
 @Index('exercise_pkey', ['id'], { unique: true })
 @Entity('exercise', { schema: 'public' })

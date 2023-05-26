@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Category } from './Category'
-import { Member } from './Member'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Category } from '~/definition/entity/category.entity';
+
+import { Member } from './member.entity';
 
 @Index('member_category_member_id_category_id_key', ['categoryId', 'memberId'], { unique: true })
 @Index('member_category_pkey', ['id'], { unique: true })

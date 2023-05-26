@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { AppPageSection } from './AppPageSection'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('app_page_path_app_id_is_deleted_key', ['appId', 'isDeleted', 'path'], {
   unique: true,

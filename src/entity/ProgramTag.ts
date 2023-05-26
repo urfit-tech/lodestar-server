@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Program } from './Program'
-import { Tag } from './Tag'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Tag } from '~/definition/entity/tag.entity';
+
+import { Program } from './Program';
 
 @Index('program_tag_pkey', ['id'], { unique: true })
 @Index('program_tag_program_id_tag_name_key', ['programId', 'tagName'], {

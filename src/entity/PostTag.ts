@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Post } from './Post'
-import { Tag } from './Tag'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Tag } from '~/definition/entity/tag.entity';
+
+import { Post } from './Post';
 
 @Index('post_tag_pkey', ['id'], { unique: true })
 @Entity('post_tag', { schema: 'public' })

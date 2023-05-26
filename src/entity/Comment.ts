@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGenerat
 import { App } from './App'
 import { CommentReaction } from './CommentReaction'
 import { CommentReply } from './CommentReply'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('comment_pkey', ['id'], { unique: true })
 @Entity('comment', { schema: 'public' })
