@@ -34,7 +34,7 @@ describe('MemberService', () => {
     service = module.get<MemberService>(MemberService);
   });
 
-  afterEach(() => {});
+  afterEach(() => jest.resetAllMocks());
 
   describe('#rawCsvToMember', () => {
     it('Should raise error due to incorrect header format', async () => {
@@ -50,7 +50,7 @@ describe('MemberService', () => {
       });
     });
 
-    it('Should process all included categories, properties, tags', async () => {
+    it('Should process all included categories, properties, tags, phones', async () => {
       const memberId = v4();
       const createdAt = new Date().toISOString();
       const rawRows = [
@@ -121,6 +121,74 @@ describe('MemberService', () => {
       member.memberTags.forEach((memberTag) => {
         expect(['test_tag1', 'test_tag2']).toContain(memberTag.tagName2.name);
       });
+      expect(member.star).toBe(999);
+      expect(member.createdAt).toBe(createdAt);
+    });
+
+    it('Should allow missing partial categories, properties, tags, phones', async () => {
+      const memberId = v4();
+      const createdAt = new Date().toISOString();
+      const rawRows = [
+        {
+          '流水號': 'id',
+          '姓名': 'name',
+          '帳號': 'username',
+          '信箱': 'email',
+          '手機1': 'phones.0',
+          '手機2': 'phones.1',
+          '分類1': 'categories.0',
+          '分類2': 'categories.1',
+          '屬性1': 'properties.0',
+          '屬性2': 'properties.1',
+          '標籤1': 'tags.0',
+          '標籤2': 'tags.1',
+          '星等': 'star',
+          '建立日期': 'createdAt',
+        },
+        {
+          '流水號': memberId,
+          '姓名': 'test_partial_missing',
+          '帳號': 'test_partial_missing_account',
+          '信箱': 'test_partial_missing_email@test.com',
+          '手機1': '0912345678',
+          '手機2': '',
+          '分類1': 'test_category1',
+          '分類2': '',
+          '屬性1': 'test_property1',
+          '屬性2': '',
+          '標籤1': 'test_tag1',
+          '標籤2': '',
+          '星等': '999',
+          '建立日期': createdAt,
+        },
+      ];
+      mockDefinitionInfra.getCategories.mockReturnValueOnce([
+        { id: 'test_category1_id', name: 'test_category1' },
+        { id: 'test_category2_id', name: 'test_category2' },
+      ]);
+      mockDefinitionInfra.getProperties.mockReturnValueOnce([
+        { id: 'test_property1_id', name: '屬性1' },
+        { id: 'test_property2_id', name: '屬性2' },
+      ])
+      mockDefinitionInfra.getTags.mockReturnValueOnce([
+        { name: 'test_tag1' },
+        { name: 'test_tag2' },
+      ]);
+
+      const [member] = await service.rawCsvToMember('test-app-id', rawRows);
+      expect(member.id).toBe(memberId);
+      expect(member.name).toBe('test_partial_missing');
+      expect(member.username).toBe(memberId);
+      expect(member.email).toBe('test_partial_missing_email@test.com');
+      expect(member.memberPhones.length).toBe(1);
+      expect(member.memberPhones[0].phone).toEqual('0912345678');
+      expect(member.memberCategories.length).toBe(1);
+      expect(member.memberCategories[0].category.id).toEqual('test_category1_id');
+      expect(member.memberProperties.length).toBe(1);
+      expect(member.memberProperties[0].property.id).toEqual('test_property1_id');
+      expect(member.memberProperties[0].value).toEqual('test_property1');
+      expect(member.memberTags.length).toBe(1);
+      expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toBe(createdAt);
     });
