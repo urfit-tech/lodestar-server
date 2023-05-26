@@ -52,7 +52,7 @@ describe('MemberService', () => {
 
     it('Should process all included categories, properties, tags, phones', async () => {
       const memberId = v4();
-      const createdAt = new Date().toISOString();
+      const createdAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -84,7 +84,7 @@ describe('MemberService', () => {
           '標籤1': 'test_tag1',
           '標籤2': 'test_tag2',
           '星等': '999',
-          '建立日期': createdAt,
+          '建立日期': createdAt.toISOString(),
         },
       ];
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
@@ -122,12 +122,12 @@ describe('MemberService', () => {
         expect(['test_tag1', 'test_tag2']).toContain(memberTag.tagName2.name);
       });
       expect(member.star).toBe(999);
-      expect(member.createdAt).toBe(createdAt);
+      expect(member.createdAt).toStrictEqual(createdAt);
     });
 
     it('Should allow missing partial categories, properties, tags, phones', async () => {
       const memberId = v4();
-      const createdAt = new Date().toISOString();
+      const createdAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -159,7 +159,7 @@ describe('MemberService', () => {
           '標籤1': 'test_tag1',
           '標籤2': '',
           '星等': '999',
-          '建立日期': createdAt,
+          '建立日期': createdAt.toISOString(),
         },
       ];
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
@@ -190,12 +190,12 @@ describe('MemberService', () => {
       expect(member.memberTags.length).toBe(1);
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
-      expect(member.createdAt).toBe(createdAt);
+      expect(member.createdAt).toStrictEqual(createdAt);
     });
 
     it('Should skip unknown categories, properties, tags', async () => {
       const memberId = v4();
-      const createdAt = new Date().toISOString();
+      const createdAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -227,7 +227,7 @@ describe('MemberService', () => {
           '標籤1': 'test_tag1',
           '不存在標籤2': 'not_exists_tag',
           '星等': '999',
-          '建立日期': createdAt,
+          '建立日期': createdAt.toISOString(),
         },
       ];
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
@@ -255,12 +255,12 @@ describe('MemberService', () => {
       expect(member.memberTags.length).toBe(1);
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
-      expect(member.createdAt).toBe(createdAt);
+      expect(member.createdAt).toStrictEqual(createdAt);
     });
 
     it('Should skip extra unknown categories, properties, tags', async () => {
       const memberId = v4();
-      const createdAt = new Date().toISOString();
+      const createdAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -289,7 +289,7 @@ describe('MemberService', () => {
           '標籤1': 'test_tag1',
           '多餘標籤2': 'extra_unknown_tag',
           '星等': '999',
-          '建立日期': createdAt,
+          '建立日期': createdAt.toISOString(),
         },
       ];
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
@@ -317,7 +317,7 @@ describe('MemberService', () => {
       expect(member.memberTags.length).toBe(1);
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
-      expect(member.createdAt).toBe(createdAt);
+      expect(member.createdAt).toStrictEqual(createdAt);
     });
   });
 });
