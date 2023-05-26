@@ -9,7 +9,7 @@ import { InvoiceRunner } from '~/runner/invoice.runner';
 import { Runner } from '~/runner/runner';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
-import { Member } from '~/entity/Member';
+import { Member } from '~/member/entity/member.entity';
 import { App } from '~/entity/App';
 import { AppPlan } from '~/entity/AppPlan';
 import { Role } from '~/entity/Role';
