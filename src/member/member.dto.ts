@@ -1,13 +1,19 @@
-import { IsEmail, IsDate, IsString, IsArray, IsObject } from 'class-validator';
+import { IsEmail, IsDate, IsString, IsArray, IsObject, IsUUID, IsNotEmpty } from 'class-validator';
 
 /**
  * Formats represents raw rows inside csv file for member import.
  */
 export class CsvRawMemberDTO {  
+  @IsUUID()
+  @IsNotEmpty()
   id: string;
   
+  @IsString()
+  @IsNotEmpty()
   name: string;
   
+  @IsString()
+  @IsNotEmpty()
   username: string;
   
   @IsEmail()

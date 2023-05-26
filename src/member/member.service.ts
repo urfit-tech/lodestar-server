@@ -1,7 +1,7 @@
 import { v4 } from 'uuid';
 import { trim } from 'lodash';
 import { EntityManager } from 'typeorm';
-import { validate, validateOrReject } from 'class-validator';
+import { validateOrReject, validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -38,7 +38,7 @@ export class MemberService {
     const appTags: Array<Tag> = await this.definitionInfra.getTags(this.entityManager);
 
     const validRows = this.normalizeRawRows(rawRows, headerInfos)
-      .filter((eachRow) => validate(eachRow))
+      .filter((eachRow) => validateSync(eachRow).length === 0)
       .map((eachRow: CsvRawMemberDTO) => {
         const memberId = eachRow.id || v4();
 
