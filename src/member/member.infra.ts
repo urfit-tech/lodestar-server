@@ -1,7 +1,7 @@
 import { EntityManager, In } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
-import { MemberProperty } from '~/entity/MemberProperty';
+import { MemberProperty } from './entity/member_property.entity';
 
 @Injectable()
 export class MemberInfrastructure {
