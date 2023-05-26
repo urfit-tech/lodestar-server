@@ -144,7 +144,7 @@ export class MemberService {
   ) {
     const normalizedRows = [];
     rows.forEach((row) => {
-      const normalized: Record<string, string | Array<string> | Record<string, string>> = {};
+      const normalized: Record<string, string | Array<string> | Record<string, string> | Date> = {};
       for (const key in row) {
         const value = trim(row[key]);
         if (header.id === key) {
@@ -158,7 +158,7 @@ export class MemberService {
         } else if (header.star === key) {
           normalized.star = value;
         } else if (header.createdAt === key) {
-          normalized.createdAt = value;
+          normalized.createdAt = new Date(value);
         } else if (header.categories.includes(key)) {
           normalized.categories = normalized.categories
             ? [...(normalized.categories as Array<string>), value]
