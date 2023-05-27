@@ -3,8 +3,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
 import { DefinitionInfrastructure } from '~/definition/definition.infra';
+import { Property } from '~/definition/entity/property.entity';
+import { Category } from '~/definition/entity/category.entity';
+import { Tag } from '~/definition/entity/tag.entity';
 
 import { MemberService } from './member.service';
+import { MemberInfrastructure } from './member.infra';
+import { Member } from './entity/member.entity';
+import { MemberPhone } from './entity/member_phone.entity';
+import { MemberProperty } from './entity/member_property.entity';
+import { MemberCategory } from './entity/member_category.entity';
+import { MemberTag } from './entity/member_tag.entity';
 
 describe('MemberService', () => {
   let service: MemberService;
@@ -13,6 +22,7 @@ describe('MemberService', () => {
     getProperties: jest.fn(),
     getTags: jest.fn(),
   };
+  let mockMemberInfra = {};
   let mockEntityManager = jest.fn();
 
   beforeEach(async () => {
@@ -22,6 +32,10 @@ describe('MemberService', () => {
         {
           provide: DefinitionInfrastructure,
           useValue: mockDefinitionInfra,
+        },
+        {
+          provide: MemberInfrastructure,
+          useValue: mockMemberInfra,
         },
         {
           provide: getEntityManagerToken('phdb'),
@@ -395,6 +409,77 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
+    });
+  });
+
+  describe('#memberToRawCsv', () => {
+    it('Should process all member fields and generate csv rows', async () => {
+      const category1 = new Category();
+      category1.id = 'test_category1_id';
+      category1.name = '測試分類1';
+      const category2 = new Category();
+      category2.id = 'test_category2_id';
+      category2.name = '測試分類2';
+
+      const property1 = new Property();
+      property1.id = 'test_property1_id';
+      property1.name = '測試屬性1';
+      const property2 = new Property();
+      property2.id = 'test_property2_id';
+      property2.name = '測試屬性2';
+
+      const tag1 = new Tag();
+      tag1.name = '測試標籤1';
+      const tag2 = new Tag();
+      tag2.name = '測試標籤2';
+
+      const headerInfos = await service.formHeaderInfoFromData(
+        5,
+        [category1, category2],
+        [property1, property2],
+        [tag1, tag2],
+      );
+      const member = new Member();
+      member.id = v4();
+      member.name = 'test';
+      member.username = 'test';
+      member.email = 'test@example.com';
+      member.star = 999;
+      member.createdAt = new Date();
+
+      const memberPhone1 = new MemberPhone();
+      memberPhone1.phone = '0912345678';
+      member.memberPhones = [memberPhone1];
+
+      const memberProperty1 = new MemberProperty();
+      memberProperty1.property = property1;
+      memberProperty1.value = '測試屬性值1';
+      member.memberProperties = [memberProperty1];
+
+      const memberCategory1 = new MemberCategory();
+      memberCategory1.category = category1;
+      member.memberCategories = [memberCategory1];
+
+      const memberTag1 = new MemberTag();
+      memberTag1.tagName2 = tag1;
+      member.memberTags = [memberTag1];
+
+      const raws = await service.memberToRawCsv(
+        headerInfos,
+        [member],
+      );
+      const [raw] = raws;
+      expect(raws.length).toBe(1);
+      expect(raw['流水號']).toEqual(member.id);
+      expect(raw['姓名']).toEqual(member.name);
+      expect(raw['帳號']).toEqual(member.username);
+      expect(raw['信箱']).toEqual(member.email);
+      expect(raw['星等']).toEqual(member.star.toString());
+      expect(raw['建立日期']).toEqual(member.createdAt);
+      expect(raw['分類1']).toEqual(member.memberCategories[0].category.name);
+      expect(raw['屬性1']).toEqual(member.memberProperties[0].value);
+      expect(raw['手機1']).toEqual(member.memberPhones[0].phone);
+      expect(raw['標籤1']).toEqual(member.memberTags[0].tagName2.name);
     });
   });
 });

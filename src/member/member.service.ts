@@ -93,6 +93,13 @@ export class MemberService {
     return validRows;
   }
 
+  async memberToRawCsv(
+    headerInfos: MemberCsvHeaderMappingInfo,
+    members: Array<Member>,
+  ): Promise<Array<Record<string, any>>> {
+    return [];
+  }
+
   /**
    * First row of file is human readable header, and the second one is for code.
    * @Param headerRow, key will be first row, value is second row.
@@ -139,6 +146,15 @@ export class MemberService {
     const transformedInfo = plainToInstance(MemberCsvHeaderMappingInfo, info);
     await validateOrReject(transformedInfo);
     return transformedInfo;
+  }
+
+  public async formHeaderInfoFromData(
+    maxPhoneCount: number,
+    appCategories: Array<Category>,
+    appProperties: Array<Property>,
+    appTags: Array<Tag>,
+  ): Promise<MemberCsvHeaderMappingInfo> {
+    return {} as any;
   }
 
   private deserializeFromRawRows(
