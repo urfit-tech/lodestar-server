@@ -2,7 +2,7 @@ import { v4 } from 'uuid';
 import { invert, trim } from 'lodash';
 import { EntityManager } from 'typeorm';
 import { validateOrReject, validateSync } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
@@ -97,7 +97,30 @@ export class MemberService {
     headerInfos: MemberCsvHeaderMappingInfo,
     members: Array<Member>,
   ): Promise<Array<Record<string, any>>> {
-    return [];
+    let csvRawMembers: Array<CsvRawMemberDTO> = [];
+    members
+      .forEach((each) => {
+        const csvRawMember = new CsvRawMemberDTO();
+        csvRawMember.id = each.id;
+        csvRawMember.name = each.name;
+        csvRawMember.username = each.username;
+        csvRawMember.email = each.email;
+        csvRawMember.star = each.star.toString();
+        csvRawMember.createdAt = each.createdAt;
+        csvRawMember.categories = each.memberCategories.map(({ category }) => category.name);
+        csvRawMember.properties = each.memberProperties.reduce(
+          (acc, current) => {
+            acc[current.property.name] = current.value;
+            return acc;
+          },
+          {},
+        );
+        csvRawMember.phones = each.memberPhones.map(({ phone }) => phone);
+        csvRawMember.tags = each.memberTags.map(({ tagName2 }) => tagName2.name);
+
+        csvRawMembers.push(csvRawMember);
+      });
+    return this.serializeToRawRows(csvRawMembers, headerInfos);
   }
 
   /**
@@ -154,7 +177,68 @@ export class MemberService {
     appProperties: Array<Property>,
     appTags: Array<Tag>,
   ): Promise<MemberCsvHeaderMappingInfo> {
-    return {} as any;
+    const info: MemberCsvHeaderMappingInfo = {
+      id: '流水號',
+      name: '姓名',
+      username: '帳號',
+      email: '信箱',
+      categories: appCategories.map(({ name }) => name),
+      properties: appProperties.map(({ name }) => name),
+      phones: [...Array(maxPhoneCount).keys()].map((each) => `手機${(each + 1).toString()}`),
+      tags: appTags.map(({ name }) => name),
+      star: '星等',
+      createdAt: '建立日期',
+    };
+
+    await validateOrReject(info);
+    return info;
+  }
+
+  private serializeToRawRows(
+    rows: Array<CsvRawMemberDTO>, header: MemberCsvHeaderMappingInfo,
+  ): Array<Record<string, any>> {
+    const serializedRows: Array<Record<string, any>> = [];
+    rows.forEach((row) => {
+      const serialized = {};
+      const plainData: Record<string, string | Array<string> | Record<string, string>> = instanceToPlain(row);
+
+      for (const key in plainData) {
+        const headerValue = header[key];
+        const value = plainData[key];
+        switch (key) {
+          case 'id':
+          case 'name':
+          case 'username':
+          case 'email':
+          case 'star':
+          case 'createdAt':
+            serialized[headerValue] = value;
+            continue;
+          case 'phones':
+            headerValue.forEach((_, index) => {
+              serialized[`手機${index + 1}`] = (value as Array<string>).length > index ? value[index] : '';
+            });
+            continue;
+          case 'categories':
+            headerValue.forEach((_, index) => {
+              serialized[`分類${index + 1}`] = (value as Array<string>).length > index ? value[index] : '';
+            });
+            continue;
+          case 'properties':
+            headerValue.forEach((each, index) => {
+              serialized[`屬性${index + 1}`] = (value as Record<string, string>)[each] || '';
+            })
+            continue;
+          case 'tags':
+            headerValue.forEach((_, index) => {
+              serialized[`標籤${index + 1}`] = (value as Array<string>).length > index ? value[index] : '';
+            });
+            continue;
+        }
+      }
+      serializedRows.push(serialized);
+    });
+    return serializedRows;
   }
 
   private deserializeFromRawRows(
