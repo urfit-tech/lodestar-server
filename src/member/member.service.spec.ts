@@ -42,7 +42,7 @@ describe('MemberService', () => {
         { '姓名': 'name' },
       ];
       (
-        await service.rawCsvToMember('test-app-id', rawRows)
+        await service.parseHeaderInfoFromColumn(rawRows.shift())
           .catch((err) => err)
       ).forEach(({ constraints }) => {
         expect(constraints.isNotEmpty).not.toBeUndefined();
@@ -100,7 +100,8 @@ describe('MemberService', () => {
         { name: 'test_tag2' },
       ]);
       
-      const [member] = await service.rawCsvToMember('test-app-id', rawRows);
+      const headerInfos = await service.parseHeaderInfoFromColumn(rawRows.shift());
+      const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test');
       expect(member.username).toBe(memberId);
@@ -175,7 +176,8 @@ describe('MemberService', () => {
         { name: 'test_tag2' },
       ]);
 
-      const [member] = await service.rawCsvToMember('test-app-id', rawRows);
+      const headerInfos = await service.parseHeaderInfoFromColumn(rawRows.shift());
+      const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_partial_missing');
       expect(member.username).toBe(memberId);
@@ -240,7 +242,8 @@ describe('MemberService', () => {
         { name: 'test_tag1' },
       ]);
 
-      const [member] = await service.rawCsvToMember('test-app-id', rawRows);
+      const headerInfos = await service.parseHeaderInfoFromColumn(rawRows.shift());
+      const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_not_exists');
       expect(member.username).toBe(memberId);
@@ -283,7 +286,7 @@ describe('MemberService', () => {
           '手機1': '0912345678',
           '手機2': '',
           '分類1': 'test_category1',
-          '多於分類1': 'extra_unknown_category',
+          '多餘分類1': 'extra_unknown_category',
           '屬性1': 'test_property1',
           '多餘屬性2': 'extra_unknown_property',
           '標籤1': 'test_tag1',
@@ -302,7 +305,8 @@ describe('MemberService', () => {
         { name: 'test_tag1' },
       ]);
 
-      const [member] = await service.rawCsvToMember('test-app-id', rawRows);
+      const headerInfos = await service.parseHeaderInfoFromColumn(rawRows.shift());
+      const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_extra_unknown');
       expect(member.username).toBe(memberId);
@@ -372,7 +376,8 @@ describe('MemberService', () => {
         { name: 'test_tag1' },
       ]);
 
-      const members = await service.rawCsvToMember('test-app-id', rawRows);
+      const headerInfos = await service.parseHeaderInfoFromColumn(rawRows.shift());
+      const members = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(members.length).toBe(1);
       const [member] = members;
       expect(member.id).toBe(memberId);

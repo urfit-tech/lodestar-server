@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { trim } from 'lodash';
+import { invert, trim } from 'lodash';
 import { EntityManager } from 'typeorm';
 import { validateOrReject, validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
@@ -26,9 +26,11 @@ export class MemberService {
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {}
 
-  async rawCsvToMember(appId: string, rawRows: Array<Record<string, string>>): Promise<Array<Member>> {
-    const headerInfos = await this.getHeaderInfo(rawRows.shift());
-
+  async rawCsvToMember(
+    appId: string,
+    headerInfos: MemberCsvHeaderMappingInfo,
+    rawRows: Array<Record<string, string>>,
+  ): Promise<Array<Member>> {
     const appCategories: Array<Category> = await this.definitionInfra.getCategories(
       appId, this.entityManager,
     );
@@ -37,7 +39,7 @@ export class MemberService {
     );
     const appTags: Array<Tag> = await this.definitionInfra.getTags(this.entityManager);
 
-    const validRows = this.normalizeRawRows(rawRows, headerInfos)
+    const validRows = this.deserializeFromRawRows(rawRows, headerInfos)
       .filter((eachRow) => validateSync(eachRow).length === 0)
       .map((eachRow: CsvRawMemberDTO) => {
         const memberId = eachRow.id || v4();
@@ -95,7 +97,7 @@ export class MemberService {
    * First row of file is human readable header, and the second one is for code.
    * @Param headerRow, key will be first row, value is second row.
    */
-  private async getHeaderInfo(headerRow: Record<string, string>): Promise<MemberCsvHeaderMappingInfo> {
+  public async parseHeaderInfoFromColumn(headerRow: Record<string, string>): Promise<MemberCsvHeaderMappingInfo> {
     const info: MemberCsvHeaderMappingInfo = {
       id: '',
       name: '',
@@ -139,47 +141,47 @@ export class MemberService {
     return transformedInfo;
   }
 
-  private normalizeRawRows(
+  private deserializeFromRawRows(
     rows: Array<Record<string, any>>, header: MemberCsvHeaderMappingInfo,
-  ) {
-    const normalizedRows = [];
+  ): Array<CsvRawMemberDTO> {
+    const deserializedRows = [];
     rows.forEach((row) => {
-      const normalized: Record<string, string | Array<string> | Record<string, string> | Date> = {};
-      for (const key in row) {
-        const value = trim(row[key]);
-        if (header.id === key) {
-          normalized.id = value
-        } else if (header.name === key) {
-          normalized.name = value;
-        } else if (header.username === key) {
-          normalized.username = value;
-        } else if (header.email === key) {
-          normalized.email = value;
-        } else if (header.star === key) {
-          normalized.star = value;
-        } else if (header.createdAt === key) {
-          normalized.createdAt = new Date(value);
-        } else if (header.categories.includes(key)) {
-          normalized.categories = normalized.categories
-            ? [...(normalized.categories as Array<string>), value]
-            : [value];
-        } else if (header.properties.includes(key)) {
-          normalized.properties = {
-            ...(normalized.properties as Record<string, string> || {}),
-            [key]: value,
-          };
-        } else if (header.phones.includes(key)) {
-          normalized.phones = normalized.phones
-            ? [...(normalized.phones as Array<string>), value]
-            : [value];
-        } else if (header.tags.includes(key)) {
-          normalized.tags = normalized.tags
-            ? [...(normalized.tags as Array<string>), value]
-            : [value];
+      const deserialized: Record<string, string | Array<string> | Record<string, string> | Date> = {};
+      for (const humanReadableKey in row) {
+        const codeReadable = invert(header)[humanReadableKey];
+        const dataValue = trim(row[humanReadableKey]);
+        switch(humanReadableKey) {
+          case header.id:
+          case header.name:
+          case header.username:
+          case header.email:
+          case header.star:
+            deserialized[codeReadable] = dataValue; continue;
+          case header.createdAt:
+            deserialized[codeReadable] = new Date(dataValue); continue;
+          default:
+            if (header.categories.includes(humanReadableKey)) {
+              deserialized.categories = deserialized.categories
+                ? [...(deserialized.categories as Array<string>), dataValue]
+                : [dataValue];
+            } else if (header.properties.includes(humanReadableKey)) {
+              deserialized.properties = {
+                ...(deserialized.properties as Record<string, string> || {}),
+                [humanReadableKey]: dataValue,
+              };
+            } else if (header.phones.includes(humanReadableKey)) {
+              deserialized.phones = deserialized.phones
+                ? [...(deserialized.phones as Array<string>), dataValue]
+                : [dataValue];
+            } else if (header.tags.includes(humanReadableKey)) {
+              deserialized.tags = deserialized.tags
+                ? [...(deserialized.tags as Array<string>), dataValue]
+                : [dataValue];
+            }
         }
       }
-      normalizedRows.push(normalized);
+      deserializedRows.push(deserialized);
     });
-    return plainToInstance(CsvRawMemberDTO, normalizedRows);
+    return plainToInstance(CsvRawMemberDTO, deserializedRows);
   }
 }
