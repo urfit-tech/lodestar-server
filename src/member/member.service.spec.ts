@@ -417,27 +417,16 @@ describe('MemberService', () => {
       const category1 = new Category();
       category1.id = 'test_category1_id';
       category1.name = '測試分類1';
-      const category2 = new Category();
-      category2.id = 'test_category2_id';
-      category2.name = '測試分類2';
 
       const property1 = new Property();
       property1.id = 'test_property1_id';
       property1.name = '測試屬性1';
-      const property2 = new Property();
-      property2.id = 'test_property2_id';
-      property2.name = '測試屬性2';
 
       const tag1 = new Tag();
       tag1.name = '測試標籤1';
-      const tag2 = new Tag();
-      tag2.name = '測試標籤2';
 
       const headerInfos = await service.formHeaderInfoFromData(
-        5,
-        [category1, category2],
-        [property1, property2],
-        [tag1, tag2],
+        5, [category1], [property1], [tag1],
       );
       const member = new Member();
       member.id = v4();
@@ -480,6 +469,256 @@ describe('MemberService', () => {
       expect(raw['屬性1']).toEqual(member.memberProperties[0].value);
       expect(raw['手機1']).toEqual(member.memberPhones[0].phone);
       expect(raw['標籤1']).toEqual(member.memberTags[0].tagName2.name);
+    });
+
+    it('Should process all member fields and generate csv rows with multiple field values', async () => {
+      const category1 = new Category();
+      category1.id = 'test_category1_id';
+      category1.name = '測試分類1';
+      const category2 = new Category();
+      category2.id = 'test_category2_id';
+      category2.name = '測試分類2';
+
+      const property1 = new Property();
+      property1.id = 'test_property1_id';
+      property1.name = '測試屬性1';
+      const property2 = new Property();
+      property2.id = 'test_property2_id';
+      property2.name = '測試屬性2';
+
+      const tag1 = new Tag();
+      tag1.name = '測試標籤1';
+      const tag2 = new Tag();
+      tag2.name = '測試標籤2';
+
+      const headerInfos = await service.formHeaderInfoFromData(
+        5,
+        [category1, category2],
+        [property1, property2],
+        [tag1, tag2],
+      );
+      const member = new Member();
+      member.id = v4();
+      member.name = 'test';
+      member.username = 'test';
+      member.email = 'test@example.com';
+      member.star = 999;
+      member.createdAt = new Date();
+
+      const memberPhone1 = new MemberPhone();
+      memberPhone1.phone = '0912345678';
+      const memberPhone2 = new MemberPhone();
+      memberPhone2.phone = '0911111111';
+      member.memberPhones = [memberPhone1, memberPhone2];
+
+      const memberProperty1 = new MemberProperty();
+      memberProperty1.property = property1;
+      memberProperty1.value = '測試屬性值1';
+      const memberProperty2 = new MemberProperty();
+      memberProperty2.property = property2;
+      memberProperty2.value = '測試屬性值2';
+      member.memberProperties = [memberProperty1, memberProperty2];
+
+      const memberCategory1 = new MemberCategory();
+      memberCategory1.category = category1;
+      const memberCategory2 = new MemberCategory();
+      memberCategory2.category = category2;
+      member.memberCategories = [memberCategory1, memberCategory2];
+
+      const memberTag1 = new MemberTag();
+      memberTag1.tagName2 = tag1;
+      const memberTag2 = new MemberTag();
+      memberTag2.tagName2 = tag2;
+      member.memberTags = [memberTag1, memberTag2];
+
+      const raws = await service.memberToRawCsv(
+        headerInfos,
+        [member],
+      );
+      const [raw] = raws;
+      expect(raws.length).toBe(1);
+      expect(raw['流水號']).toEqual(member.id);
+      expect(raw['姓名']).toEqual(member.name);
+      expect(raw['帳號']).toEqual(member.username);
+      expect(raw['信箱']).toEqual(member.email);
+      expect(raw['星等']).toEqual(member.star.toString());
+      expect(raw['建立日期']).toEqual(member.createdAt);
+      Array(member.memberCategories.length).forEach((index) => {
+        expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index].category.name);
+        expect(raw[`屬性${index + 1}`]).toEqual(member.memberProperties[index].value);
+        expect(raw[`標籤${index + 1}`]).toEqual(member.memberTags[index].tagName2.name);
+      });
+      Array(member.memberPhones.length).forEach((index) => {
+        expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index].phone);
+      });
+    });
+
+    it('Should output empty string if some category, property, tag is not use', async () => {
+      const category1 = new Category();
+      category1.id = 'test_category1_id';
+      category1.name = '測試分類1';
+      const category2 = new Category();
+      category2.id = 'test_category2_id';
+      category2.name = '測試分類2';
+
+      const property1 = new Property();
+      property1.id = 'test_property1_id';
+      property1.name = '測試屬性1';
+      const property2 = new Property();
+      property2.id = 'test_property2_id';
+      property2.name = '測試屬性2';
+
+      const tag1 = new Tag();
+      tag1.name = '測試標籤1';
+      const tag2 = new Tag();
+      tag2.name = '測試標籤2';
+
+      const headerInfos = await service.formHeaderInfoFromData(
+        5,
+        [category1, category2],
+        [property1, property2],
+        [tag1, tag2],
+      );
+      const member = new Member();
+      member.id = v4();
+      member.name = 'test';
+      member.username = 'test';
+      member.email = 'test@example.com';
+      member.star = 999;
+      member.createdAt = new Date();
+
+      const memberPhone1 = new MemberPhone();
+      memberPhone1.phone = '0912345678';
+      const memberPhone2 = new MemberPhone();
+      memberPhone2.phone = '0911111111';
+      member.memberPhones = [memberPhone1, memberPhone2];
+
+      const memberProperty1 = new MemberProperty();
+      memberProperty1.property = property1;
+      memberProperty1.value = '測試屬性值1';
+      member.memberProperties = [memberProperty1];
+
+      const memberCategory1 = new MemberCategory();
+      memberCategory1.category = category1;
+      member.memberCategories = [memberCategory1];
+
+      const memberTag1 = new MemberTag();
+      memberTag1.tagName2 = tag1;
+      member.memberTags = [memberTag1];
+
+      const raws = await service.memberToRawCsv(
+        headerInfos,
+        [member],
+      );
+      const [raw] = raws;
+      expect(raws.length).toBe(1);
+      expect(raw['流水號']).toEqual(member.id);
+      expect(raw['姓名']).toEqual(member.name);
+      expect(raw['帳號']).toEqual(member.username);
+      expect(raw['信箱']).toEqual(member.email);
+      expect(raw['星等']).toEqual(member.star.toString());
+      expect(raw['建立日期']).toEqual(member.createdAt);
+      Array(member.memberCategories.length).forEach((index) => {
+        expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index]
+          ? member.memberCategories[index].category.name : '',
+        );
+        expect(raw[`屬性${index + 1}`]).toEqual(member.memberProperties[index]
+          ? member.memberProperties[index].value : '',
+        );
+        expect(raw[`標籤${index + 1}`]).toEqual(member.memberTags[index]
+          ? member.memberTags[index].tagName2.name : '',
+        );
+      });
+      Array(member.memberPhones.length).forEach((index) => {
+        expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index]
+          ? member.memberPhones[index].phone : '',
+        );
+      });
+    });
+
+    it('Should skip categories, properties, tags is not belong to app', async () => {
+      const category1 = new Category();
+      category1.id = 'test_category1_id';
+      category1.name = '測試分類1';
+      const notBelongCategory = new Category();
+      notBelongCategory.id = 'notBelongCategory_id';
+      notBelongCategory.name = '不存在分類';
+
+      const property1 = new Property();
+      property1.id = 'test_property1_id';
+      property1.name = '測試屬性1';
+      const notBelongProperty = new Property();
+      notBelongProperty.id = 'notBelongProperty_id';
+      notBelongProperty.name = '不存在屬性';
+
+      const tag1 = new Tag();
+      tag1.name = '測試標籤1';
+      const notBelongTag = new Tag();
+      notBelongTag.name = '不存在標籤';
+
+      const headerInfos = await service.formHeaderInfoFromData(
+        5, [category1], [property1], [tag1],
+      );
+      const member = new Member();
+      member.id = v4();
+      member.name = 'test';
+      member.username = 'test';
+      member.email = 'test@example.com';
+      member.star = 999;
+      member.createdAt = new Date();
+
+      const memberPhone1 = new MemberPhone();
+      memberPhone1.phone = '0912345678';
+      member.memberPhones = [memberPhone1];
+
+      const memberProperty1 = new MemberProperty();
+      memberProperty1.property = property1;
+      memberProperty1.value = '測試屬性值1';
+      const notBelongMemberProperty = new MemberProperty();
+      notBelongMemberProperty.property = notBelongProperty;
+      notBelongMemberProperty.value = '不存在屬性之值';
+      member.memberProperties = [memberProperty1, notBelongMemberProperty];
+
+      const memberCategory1 = new MemberCategory();
+      memberCategory1.category = category1;
+      const notBelongMemberCategory = new MemberCategory();
+      notBelongMemberCategory.category = notBelongCategory;
+      member.memberCategories = [memberCategory1, notBelongMemberCategory];
+
+      const memberTag1 = new MemberTag();
+      memberTag1.tagName2 = tag1;
+      const notBelongMemberTag = new MemberTag();
+      notBelongMemberTag.tagName2 = notBelongTag;
+      member.memberTags = [memberTag1, notBelongMemberTag];
+
+      const raws = await service.memberToRawCsv(
+        headerInfos,
+        [member],
+      );
+      const [raw] = raws;
+      expect(raws.length).toBe(1);
+      expect(raw['流水號']).toEqual(member.id);
+      expect(raw['姓名']).toEqual(member.name);
+      expect(raw['帳號']).toEqual(member.username);
+      expect(raw['信箱']).toEqual(member.email);
+      expect(raw['星等']).toEqual(member.star.toString());
+      expect(raw['建立日期']).toEqual(member.createdAt);
+      Array(member.memberCategories.length).forEach((index) => {
+        expect(raw[`分類${index + 1}`]).toEqual(index === 0
+          ? member.memberCategories[index].category.name : '',
+        );
+        expect(raw[`屬性${index + 1}`]).toEqual(index === 0
+          ? member.memberProperties[index].value : '',
+        );
+        expect(raw[`標籤${index + 1}`]).toEqual(index === 0
+          ? member.memberTags[index].tagName2.name : '',
+        );
+      });
+      Array(member.memberPhones.length).forEach((index) => {
+        expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index]
+          ? member.memberPhones[index].phone : '',
+        );
+      });
     });
   });
 });
