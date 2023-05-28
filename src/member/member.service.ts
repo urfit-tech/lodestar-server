@@ -182,10 +182,10 @@ export class MemberService {
       name: '姓名',
       username: '帳號',
       email: '信箱',
-      categories: appCategories.map(({ name }) => name),
+      categories: [...Array(appCategories.length).keys()].map((each) => `分類${(each + 1).toString()}`),
       properties: appProperties.map(({ name }) => name),
       phones: [...Array(maxPhoneCount).keys()].map((each) => `手機${(each + 1).toString()}`),
-      tags: appTags.map(({ name }) => name),
+      tags: [...Array(appTags.length).keys()].map((each) => `標籤${(each + 1).toString()}`),
       star: '星等',
       createdAt: '建立日期',
     };
@@ -226,7 +226,7 @@ export class MemberService {
             continue;
           case 'properties':
             headerValue.forEach((each, index) => {
-              serialized[`屬性${index + 1}`] = (value as Record<string, string>)[each] || '';
+              serialized[each] = (value as Record<string, string>)[each] || '';
             })
             continue;
           case 'tags':
