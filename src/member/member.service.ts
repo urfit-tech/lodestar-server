@@ -2,7 +2,7 @@ import { v4 } from 'uuid';
 import { invert, trim } from 'lodash';
 import { EntityManager } from 'typeorm';
 import { validateOrReject, validateSync } from 'class-validator';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
@@ -12,7 +12,7 @@ import { Category } from '~/definition/entity/category.entity';
 import { Tag } from '~/definition/entity/tag.entity';
 
 import { MemberCsvHeaderMappingInfo } from './member.type';
-import { CsvRawMemberDTO } from './member.dto';
+import { CsvRawMember } from './class/csvRawMember';
 import { Member } from './entity/member.entity';
 import { MemberCategory } from './entity/member_category.entity';
 import { MemberProperty } from './entity/member_property.entity';
@@ -41,7 +41,7 @@ export class MemberService {
 
     const validRows = this.deserializeFromRawRows(rawRows, headerInfos)
       .filter((eachRow) => validateSync(eachRow).length === 0)
-      .map((eachRow: CsvRawMemberDTO) => {
+      .map((eachRow: CsvRawMember) => {
         const memberId = eachRow.id || v4();
 
         const member = new Member();
@@ -97,10 +97,9 @@ export class MemberService {
     headerInfos: MemberCsvHeaderMappingInfo,
     members: Array<Member>,
   ): Promise<Array<Record<string, any>>> {
-    let csvRawMembers: Array<CsvRawMemberDTO> = [];
-    members
-      .forEach((each) => {
-        const csvRawMember = new CsvRawMemberDTO();
+    return members
+      .map((each) => {
+        const csvRawMember = new CsvRawMember();
         csvRawMember.id = each.id;
         csvRawMember.name = each.name;
         csvRawMember.username = each.username;
@@ -118,9 +117,9 @@ export class MemberService {
         csvRawMember.phones = each.memberPhones.map(({ phone }) => phone);
         csvRawMember.tags = each.memberTags.map(({ tagName2 }) => tagName2.name);
 
-        csvRawMembers.push(csvRawMember);
-      });
-    return this.serializeToRawRows(csvRawMembers, headerInfos);
+        return csvRawMember;
+      })
+      .map((each) => each.serializeToCsvRawRow(headerInfos));
   }
 
   /**
@@ -194,56 +193,9 @@ export class MemberService {
     return info;
   }
 
-  private serializeToRawRows(
-    rows: Array<CsvRawMemberDTO>, header: MemberCsvHeaderMappingInfo,
-  ): Array<Record<string, any>> {
-    const serializedRows: Array<Record<string, any>> = [];
-    rows.forEach((row) => {
-      const serialized = {};
-      const plainData: Record<string, string | Array<string> | Record<string, string>> = instanceToPlain(row);
-
-      for (const key in plainData) {
-        const headerValue = header[key];
-        const value = plainData[key];
-        switch (key) {
-          case 'id':
-          case 'name':
-          case 'username':
-          case 'email':
-          case 'star':
-          case 'createdAt':
-            serialized[headerValue] = value;
-            continue;
-          case 'phones':
-            headerValue.forEach((_, index) => {
-              serialized[`手機${index + 1}`] = (value as Array<string>).length > index ? value[index] : '';
-            });
-            continue;
-          case 'categories':
-            headerValue.forEach((_, index) => {
-              serialized[`分類${index + 1}`] = (value as Array<string>).length > index ? value[index] : '';
-            });
-            continue;
-          case 'properties':
-            headerValue.forEach((each, index) => {
-              serialized[each] = (value as Record<string, string>)[each] || '';
-            })
-            continue;
-          case 'tags':
-            headerValue.forEach((_, index) => {
-              serialized[`標籤${index + 1}`] = (value as Array<string>).length > index ? value[index] : '';
-            });
-            continue;
-        }
-      }
-      serializedRows.push(serialized);
-    });
-    return serializedRows;
-  }
-
   private deserializeFromRawRows(
     rows: Array<Record<string, any>>, header: MemberCsvHeaderMappingInfo,
-  ): Array<CsvRawMemberDTO> {
+  ): Array<CsvRawMember> {
     const deserializedRows = [];
     rows.forEach((row) => {
       const deserialized: Record<string, string | Array<string> | Record<string, string> | Date | number> = {};
@@ -286,6 +238,6 @@ export class MemberService {
       }
       deserializedRows.push(deserialized);
     });
-    return plainToInstance(CsvRawMemberDTO, deserializedRows);
+    return plainToInstance(CsvRawMember, deserializedRows);
   }
 }
