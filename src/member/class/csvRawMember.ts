@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsObject, IsUUID, IsNotEmpty, IsNumber, IsDate, IsEmail } from 'class-validator';
+import { IsString, IsArray, IsObject, IsUUID, IsNotEmpty, IsNumber, IsDate, IsEmail, validateSync } from 'class-validator';
 
 import { MemberCsvHeaderMappingInfo } from '../member.type';
 
@@ -73,5 +73,29 @@ export class CsvRawMember {
       ...properties,
       ...tags,
     };
+  }
+
+  public deserializedFromCsvRawRow(
+    header: MemberCsvHeaderMappingInfo,
+    row: Record<string, any>,
+  ): CsvRawMember {
+    this.id = row[header.id];
+    this.name = row[header.name];
+    this.username = row[header.username];
+    this.email = row[header.email];
+    this.star = parseInt(row[header.star]);
+    this.createdAt = new Date(row[header.createdAt]);
+    this.phones = header.phones.map((each) => row[each]);
+    this.categories = header.categories.map((each) => row[each]);
+    this.properties = header.properties.reduce(
+      (acc, current) => {
+        acc[current] = row[current];
+        return acc;
+      },
+      {},
+    );
+    this.tags = header.tags.map((each) => row[each]);
+    validateSync(this);
+    return this;
   }
 }
