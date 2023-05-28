@@ -52,7 +52,7 @@ export class MemberService {
         member.role = 'general-member';
         member.username = memberId;
         member.createdAt = eachRow.createdAt;
-        member.star = parseInt(eachRow.star) || 0;
+        member.star = eachRow.star || 0;
         member.memberCategories = eachRow.categories
           .filter((category) => appCategories.find(({ name }) => category === name))
           .map((category) => {
@@ -105,7 +105,7 @@ export class MemberService {
         csvRawMember.name = each.name;
         csvRawMember.username = each.username;
         csvRawMember.email = each.email;
-        csvRawMember.star = each.star.toString();
+        csvRawMember.star = each.star;
         csvRawMember.createdAt = each.createdAt;
         csvRawMember.categories = each.memberCategories.map(({ category }) => category.name);
         csvRawMember.properties = each.memberProperties.reduce(
@@ -246,7 +246,7 @@ export class MemberService {
   ): Array<CsvRawMemberDTO> {
     const deserializedRows = [];
     rows.forEach((row) => {
-      const deserialized: Record<string, string | Array<string> | Record<string, string> | Date> = {};
+      const deserialized: Record<string, string | Array<string> | Record<string, string> | Date | number> = {};
       for (const humanReadableKey in row) {
         const codeReadable = invert(header)[humanReadableKey];
         const dataValue = row[humanReadableKey];
@@ -255,10 +255,14 @@ export class MemberService {
           case header.name:
           case header.username:
           case header.email:
+            deserialized[codeReadable] = trim(dataValue);
+            continue;
           case header.star:
-            deserialized[codeReadable] = trim(dataValue); continue;
+            deserialized[codeReadable] = parseInt(trim(dataValue));
+            continue;
           case header.createdAt:
-            deserialized[codeReadable] = new Date(dataValue); continue;
+            deserialized[codeReadable] = new Date(dataValue);
+            continue;
           default:
             if (header.categories.includes(humanReadableKey)) {
               deserialized.categories = deserialized.categories
