@@ -721,4 +721,156 @@ describe('MemberService', () => {
       });
     });
   });
+
+  describe('Complementary of import / export functionalities', () => {
+    it('exported data can re-import with multiple', async () => {
+      const category1 = new Category();
+      category1.id = 'test_category1_id';
+      category1.name = '測試分類1';
+
+      const property1 = new Property();
+      property1.id = 'test_property1_id';
+      property1.name = '測試屬性1';
+
+      const tag1 = new Tag();
+      tag1.name = '測試標籤1';
+
+      mockDefinitionInfra.getCategories.mockReturnValueOnce([category1]);
+      mockDefinitionInfra.getProperties.mockReturnValueOnce([property1]);
+      mockDefinitionInfra.getTags.mockReturnValueOnce([tag1]);
+
+      const headerInfos = await service.formHeaderInfoFromData(
+        5, [category1], [property1], [tag1],
+      );
+      const memberId = v4();
+      const memberCreatedAt = new Date();
+      const member = new Member();
+      member.id = memberId;
+      member.name = 'test';
+      member.username = 'test';
+      member.email = 'test@example.com';
+      member.star = 999;
+      member.createdAt = memberCreatedAt;
+
+      const memberPhone1 = new MemberPhone();
+      memberPhone1.phone = '0912345678';
+      member.memberPhones = [memberPhone1];
+
+      const memberProperty1 = new MemberProperty();
+      memberProperty1.property = property1;
+      memberProperty1.value = '測試屬性1之值';
+      member.memberProperties = [memberProperty1];
+
+      const memberCategory1 = new MemberCategory();
+      memberCategory1.category = category1;
+      member.memberCategories = [memberCategory1];
+
+      const memberTag1 = new MemberTag();
+      memberTag1.tagName2 = tag1;
+      member.memberTags = [memberTag1];
+
+      const rawRows = await service.memberToRawCsv(
+        headerInfos,
+        [member],
+      );
+      const importedMembers = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      expect(importedMembers.length).toBe(1);
+      const [importedMember] = importedMembers;
+      expect(importedMember.id).toEqual(member.id);
+      expect(importedMember.name).toEqual(member.name);
+      expect(importedMember.username).toEqual(member.id); // Due to default set username to member id.
+      expect(importedMember.email).toEqual(member.email);
+      expect(importedMember.star).toEqual(member.star);
+      expect(importedMember.createdAt).toEqual(memberCreatedAt);
+      importedMember.memberPhones.forEach((each) => {
+        const find = member.memberPhones.find((every) => each.phone === every.phone);
+        expect(find).not.toBeUndefined();
+      });
+      importedMember.memberCategories.forEach((each) => {
+        const find = member.memberCategories.find((every) => each.categoryId === every.categoryId);
+        expect(find).not.toBeUndefined();
+      });
+      importedMember.memberProperties.forEach((each) => {
+        const find = member.memberProperties.find((every) => each.id === every.id);
+        expect(find).not.toBeUndefined();
+        expect(find.value).toEqual(memberProperty1.value);
+      });
+      importedMember.memberTags.forEach((each) => {
+        const find = member.memberTags.find((every) => each.id === every.id);
+        expect(find).not.toBeUndefined();
+      });
+    });
+
+    it('imported data can re-export with multiple', async () => {
+      const memberId = v4();
+      const createdAt = new Date();
+      const rawRows = [
+        {
+          '流水號': 'id',
+          '姓名': 'name',
+          '帳號': 'username',
+          '信箱': 'email',
+          '手機1': 'phones.0',
+          '手機2': 'phones.1',
+          '分類1': 'categories.0',
+          '分類2': 'categories.1',
+          '測試屬性1': 'properties.0',
+          '測試屬性2': 'properties.1',
+          '標籤1': 'tags.0',
+          '標籤2': 'tags.1',
+          '星等': 'star',
+          '建立日期': 'createdAt',
+        },
+        {
+          '流水號': memberId,
+          '姓名': 'test',
+          '帳號': 'test_account',
+          '信箱': 'test_email@test.com',
+          '手機1': '0912345678',
+          '手機2': '0923456789',
+          '分類1': '測試分類1',
+          '分類2': '測試分類2',
+          '測試屬性1': '測試屬性1之值',
+          '測試屬性2': '',
+          '標籤1': '測試標籤1',
+          '標籤2': '',
+          '星等': '999',
+          '建立日期': createdAt.toISOString(),
+        },
+      ];
+      mockDefinitionInfra.getCategories.mockReturnValueOnce([
+        { id: 'test_category1_id', name: '測試分類1' },
+        { id: 'test_category2_id', name: '測試分類2' },
+      ]);
+      mockDefinitionInfra.getProperties.mockReturnValueOnce([
+        { id: 'test_property1_id', name: '測試屬性1' },
+        { id: 'test_property2_id', name: '測試屬性2' },
+      ])
+      mockDefinitionInfra.getTags.mockReturnValueOnce([
+        { name: '測試標籤1' },
+        { name: '測試標籤2' },
+      ]);
+      
+      const headerInfos = await service.parseHeaderInfoFromColumn(rawRows.shift());
+      const members = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const [member] = members;
+      const exportedRawRows = await service.memberToRawCsv(headerInfos, members);
+      expect(exportedRawRows.length).toBe(1);
+      const [exportedRawRow] = exportedRawRows;
+      expect(exportedRawRow['流水號']).toEqual(member.id);
+      expect(exportedRawRow['姓名']).toEqual(member.name);
+      expect(exportedRawRow['帳號']).toEqual(member.username);
+      expect(exportedRawRow['信箱']).toEqual(member.email);
+      expect(exportedRawRow['星等']).toEqual(member.star.toString());
+      expect(exportedRawRow['建立日期']).toEqual(member.createdAt);
+      expect(exportedRawRow['手機1']).toEqual(member.memberPhones[0].phone);
+      expect(exportedRawRow['手機2']).toEqual(member.memberPhones[1].phone);
+      expect(exportedRawRow['分類1']).toEqual(member.memberCategories[0].category.name);
+      expect(exportedRawRow['分類2']).toEqual(member.memberCategories[1].category.name);
+      expect(exportedRawRow['測試屬性1']).toEqual(member.memberProperties[0].value);
+      expect(exportedRawRow['測試屬性2']).toEqual('');
+      expect(exportedRawRow['標籤1']).toEqual(member.memberTags[0].tagName2.name);
+      expect(exportedRawRow['標籤2']).toEqual('');
+    });
+  });
 });
