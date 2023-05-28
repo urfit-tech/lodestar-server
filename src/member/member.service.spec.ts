@@ -466,7 +466,7 @@ describe('MemberService', () => {
       expect(raw['星等']).toEqual(member.star.toString());
       expect(raw['建立日期']).toEqual(member.createdAt);
       expect(raw['分類1']).toEqual(member.memberCategories[0].category.name);
-      expect(raw['屬性1']).toEqual(member.memberProperties[0].value);
+      expect(raw['測試屬性1']).toEqual(member.memberProperties[0].value);
       expect(raw['手機1']).toEqual(member.memberPhones[0].phone);
       expect(raw['標籤1']).toEqual(member.memberTags[0].tagName2.name);
     });
@@ -545,7 +545,7 @@ describe('MemberService', () => {
       expect(raw['建立日期']).toEqual(member.createdAt);
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index].category.name);
-        expect(raw[`屬性${index + 1}`]).toEqual(member.memberProperties[index].value);
+        expect(raw[`測試屬性${index + 1}`]).toEqual(member.memberProperties[index].value);
         expect(raw[`標籤${index + 1}`]).toEqual(member.memberTags[index].tagName2.name);
       });
       Array(member.memberPhones.length).forEach((index) => {
@@ -622,7 +622,7 @@ describe('MemberService', () => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index]
           ? member.memberCategories[index].category.name : '',
         );
-        expect(raw[`屬性${index + 1}`]).toEqual(member.memberProperties[index]
+        expect(raw[`測試屬性${index + 1}`]).toEqual(member.memberProperties[index]
           ? member.memberProperties[index].value : '',
         );
         expect(raw[`標籤${index + 1}`]).toEqual(member.memberTags[index]
@@ -707,7 +707,7 @@ describe('MemberService', () => {
         expect(raw[`分類${index + 1}`]).toEqual(index === 0
           ? member.memberCategories[index].category.name : '',
         );
-        expect(raw[`屬性${index + 1}`]).toEqual(index === 0
+        expect(raw[`測試屬性${index + 1}`]).toEqual(index === 0
           ? member.memberProperties[index].value : '',
         );
         expect(raw[`標籤${index + 1}`]).toEqual(index === 0
