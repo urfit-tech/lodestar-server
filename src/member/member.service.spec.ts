@@ -463,7 +463,7 @@ describe('MemberService', () => {
       expect(raw['姓名']).toEqual(member.name);
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
-      expect(raw['星等']).toEqual(member.star.toString());
+      expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt);
       expect(raw['分類1']).toEqual(member.memberCategories[0].category.name);
       expect(raw['測試屬性1']).toEqual(member.memberProperties[0].value);
@@ -541,7 +541,7 @@ describe('MemberService', () => {
       expect(raw['姓名']).toEqual(member.name);
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
-      expect(raw['星等']).toEqual(member.star.toString());
+      expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt);
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index].category.name);
@@ -616,7 +616,7 @@ describe('MemberService', () => {
       expect(raw['姓名']).toEqual(member.name);
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
-      expect(raw['星等']).toEqual(member.star.toString());
+      expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt);
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index]
@@ -701,7 +701,7 @@ describe('MemberService', () => {
       expect(raw['姓名']).toEqual(member.name);
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
-      expect(raw['星等']).toEqual(member.star.toString());
+      expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt);
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(index === 0
@@ -861,7 +861,7 @@ describe('MemberService', () => {
       expect(exportedRawRow['姓名']).toEqual(member.name);
       expect(exportedRawRow['帳號']).toEqual(member.username);
       expect(exportedRawRow['信箱']).toEqual(member.email);
-      expect(exportedRawRow['星等']).toEqual(member.star.toString());
+      expect(exportedRawRow['星等']).toEqual(member.star);
       expect(exportedRawRow['建立日期']).toEqual(member.createdAt);
       expect(exportedRawRow['手機1']).toEqual(member.memberPhones[0].phone);
       expect(exportedRawRow['手機2']).toEqual(member.memberPhones[1].phone);
