@@ -249,14 +249,14 @@ export class MemberService {
       const deserialized: Record<string, string | Array<string> | Record<string, string> | Date> = {};
       for (const humanReadableKey in row) {
         const codeReadable = invert(header)[humanReadableKey];
-        const dataValue = trim(row[humanReadableKey]);
+        const dataValue = row[humanReadableKey];
         switch(humanReadableKey) {
           case header.id:
           case header.name:
           case header.username:
           case header.email:
           case header.star:
-            deserialized[codeReadable] = dataValue; continue;
+            deserialized[codeReadable] = trim(dataValue); continue;
           case header.createdAt:
             deserialized[codeReadable] = new Date(dataValue); continue;
           default:
