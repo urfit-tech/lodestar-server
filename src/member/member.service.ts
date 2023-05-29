@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { EntityManager } from 'typeorm';
-import { validateOrReject } from 'class-validator';
+import { validateOrReject, validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -41,7 +41,8 @@ export class MemberService {
     return rawRows.map((rawRow) => {
       const csvRawMember = new CsvRawMember();
       return csvRawMember.deserializedFromCsvRawRow(headerInfos, rawRow);
-    }).map((eachRow: CsvRawMember) => {
+    }).filter((eachRow) => validateSync(eachRow).length === 0)
+      .map((eachRow: CsvRawMember) => {
       const memberId = eachRow.id || v4();
 
       const member = new Member();
