@@ -38,6 +38,42 @@ export class ImporterTasker extends Tasker {
     };
   }
 
+  constructor(
+    private readonly storageService: StorageService,
+    private readonly memberService: MemberService,
+  ) {
+    super();
+  }
+
   @Process()
-  async process(job: Job<ImportJob>): Promise<void> {}
+  async process(job: Job<ImportJob>): Promise<void> {
+    const { appId, category, fileInfos }: ImportJob = job.data;
+    for (const fileInfo of fileInfos) {
+      const { checksumETag, fileName } = fileInfo;
+
+      try {
+        const { ContentType, Body, ETag } = await this.storageService.getFileFromBucketStorage({
+          Key: `${appId}/${fileName}`,
+        });
+
+        if (`"${checksumETag}"` === ETag) {
+          await this.importToDatabase(appId, category, ContentType, Body as Buffer);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  }
+
+  private importToDatabase(
+    appId: string,
+    category: ImportCategory,
+    mimeType: string,
+    rawBin: Buffer,
+  ): Promise<void> {
+    switch (category) {
+      case 'member':
+        return this.memberService.processMemberImportFromFile(appId, mimeType, rawBin);
+    }
+  }
 }

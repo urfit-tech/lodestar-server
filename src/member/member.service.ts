@@ -2,6 +2,7 @@ import { v4 } from 'uuid';
 import { EntityManager } from 'typeorm';
 import { validateOrReject, validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
+import { parse } from 'csv-parse/sync';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
@@ -24,6 +25,40 @@ export class MemberService {
     private readonly definitionInfra: DefinitionInfrastructure,
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {}
+
+  async processMemberImportFromFile(
+    appId: string, mimeType: string, rawBin: Buffer,
+  ): Promise<void> {
+    let rawRows: Array<any> = [];
+    switch (mimeType){
+      case 'application/vnd.ms-excel':
+        // convert excel to json
+        break;
+      default:
+        rawRows = parse(rawBin, { columns: true, skip_empty_lines: true });
+        break;
+    }
+
+    const headerInfos = await this.parseHeaderInfoFromColumn(rawRows.shift());
+    const membersToImport = await this.rawCsvToMember(appId, headerInfos, rawRows);
+    const results = await Promise.allSettled(membersToImport.map((member) => {
+      return this.entityManager.transaction(async (manager) => {
+        try {
+          await manager.save(member);
+          await manager.save(member.memberCategories);
+          await manager.save(member.memberProperties);
+          await manager.save(member.memberPhones);
+          await manager.save(member.memberTags);
+        } catch (error) {
+          throw new Error(JSON.stringify({
+            memberEmail: member.email,
+            memberUsername: member.username,
+            error,
+          }));
+        }
+      });
+    }));
+  }
 
   async rawCsvToMember(
     appId: string,
@@ -57,9 +92,11 @@ export class MemberService {
       member.memberCategories = eachRow.categories
         .filter((category) => appCategories.find(({ name }) => category === name))
         .map((category) => {
+          const appCategory = appCategories.find(({ name }) => category === name);
           const memberCategory = new MemberCategory();
           memberCategory.memberId = memberId;
-          memberCategory.category = appCategories.find(({ name }) => category === name);
+          memberCategory.category = appCategory;
+          memberCategory.position = appCategory.position;
           return memberCategory;
         });
       member.memberProperties = Object.keys(eachRow.properties)
@@ -89,7 +126,7 @@ export class MemberService {
           return memberTag;
         });
 
-      return member; 
+      return member;
     });
   }
 

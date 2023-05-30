@@ -1,4 +1,4 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
 
 import { MemberTag } from '~/member/entity/member_tag.entity';
 import { ActivityTag } from '~/entity/ActivityTag';
@@ -12,7 +12,12 @@ import { ProgramTag } from '~/entity/ProgramTag';
 @Index('tag_pkey', ['name'], { unique: true })
 @Entity('tag', { schema: 'public' })
 export class Tag {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn({
+    primary: true,
+    unique: true,
+    type: 'text',
+    default: () => 'gen_random_uuid()'
+  })
   name: string
 
   @Column('text', { name: 'type' })
