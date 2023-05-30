@@ -1,0 +1,4 @@
+流水號,姓名,帳號,信箱,星等,承辦人信箱,電話1,電話2,電話3,標籤1,標籤2,標籤3,分類1,分類2,分類3,test-property,建立日期
+id,name,username,email,star,manager.email,phones.1,phones.2,phones.3,tags.1,tags.2,tags.3,categories.1,categories.2,categories.3,properties.1,createdAt
+,KK,kk@example.com,kk@example.com,999,,987654321,900000000,,,工程,,test-category,前端工程,,Somet-test-value,
+,ZZ,zz@example.com,zz@example.com,0,sales@example.com,912345678,,,設計,,test-member-tag,平面設計,,,,
