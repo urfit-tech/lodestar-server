@@ -1,7 +1,6 @@
 import { v4 } from 'uuid';
 import { EntityManager } from 'typeorm';
-import { validateOrReject, validateSync } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import { parse } from 'csv-parse/sync';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -11,7 +10,7 @@ import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { Tag } from '~/definition/entity/tag.entity';
 
-import { MemberCsvHeaderMappingInfo } from './member.type';
+import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 import { CsvRawMember } from './class/csvRawMember';
 import { Member } from './entity/member.entity';
 import { MemberCategory } from './entity/member_category.entity';
@@ -39,7 +38,7 @@ export class MemberService {
         break;
     }
 
-    const headerInfos = await this.parseHeaderInfoFromColumn(rawRows.shift());
+    const headerInfos = await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
     const membersToImport = await this.rawCsvToMember(appId, headerInfos, rawRows);
     const results = await Promise.allSettled(membersToImport.map((member) => {
       return this.entityManager.transaction(async (manager) => {
@@ -62,7 +61,7 @@ export class MemberService {
 
   async rawCsvToMember(
     appId: string,
-    headerInfos: MemberCsvHeaderMappingInfo,
+    headerInfos: MemberCsvHeaderMapping,
     rawRows: Array<Record<string, string>>,
   ): Promise<Array<Member>> {
     const appCategories: Array<Category> = await this.definitionInfra.getCategories(
@@ -131,7 +130,7 @@ export class MemberService {
   }
 
   async memberToRawCsv(
-    headerInfos: MemberCsvHeaderMappingInfo,
+    headerInfos: MemberCsvHeaderMapping,
     members: Array<Member>,
   ): Promise<Array<Record<string, any>>> {
     return members
@@ -157,76 +156,5 @@ export class MemberService {
         return csvRawMember;
       })
       .map((each) => each.serializeToCsvRawRow(headerInfos));
-  }
-
-  /**
-   * First row of file is human readable header, and the second one is for code.
-   * @Param headerRow, key will be first row, value is second row.
-   */
-  public async parseHeaderInfoFromColumn(headerRow: Record<string, string>): Promise<MemberCsvHeaderMappingInfo> {
-    const info: MemberCsvHeaderMappingInfo = {
-      id: '',
-      name: '',
-      username: '',
-      email: '',
-      categories: [],
-      properties: [],
-      phones: [],
-      tags: [],
-      star: '',
-      createdAt: '',
-    };
-    
-    for (const humanReadable in headerRow) {
-      const codeReadable = headerRow[humanReadable];
-      const [key] = codeReadable.split('.');
-      switch (codeReadable) {
-        case 'id':
-        case 'name':
-        case 'username':
-        case 'email':
-        case 'star':
-        case 'createdAt':
-          info[key] = humanReadable; continue;
-        default:
-          if (codeReadable.startsWith('categories.')) {
-            info.categories.push(humanReadable);
-          } else if (codeReadable.startsWith('properties.')) {
-            info.properties.push(humanReadable);
-          } else if (codeReadable.startsWith('phones.')) {
-            info.phones.push(humanReadable);
-          } else if (codeReadable.startsWith('tags.')) {
-            info.tags.push(humanReadable);
-          }
-          continue;
-      }
-    }
-
-    const transformedInfo = plainToInstance(MemberCsvHeaderMappingInfo, info);
-    await validateOrReject(transformedInfo);
-    return transformedInfo;
-  }
-
-  public async formHeaderInfoFromData(
-    maxPhoneCount: number,
-    appCategories: Array<Category>,
-    appProperties: Array<Property>,
-    appTags: Array<Tag>,
-  ): Promise<MemberCsvHeaderMappingInfo> {
-    const info: MemberCsvHeaderMappingInfo = {
-      id: '流水號',
-      name: '姓名',
-      username: '帳號',
-      email: '信箱',
-      categories: [...Array(appCategories.length).keys()].map((each) => `分類${(each + 1).toString()}`),
-      properties: appProperties.map(({ name }) => name),
-      phones: [...Array(maxPhoneCount).keys()].map((each) => `手機${(each + 1).toString()}`),
-      tags: [...Array(appTags.length).keys()].map((each) => `標籤${(each + 1).toString()}`),
-      star: '星等',
-      createdAt: '建立日期',
-    };
-
-    await validateOrReject(info);
-    return info;
   }
 }

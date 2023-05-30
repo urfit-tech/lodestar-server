@@ -1,7 +1,7 @@
 import { v4 } from 'uuid';
 import { IsString, IsArray, IsObject, IsUUID, IsNotEmpty, IsNumber, IsDate, IsEmail, validateSync, isEmpty, isNotEmpty } from 'class-validator';
 
-import { MemberCsvHeaderMappingInfo } from '../member.type';
+import { MemberCsvHeaderMapping } from './csvHeaderMapping';
 
 /**
  * Formats represents raw rows inside csv file for member import.
@@ -44,7 +44,7 @@ export class CsvRawMember {
   createdAt: Date;
 
   public serializeToCsvRawRow(
-    header: MemberCsvHeaderMappingInfo,
+    header: MemberCsvHeaderMapping,
   ): Record<string, string | number | Date> {
     const phones = header.phones.reduce((acc, _, index) => {
       acc[`手機${index + 1}`] = this.phones.length > index ? this.phones[index] : '';
@@ -77,7 +77,7 @@ export class CsvRawMember {
   }
 
   public deserializedFromCsvRawRow(
-    header: MemberCsvHeaderMappingInfo,
+    header: MemberCsvHeaderMapping,
     row: Record<string, any>,
   ): CsvRawMember {
     this.id = isEmpty(row[header.id]) ? v4() : row[header.id];
