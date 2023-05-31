@@ -73,6 +73,37 @@ export class MemberCsvHeaderMapping {
     return this;
   }
 
+  public async serializeToRawRow() {
+    const phones = this.phones.reduce((acc, _, index) => {
+      acc[`手機${index + 1}`] = `phones.${index + 1}`;
+      return acc;
+    }, {});
+    const categories = this.categories.reduce((acc, _, index) => {
+      acc[`分類${index + 1}`] = `categories.${index + 1}`;
+      return acc;
+    }, {});
+    const properties = this.properties.reduce((acc, current, index) => {
+      acc[current] = `properties.${index + 1}`;
+      return acc;
+    }, {});
+    const tags = this.tags.reduce((acc, _, index) => {
+      acc[`標籤${index + 1}`] = `tags.${index + 1}`;
+      return acc;
+    }, {});
+    return {
+      ['流水號']: 'id',
+      ['姓名']: 'name',
+      ['帳號']: 'username',
+      ['信箱']: 'email',
+      ['星等']: 'star',
+      ['建立日期']: 'createdAt',
+      ...phones,
+      ...categories,
+      ...properties,
+      ...tags,
+    };
+  }
+
   public async deserializeFromDataBase(
     maxPhoneCount: number,
     appCategories: Array<Category>,

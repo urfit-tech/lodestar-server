@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { validateSync } from 'class-validator';
 import { parse } from 'csv-parse/sync';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -12,6 +12,7 @@ import { Tag } from '~/definition/entity/tag.entity';
 
 import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 import { CsvRawMember } from './class/csvRawMember';
+import { MemberInfrastructure } from './member.infra';
 import { Member } from './entity/member.entity';
 import { MemberCategory } from './entity/member_category.entity';
 import { MemberProperty } from './entity/member_property.entity';
@@ -22,6 +23,7 @@ import { MemberTag } from './entity/member_tag.entity';
 export class MemberService {
   constructor(
     private readonly definitionInfra: DefinitionInfrastructure,
+    private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {}
 
@@ -57,6 +59,23 @@ export class MemberService {
         }
       });
     }));
+  }
+
+  async processExportFromDatabase(appId: string, memberIds: Array<string>): Promise<Array<Record<string, any>>> {
+    const appCategories: Array<Category> = await this.definitionInfra.getCategories(
+      appId, this.entityManager,
+    );
+    const appProperties: Array<Property> = await this.definitionInfra.getProperties(
+      appId, this.entityManager,
+    );
+    const appTags: Array<Tag> = await this.definitionInfra.getTags(this.entityManager);
+    const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, appCategories, appProperties, appTags);
+    const fetchedMembers = await this.memberInfra.getMembersByConditions(appId, { id: In(memberIds) }, this.entityManager);
+
+    return [
+      await headerInfos.serializeToRawRow(),
+      ...(await this.memberToRawCsv(headerInfos, fetchedMembers)),
+    ];
   }
 
   async rawCsvToMember(

@@ -1,4 +1,13 @@
-import aws from 'aws-sdk';
+import {
+  S3,
+  ListObjectsV2Request,
+  GetObjectRequest,
+  GetObjectCommand,
+  PutObjectCommandInput,
+  GetObjectCommandInput,
+  ListObjectsV2CommandInput,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config';
 
@@ -23,53 +32,53 @@ export class StorageService {
     this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
   }
 
-  private s3(): aws.S3 {
-    return new aws.S3({
-      accessKeyId: this.awsS3AccessKeyId,
-      secretAccessKey: this.awsS3SecretAccessKey,
+  private s3(): S3 {
+    return new S3({
+      credentials: {
+        accessKeyId: this.awsS3AccessKeyId,
+        secretAccessKey: this.awsS3SecretAccessKey,
+      },
     });
   }
 
-  signedBucketStaticUrl(operation: string, params: any): string {
-    return this.signedUrl(this.awsS3BucketStatic, operation, params);
+  getSignedUrlForDownloadStorage(key: string, expiresIn: number): Promise<string> {
+    const command = new GetObjectCommand({
+      Key: key,
+      Bucket: this.awsS3BucketStorage,
+    })
+    return getSignedUrl(this.s3(), command, { expiresIn });
   }
 
-  signedBucketStorageUrl(operation: string, params: any): string {
-    return this.signedUrl(this.awsS3BucketStorage, operation, params);
+  saveFilesInBucketStorage(data: Omit<PutObjectCommandInput, 'Bucket'>) {
+    return this.saveFileToBucket({
+      ...data,
+      Bucket: this.awsS3BucketStorage,
+    });
   }
 
-  listFilesInBucketStorage(data: Omit<aws.S3.ListObjectsV2Request, 'Bucket'>) {
+  listFilesInBucketStorage(data: Omit<ListObjectsV2Request, 'Bucket'>) {
     return this.listFilesInBucket({
       ...data,
       Bucket: this.awsS3BucketStorage,
     });
   }
 
-  getFileFromBucketStorage(data: Omit<aws.S3.GetObjectRequest, 'Bucket'>) {
+  getFileFromBucketStorage(data: Omit<GetObjectRequest, 'Bucket'>) {
     return this.getFileFromBucket({
       ...data,
       Bucket: this.awsS3BucketStorage,
     });
   }
 
-  private async getFileFromBucket(data: aws.S3.Types.GetObjectRequest) {
-    return this.s3().getObject(data).promise();
+  private async getFileFromBucket(data: GetObjectCommandInput) {
+    return this.s3().getObject(data);
   }
 
-  private async saveFileToBucket(data: aws.S3.Types.PutObjectRequest) {
-    return this.s3().putObject(data).promise();
+  private async saveFileToBucket(data: PutObjectCommandInput) {
+    return this.s3().putObject(data);
   }
 
-  private listFilesInBucket(data: aws.S3.ListObjectsV2Request) {
-    return this.s3().listObjectsV2(data).promise();
-  }
-
-  private signedUrl(
-    bucket: string, operation: string, params: any,
-  ): string {
-    return this.s3().getSignedUrl(operation, {
-      ...params,
-      Bucket: bucket,
-    });
+  private listFilesInBucket(data: ListObjectsV2CommandInput) {
+    return this.s3().listObjectsV2(data);
   }
 }
