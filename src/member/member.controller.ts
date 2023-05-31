@@ -27,10 +27,10 @@ export class MemberController {
     this.jwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
   
-  private verify(token: string): boolean {
+  private verify(authorization: string): Record<string, any> {
     try {
-      jwt.verify(token, this.jwtSecret);
-      return true;
+      const [_, token] = authorization.split(' ');
+      return jwt.verify(token, this.jwtSecret) as Record<string, any>;
     } catch (error) {
       this.logger.error(error);
       throw new UnauthorizedException();
@@ -61,12 +61,12 @@ export class MemberController {
     @Headers('Authorization') authorization: string,
     @Body() metadata: MemberExportDTO,
   ): Promise<void> {
-    this.verify(authorization);
+    const { memberId: invokerMemberId } = this.verify(authorization);
 
     const { appId, memberIds } = metadata;
     const exportJob: MemberExportJob = {
       appId,
-      invokerMemberId: '',
+      invokerMemberId: invokerMemberId,
       category: 'member',
       memberIds,
     };
