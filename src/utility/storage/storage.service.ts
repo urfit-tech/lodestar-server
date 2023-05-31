@@ -1,11 +1,13 @@
 import {
-  S3,
+  S3Client,
   ListObjectsV2Request,
   GetObjectRequest,
   GetObjectCommand,
   PutObjectCommandInput,
   GetObjectCommandInput,
   ListObjectsV2CommandInput,
+  PutObjectCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common'
@@ -32,8 +34,8 @@ export class StorageService {
     this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
   }
 
-  private s3(): S3 {
-    return new S3({
+  private s3(): S3Client {
+    return new S3Client({
       credentials: {
         accessKeyId: this.awsS3AccessKeyId,
         secretAccessKey: this.awsS3SecretAccessKey,
@@ -71,14 +73,17 @@ export class StorageService {
   }
 
   private async getFileFromBucket(data: GetObjectCommandInput) {
-    return this.s3().getObject(data);
+    const command = new GetObjectCommand(data);
+    return this.s3().send(command);
   }
 
   private async saveFileToBucket(data: PutObjectCommandInput) {
-    return this.s3().putObject(data);
+    const command = new PutObjectCommand(data);
+    return this.s3().send(command);
   }
 
   private listFilesInBucket(data: ListObjectsV2CommandInput) {
-    return this.s3().listObjectsV2(data);
+    const command = new ListObjectsV2Command(data);
+    return this.s3().send(command);
   }
 }
