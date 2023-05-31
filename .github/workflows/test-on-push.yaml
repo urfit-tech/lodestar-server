@@ -64,5 +64,9 @@ jobs:
           hasura migrate apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
           hasura seed apply --endpoint http://localhost:8080 --database-name default --project migrations/hasura --skip-update-check
 
-      - name: Full Testing(Unit + E2E)
+      - name: Unit Testing
         run: yarn run test --coverage
+      
+      - name: E2E Testing
+        run: yarn run test:e2e --coverage
+
