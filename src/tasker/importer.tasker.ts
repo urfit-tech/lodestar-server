@@ -55,9 +55,10 @@ export class ImporterTasker extends Tasker {
         const { ContentType, Body, ETag } = await this.storageService.getFileFromBucketStorage({
           Key: `${appId}/${fileName}`,
         });
+        const uint8Array = await Body.transformToByteArray();
 
         if (`"${checksumETag}"` === ETag) {
-          await this.importToDatabase(appId, category, ContentType, Body as Buffer);
+          await this.importToDatabase(appId, category, ContentType, Buffer.from(uint8Array));
         }
       } catch (err) {
         console.log(err);
