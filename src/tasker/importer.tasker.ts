@@ -75,7 +75,7 @@ export class ImporterTasker extends Tasker {
   ): Promise<void> {
     switch (category) {
       case 'member':
-        return this.memberService.processMemberImportFromFile(appId, mimeType, rawBin);
+        return this.memberService.processImportFromFile(appId, mimeType, rawBin);
     }
   }
 }

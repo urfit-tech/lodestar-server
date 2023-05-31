@@ -27,7 +27,7 @@ export class MemberService {
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {}
 
-  async processMemberImportFromFile(
+  async processImportFromFile(
     appId: string, mimeType: string, rawBin: Buffer,
   ): Promise<void> {
     let rawRows: Array<any> = [];
