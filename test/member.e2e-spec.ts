@@ -1,40 +1,41 @@
+import jwt from 'jsonwebtoken';
+import { Queue } from 'bull';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
+import { getQueueToken } from '@nestjs/bull';
 import request from 'supertest';
 
-import { PostgresModule } from '~/database/postgres.module';
+import { ApplicationModule } from '~/application.module';
 import { ApiExceptionFilter } from '~/api.filter';
-import { MemberModule } from '~/member/member.module';
+import { ExporterTasker } from '~/tasker/exporter.tasker';
+
+import { app } from './data';
 
 describe('MemberController (e2e)', () => {
-  let app: INestApplication;
+  let application: INestApplication;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
-        PostgresModule.forRootAsync(),
-        MemberModule,
-      ],
+      imports: [ApplicationModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    application = moduleFixture.createNestApplication();
 
-    app.useGlobalFilters(new ApiExceptionFilter());
+    application.useGlobalFilters(new ApiExceptionFilter());
 
-    await app.init();
+    await application.init();
   });
 
   afterEach(async () => {
-    await app.close();
+    await application.close();
   });
 
   describe('/members/import (POST)', () => {
     const route = '/members/import';
 
     it('Should raise unauthorized exception', async () => {
-      await request(app.getHttpServer())
+      await request(application.getHttpServer())
         .post(route)
         .send({})
         .expect(401);
@@ -45,10 +46,36 @@ describe('MemberController (e2e)', () => {
     const route = '/members/export';
 
     it('Should raise unauthorized exception', async () => {
-      await request(app.getHttpServer())
+      await request(application.getHttpServer())
         .post(route)
         .send({})
         .expect(401);
+    });
+
+    it('Should insert job into queue', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+      const exporterQueue = application.get<Queue>(getQueueToken(ExporterTasker.name));
+      await exporterQueue.empty();
+      
+      const token = jwt.sign({
+        'memberId': 'invoker_member_id',
+      }, jwtSecret);
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          appId: app.id,
+          memberIds: [],
+        })
+        .expect(201);
+      
+      const { data } = (await exporterQueue.getWaiting())[0];
+      expect(data.appId).toBe(app.id);
+      expect(data.invokerMemberId).toBe('invoker_member_id');
+      expect(data.category).toBe('member');
+      expect(data.memberIds).toStrictEqual([]);
     });
   });
 });
