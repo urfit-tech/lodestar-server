@@ -1,6 +1,7 @@
 import { cwd, env } from 'process';
 import { LoggerModule } from 'nestjs-pino';
 import { Module } from '@nestjs/common'
+import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config'
 
 import { ApplicationController } from './application.controller'
@@ -37,6 +38,24 @@ import { UtilityModule } from './utility/utility.module'
       inject: [ConfigService],
     }),
     PostgresModule.forRootAsync(),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService<{
+        QUEUE_REDIS_URI: string;
+      }>) => {
+        const queueRedisUri = configService.getOrThrow('QUEUE_REDIS_URI');
+        const url = new URL(queueRedisUri);
+        return {
+          redis: {
+            host: url.hostname,
+            port: Number(url.port),
+            username: url.username,
+            password: url.password,
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     // TypeOrmModule.forRoot(MongoDataSourceConfig),
     AuthModule,
     MemberModule,
