@@ -2,7 +2,7 @@ import { Job, Queue } from 'bull';
 import { parse } from 'csv-parse/sync';
 import { EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { BullModule, InjectQueue, Process, Processor } from '@nestjs/bull';
 import { DynamicModule } from '@nestjs/common';
 
 import { DefinitionModule } from '~/definition/definition.module';
@@ -36,6 +36,8 @@ export class ImporterTasker extends Tasker {
       imports: [
         UtilityModule,
         DefinitionModule,
+        // BullModule.registerQueue({ name: MailerTasker.name }),
+        BullModule.registerQueue({ name: 'mailer' }),
       ],
       providers: [
         StorageService,
