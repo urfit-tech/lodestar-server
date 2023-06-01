@@ -61,7 +61,7 @@ export class ExporterTasker extends Tasker {
   async process(job: Job<ExportJob>): Promise<void> {
     const { appId, invokerMemberId, category }: ExportJob = job.data;
     const csvRawData = await this.exportFromDatabase(appId, job.data);
-    const invoker = await this.memberInfra.getMembersByConditions(
+    const invokers = await this.memberInfra.getMembersByConditions(
       appId, { id: invokerMemberId }, this.entityManager,
     );
 
@@ -76,8 +76,8 @@ export class ExporterTasker extends Tasker {
       .getSignedUrlForDownloadStorage(fileKey, 24 * 60 * 60);
     this.putEmailQueue(
       appId,
-      invoker,
-      '匯出結果(Export)',
+      invokers,
+      '匯出結果(MemberExport)',
       `檔案下載連結: ${signedDownloadUrl}</br>請在24小時內下載，逾時連結將失效。`,
     );
   }
