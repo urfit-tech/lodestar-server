@@ -1,8 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
-import { File } from '~/entity/File'
-import { Member } from '~/entity/Member'
-import { ProgramContentVideo } from '~/entity/ProgramContentVideo'
+import { Member } from '~/member/entity/member.entity';
+import { File } from '~/entity/File';
+import { ProgramContentVideo } from '~/entity/ProgramContentVideo';
 
 @Index('attachment_pkey', ['id'], { unique: true })
 @Entity('attachment', { schema: 'public' })

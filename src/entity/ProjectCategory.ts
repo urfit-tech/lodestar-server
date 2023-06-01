@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Category } from './Category'
-import { Project } from './Project'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Category } from '~/definition/entity/category.entity';
+
+import { Project } from './Project';
 
 @Index('project_category_pkey', ['id'], { unique: true })
 @Entity('project_category', { schema: 'public' })

@@ -1,6 +1,8 @@
-import { Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Category } from './Category'
-import { ProgramPackage } from './ProgramPackage'
+import { Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Category } from '~/definition/entity/category.entity';
+
+import { ProgramPackage } from './ProgramPackage';
 
 @Index('program_package_category_pkey', ['id'], { unique: true })
 @Entity('program_package_category', { schema: 'public' })

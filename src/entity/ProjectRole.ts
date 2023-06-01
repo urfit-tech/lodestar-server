@@ -1,7 +1,9 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Identity } from './Identity'
-import { Member } from './Member'
-import { Project } from './Project'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Member } from '~/member/entity/member.entity';
+
+import { Identity } from './Identity';
+import { Project } from './Project';
 
 @Index('project_role_pkey', ['id'], { unique: true })
 @Entity('project_role', { schema: 'public' })

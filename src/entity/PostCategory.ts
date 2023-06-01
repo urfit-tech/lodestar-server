@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Category } from './Category'
+import { Category } from '~/definition/entity/category.entity';
 import { Post } from './Post'
 
 @Index('post_id_category_id_key', ['categoryId', 'postId'], {})

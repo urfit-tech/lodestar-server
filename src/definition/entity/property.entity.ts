@@ -1,7 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { MemberProperty } from './MemberProperty'
-import { SignupProperty } from './SignupProperty'
+import { App } from '~/entity/App';
+import { SignupProperty } from '~/entity/SignupProperty';
+
+import { MemberProperty } from '~/member/entity/member_property.entity';
 
 @Index('property_pkey', ['id'], { unique: true })
 @Entity('property', { schema: 'public' })

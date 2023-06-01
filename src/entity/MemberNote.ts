@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('member_note_author_id', ['authorId'], {})
 @Index('member_note_created_at_desc', ['createdAt'], {})

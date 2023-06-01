@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 import { Merchandise } from './Merchandise'
 
 @Index('member_shop_pkey', ['id'], { unique: true })

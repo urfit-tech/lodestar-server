@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
-import { Property } from './Property'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Property } from '~/definition/entity/property.entity';
+
+import { Member } from './member.entity';
 
 @Index('member_property_pkey', ['id'], { unique: true })
 @Index('member_property_member_id_property_id_key', ['memberId', 'propertyId'], { unique: true })

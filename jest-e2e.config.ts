@@ -13,6 +13,7 @@ const config: Config = {
   coveragePathIgnorePatterns: [
     "<rootDir>/src/entity/*",
     ".spec.ts",
+    ".entity.ts"
   ],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',

@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 
 import { OrderLog } from '~/order/entity/order_log.entity';
 
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('order_executor_pkey', ['id'], { unique: true })
 @Entity('order_executor', { schema: 'public' })

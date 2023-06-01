@@ -1,9 +1,22 @@
-import { Module } from '@nestjs/common'
+import { Logger, Module } from '@nestjs/common'
+import { BullModule } from '@nestjs/bull';
 
+import { DefinitionModule } from '~/definition/definition.module';
+import { ImporterTasker } from '~/tasker/importer.tasker';
+import { ExporterTasker } from '~/tasker/exporter.tasker';
+
+import { MemberController } from './member.controller';
 import { MemberService } from './member.service';
+import { MemberInfrastructure } from './member.infra';
 
 @Module({
-  providers: [MemberService],
-  exports: [MemberService],
+  controllers: [MemberController],
+  imports: [
+    DefinitionModule, 
+    BullModule.registerQueue({ name: ImporterTasker.name }),
+    BullModule.registerQueue({ name: ExporterTasker.name }),
+  ],
+  providers: [Logger, MemberInfrastructure, MemberService],
+  exports: [MemberInfrastructure, MemberService],
 })
 export class MemberModule {}

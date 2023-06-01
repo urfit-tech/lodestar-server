@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('member_card_member_id_card_identifier_key', ['cardIdentifier', 'memberId'], { unique: true })
 @Index('member_card_id_key', ['id'], { unique: true })

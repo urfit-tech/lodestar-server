@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
-import { ProgramPackageProgram } from './ProgramPackageProgram'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Member } from '~/member/entity/member.entity';
+
+import { ProgramPackageProgram } from './ProgramPackageProgram';
 
 @Index('program_tempo_delivery_pkey', ['id'], { unique: true })
 @Index('program_tempo_delivery_member_id_program_package_program_id_key', ['memberId', 'programPackageProgramId'], {
