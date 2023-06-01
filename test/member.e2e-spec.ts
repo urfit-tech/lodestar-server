@@ -8,6 +8,7 @@ import request from 'supertest';
 
 import { ApplicationModule } from '~/application.module';
 import { ApiExceptionFilter } from '~/api.filter';
+import { ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker } from '~/tasker/exporter.tasker';
 
 import { app } from './data';
@@ -37,8 +38,41 @@ describe('MemberController (e2e)', () => {
     it('Should raise unauthorized exception', async () => {
       await request(application.getHttpServer())
         .post(route)
+        .set('Authorization', 'Bearer something')
         .send({})
         .expect(401);
+    });
+
+    it('Should insert job into queue', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+      const importerQueue = application.get<Queue>(getQueueToken(ImporterTasker.name));
+      await importerQueue.empty();
+      
+      const token = jwt.sign({
+        'memberId': 'invoker_member_id',
+      }, jwtSecret);
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          appId: app.id,
+          fileInfos: [{
+            key: 'some_key',
+            checksum: 'some_checksum',
+          }],
+        })
+        .expect(201);
+      
+      const { data } = (await importerQueue.getWaiting())[0];
+      expect(data.appId).toBe(app.id);
+      expect(data.invokerMemberId).toBe('invoker_member_id');
+      expect(data.category).toBe('member');
+      expect(data.fileInfos).toStrictEqual([{
+        checksumETag: 'some_checksum',
+        fileName: 'some_key',
+      }]);
     });
   });
 
@@ -48,6 +82,7 @@ describe('MemberController (e2e)', () => {
     it('Should raise unauthorized exception', async () => {
       await request(application.getHttpServer())
         .post(route)
+        .set('Authorization', 'Bearer something')
         .send({})
         .expect(401);
     });
