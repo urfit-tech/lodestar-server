@@ -1,7 +1,8 @@
 import { subtle } from 'crypto';
 import { EntityManager } from 'typeorm';
 import jwt from 'jsonwebtoken';
-import { Injectable } from '@nestjs/common'
+import axios from 'axios';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
@@ -17,12 +18,16 @@ export class VideoService {
   private readonly cfStreamingKeyId: string;
   private readonly cfStreamingJwk: string;
   private readonly hasuraJwtSecret: string;
-  
+  private readonly cfAccountId: string;
+  private readonly cfApiToken: string;
+
   constructor(
     private readonly configService: ConfigService<{
       CF_STREAMING_KEY_ID: string;
       CF_STREAMING_JWK: string;
       HASURA_JWT_SECRET: string;
+      CF_ACCOUNT_ID: string;
+      CF_API_TOKEN: string;
     }>,
     private readonly mediaInfra: MediaInfrastructure,
     private readonly programService: ProgramService,
@@ -32,6 +37,8 @@ export class VideoService {
     this.cfStreamingKeyId = configService.getOrThrow('CF_STREAMING_KEY_ID');
     this.cfStreamingJwk = configService.getOrThrow('CF_STREAMING_JWK');
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
+    this.cfAccountId = configService.getOrThrow('CF_ACCOUNT_ID');
+    this.cfApiToken = configService.getOrThrow('CF_API_TOKEN');
   }
 
   async generateCfVideoToken(videoId: string, authToken?: string) {
@@ -81,7 +88,7 @@ export class VideoService {
   private async getCfOptions(id: string): Promise<CfVideoStreamOptions | null> {
     try {
       const attachment = await this.mediaInfra.getById(id, this.entityManager);
-      return attachment.options.cloudflare as CfVideoStreamOptions
+      return attachment.options.cloudflare as CfVideoStreamOptions;
     } catch (error) {
       console.error(error);
       return null;
@@ -90,39 +97,90 @@ export class VideoService {
 
   private async generateCfStreamingToken(cfUid: string): Promise<string> {
     const encoder = new TextEncoder();
-    const expiresIn = Math.floor(Date.now() / 1000) + 3600
+    const expiresIn = Math.floor(Date.now() / 1000) + 3600;
     const headers = {
-      'alg': 'RS256',
-      'kid': this.cfStreamingKeyId,
+      alg: 'RS256',
+      kid: this.cfStreamingKeyId,
     };
     const data = {
-      'sub': cfUid,
-      'kid': this.cfStreamingKeyId,
-      'exp': expiresIn,
-      'accessRules': [{
-        'type': 'any',
-        'action': 'allow'
-      }],
+      sub: cfUid,
+      kid: this.cfStreamingKeyId,
+      exp: expiresIn,
+      accessRules: [
+        {
+          type: 'any',
+          action: 'allow',
+        },
+      ],
     };
 
     const token = `${this.utilityService.objectToBase64url(headers)}.${this.utilityService.objectToBase64url(data)}`;
 
     const jwk = JSON.parse(atob(this.cfStreamingJwk));
     const key = await subtle.importKey(
-      'jwk', jwk,
+      'jwk',
+      jwk,
       {
         name: 'RSASSA-PKCS1-v1_5',
         hash: 'SHA-256',
       },
-      false, [ 'sign' ],
+      false,
+      ['sign'],
     );
-  
-    const signature = await subtle.sign(
-      { name: 'RSASSA-PKCS1-v1_5' }, key, encoder.encode(token),
-    );
-  
+
+    const signature = await subtle.sign({ name: 'RSASSA-PKCS1-v1_5' }, key, encoder.encode(token));
+
     const signedToken = `${token}.${this.utilityService.arrayBufferToBase64Url(signature)}`;
-  
+
     return signedToken;
+  }
+
+  async generateCloudFlareDownloadableFile(videoId: string) {
+    const { data } = await axios.post(
+      `https://api.cloudflare.com/client/v4/accounts/${this.cfAccountId}/stream/${videoId}/downloads`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${this.cfApiToken}`,
+        },
+      },
+    );
+
+    if (!data.success) {
+      throw new APIException({
+        code: 'E_CALL_CF_API',
+        message: 'call post cloudflare api failed',
+      });
+    }
+
+    return {
+      status: data.result.default.status,
+      url: data.result.default.url,
+      percentComplete: data.result.default.percentComplete,
+    };
+  }
+
+  async getCloudFlareDownloadableFile(videoId: string) {
+    const { data } = await axios.get(
+      `https://api.cloudflare.com/client/v4/accounts/${this.cfAccountId}/stream/${videoId}/downloads`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.cfApiToken}`,
+        },
+      },
+    );
+
+    if (!data.success) {
+      throw new APIException({
+        code: 'E_CALL_CF_API',
+        message: 'call get cloudflare api failed',
+      });
+    }
+
+    return {
+      status: data.result.default.status,
+      url: data.result.default.url,
+      percentComplete: data.result.default.percentComplete,
+    };
   }
 }
