@@ -42,11 +42,12 @@ export class MemberController {
     @Headers('Authorization') authorization: string,
     @Body() metadata: MemberImportDTO,
   ): Promise<void> {
-    this.verify(authorization);
+    const { memberId: invokerMemberId } = this.verify(authorization);
 
     const { appId, fileInfos } = metadata;
     const importJob: ImportJob = {
       appId,
+      invokerMemberId,
       category: 'member',
       fileInfos: fileInfos.map(({ key, checksum }) => ({
         checksumETag: checksum,

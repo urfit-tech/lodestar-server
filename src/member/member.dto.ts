@@ -10,3 +10,9 @@ export class MemberExportDTO {
   appId: string;
   memberIds: Array<string>;
 }
+
+export class MemberImportResultDTO {
+  toInsertCount: number;
+  insertedCount: number;
+  failedCount: number;
+}

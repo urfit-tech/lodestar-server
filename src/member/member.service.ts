@@ -1,7 +1,6 @@
 import { v4 } from 'uuid';
 import { EntityManager, In } from 'typeorm';
 import { validateSync } from 'class-validator';
-import { parse } from 'csv-parse/sync';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
@@ -13,6 +12,7 @@ import { Tag } from '~/definition/entity/tag.entity';
 import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 import { CsvRawMember } from './class/csvRawMember';
 import { MemberInfrastructure } from './member.infra';
+import { MemberImportResultDTO } from './member.dto';
 import { Member } from './entity/member.entity';
 import { MemberCategory } from './entity/member_category.entity';
 import { MemberProperty } from './entity/member_property.entity';
@@ -28,18 +28,8 @@ export class MemberService {
   ) {}
 
   async processImportFromFile(
-    appId: string, mimeType: string, rawBin: Buffer,
-  ): Promise<void> {
-    let rawRows: Array<any> = [];
-    switch (mimeType){
-      case 'application/vnd.ms-excel':
-        // convert excel to json
-        break;
-      default:
-        rawRows = parse(rawBin, { columns: true, skip_empty_lines: true });
-        break;
-    }
-
+    appId: string, rawRows: Array<Record<string, any>>,
+  ): Promise<MemberImportResultDTO> {
     const headerInfos = await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
     const membersToImport = await this.rawCsvToMember(appId, headerInfos, rawRows);
     const results = await Promise.allSettled(membersToImport.map((member) => {
@@ -59,6 +49,12 @@ export class MemberService {
         }
       });
     }));
+
+    return {
+      toInsertCount: membersToImport.length,
+      insertedCount: results.filter((result) => result.status === 'fulfilled').length,
+      failedCount: results.filter((result) => result.status === 'rejected').length,
+    };
   }
 
   async processExportFromDatabase(appId: string, memberIds: Array<string>): Promise<Array<Record<string, any>>> {
