@@ -74,8 +74,10 @@ export class ImporterTasker extends Tasker {
         if (`"${checksumETag}"` !== ETag) {
           throw new Error('Unmatched checksum.');
         }
+        const uint8Array = await Body.transformToByteArray();
+
         const insertResult = await this.importToDatabase(
-          appId, category, ContentType, Body as unknown as Buffer,
+          appId, category, ContentType, Buffer.from(uint8Array),
         );
         this.putEmailQueue(
           appId,
