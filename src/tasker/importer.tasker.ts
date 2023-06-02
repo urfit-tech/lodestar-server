@@ -85,6 +85,9 @@ export class ImporterTasker extends Tasker {
           '匯入結果(MemberImport)',
           `預計插入筆數：${insertResult.toInsertCount}</br>實際插入筆數:${insertResult.insertedCount}</br>出錯筆數:${insertResult.failedCount}`,
         );
+        await this.storageService.deleteFileAtBucketStorage({
+          Key: `${appId}/${fileName}`,
+        });
       } catch (err) {
         console.log(err);
         this.putEmailQueue(
