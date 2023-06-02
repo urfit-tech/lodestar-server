@@ -27,6 +27,7 @@ describe('ImporterTasker', () => {
   let application: INestApplication;
   let mockStorageService = {
     getFileFromBucketStorage: jest.fn(),
+    deleteFileAtBucketStorage: jest.fn(),
   };
  
   let manager: EntityManager;
@@ -112,7 +113,9 @@ describe('ImporterTasker', () => {
           const testDataFile = readFileSync(join(__dirname, 'test-member-import-data.csv'));
           return {
             ContentType: 'text/csv',
-            Body: testDataFile,
+            Body: {
+              transformToByteArray: () => testDataFile,
+            },
             ETag: '"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"',
           };
         });
