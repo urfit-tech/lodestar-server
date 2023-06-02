@@ -64,8 +64,7 @@ export class MemberService {
     const appProperties: Array<Property> = await this.definitionInfra.getProperties(
       appId, this.entityManager,
     );
-    const appTags: Array<Tag> = await this.definitionInfra.getTags(this.entityManager);
-    const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, appCategories, appProperties, appTags);
+    const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 20, appCategories, appProperties);
     const fetchedMembers = await this.memberInfra.getMembersByConditions(appId, { id: In(memberIds) }, this.entityManager);
 
     return [

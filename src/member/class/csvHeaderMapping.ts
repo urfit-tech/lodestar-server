@@ -106,9 +106,9 @@ export class MemberCsvHeaderMapping {
 
   public async deserializeFromDataBase(
     maxPhoneCount: number,
+    maxTagCount: number,
     appCategories: Array<Category>,
     appProperties: Array<Property>,
-    appTags: Array<Tag>,
   ) {
     this.id = '流水號';
     this.name = '姓名';
@@ -117,7 +117,7 @@ export class MemberCsvHeaderMapping {
     this.categories = [...Array(appCategories.length).keys()].map((each) => `分類${(each + 1).toString()}`);
     this.properties = appProperties.map(({ name }) => name);
     this.phones = [...Array(maxPhoneCount).keys()].map((each) => `手機${(each + 1).toString()}`);
-    this.tags = [...Array(appTags.length).keys()].map((each) => `標籤${(each + 1).toString()}`);
+    this.tags = [...Array(maxTagCount).keys()].map((each) => `標籤${(each + 1).toString()}`);
     this.star = '星等';
     this.createdAt = '建立日期';
 
