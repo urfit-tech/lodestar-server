@@ -74,8 +74,10 @@ export class ImporterTasker extends Tasker {
         if (`"${checksumETag}"` !== ETag) {
           throw new Error('Unmatched checksum.');
         }
+        const uint8Array = await Body.transformToByteArray();
+
         const insertResult = await this.importToDatabase(
-          appId, category, ContentType, Body as unknown as Buffer,
+          appId, category, ContentType, Buffer.from(uint8Array),
         );
         this.putEmailQueue(
           appId,
@@ -83,6 +85,9 @@ export class ImporterTasker extends Tasker {
           '匯入結果(MemberImport)',
           `預計插入筆數：${insertResult.toInsertCount}</br>實際插入筆數:${insertResult.insertedCount}</br>出錯筆數:${insertResult.failedCount}`,
         );
+        await this.storageService.deleteFileAtBucketStorage({
+          Key: `${appId}/${fileName}`,
+        });
       } catch (err) {
         console.log(err);
         this.putEmailQueue(

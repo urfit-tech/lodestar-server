@@ -68,7 +68,7 @@ export class CsvRawMember {
       [header.username]: this.username,
       [header.email]: this.email,
       [header.star]: this.star,
-      [header.createdAt]: this.createdAt,
+      [header.createdAt]: this.createdAt.toISOString(),
       ...phones,
       ...categories,
       ...properties,

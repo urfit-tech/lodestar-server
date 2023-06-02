@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 
 import { PostgresModule } from '~/database/postgres.module';
+import { UtilityModule } from '~/utility/utility.module';
 
 import { Tasker } from './tasker';
 
@@ -42,6 +43,7 @@ export class TaskerModule {
           inject: [ConfigService],
         }),
         PostgresModule.forRootAsync(),
+        UtilityModule,
         BullModule.forRootAsync({
           imports: [ConfigModule],
           useFactory: (configService: ConfigService<{

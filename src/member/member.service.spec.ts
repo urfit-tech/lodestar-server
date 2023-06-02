@@ -427,7 +427,7 @@ describe('MemberService', () => {
       tag1.name = '測試標籤1';
 
       const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(5, [category1], [property1], [tag1]);
+        .deserializeFromDataBase(5, 5, [category1], [property1]);
       const member = new Member();
       member.id = v4();
       member.name = 'test';
@@ -464,7 +464,7 @@ describe('MemberService', () => {
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
       expect(raw['星等']).toEqual(member.star);
-      expect(raw['建立日期']).toEqual(member.createdAt);
+      expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       expect(raw['分類1']).toEqual(member.memberCategories[0].category.name);
       expect(raw['測試屬性1']).toEqual(member.memberProperties[0].value);
       expect(raw['手機1']).toEqual(member.memberPhones[0].phone);
@@ -494,9 +494,9 @@ describe('MemberService', () => {
       const headerInfos = await new MemberCsvHeaderMapping()
         .deserializeFromDataBase(
           5,
+          5,
           [category1, category2],
           [property1, property2],
-          [tag1, tag2],
         );
       const member = new Member();
       member.id = v4();
@@ -543,7 +543,7 @@ describe('MemberService', () => {
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
       expect(raw['星等']).toEqual(member.star);
-      expect(raw['建立日期']).toEqual(member.createdAt);
+      expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index].category.name);
         expect(raw[`測試屬性${index + 1}`]).toEqual(member.memberProperties[index].value);
@@ -577,9 +577,9 @@ describe('MemberService', () => {
       const headerInfos = await new MemberCsvHeaderMapping()
         .deserializeFromDataBase(
           5,
+          5,
           [category1, category2],
           [property1, property2],
-          [tag1, tag2],
         );
       const member = new Member();
       member.id = v4();
@@ -619,7 +619,7 @@ describe('MemberService', () => {
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
       expect(raw['星等']).toEqual(member.star);
-      expect(raw['建立日期']).toEqual(member.createdAt);
+      expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index]
           ? member.memberCategories[index].category.name : '',
@@ -659,7 +659,7 @@ describe('MemberService', () => {
       notBelongTag.name = '不存在標籤';
 
       const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(5, [category1], [property1], [tag1]);
+        .deserializeFromDataBase(5, 5, [category1], [property1]);
       const member = new Member();
       member.id = v4();
       member.name = 'test';
@@ -703,7 +703,7 @@ describe('MemberService', () => {
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
       expect(raw['星等']).toEqual(member.star);
-      expect(raw['建立日期']).toEqual(member.createdAt);
+      expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(index === 0
           ? member.memberCategories[index].category.name : '',
@@ -741,7 +741,7 @@ describe('MemberService', () => {
       mockDefinitionInfra.getTags.mockReturnValueOnce([tag1]);
 
       const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(5, [category1], [property1], [tag1]);
+        .deserializeFromDataBase(5, 5, [category1], [property1]);
       const memberId = v4();
       const memberCreatedAt = new Date();
       const member = new Member();
@@ -862,7 +862,7 @@ describe('MemberService', () => {
       expect(exportedRawRow['帳號']).toEqual(member.username);
       expect(exportedRawRow['信箱']).toEqual(member.email);
       expect(exportedRawRow['星等']).toEqual(member.star);
-      expect(exportedRawRow['建立日期']).toEqual(member.createdAt);
+      expect(exportedRawRow['建立日期']).toEqual(member.createdAt.toISOString());
       expect(exportedRawRow['手機1']).toEqual(member.memberPhones[0].phone);
       expect(exportedRawRow['手機2']).toEqual(member.memberPhones[1].phone);
       expect(exportedRawRow['分類1']).toEqual(member.memberCategories[0].category.name);

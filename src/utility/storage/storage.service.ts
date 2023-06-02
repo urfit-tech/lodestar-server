@@ -8,6 +8,8 @@ import {
   ListObjectsV2CommandInput,
   PutObjectCommand,
   ListObjectsV2Command,
+  DeleteObjectCommandInput,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common'
@@ -58,6 +60,13 @@ export class StorageService {
     });
   }
 
+  deleteFileAtBucketStorage(data: Omit<DeleteObjectCommandInput, 'Bucket'>) {
+    return this.deleteFeilAtBucket({
+      ...data,
+      Bucket: this.awsS3BucketStorage,
+    });
+  }
+
   listFilesInBucketStorage(data: Omit<ListObjectsV2Request, 'Bucket'>) {
     return this.listFilesInBucket({
       ...data,
@@ -79,6 +88,11 @@ export class StorageService {
 
   private async saveFileToBucket(data: PutObjectCommandInput) {
     const command = new PutObjectCommand(data);
+    return this.s3().send(command);
+  }
+
+  private async deleteFeilAtBucket(data: DeleteObjectCommandInput) {
+    const command = new DeleteObjectCommand(data);
     return this.s3().send(command);
   }
 
