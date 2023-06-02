@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGenerat
 import { App } from './App'
 import { IssueReaction } from './IssueReaction'
 import { IssueReply } from './IssueReply'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('issue_pkey', ['id'], { unique: true })
 @Entity('issue', { schema: 'public' })

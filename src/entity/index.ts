@@ -11,7 +11,6 @@ import { AppChannel } from './AppChannel';
 import { AppDefaultPermission } from './AppDefaultPermission';
 import { AppEmailTemplate } from './AppEmailTemplate';
 import { AppExtendedModule } from './AppExtendedModule';
-import { AppHost } from './AppHost';
 import { AppLanguage } from './AppLanguage';
 import { AppNav } from './AppNav';
 import { AppPage } from './AppPage';
@@ -31,7 +30,7 @@ import { Card } from './Card';
 import { CardDiscount } from './CardDiscount';
 import { CartItem } from './CartItem';
 import { CartProduct } from './CartProduct';
-import { Category } from './Category';
+import { Category } from '~/definition/entity/category.entity';;
 import { Certificate } from './Certificate';
 import { CertificateTemplate } from './CertificateTemplate';
 import { CoinLog } from './CoinLog';
@@ -76,9 +75,8 @@ import { IsznUser } from './IsznUser';
 import { Locale } from './Locale';
 import { Media } from './Media';
 import { Meet } from './Meet';
-import { Member } from './Member';
+import { Member } from '~/member/entity/member.entity';;
 import { MemberCard } from './MemberCard';
-import { MemberCategory } from './MemberCategory';
 import { MemberCertificate } from './MemberCertificate';
 import { MemberContract } from './MemberContract';
 import { MemberDevice } from './MemberDevice';
@@ -86,12 +84,9 @@ import { MemberNote } from './MemberNote';
 import { MemberOauth } from './MemberOauth';
 import { MemberPermissionExtra } from './MemberPermissionExtra';
 import { MemberPermissionGroup } from './MemberPermissionGroup';
-import { MemberPhone } from './MemberPhone';
-import { MemberProperty } from './MemberProperty';
 import { MemberShop } from './MemberShop';
 import { MemberSocial } from './MemberSocial';
 import { MemberSpeciality } from './MemberSpeciality';
-import { MemberTag } from './MemberTag';
 import { MemberTask } from './MemberTask';
 import { MemberTrackingLog } from './MemberTrackingLog';
 import { Merchandise } from './Merchandise';
@@ -175,7 +170,7 @@ import { ProjectReaction } from './ProjectReaction';
 import { ProjectRole } from './ProjectRole';
 import { ProjectSection } from './ProjectSection';
 import { ProjectTag } from './ProjectTag';
-import { Property } from './Property';
+import { Property } from '~/definition/entity/property.entity';;
 import { Question } from './Question';
 import { QuestionGroup } from './QuestionGroup';
 import { QuestionLibrary } from './QuestionLibrary';
@@ -193,7 +188,7 @@ import { SignupProperty } from './SignupProperty';
 import { SmsVerificationCode } from './SmsVerificationCode';
 import { SocialCard } from './SocialCard';
 import { SocialCardSubscriber } from './SocialCardSubscriber';
-import { Tag } from './Tag';
+import { Tag } from '~/definition/entity/tag.entity';;
 import { Token } from './Token';
 import { User } from './User';
 import { UserOauth } from './UserOauth';
@@ -206,18 +201,22 @@ import { VoucherPlan } from './VoucherPlan';
 import { VoucherPlanProduct } from './VoucherPlanProduct';
 import { WebhookLog } from './WebhookLog';
 
-import { TableLog } from './TableLog.mongo';
-
-
+import { AppHost } from '~/app/entity/app_host.entity';
 import { AppModule } from '~/app/entity/app_module.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { Invoice } from '~/invoice/invoice.entity';
 import { Attachment } from '~/media/attachment.entity';
+import { MemberCategory } from '~/member/entity/member_category.entity';
+import { MemberPhone } from '~/member/entity/member_phone.entity';
+import { MemberProperty } from '~/member/entity/member_property.entity';
+import { MemberTag } from '~/member/entity/member_tag.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { ProgramContent } from '~/program/entity/program_content.entity';
+import { TableLog } from '~/table_log/table_log.entity';
+import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
 
 export const PostgresEntities = [
   Activity,
@@ -424,8 +423,10 @@ export const PostgresEntities = [
   SmsVerificationCode,
   SocialCard,
   SocialCardSubscriber,
+  TableLog,
   Tag,
   Token,
+  TriggerLog,
   User,
   UserOauth,
   UserPermission,
@@ -436,8 +437,4 @@ export const PostgresEntities = [
   VoucherPlan,
   VoucherPlanProduct,
   WebhookLog,
-];
-
-export const MongoEntities = [
-  TableLog,
 ];

@@ -4,7 +4,7 @@ import { ActivitySession } from './ActivitySession'
 import { ActivityTag } from './ActivityTag'
 import { ActivityTicket } from './ActivityTicket'
 import { App } from './App'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 import { PackageItem } from './PackageItem'
 
 @Index('activity_pkey', ['id'], { unique: true })

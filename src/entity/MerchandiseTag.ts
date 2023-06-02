@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Merchandise } from './Merchandise'
-import { Tag } from './Tag'
+import { Tag } from '~/definition/entity/tag.entity';
 
 @Index('merchandise_tag_pkey', ['id'], { unique: true })
 @Entity('merchandise_tag', { schema: 'public' })

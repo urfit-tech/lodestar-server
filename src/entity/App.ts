@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm'
 
+import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 
@@ -9,7 +10,6 @@ import { AppChannel } from './AppChannel'
 import { AppDefaultPermission } from './AppDefaultPermission'
 import { AppEmailTemplate } from './AppEmailTemplate'
 import { AppExtendedModule } from './AppExtendedModule'
-import { AppHost } from './AppHost'
 import { AppLanguage } from './AppLanguage'
 import { AppNav } from './AppNav'
 import { AppPlan } from './AppPlan'
@@ -19,7 +19,7 @@ import { Card } from './Card'
 import { CartItem } from './CartItem'
 import { Comment } from './Comment'
 import { Issue } from './Issue'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 import { Merchandise } from './Merchandise'
 import { Package } from './Package'
 import { Podcast } from './Podcast'
@@ -27,7 +27,7 @@ import { Post } from './Post'
 import { ProductChannel } from './ProductChannel'
 import { Program } from './Program'
 import { ProgramPackage } from './ProgramPackage'
-import { Property } from './Property'
+import { Property } from '~/definition/entity/property.entity';
 import { SharingCode } from './SharingCode'
 import { SmsVerificationCode } from './SmsVerificationCode'
 import { VoucherPlan } from './VoucherPlan'

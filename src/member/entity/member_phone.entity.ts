@@ -1,5 +1,6 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Member } from './member.entity';
 
 @Index('member_phone_pkey', ['id'], { unique: true })
 @Index('member_phone_member_id_phone_key', ['memberId', 'phone'], {

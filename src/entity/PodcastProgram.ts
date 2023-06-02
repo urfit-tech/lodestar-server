@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 import { PlaylistPodcastProgram } from './PlaylistPodcastProgram'
 import { Podcast } from './Podcast'
 import { PodcastAlbumPodcastProgram } from './PodcastAlbumPodcastProgram'

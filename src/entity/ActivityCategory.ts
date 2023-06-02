@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Activity } from './Activity'
-import { Category } from './Category'
+import { Category } from '~/definition/entity/category.entity';
 
 @Index('activity_category_pkey', ['id'], { unique: true })
 @Entity('activity_category', { schema: 'public' })

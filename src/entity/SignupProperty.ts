@@ -1,5 +1,6 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Property } from './Property'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Property } from '~/definition/entity/property.entity';
 
 @Index('signup_property_pkey', ['id'], { unique: true })
 @Entity('signup_property', { schema: 'public' })

@@ -1,6 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
-import { Review } from './Review'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { Member } from '~/member/entity/member.entity';
+
+import { Review } from './Review';
 
 @Index('review_reaction_pkey', ['id'], { unique: true })
 @Index('review_reaction_review_id_member_id_key', ['memberId', 'reviewId'], {

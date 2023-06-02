@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
 import { Contract } from './Contract'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('member_contract_agreed_at', ['agreedAt'], {})
 @Index('member_contract_agreed_at_revoked_at_idx', ['agreedAt', 'revokedAt'], {})

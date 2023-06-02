@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('member_tracking_log_pkey', ['id'], { unique: true })
 @Entity('member_tracking_log', { schema: 'public' })

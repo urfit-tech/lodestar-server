@@ -1,7 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 import { AppointmentSchedule } from './AppointmentSchedule'
 import { Currency } from './Currency'
-import { Member } from './Member'
+import { Member } from '~/member/entity/member.entity';
 
 @Index('appointment_plan_pkey', ['id'], { unique: true })
 @Entity('appointment_plan', { schema: 'public' })

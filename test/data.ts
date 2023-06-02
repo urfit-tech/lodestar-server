@@ -1,8 +1,11 @@
 import { v4 } from 'uuid';
 
-import { App } from '~/entity/App';
-import { AppPlan } from '~/entity/AppPlan';
 import { Role } from '~/entity/Role';
+import { AppPlan } from '~/entity/AppPlan';
+import { App } from '~/entity/App';
+import { Category } from '~/definition/entity/category.entity';
+import { Property } from '~/definition/entity/property.entity';
+import { Tag } from '~/definition/entity/tag.entity';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -16,3 +19,18 @@ export const app = new App();
 app.id = 'test';
 app.symbol = 'TST';
 app.appPlan = appPlan;
+
+export const category = new Category();
+category.appId = app.id;
+category.class = '';
+category.position = 0;
+category.name = 'test-category';
+
+export const memberProperty = new Property();
+memberProperty.app = app;
+memberProperty.type = 'member';
+memberProperty.name = 'test-property';
+
+export const memberTag = new Tag();
+memberTag.type = 'member';
+memberTag.name = 'test-member-tag';

@@ -1,15 +1,16 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { ActivityCategory } from './ActivityCategory'
-import { CreatorCategory } from './CreatorCategory'
-import { MemberCategory } from './MemberCategory'
-import { MemberTask } from './MemberTask'
-import { MerchandiseCategory } from './MerchandiseCategory'
-import { PodcastAlbumCategory } from './PodcastAlbumCategory'
-import { PodcastProgramCategory } from './PodcastProgramCategory'
-import { PostCategory } from './PostCategory'
-import { ProgramCategory } from './ProgramCategory'
-import { ProgramPackageCategory } from './ProgramPackageCategory'
-import { ProjectCategory } from './ProjectCategory'
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { MemberCategory } from '~/member/entity/member_category.entity';
+import { ActivityCategory } from '~/entity/ActivityCategory';
+import { CreatorCategory } from '~/entity/CreatorCategory';
+import { MemberTask } from '~/entity/MemberTask';
+import { MerchandiseCategory } from '~/entity/MerchandiseCategory';
+import { PodcastAlbumCategory } from '~/entity/PodcastAlbumCategory';
+import { PodcastProgramCategory } from '~/entity/PodcastProgramCategory';
+import { PostCategory } from '~/entity/PostCategory';
+import { ProgramCategory } from '~/entity/ProgramCategory';
+import { ProgramPackageCategory } from '~/entity/ProgramPackageCategory';
+import { ProjectCategory } from '~/entity/ProjectCategory';
 
 @Index('category_app_id_class_name_key', ['appId', 'class', 'name'], {
   unique: true,

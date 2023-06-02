@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm'
 
 import { SignupProperty } from '~/entity/SignupProperty'
-import { MemberService } from '~/member/member.service'
+import { MemberInfrastructure } from '~/member/member.infra';
 import { MemberRole, PublicMember } from '~/member/member.type'
 import { AppService } from '~/app/app.service'
 import { PermissionService } from '~/permission/permission.service'
@@ -19,9 +19,9 @@ export class AuthService {
 
   constructor(
     private readonly configService: ConfigService<{ HASURA_JWT_SECRET: string }>,
-    private readonly memberService: MemberService,
     private readonly appService: AppService,
     private readonly permissionService: PermissionService,
+    private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
@@ -112,7 +112,7 @@ export class AuthService {
 
   private async checkUndoneSignUpProperty(appId: string, memberId: string, manager: EntityManager) {
     const requiredPropertyIds = await this.getSignUpPropertyIds(appId, manager);
-    const requiredMemberProperties = await this.memberService.getMemberPropertiesByIds(memberId, requiredPropertyIds, manager);
+    const requiredMemberProperties = await this.memberInfra.getMemberPropertiesByIds(memberId, requiredPropertyIds, manager);
   
     if (requiredMemberProperties.some(({ value }) => value === '')) {
       return false

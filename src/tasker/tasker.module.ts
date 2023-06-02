@@ -1,20 +1,21 @@
 import { cwd } from 'process';
-import { DynamicModule, Module } from '@nestjs/common';
+import { LoggerModule } from 'nestjs-pino';
+import { DynamicModule, Module, Type, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 
 import { PostgresModule } from '~/database/postgres.module';
 
-import { TaskerType } from './tasker';
+import { Tasker } from './tasker';
 
 @Module({})
 export class TaskerModule {
-  static forRoot(options: { workerName: string, nodeEnv: string }): DynamicModule {
-    const { workerName, nodeEnv } = options;
+  static forRoot(options: { workerName: string, nodeEnv: string, clazz: Type<Tasker>; }): DynamicModule {
+    const { workerName, nodeEnv, clazz } = options;
 
-    if (TaskerType[workerName] === undefined) {
-      throw new Error(`Given tasker name is not exists: ${workerName}`);
-    }
+    const invokedTaskerModule = (clazz as any).forRoot
+      ? (clazz as any).forRoot()
+      : { imports: [], providers: [] };
 
     return {
       module: TaskerModule,
@@ -22,6 +23,23 @@ export class TaskerModule {
         ConfigModule.forRoot({
           envFilePath: `${cwd()}/.env${nodeEnv ? `.${nodeEnv}` : ''}`,
           isGlobal: true,
+        }),
+        LoggerModule.forRootAsync({
+          providers: [ConfigService],
+          useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
+            const nodeEnv = configService.getOrThrow('NODE_ENV');
+            return nodeEnv !== 'production' ? {
+              pinoHttp: {
+                transport: {
+                  target: 'pino-pretty',
+                  options: {
+                    ignore: 'pid,context,hostname',
+                  },
+                },
+              },
+            } : {};
+          },
+          inject: [ConfigService],
         }),
         PostgresModule.forRootAsync(),
         BullModule.forRootAsync({
@@ -43,8 +61,13 @@ export class TaskerModule {
           inject: [ConfigService],
         }),
         BullModule.registerQueue({ name: workerName }),
+        ...(invokedTaskerModule.imports || []),
       ],
-      providers: [TaskerType[workerName]],
+      providers: [
+        Logger,
+        { provide: Tasker, useClass: clazz },
+        ...(invokedTaskerModule.providers || []),
+      ],
     };
   }
 }

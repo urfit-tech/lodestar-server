@@ -1,14 +1,14 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-import { Coupon } from '~/entity/Coupon'
-import { Member } from '~/entity/Member'
-import { OrderContact } from '~/entity/OrderContact'
-import { OrderDiscount } from '~/entity/OrderDiscount'
-import { OrderExecutor } from '~/entity/OrderExecutor'
-import { PaymentLog } from '~/payment/payment_log.entity'
+import { Member } from '~/member/entity/member.entity';
+import { Coupon } from '~/entity/Coupon';
+import { OrderContact } from '~/entity/OrderContact';
+import { OrderDiscount } from '~/entity/OrderDiscount';
+import { OrderExecutor } from '~/entity/OrderExecutor';
+import { PaymentLog } from '~/payment/payment_log.entity';
 import { Invoice } from '~/invoice/invoice.entity';
 
-import { OrderProduct } from './order_product.entity'
+import { OrderProduct } from './order_product.entity';
 
 @Index('order_log_started_at_desc', ['createdAt'], {})
 @Index('order_log_custom_id_key', ['customId'], { unique: true })
