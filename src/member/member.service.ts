@@ -104,7 +104,7 @@ export class MemberService {
       member.name = eachRow.name;
       member.email = eachRow.email,
       member.role = 'general-member';
-      member.username = memberId;
+      member.username = eachRow.username;
       member.createdAt = eachRow.createdAt;
       member.star = eachRow.star || 0;
       member.memberCategories = eachRow.categories
