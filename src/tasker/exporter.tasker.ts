@@ -71,12 +71,12 @@ export class ExporterTasker extends Tasker {
       );
 
       const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}`;
-      const result = await this.storageService.saveFilesInBucketStorage({
+      const { ETag } = await this.storageService.saveFilesInBucketStorage({
         Key: fileKey,
         Body: csvRawData,
         ContentType: 'text/csv',
       });
-      this.logger.log(`[File]: ${fileKey} saved with ${result} into S3.`);
+      this.logger.log(`[File]: ${fileKey} saved with ETag: ${ETag} into S3.`);
 
       const signedDownloadUrl = await this.storageService
         .getSignedUrlForDownloadStorage(fileKey, 24 * 60 * 60);
