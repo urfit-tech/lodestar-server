@@ -75,7 +75,7 @@ export class ImporterTasker extends Tasker {
 
         try {
           const insertResult = await this.processFiles(
-            appId, checksumETag, fileName, category,
+            appId, fileName, checksumETag, category,
           );
           await this.storageService.deleteFileAtBucketStorage({
             Key: `${appId}/${fileName}`,
