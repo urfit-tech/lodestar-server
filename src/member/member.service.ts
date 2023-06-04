@@ -50,10 +50,15 @@ export class MemberService {
       });
     }));
 
+    const fulfilleds = results.filter(
+      (result) => result.status === 'fulfilled');
+    const rejecteds = results.filter(
+      (result) => result.status === 'rejected') as Array<PromiseRejectedResult>;
     return {
       toInsertCount: membersToImport.length,
-      insertedCount: results.filter((result) => result.status === 'fulfilled').length,
-      failedCount: results.filter((result) => result.status === 'rejected').length,
+      insertedCount: fulfilleds.length,
+      failedCount: rejecteds.length,
+      failedErrors: rejecteds.map(({ reason }) => reason),
     };
   }
 

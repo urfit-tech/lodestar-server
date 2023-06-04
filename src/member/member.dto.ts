@@ -15,4 +15,5 @@ export class MemberImportResultDTO {
   toInsertCount: number;
   insertedCount: number;
   failedCount: number;
+  failedErrors: any;
 }
