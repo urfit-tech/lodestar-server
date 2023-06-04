@@ -79,7 +79,7 @@ export class ExporterTasker extends Tasker {
       this.logger.log(`[File]: ${fileKey} saved with ETag: ${ETag} into S3.`);
 
       const signedDownloadUrl = await this.storageService
-        .getSignedUrlForDownloadStorage(fileKey, 24 * 60 * 60);
+        .getSignedUrlForDownloadStorage(fileKey, 7 * 24 * 60 * 60);
       this.putEmailQueue(
         appId,
         invokers,
