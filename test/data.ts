@@ -26,6 +26,12 @@ category.class = '';
 category.position = 0;
 category.name = 'test-category';
 
+export const anotherCategory = new Category();
+anotherCategory.appId = app.id;
+anotherCategory.class = '';
+anotherCategory.position = 0;
+anotherCategory.name = 'test-another-category';
+
 export const memberProperty = new Property();
 memberProperty.app = app;
 memberProperty.type = 'member';
@@ -34,3 +40,7 @@ memberProperty.name = 'test-property';
 export const memberTag = new Tag();
 memberTag.type = 'member';
 memberTag.name = 'test-member-tag';
+
+export const anotherMemberTag = new Tag();
+anotherMemberTag.type = 'member';
+anotherCategory.name = 'test-another-member-tag';

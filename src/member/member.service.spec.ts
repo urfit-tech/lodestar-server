@@ -23,7 +23,9 @@ describe('MemberService', () => {
     getProperties: jest.fn(),
     getTags: jest.fn(),
   };
-  let mockMemberInfra = {};
+  let mockMemberInfra = {
+    getMembersByConditions: jest.fn(),
+  };
   let mockEntityManager = jest.fn();
 
   beforeEach(async () => {
@@ -102,6 +104,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
         { id: 'test_category2_id', name: 'test_category2' },
@@ -178,6 +181,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
         { id: 'test_category2_id', name: 'test_category2' },
@@ -247,6 +251,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
       ]);
@@ -310,6 +315,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
       ]);
@@ -381,6 +387,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
       ]);
@@ -736,6 +743,7 @@ describe('MemberService', () => {
       const tag1 = new Tag();
       tag1.name = '測試標籤1';
 
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([category1]);
       mockDefinitionInfra.getProperties.mockReturnValueOnce([property1]);
       mockDefinitionInfra.getTags.mockReturnValueOnce([tag1]);
@@ -838,6 +846,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: '測試分類1' },
         { id: 'test_category2_id', name: '測試分類2' },
