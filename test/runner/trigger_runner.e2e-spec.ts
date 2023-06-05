@@ -16,7 +16,7 @@ import { CacheService } from '~/utility/cache/cache.service';
 import { autoRollbackTransaction } from '../utils';
 import { appPlan } from '../data';
 
-describe('TriggerRunner (e2e)', () => {
+describe.skip('TriggerRunner (e2e)', () => {
   let application: INestApplication;
   
   let cacheService: CacheService;

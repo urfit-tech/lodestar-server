@@ -3,7 +3,7 @@ import { parse } from 'csv-parse/sync';
 import { EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { BullModule, InjectQueue, Process, Processor } from '@nestjs/bull';
-import { DynamicModule } from '@nestjs/common';
+import { DynamicModule, Logger } from '@nestjs/common';
 
 import { DefinitionModule } from '~/definition/definition.module';
 import { MemberInfrastructure } from '~/member/member.infra';
@@ -48,6 +48,7 @@ export class ImporterTasker extends Tasker {
   }
 
   constructor(
+    private readonly logger: Logger,
     private readonly storageService: StorageService,
     private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
@@ -59,45 +60,64 @@ export class ImporterTasker extends Tasker {
 
   @Process()
   async process(job: Job<ImportJob>): Promise<void> {
-    const { appId, invokerMemberId, category, fileInfos }: ImportJob = job.data;
-    const invokers = await this.memberInfra.getMembersByConditions(
-      appId, { id: invokerMemberId }, this.entityManager,
-    );
-    for (const fileInfo of fileInfos) {
-      const { checksumETag, fileName } = fileInfo;
+    try {
+      const { id } = job;
+      this.logger.log(`Import task: ${id} processing.`);
 
-      try {
-        const { ContentType, Body, ETag } = await this.storageService.getFileFromBucketStorage({
-          Key: `${appId}/${fileName}`,
-        });
+      const { appId, invokerMemberId, category, fileInfos }: ImportJob = job.data;
+      const invokers = await this.memberInfra.getMembersByConditions(
+        appId, { id: invokerMemberId }, this.entityManager,
+      );
+      const processResult: Record<string, MemberImportResultDTO | Error> = {};
 
-        if (`"${checksumETag}"` !== ETag) {
-          throw new Error('Unmatched checksum.');
+      for (const fileInfo of fileInfos) {
+        const { checksumETag, fileName } = fileInfo;
+
+        try {
+          const insertResult = await this.processFiles(
+            appId, fileName, checksumETag, category,
+          );
+          await this.storageService.deleteFileAtBucketStorage({
+            Key: `${appId}/${fileName}`,
+          });
+          processResult[fileName] = insertResult;
+        } catch (err) {
+          processResult[fileName] = err;
         }
-        const uint8Array = await Body.transformToByteArray();
-
-        const insertResult = await this.importToDatabase(
-          appId, category, ContentType, Buffer.from(uint8Array),
-        );
-        this.putEmailQueue(
-          appId,
-          invokers,
-          '匯入結果(MemberImport)',
-          `預計插入筆數：${insertResult.toInsertCount}</br>實際插入筆數:${insertResult.insertedCount}</br>出錯筆數:${insertResult.failedCount}`,
-        );
-        await this.storageService.deleteFileAtBucketStorage({
-          Key: `${appId}/${fileName}`,
-        });
-      } catch (err) {
-        console.log(err);
-        this.putEmailQueue(
-          appId,
-          invokers,
-          '匯入結果(MemberImport)：失敗',
-          JSON.stringify(err),
-        );
       }
+      this.logger.log(`import process result: ${JSON.stringify(processResult)}`);
+
+      await this.putEmailQueue(
+        appId,
+        invokers,
+        '匯入結果(MemberImport)',
+        JSON.stringify(processResult),
+      );
+      this.logger.log(`Import task: ${id} completed.`);
+    } catch (error) {
+      this.logger.error('Import task error:');
+      this.logger.error(error);
     }
+  }
+
+  private async processFiles(
+    appId: string,
+    fileName: string,
+    checksumETag: string,
+    category: ImportCategory,
+  ): Promise<MemberImportResultDTO> {
+    const { ContentType, Body, ETag } = await this.storageService.getFileFromBucketStorage({
+      Key: `${appId}/${fileName}`,
+    });
+
+    if (`"${checksumETag}"` !== ETag) {
+      throw new Error('Unmatched checksum.');
+    }
+    const uint8Array = await Body.transformToByteArray();
+
+    return this.importToDatabase(
+      appId, category, ContentType, Buffer.from(uint8Array),
+    );
   }
 
   private importToDatabase(
