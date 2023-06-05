@@ -10,7 +10,10 @@ import { StorageService } from './storage/storage.service'
 import { ShutdownService } from './shutdown/shutdown.service'
 import { UtilityService } from './utility.service'
 
+import { StorageController } from './storage/storage.controller';
+
 @Module({
+  controllers: [StorageController],
   imports: [FeedModule, MailerModule, CallerModule, SocialModule],
   providers: [UtilityService, ApolloService, QueueService, CacheService, StorageService, ShutdownService],
   exports: [UtilityService, CacheService, ShutdownService],
