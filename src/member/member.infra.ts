@@ -19,9 +19,15 @@ export class MemberInfrastructure {
       },
       relations: {
         memberPhones: true,
-        memberCategories: true,
-        memberTags: true,
-        memberProperties: true,
+        memberCategories: {
+          category: true,
+        },
+        memberTags: {
+          tagName2: true,
+        },
+        memberProperties: {
+          property: true,
+        },
       },
     });
   }
