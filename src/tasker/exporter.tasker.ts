@@ -3,7 +3,7 @@ import { Job, Queue } from 'bull';
 import { stringify } from 'csv-stringify/sync';
 import { EntityManager } from 'typeorm';
 import { BullModule, InjectQueue, Process, Processor } from '@nestjs/bull';
-import { DynamicModule } from '@nestjs/common';
+import { DynamicModule, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
 import { DefinitionModule } from '~/definition/definition.module';
@@ -47,6 +47,7 @@ export class ExporterTasker extends Tasker {
   }
 
   constructor(
+    private readonly logger: Logger,
     private readonly storageService: StorageService,
     private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
@@ -59,27 +60,37 @@ export class ExporterTasker extends Tasker {
 
   @Process()
   async process(job: Job<ExportJob>): Promise<void> {
-    const { appId, invokerMemberId, category }: ExportJob = job.data;
-    const csvRawData = await this.exportFromDatabase(appId, job.data);
-    const invokers = await this.memberInfra.getMembersByConditions(
-      appId, { id: invokerMemberId }, this.entityManager,
-    );
+    try {
+      const { id } = job;
+      this.logger.log(`Export task: ${id} processing.`);
 
-    const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}`;
-    const result = await this.storageService.saveFilesInBucketStorage({
-      Key: fileKey,
-      Body: csvRawData,
-      ContentType: 'text/csv',
-    });
+      const { appId, invokerMemberId, category }: ExportJob = job.data;
+      const csvRawData = await this.exportFromDatabase(appId, job.data);
+      const invokers = await this.memberInfra.getMembersByConditions(
+        appId, { id: invokerMemberId }, this.entityManager,
+      );
 
-    const signedDownloadUrl = await this.storageService
-      .getSignedUrlForDownloadStorage(fileKey, 24 * 60 * 60);
-    this.putEmailQueue(
-      appId,
-      invokers,
-      '匯出結果(MemberExport)',
-      `檔案下載連結: ${signedDownloadUrl}</br>請在24小時內下載，逾時連結將失效。`,
-    );
+      const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}`;
+      const { ETag } = await this.storageService.saveFilesInBucketStorage({
+        Key: fileKey,
+        Body: csvRawData,
+        ContentType: 'text/csv',
+      });
+      this.logger.log(`[File]: ${fileKey} saved with ETag: ${ETag} into S3.`);
+
+      const signedDownloadUrl = await this.storageService
+        .getSignedUrlForDownloadStorage(fileKey, 7 * 24 * 60 * 60);
+      this.putEmailQueue(
+        appId,
+        invokers,
+        '匯出結果(MemberExport)',
+        `檔案下載連結: ${signedDownloadUrl}</br>請在24小時內下載，逾時連結將失效。`,
+      );
+      this.logger.log(`Export task: ${id} completed.`);
+    } catch (error) {
+      this.logger.error('Export task error:');
+      this.logger.error(error);
+    }
   }
 
   private async exportFromDatabase(appId: string, data: ExportJob) {

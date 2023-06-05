@@ -290,7 +290,7 @@ export class Member {
   @OneToMany(() => MemberPhone, memberPhone => memberPhone.member)
   memberPhones: MemberPhone[]
 
-  @OneToMany(() => MemberProperty, memberProperty => memberProperty.member)
+  @OneToMany(() => MemberProperty, memberProperty => memberProperty.member, { persistence: false })
   memberProperties: MemberProperty[]
 
   @OneToMany(() => MemberShop, memberShop => memberShop.member)

@@ -11,7 +11,7 @@ import { ApiExceptionFilter } from '~/api.filter';
 import { ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker } from '~/tasker/exporter.tasker';
 
-import { app } from './data';
+import { app } from '../data';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;

@@ -23,7 +23,9 @@ describe('MemberService', () => {
     getProperties: jest.fn(),
     getTags: jest.fn(),
   };
-  let mockMemberInfra = {};
+  let mockMemberInfra = {
+    getMembersByConditions: jest.fn(),
+  };
   let mockEntityManager = jest.fn();
 
   beforeEach(async () => {
@@ -102,6 +104,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
         { id: 'test_category2_id', name: 'test_category2' },
@@ -119,7 +122,7 @@ describe('MemberService', () => {
       const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test');
-      expect(member.username).toBe(memberId);
+      expect(member.username).toBe('test_account');
       expect(member.email).toBe('test_email@test.com');
       member.memberPhones.forEach((memberPhone) => {
         expect(['0912345678', '0923456789']).toContain(memberPhone.phone);
@@ -178,6 +181,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
         { id: 'test_category2_id', name: 'test_category2' },
@@ -195,7 +199,7 @@ describe('MemberService', () => {
       const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_partial_missing');
-      expect(member.username).toBe(memberId);
+      expect(member.username).toBe('test_partial_missing_account');
       expect(member.email).toBe('test_partial_missing_email@test.com');
       expect(member.memberPhones.length).toBe(1);
       expect(member.memberPhones[0].phone).toEqual('0912345678');
@@ -247,6 +251,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
       ]);
@@ -261,7 +266,7 @@ describe('MemberService', () => {
       const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_not_exists');
-      expect(member.username).toBe(memberId);
+      expect(member.username).toBe('test_not_exists_account');
       expect(member.email).toBe('test_not_exists_email@test.com');
       expect(member.memberPhones.length).toBe(1);
       expect(member.memberPhones[0].phone).toEqual('0912345678');
@@ -310,6 +315,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
       ]);
@@ -324,7 +330,7 @@ describe('MemberService', () => {
       const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_extra_unknown');
-      expect(member.username).toBe(memberId);
+      expect(member.username).toBe('test_extra_unknown_account');
       expect(member.email).toBe('test_extra_unknown_email@test.com');
       expect(member.memberPhones.length).toBe(1);
       expect(member.memberPhones[0].phone).toEqual('0912345678');
@@ -381,6 +387,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: 'test_category1' },
       ]);
@@ -397,7 +404,7 @@ describe('MemberService', () => {
       const [member] = members;
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_normal');
-      expect(member.username).toBe(memberId);
+      expect(member.username).toBe('test_normal_account');
       expect(member.email).toBe('test_normal_email@test.com');
       expect(member.memberPhones.length).toBe(1);
       expect(member.memberPhones[0].phone).toEqual('0912345678');
@@ -736,6 +743,7 @@ describe('MemberService', () => {
       const tag1 = new Tag();
       tag1.name = '測試標籤1';
 
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([category1]);
       mockDefinitionInfra.getProperties.mockReturnValueOnce([property1]);
       mockDefinitionInfra.getTags.mockReturnValueOnce([tag1]);
@@ -778,7 +786,7 @@ describe('MemberService', () => {
       const [importedMember] = importedMembers;
       expect(importedMember.id).toEqual(member.id);
       expect(importedMember.name).toEqual(member.name);
-      expect(importedMember.username).toEqual(member.id); // Due to default set username to member id.
+      expect(importedMember.username).toEqual(member.username);
       expect(importedMember.email).toEqual(member.email);
       expect(importedMember.star).toEqual(member.star);
       expect(importedMember.createdAt).toEqual(memberCreatedAt);
@@ -838,6 +846,7 @@ describe('MemberService', () => {
           '建立日期': createdAt.toISOString(),
         },
       ];
+      mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
       mockDefinitionInfra.getCategories.mockReturnValueOnce([
         { id: 'test_category1_id', name: '測試分類1' },
         { id: 'test_category2_id', name: '測試分類2' },
