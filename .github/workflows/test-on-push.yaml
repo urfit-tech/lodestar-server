@@ -68,5 +68,5 @@ jobs:
         run: yarn run test --coverage
       
       - name: E2E Testing
-        run: yarn run test:e2e --coverage
+        run: yarn run test:e2e --coverage --runInBand
 
