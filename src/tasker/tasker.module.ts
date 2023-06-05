@@ -1,4 +1,6 @@
 import { cwd } from 'process';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import { LoggerModule } from 'nestjs-pino';
 import { DynamicModule, Module, Type, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -8,6 +10,8 @@ import { PostgresModule } from '~/database/postgres.module';
 import { UtilityModule } from '~/utility/utility.module';
 
 import { Tasker } from './tasker';
+
+dayjs.extend(utc);
 
 @Module({})
 export class TaskerModule {
@@ -29,7 +33,7 @@ export class TaskerModule {
           providers: [ConfigService],
           useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
             const nodeEnv = configService.getOrThrow('NODE_ENV');
-            return nodeEnv !== 'production' ? {
+            return ['production', 'staging'].includes(nodeEnv) ? {
               pinoHttp: {
                 transport: {
                   target: 'pino-pretty',

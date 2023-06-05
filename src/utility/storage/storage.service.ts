@@ -34,11 +34,19 @@ export class StorageService {
     return new S3Client({});
   }
 
+  getSignedUrlForUploadStorage(appId: string, key: string, expiresIn: number): Promise<string> {
+    const command = new PutObjectCommand({
+      Key: `${appId}/${key}`,
+      Bucket: this.awsS3BucketStorage,
+    });
+    return getSignedUrl(this.s3(), command, { expiresIn });
+  }
+
   getSignedUrlForDownloadStorage(key: string, expiresIn: number): Promise<string> {
     const command = new GetObjectCommand({
       Key: key,
       Bucket: this.awsS3BucketStorage,
-    })
+    });
     return getSignedUrl(this.s3(), command, { expiresIn });
   }
 

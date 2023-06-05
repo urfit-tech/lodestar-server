@@ -24,7 +24,7 @@ import { UtilityModule } from './utility/utility.module'
       providers: [ConfigService],
       useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
         const nodeEnv = configService.getOrThrow('NODE_ENV');
-        return nodeEnv !== 'production' ? {
+        return ['production', 'staging'].includes(nodeEnv) ? {
           pinoHttp: {
             transport: {
               target: 'pino-pretty',
