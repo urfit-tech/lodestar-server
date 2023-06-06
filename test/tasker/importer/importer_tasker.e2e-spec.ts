@@ -163,5 +163,64 @@ describe('ImporterTasker', () => {
         expect(zzMember.memberTags[0].tagName).toBe(memberTag.name);
       });
     });
+
+    describe('Excel file', () => {
+      it('Should import with skip invalid categories, properties, tags data', async () => {
+        const importerTasker = application.get<ImporterTasker>(Tasker);
+
+        mockStorageService.getFileFromBucketStorage.mockImplementationOnce(() => {
+          const testDataFile = readFileSync(join(__dirname, 'test-member-import-data.xlsx'));
+          return {
+            ContentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            Body: {
+              transformToByteArray: () => testDataFile,
+            },
+            ETag: '"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"',
+          };
+        });
+
+        await importerTasker.process({
+          data: {
+            appId: app.id,
+            category: 'member',
+            fileInfos: [{
+              fileName: 'test-data.xlsx',
+              checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            }],
+          },
+        }  as Job<ImportJob>);
+        const members = await memberRepo.find({
+          where: {},
+          relations:{
+            memberPhones: true,
+            memberCategories: true,
+            memberProperties: true,
+            memberTags: true,
+          },
+        });
+        expect(members.length).toBe(2);
+        const kkMember = members.find(({ name }) => name === 'KK');
+        const zzMember = members.find(({ name }) => name === 'ZZ');
+        const cases = {
+          'name': ['KK', 'ZZ'],
+          'email': ['kk@example.com', 'zz@example.com'],
+          'star': ['999', '0'],
+        };
+        for (const key in cases) {
+          expect(kkMember[key]).toBe(cases[key][0]);
+          expect(zzMember[key]).toBe(cases[key][1]);
+        }
+        expect(['987654321', '900000000']).toContain(kkMember.memberPhones[0].phone);
+        expect(['987654321', '900000000']).toContain(kkMember.memberPhones[1].phone);
+        expect(zzMember.memberPhones[0].phone).toBe('912345678');
+        expect(kkMember.memberCategories[0].categoryId).toBe(category.id);
+        expect(zzMember.memberCategories.length).toBe(0);
+        expect(kkMember.memberProperties[0].propertyId).toBe(memberProperty.id);
+        expect(kkMember.memberProperties[0].value).toBe('Somet-test-value');
+        expect(zzMember.memberProperties.length).toBe(0);
+        expect(kkMember.memberTags.length).toBe(0);
+        expect(zzMember.memberTags[0].tagName).toBe(memberTag.name);
+      });
+    });
   });
 });
