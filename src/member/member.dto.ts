@@ -9,6 +9,7 @@ export class MemberImportDTO {
 export class MemberExportDTO {
   appId: string;
   memberIds: Array<string>;
+  exportMime?: string;
 }
 
 export class MemberImportResultDTO {
