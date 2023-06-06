@@ -38,8 +38,6 @@
     "bull": "^4.10.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
-    "csv-parse": "^5.4.0",
-    "csv-stringify": "^6.4.0",
     "dayjs": "^1.11.7",
     "dotenv": "^16.0.3",
     "ioredis": "^5.3.1",

@@ -1,6 +1,5 @@
 import { Job, Queue } from 'bull';
 import * as XLSX from 'xlsx';
-import { parse as csvParse } from 'csv-parse/sync';
 import { EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { BullModule, InjectQueue, Process, Processor } from '@nestjs/bull';
@@ -128,14 +127,14 @@ export class ImporterTasker extends Tasker {
     rawBin: Buffer,
   ): Promise<MemberImportResultDTO> {
     let rawRows: Array<Record<string, any>> = [];
+    const { Sheets, SheetNames } = XLSX.read(rawBin);
+
     switch (mimeType){
       case 'application/vnd.ms-excel':
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-        const { Sheets, SheetNames } = XLSX.read(rawBin);
-        rawRows = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
-        break;
+      case 'text/csv':
       default:
-        rawRows = csvParse(rawBin, { columns: true, skip_empty_lines: true });
+        rawRows = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
         break;
     }
 
