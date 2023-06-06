@@ -87,7 +87,7 @@ export class CsvRawMember {
     this.star = parseInt(row[header.star]);
     this.createdAt = isEmpty(row[header.createdAt]) ? new Date() : new Date(row[header.createdAt]);
     this.phones = header.phones
-      .map((each) => row[each])
+      .map((each) => row[each].toString())
       .filter(isNotEmpty);
     this.categories = header.categories
       .map((each) => row[each])
