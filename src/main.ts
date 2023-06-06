@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'
 import { Logger } from 'nestjs-pino';
+import { json, urlencoded } from 'express';
 import { INestApplication, RequestMethod, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core'
 
@@ -45,7 +46,9 @@ async function bootstrap() {
           { path: 'healthz', method: RequestMethod.GET },
         ],
       })
-      .enableVersioning({ type: VersioningType.URI });
+      .enableVersioning({ type: VersioningType.URI })
+      .use(json({ limit: '10mb' }))
+      .use(urlencoded({ extended: true, limit: '10mb' }));
   }
   app = app
     .enableShutdownHooks();

@@ -64,12 +64,13 @@ export class MemberController {
   ): Promise<void> {
     const { memberId: invokerMemberId } = this.verify(authorization);
 
-    const { appId, memberIds } = metadata;
+    const { appId, memberIds, exportMime } = metadata;
     const exportJob: MemberExportJob = {
       appId,
       invokerMemberId: invokerMemberId,
       category: 'member',
       memberIds,
+      exportMime,
     };
     await this.exportQueue.add(exportJob);
   }

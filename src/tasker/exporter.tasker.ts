@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { Job, Queue } from 'bull';
-import { stringify } from 'csv-stringify/sync';
+import * as XLSX from 'xlsx';
 import { EntityManager } from 'typeorm';
 import { BullModule, InjectQueue, Process, Processor } from '@nestjs/bull';
 import { DynamicModule, Logger } from '@nestjs/common';
@@ -21,6 +21,7 @@ export interface ExportJob {
   appId: string;
   invokerMemberId: string;
   category: ExportCategory;
+  exportMime?: string;
 }
 
 export type MemberExportJob = ExportJob & {
@@ -64,7 +65,7 @@ export class ExporterTasker extends Tasker {
       const { id } = job;
       this.logger.log(`Export task: ${id} processing.`);
 
-      const { appId, invokerMemberId, category }: ExportJob = job.data;
+      const { appId, invokerMemberId, category, exportMime }: ExportJob = job.data;
       const csvRawData = await this.exportFromDatabase(appId, job.data);
       const invokers = await this.memberInfra.getMembersByConditions(
         appId, { id: invokerMemberId }, this.entityManager,
@@ -74,7 +75,7 @@ export class ExporterTasker extends Tasker {
       const { ETag } = await this.storageService.saveFilesInBucketStorage({
         Key: fileKey,
         Body: csvRawData,
-        ContentType: 'text/csv',
+        ContentType: exportMime,
       });
       this.logger.log(`[File]: ${fileKey} saved with ETag: ${ETag} into S3.`);
 
@@ -102,10 +103,19 @@ export class ExporterTasker extends Tasker {
         break;
     }
 
-    return stringify(rawRows, {
-      header: true,
-      columns: Object.keys(rawRows[0]),
-    });
+    return this.writeToFile(rawRows, data.exportMime);
+  }
+
+  private writeToFile(rawRows: Array<Record<string, any>>, mimeType?: string) {
+    const newBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(newBook, XLSX.utils.json_to_sheet(rawRows));
+
+    switch (mimeType) {
+      case 'text/csv':
+        return XLSX.write(newBook, { type: 'buffer', bookType: 'csv' });
+      default:
+        return XLSX.write(newBook, { type: 'buffer', bookType: 'xlsx' });
+    }
   }
 
   private async putEmailQueue(

@@ -1,6 +1,6 @@
 import { Job } from 'bull';
 import { v4 } from 'uuid';
-import { parse } from 'csv-parse/sync';
+import * as XLSX from 'xlsx';
 import { EntityManager, Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
 import { getEntityManagerToken } from '@nestjs/typeorm';
@@ -142,9 +142,11 @@ describe('ExporterTasker', () => {
         memberIds: [
           testMember.id,
         ],
+        exportMime: 'text/csv',
       },
     } as Job<MemberExportJob>);
-    const parsed = parse(savedFile, { columns: true });
+    const { Sheets, SheetNames } = XLSX.read(savedFile);
+    const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
     expect(parsed.length).toBe(2);
     const [_, data] = parsed;
     expect(data['流水號']).toBe(testMember.id);
