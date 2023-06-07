@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc'
 import { Logger } from 'nestjs-pino';
 import { json, urlencoded } from 'express';
-import { INestApplication, RequestMethod, VersioningType } from '@nestjs/common';
+import { INestApplication, RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core'
 
 import { RunnerModule } from './runner/runner.module';
@@ -40,6 +40,7 @@ async function bootstrap() {
     app = await NestFactory.create(ApplicationModule, { bufferLogs: true });
 
     app = app
+      .useGlobalPipes(new ValidationPipe())
       .useGlobalFilters(new ApiExceptionFilter())
       .setGlobalPrefix('api', {
         exclude: [
