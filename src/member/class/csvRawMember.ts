@@ -22,6 +22,10 @@ export class CsvRawMember {
   @IsEmail()
   email: string;
 
+  @IsString()
+  @IsNotEmpty()
+  role: string;
+
   @IsArray()
   @IsString({ each: true })
   categories: Array<string>;
@@ -42,6 +46,9 @@ export class CsvRawMember {
   
   @IsDate()
   createdAt: Date;
+
+  @IsDate()
+  loginedAt: Date;
 
   public serializeToCsvRawRow(
     header: MemberCsvHeaderMapping,
@@ -68,7 +75,9 @@ export class CsvRawMember {
       [header.username]: this.username,
       [header.email]: this.email,
       [header.star]: this.star,
+      [header.role]: this.role,
       [header.createdAt]: this.createdAt.toISOString(),
+      [header.loginedAt]: this.loginedAt.toISOString(),
       ...phones,
       ...categories,
       ...properties,
@@ -85,7 +94,9 @@ export class CsvRawMember {
     this.username = row[header.username];
     this.email = row[header.email];
     this.star = parseInt(row[header.star]);
+    this.role = isEmpty(row[header.role]) ? 'general-member' : row[header.role];
     this.createdAt = isEmpty(row[header.createdAt]) ? new Date() : new Date(row[header.createdAt]);
+    this.loginedAt = isEmpty(row[header.loginedAt]) ? new Date() : new Date(row[header.loginedAt]);
     this.phones = header.phones
       .map((each) => row[each].toString())
       .filter(isNotEmpty);

@@ -97,12 +97,14 @@ describe('MemberService (e2e)', () => {
     it('Should insert not exists members', async () => {
       const memberId = v4();
       const createdAt = new Date();
+      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
           '姓名': 'name',
           '帳號': 'username',
           '信箱': 'email',
+          '身份': 'role',
           '手機1': 'phones.0',
           '手機2': 'phones.1',
           '分類1': 'categories.0',
@@ -113,12 +115,14 @@ describe('MemberService (e2e)', () => {
           '標籤2': 'tags.1',
           '星等': 'star',
           '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
         },
         {
           '流水號': memberId,
           '姓名': 'test',
           '帳號': 'test_account',
           '信箱': 'test_email@test.com',
+          '身份': 'general-member',
           '手機1': '0912345678',
           '手機2': '0923456789',
           '分類1': 'test_category1',
@@ -129,6 +133,7 @@ describe('MemberService (e2e)', () => {
           '標籤2': 'test_tag2',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
+          '上次登入日期': loginedAt.toISOString(),
         },
       ];
       const insertResult = await service.processImportFromFile(app.id, rawRows);
@@ -181,6 +186,7 @@ describe('MemberService (e2e)', () => {
       insertedMember.role = 'general-member';
       insertedMember.star = 555;
       insertedMember.createdAt = new Date();
+      insertedMember.loginedAt = new Date();
 
       const insertedMemberPhone = new MemberPhone();
       insertedMemberPhone.member = insertedMember;
@@ -212,6 +218,7 @@ describe('MemberService (e2e)', () => {
           '姓名': 'name',
           '帳號': 'username',
           '信箱': 'email',
+          '身份': 'role',
           '手機1': 'phones.0',
           '手機2': 'phones.1',
           '分類1': 'categories.0',
@@ -222,12 +229,14 @@ describe('MemberService (e2e)', () => {
           '標籤2': 'tags.1',
           '星等': 'star',
           '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
         },
         {
           '流水號': insertedMember.id,
           '姓名': insertedMember.name,
           '帳號': insertedMember.username,
           '信箱': insertedMember.email,
+          '身份': insertedMember.role,
           '手機1': '0900000008',
           '手機2': '',
           '分類1': '',
@@ -238,6 +247,7 @@ describe('MemberService (e2e)', () => {
           '標籤2': anotherMemberTag.name,
           '星等': '999',
           '建立日期': insertedMember.createdAt,
+          '上次登入日期': insertedMember.loginedAt,
         },
       ];
 

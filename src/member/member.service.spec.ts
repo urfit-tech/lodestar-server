@@ -70,12 +70,14 @@ describe('MemberService', () => {
     it('Should process all included categories, properties, tags, phones', async () => {
       const memberId = v4();
       const createdAt = new Date();
+      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
           '姓名': 'name',
           '帳號': 'username',
           '信箱': 'email',
+          '身份': 'role',
           '手機1': 'phones.0',
           '手機2': 'phones.1',
           '分類1': 'categories.0',
@@ -86,12 +88,14 @@ describe('MemberService', () => {
           '標籤2': 'tags.1',
           '星等': 'star',
           '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
         },
         {
           '流水號': memberId,
           '姓名': 'test',
           '帳號': 'test_account',
           '信箱': 'test_email@test.com',
+          '身份': 'general-member',
           '手機1': '0912345678',
           '手機2': '0923456789',
           '分類1': 'test_category1',
@@ -102,6 +106,7 @@ describe('MemberService', () => {
           '標籤2': 'test_tag2',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
+          '上次登入日期': loginedAt.toISOString(),
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -142,17 +147,20 @@ describe('MemberService', () => {
       });
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
+      expect(member.loginedAt).toStrictEqual(loginedAt);
     });
 
     it('Should allow missing partial categories, properties, tags, phones', async () => {
       const memberId = v4();
       const createdAt = new Date();
+      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
           '姓名': 'name',
           '帳號': 'username',
           '信箱': 'email',
+          '身份': 'role',
           '手機1': 'phones.0',
           '手機2': 'phones.1',
           '分類1': 'categories.0',
@@ -163,12 +171,14 @@ describe('MemberService', () => {
           '標籤2': 'tags.1',
           '星等': 'star',
           '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
         },
         {
           '流水號': memberId,
           '姓名': 'test_partial_missing',
           '帳號': 'test_partial_missing_account',
           '信箱': 'test_partial_missing_email@test.com',
+          '身份': 'general-member',
           '手機1': '0912345678',
           '手機2': '',
           '分類1': 'test_category1',
@@ -179,6 +189,7 @@ describe('MemberService', () => {
           '標籤2': '',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
+          '上次登入日期': loginedAt.toISOString(),
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -212,17 +223,20 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
+      expect(member.loginedAt).toStrictEqual(loginedAt);
     });
 
     it('Should skip unknown categories, properties, tags', async () => {
       const memberId = v4();
       const createdAt = new Date();
+      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
           '姓名': 'name',
           '帳號': 'username',
           '信箱': 'email',
+          '身份': 'role',
           '手機1': 'phones.0',
           '手機2': 'phones.1',
           '分類1': 'categories.0',
@@ -233,12 +247,14 @@ describe('MemberService', () => {
           '不存在標籤2': 'tags.1',
           '星等': 'star',
           '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
         },
         {
           '流水號': memberId,
           '姓名': 'test_not_exists',
           '帳號': 'test_not_exists_account',
           '信箱': 'test_not_exists_email@test.com',
+          '身份': 'general-member',
           '手機1': '0912345678',
           '手機2': '',
           '分類1': 'test_category1',
@@ -249,6 +265,7 @@ describe('MemberService', () => {
           '不存在標籤2': 'not_exists_tag',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
+          '上次登入日期': loginedAt.toISOString(),
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -279,17 +296,20 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
+      expect(member.loginedAt).toStrictEqual(loginedAt);
     });
 
     it('Should skip extra unknown categories, properties, tags', async () => {
       const memberId = v4();
       const createdAt = new Date();
+      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
           '姓名': 'name',
           '帳號': 'username',
           '信箱': 'email',
+          '身份': 'role',
           '手機1': 'phones.0',
           '手機2': 'phones.1',
           '分類1': 'categories.0',
@@ -297,12 +317,14 @@ describe('MemberService', () => {
           '標籤1': 'tags.0',
           '星等': 'star',
           '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
         },
         {
           '流水號': memberId,
           '姓名': 'test_extra_unknown',
           '帳號': 'test_extra_unknown_account',
           '信箱': 'test_extra_unknown_email@test.com',
+          '身份': 'general-member',
           '手機1': '0912345678',
           '手機2': '',
           '分類1': 'test_category1',
@@ -313,6 +335,7 @@ describe('MemberService', () => {
           '多餘標籤2': 'extra_unknown_tag',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
+          '上次登入日期': loginedAt.toISOString(),
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -343,48 +366,56 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
+      expect(member.loginedAt).toStrictEqual(loginedAt);
     });
 
     it('Should skip invalid raw rows', async () => {
       const memberId = v4();
       const invalidMemberId = v4();
       const createdAt = new Date();
+      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
           '姓名': 'name',
           '帳號': 'username',
           '信箱': 'email',
+          '身份': 'role',
           '手機1': 'phones.0',
           '分類1': 'categories.0',
           '屬性1': 'properties.0',
           '標籤1': 'tags.0',
           '星等': 'star',
           '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
         },
         {
           '流水號': memberId,
           '姓名': 'test_normal',
           '帳號': 'test_normal_account',
           '信箱': 'test_normal_email@test.com',
+          '身份': 'general-member',
           '手機1': '0912345678',
           '分類1': 'test_category1',
           '屬性1': 'test_property1',
           '標籤1': 'test_tag1',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
+          '上次登入日期': loginedAt.toISOString(),
         },
         {
           '流水號': invalidMemberId,
           '姓名': 'test_invalid_email',
           '帳號': 'test_invalid_email_account',
           '信箱': '',
+          '身份': 'general-member',
           '手機1': '0912345678',
           '分類1': 'test_category1',
           '屬性1': 'test_property1',
           '標籤1': 'test_tag1',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
+          '上次登入日期': loginedAt.toISOString(),
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -417,6 +448,7 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
+      expect(member.loginedAt).toStrictEqual(loginedAt);
     });
   });
 
@@ -442,6 +474,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
+      member.loginedAt = new Date();
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -470,6 +503,7 @@ describe('MemberService', () => {
       expect(raw['姓名']).toEqual(member.name);
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
+      expect(raw['身份']).toEqual(member.role);
       expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       expect(raw['分類1']).toEqual(member.memberCategories[0].category.name);
@@ -512,6 +546,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
+      member.loginedAt = new Date();
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -549,6 +584,7 @@ describe('MemberService', () => {
       expect(raw['姓名']).toEqual(member.name);
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
+      expect(raw['身份']).toEqual(member.role);
       expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       Array(member.memberCategories.length).forEach((index) => {
@@ -595,6 +631,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
+      member.loginedAt = new Date();
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -674,6 +711,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
+      member.loginedAt = new Date();
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -752,6 +790,7 @@ describe('MemberService', () => {
         .deserializeFromDataBase(5, 5, [category1], [property1]);
       const memberId = v4();
       const memberCreatedAt = new Date();
+      const memberLoginedAt = new Date();
       const member = new Member();
       member.id = memberId;
       member.name = 'test';
@@ -759,6 +798,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = memberCreatedAt;
+      member.loginedAt = memberLoginedAt;
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -812,12 +852,14 @@ describe('MemberService', () => {
     it('imported data can re-export with multiple', async () => {
       const memberId = v4();
       const createdAt = new Date();
+      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
           '姓名': 'name',
           '帳號': 'username',
           '信箱': 'email',
+          '身份': 'role',
           '手機1': 'phones.0',
           '手機2': 'phones.1',
           '分類1': 'categories.0',
@@ -828,12 +870,14 @@ describe('MemberService', () => {
           '標籤2': 'tags.1',
           '星等': 'star',
           '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
         },
         {
           '流水號': memberId,
           '姓名': 'test',
           '帳號': 'test_account',
           '信箱': 'test_email@test.com',
+          '身份': 'general-member',
           '手機1': '0912345678',
           '手機2': '0923456789',
           '分類1': '測試分類1',
@@ -844,6 +888,7 @@ describe('MemberService', () => {
           '標籤2': '',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
+          '上次登入日期': loginedAt.toISOString(),
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -870,8 +915,10 @@ describe('MemberService', () => {
       expect(exportedRawRow['姓名']).toEqual(member.name);
       expect(exportedRawRow['帳號']).toEqual(member.username);
       expect(exportedRawRow['信箱']).toEqual(member.email);
+      expect(exportedRawRow['身份']).toEqual(member.role);
       expect(exportedRawRow['星等']).toEqual(member.star);
       expect(exportedRawRow['建立日期']).toEqual(member.createdAt.toISOString());
+      expect(exportedRawRow['上次登入日期']).toEqual(member.loginedAt.toISOString());
       expect(exportedRawRow['手機1']).toEqual(member.memberPhones[0].phone);
       expect(exportedRawRow['手機2']).toEqual(member.memberPhones[1].phone);
       expect(exportedRawRow['分類1']).toEqual(member.memberCategories[0].category.name);
