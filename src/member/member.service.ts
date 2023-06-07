@@ -116,9 +116,10 @@ export class MemberService {
         member.id = eachRow.id;
         member.name = eachRow.name;
         member.email = eachRow.email;
-        member.role = 'general-member';
+        member.role = eachRow.role;
         member.username = eachRow.username || eachRow.id;
         member.createdAt = eachRow.createdAt;
+        member.loginedAt = eachRow.loginedAt;
         member.star = eachRow.star || 0;
 
         member.memberCategories = eachRow.categories
@@ -177,7 +178,9 @@ export class MemberService {
         csvRawMember.username = each.username;
         csvRawMember.email = each.email;
         csvRawMember.star = each.star;
+        csvRawMember.role = each.role;
         csvRawMember.createdAt = each.createdAt;
+        csvRawMember.loginedAt = each.loginedAt;
         csvRawMember.categories = each.memberCategories.map(({ category }) => category.name);
         csvRawMember.properties = each.memberProperties.reduce(
           (acc, current) => {
