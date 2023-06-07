@@ -132,6 +132,7 @@ describe('ExporterTasker', () => {
     testMember.username = 'john_account';
     testMember.email = 'john@example.com';
     testMember.role = 'general-member';
+    testMember.loginedAt = new Date();
 
     await manager.save(testMember);
 
