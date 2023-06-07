@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Queue } from 'bull';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getQueueToken } from '@nestjs/bull';
@@ -23,7 +23,9 @@ describe('MemberController (e2e)', () => {
 
     application = moduleFixture.createNestApplication();
 
-    application.useGlobalFilters(new ApiExceptionFilter());
+    application
+      .useGlobalPipes(new ValidationPipe())
+      .useGlobalFilters(new ApiExceptionFilter());
 
     await application.init();
   });
@@ -38,9 +40,27 @@ describe('MemberController (e2e)', () => {
     it('Should raise unauthorized exception', async () => {
       await request(application.getHttpServer())
         .post(route)
-        .set('Authorization', 'Bearer something')
-        .send({})
+        .set('Authorization', `Bearer something`)
+        .send({
+          appId: app.id,
+          fileInfos: [],
+        })
         .expect(401);
+    });
+
+    it('Should raise bad request exception', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign({
+        'memberId': 'invoker_member_id',
+      }, jwtSecret);
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({})
+        .expect(400);
     });
 
     it('Should insert job into queue', async () => {
@@ -83,8 +103,27 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', 'Bearer something')
-        .send({})
+        .send({
+          appId: app.id,
+          memberIds: [],
+        })
         .expect(401);
+    });
+
+    it('Should raise bad request exception', async () => {
+      const jwtSecret = application
+      .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+      .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign({
+        'memberId': 'invoker_member_id',
+      }, jwtSecret);
+
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({})
+        .expect(400);
     });
 
     it('Should insert job into queue', async () => {
