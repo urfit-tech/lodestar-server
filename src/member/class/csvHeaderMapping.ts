@@ -9,6 +9,7 @@ export class MemberCsvHeaderMapping {
   @IsString() @IsNotEmpty() name: string;
   @IsString() @IsNotEmpty() username: string;
   @IsString() @IsNotEmpty() email: string;
+  @IsString() @IsNotEmpty() role: string;
 
   @IsArray()
   @IsString({ each: true })
@@ -32,6 +33,7 @@ export class MemberCsvHeaderMapping {
 
   @IsString() @IsNotEmpty() star: string;
   @IsString() @IsNotEmpty() createdAt: string;
+  @IsString() @IsNotEmpty() loginedAt: string;
 
   public async deserializeFromRaw(
     headerRow: Record<string, string>,
@@ -44,8 +46,10 @@ export class MemberCsvHeaderMapping {
         case 'name':
         case 'username':
         case 'email':
+        case 'role':
         case 'star':
         case 'createdAt':
+        case 'loginedAt':
           this[key] = humanReadable; continue;
         default:
           if (codeReadable.startsWith('categories.')) {
@@ -96,7 +100,9 @@ export class MemberCsvHeaderMapping {
       ['帳號']: 'username',
       ['信箱']: 'email',
       ['星等']: 'star',
+      ['身份']: 'role',
       ['建立日期']: 'createdAt',
+      ['上次登入日期']: 'loginedAt',
       ...phones,
       ...categories,
       ...properties,
@@ -119,7 +125,9 @@ export class MemberCsvHeaderMapping {
     this.phones = [...Array(maxPhoneCount).keys()].map((each) => `手機${(each + 1).toString()}`);
     this.tags = [...Array(maxTagCount).keys()].map((each) => `標籤${(each + 1).toString()}`);
     this.star = '星等';
+    this.role = '身份';
     this.createdAt = '建立日期';
+    this.loginedAt = '上次登入日期';
 
     return this;
   }
