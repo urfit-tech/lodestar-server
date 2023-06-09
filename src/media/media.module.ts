@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { ProgramService } from '~/program/program.service';
 import { UtilityService } from '~/utility/utility.service';
@@ -12,6 +12,7 @@ import { MediaInfrastructure } from './media.infra';
 @Module({
   controllers: [VideoController],
   providers: [
+    Logger,
     AudioService,
     ImageService,
     MediaInfrastructure,
