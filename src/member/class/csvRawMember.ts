@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { IsString, IsArray, IsObject, IsUUID, IsNotEmpty, IsNumber, IsDate, IsEmail, validateSync, isEmpty, isNotEmpty } from 'class-validator';
+import { IsString, IsArray, IsObject, IsUUID, IsNotEmpty, IsNumber, IsDate, IsEmail, validateSync, isEmpty, isNotEmpty, ValidateIf } from 'class-validator';
 
 import { MemberCsvHeaderMapping } from './csvHeaderMapping';
 
@@ -48,7 +48,8 @@ export class CsvRawMember {
   createdAt: Date;
 
   @IsDate()
-  loginedAt: Date;
+  @ValidateIf((_, value) => value !== null)
+  loginedAt: Date | null;
 
   public serializeToCsvRawRow(
     header: MemberCsvHeaderMapping,
@@ -77,7 +78,7 @@ export class CsvRawMember {
       [header.star]: this.star,
       [header.role]: this.role,
       [header.createdAt]: this.createdAt.toISOString(),
-      [header.loginedAt]: this.loginedAt.toISOString(),
+      [header.loginedAt]: this.loginedAt ? this.loginedAt.toISOString() : '',
       ...phones,
       ...categories,
       ...properties,
@@ -96,7 +97,7 @@ export class CsvRawMember {
     this.star = parseInt(row[header.star]);
     this.role = isEmpty(row[header.role]) ? 'general-member' : row[header.role];
     this.createdAt = isEmpty(row[header.createdAt]) ? new Date() : new Date(row[header.createdAt]);
-    this.loginedAt = isEmpty(row[header.loginedAt]) ? new Date() : new Date(row[header.loginedAt]);
+    this.loginedAt = isEmpty(row[header.loginedAt]) ? null : new Date(row[header.loginedAt]);
     this.phones = header.phones
       .map((each) => row[each].toString())
       .filter(isNotEmpty);

@@ -97,7 +97,6 @@ describe('MemberService (e2e)', () => {
     it('Should insert not exists members', async () => {
       const memberId = v4();
       const createdAt = new Date();
-      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -133,7 +132,7 @@ describe('MemberService (e2e)', () => {
           '標籤2': 'test_tag2',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
-          '上次登入日期': loginedAt.toISOString(),
+          '上次登入日期': '',
         },
       ];
       const insertResult = await service.processImportFromFile(app.id, rawRows);
@@ -186,7 +185,6 @@ describe('MemberService (e2e)', () => {
       insertedMember.role = 'general-member';
       insertedMember.star = 555;
       insertedMember.createdAt = new Date();
-      insertedMember.loginedAt = new Date();
 
       const insertedMemberPhone = new MemberPhone();
       insertedMemberPhone.member = insertedMember;
@@ -247,7 +245,7 @@ describe('MemberService (e2e)', () => {
           '標籤2': anotherMemberTag.name,
           '星等': '999',
           '建立日期': insertedMember.createdAt,
-          '上次登入日期': insertedMember.loginedAt,
+          '上次登入日期': '',
         },
       ];
 
