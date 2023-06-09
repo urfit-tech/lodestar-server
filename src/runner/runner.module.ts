@@ -40,7 +40,7 @@ export class RunnerModule {
           providers: [ConfigService],
           useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
             const nodeEnv = configService.getOrThrow('NODE_ENV');
-            return ['production', 'staging'].includes(nodeEnv) ? {
+            return ['production', 'staging'].includes(nodeEnv) ? {} : {
               pinoHttp: {
                 transport: {
                   target: 'pino-pretty',
@@ -49,7 +49,7 @@ export class RunnerModule {
                   },
                 },
               },
-            } : {};
+            };
           },
           inject: [ConfigService],
         }),
