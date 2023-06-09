@@ -70,7 +70,6 @@ describe('MemberService', () => {
     it('Should process all included categories, properties, tags, phones', async () => {
       const memberId = v4();
       const createdAt = new Date();
-      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -106,7 +105,7 @@ describe('MemberService', () => {
           '標籤2': 'test_tag2',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
-          '上次登入日期': loginedAt.toISOString(),
+          '上次登入日期': '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -147,13 +146,12 @@ describe('MemberService', () => {
       });
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
-      expect(member.loginedAt).toStrictEqual(loginedAt);
+      expect(member.loginedAt).toBeNull();
     });
 
     it('Should allow missing partial categories, properties, tags, phones', async () => {
       const memberId = v4();
       const createdAt = new Date();
-      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -189,7 +187,7 @@ describe('MemberService', () => {
           '標籤2': '',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
-          '上次登入日期': loginedAt.toISOString(),
+          '上次登入日期': '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -223,13 +221,12 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
-      expect(member.loginedAt).toStrictEqual(loginedAt);
+      expect(member.loginedAt).toBeNull();
     });
 
     it('Should skip unknown categories, properties, tags', async () => {
       const memberId = v4();
       const createdAt = new Date();
-      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -265,7 +262,7 @@ describe('MemberService', () => {
           '不存在標籤2': 'not_exists_tag',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
-          '上次登入日期': loginedAt.toISOString(),
+          '上次登入日期': '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -296,13 +293,12 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
-      expect(member.loginedAt).toStrictEqual(loginedAt);
+      expect(member.loginedAt).toBeNull();
     });
 
     it('Should skip extra unknown categories, properties, tags', async () => {
       const memberId = v4();
       const createdAt = new Date();
-      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -335,7 +331,7 @@ describe('MemberService', () => {
           '多餘標籤2': 'extra_unknown_tag',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
-          '上次登入日期': loginedAt.toISOString(),
+          '上次登入日期': '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -366,14 +362,13 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
-      expect(member.loginedAt).toStrictEqual(loginedAt);
+      expect(member.loginedAt).toBeNull();
     });
 
     it('Should skip invalid raw rows', async () => {
       const memberId = v4();
       const invalidMemberId = v4();
       const createdAt = new Date();
-      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -401,7 +396,7 @@ describe('MemberService', () => {
           '標籤1': 'test_tag1',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
-          '上次登入日期': loginedAt.toISOString(),
+          '上次登入日期': '',
         },
         {
           '流水號': invalidMemberId,
@@ -415,7 +410,7 @@ describe('MemberService', () => {
           '標籤1': 'test_tag1',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
-          '上次登入日期': loginedAt.toISOString(),
+          '上次登入日期': '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -448,7 +443,7 @@ describe('MemberService', () => {
       expect(member.memberTags[0].tagName2.name).toEqual('test_tag1');
       expect(member.star).toBe(999);
       expect(member.createdAt).toStrictEqual(createdAt);
-      expect(member.loginedAt).toStrictEqual(loginedAt);
+      expect(member.loginedAt).toBeNull();
     });
   });
 
@@ -474,7 +469,6 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
-      member.loginedAt = new Date();
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -506,6 +500,7 @@ describe('MemberService', () => {
       expect(raw['身份']).toEqual(member.role);
       expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
+      expect(raw['上次登入日期']).toEqual('');
       expect(raw['分類1']).toEqual(member.memberCategories[0].category.name);
       expect(raw['測試屬性1']).toEqual(member.memberProperties[0].value);
       expect(raw['手機1']).toEqual(member.memberPhones[0].phone);
@@ -546,7 +541,6 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
-      member.loginedAt = new Date();
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -587,6 +581,7 @@ describe('MemberService', () => {
       expect(raw['身份']).toEqual(member.role);
       expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
+      expect(raw['上次登入日期']).toEqual('');
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index].category.name);
         expect(raw[`測試屬性${index + 1}`]).toEqual(member.memberProperties[index].value);
@@ -631,7 +626,6 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
-      member.loginedAt = new Date();
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -664,6 +658,7 @@ describe('MemberService', () => {
       expect(raw['信箱']).toEqual(member.email);
       expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
+      expect(raw['上次登入日期']).toEqual('');
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index]
           ? member.memberCategories[index].category.name : '',
@@ -711,7 +706,6 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
-      member.loginedAt = new Date();
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -749,6 +743,7 @@ describe('MemberService', () => {
       expect(raw['信箱']).toEqual(member.email);
       expect(raw['星等']).toEqual(member.star);
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
+      expect(raw['上次登入日期']).toEqual('');
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(index === 0
           ? member.memberCategories[index].category.name : '',
@@ -790,7 +785,6 @@ describe('MemberService', () => {
         .deserializeFromDataBase(5, 5, [category1], [property1]);
       const memberId = v4();
       const memberCreatedAt = new Date();
-      const memberLoginedAt = new Date();
       const member = new Member();
       member.id = memberId;
       member.name = 'test';
@@ -798,7 +792,6 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = memberCreatedAt;
-      member.loginedAt = memberLoginedAt;
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -830,6 +823,7 @@ describe('MemberService', () => {
       expect(importedMember.email).toEqual(member.email);
       expect(importedMember.star).toEqual(member.star);
       expect(importedMember.createdAt).toEqual(memberCreatedAt);
+      expect(importedMember.loginedAt).toBeNull();
       importedMember.memberPhones.forEach((each) => {
         const find = member.memberPhones.find((every) => each.phone === every.phone);
         expect(find).not.toBeUndefined();
@@ -852,7 +846,6 @@ describe('MemberService', () => {
     it('imported data can re-export with multiple', async () => {
       const memberId = v4();
       const createdAt = new Date();
-      const loginedAt = new Date();
       const rawRows = [
         {
           '流水號': 'id',
@@ -888,7 +881,7 @@ describe('MemberService', () => {
           '標籤2': '',
           '星等': '999',
           '建立日期': createdAt.toISOString(),
-          '上次登入日期': loginedAt.toISOString(),
+          '上次登入日期': '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -918,7 +911,7 @@ describe('MemberService', () => {
       expect(exportedRawRow['身份']).toEqual(member.role);
       expect(exportedRawRow['星等']).toEqual(member.star);
       expect(exportedRawRow['建立日期']).toEqual(member.createdAt.toISOString());
-      expect(exportedRawRow['上次登入日期']).toEqual(member.loginedAt.toISOString());
+      expect(exportedRawRow['上次登入日期']).toEqual('');
       expect(exportedRawRow['手機1']).toEqual(member.memberPhones[0].phone);
       expect(exportedRawRow['手機2']).toEqual(member.memberPhones[1].phone);
       expect(exportedRawRow['分類1']).toEqual(member.memberCategories[0].category.name);
