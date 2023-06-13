@@ -246,7 +246,7 @@ describe('MemberService (e2e)', () => {
         }
       });
       expect(member.memberTags.length).toBe(0);
-      expect(member.star).toBe(0);
+      expect(member.star).toBe('0');
       expect(member.createdAt).toStrictEqual(createdAt);
     });
 
