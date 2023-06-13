@@ -16,6 +16,15 @@ import { AppSecret } from '~/app/entity/app_secret.entity';
 import { v4 } from 'uuid';
 import { sign } from 'jsonwebtoken';
 
+const apiPath = {
+  auth: {
+    token: '/auth/token',
+  },
+  order: {
+    transferReceivedOrder: '/order/transfer-received-order',
+  },
+};
+
 const role = new Role();
 role.name = 'app-owner';
 
@@ -125,7 +134,7 @@ describe('OrderController (e2e)', () => {
       };
 
       await request(application.getHttpServer())
-        .put('/api/v2/order/transfer-received-order')
+        .put(apiPath.order.transferReceivedOrder)
         .set(requestHeader)
         .send(requestBody)
         .expect(400)
@@ -134,7 +143,7 @@ describe('OrderController (e2e)', () => {
 
     it('should TransferOrderToken is invalid', async () => {
       const tokenResponse = await request(application.getHttpServer())
-        .post('/api/v2/auth/token')
+        .post(apiPath.auth.token)
         .send({ clientId: 'test', key: 'testKey', permissions: [] });
       const {
         result: { authToken },
@@ -146,7 +155,7 @@ describe('OrderController (e2e)', () => {
       };
 
       await request(application.getHttpServer())
-        .put('/api/v2/order/transfer-received-order')
+        .put(apiPath.order.transferReceivedOrder)
         .set(requestHeader)
         .send(requestBody)
         .expect(400)
@@ -171,7 +180,7 @@ describe('OrderController (e2e)', () => {
       });
 
       const tokenResponse = await request(application.getHttpServer())
-        .post('/api/v2/auth/token')
+        .post(apiPath.auth.token)
         .send({ clientId: 'test', key: 'testKey', permissions: [] });
       const {
         result: { authToken },
@@ -183,7 +192,7 @@ describe('OrderController (e2e)', () => {
       };
 
       await request(application.getHttpServer())
-        .put('/api/v2/order/transfer-received-order')
+        .put(apiPath.order.transferReceivedOrder)
         .set(requestHeader)
         .send(requestBody)
         .expect(400)
@@ -210,7 +219,7 @@ describe('OrderController (e2e)', () => {
       });
 
       const tokenResponse = await request(application.getHttpServer())
-        .post('/api/v2/auth/token')
+        .post(apiPath.auth.token)
         .send({ clientId: 'test', key: 'testKey', permissions: [] });
       const {
         result: { authToken },
@@ -222,7 +231,7 @@ describe('OrderController (e2e)', () => {
       };
 
       await request(application.getHttpServer())
-        .put('/api/v2/order/transfer-received-order')
+        .put(apiPath.order.transferReceivedOrder)
         .set(requestHeader)
         .send(requestBody)
         .expect(200)
