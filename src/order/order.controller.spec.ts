@@ -6,7 +6,7 @@ import { OrderService } from './order.service';
 import { ApplicationModule } from '~/application.module';
 import { TransferReceivedOrderBodyDTO } from './order.type';
 import { Role } from '~/entity/Role';
-import { Member } from '~/entity/Member';
+import { Member } from '~/member/entity/member.entity';
 import { App } from '~/entity/App';
 import { AppPlan } from '~/entity/AppPlan';
 import { AppSetting } from '~/app/entity/app_setting.entity';
