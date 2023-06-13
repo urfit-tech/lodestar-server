@@ -4,7 +4,10 @@ import { APIException } from '~/api.excetion';
 import { OrderService } from './order.service';
 import { TransferReceivedOrderBodyDTO, TransferReceivedOrderDTO, TransferReceivedOrderToken } from './order.type';
 
-@Controller('order')
+@Controller({
+  path: 'order',
+  version: ['2'],
+})
 export class OrderController {
   constructor(private orderService: OrderService) {}
 
