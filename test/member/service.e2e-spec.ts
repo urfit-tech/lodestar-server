@@ -175,6 +175,81 @@ describe('MemberService (e2e)', () => {
       expect(member.createdAt).toStrictEqual(createdAt);
     });
 
+    it('Should update values with optional missing values', async () => {
+      const memberId = v4();
+      const createdAt = new Date();
+      const rawRows = [
+        {
+          '流水號': 'id',
+          '姓名': 'name',
+          '帳號': 'username',
+          '信箱': 'email',
+          '身份': 'role',
+          '手機1': 'phones.0',
+          '手機2': 'phones.1',
+          '分類1': 'categories.0',
+          '分類2': 'categories.1',
+          [memberProperty.name]: 'properties.0',
+          '屬性2': 'properties.1',
+          '標籤1': 'tags.0',
+          '標籤2': 'tags.1',
+          '星等': 'star',
+          '建立日期': 'createdAt',
+          '上次登入日期': 'loginedAt',
+        },
+        {
+          '流水號': memberId,
+          '姓名': '',
+          '帳號': 'test_account',
+          '信箱': 'test_email@test.com',
+          '身份': 'general-member',
+          '手機1': '',
+          '手機2': '',
+          '分類1': '',
+          '分類2': '',
+          [memberProperty.name]: 'test_value1',
+          '屬性2': '',
+          '標籤1': '',
+          '標籤2': '',
+          '星等': '',
+          '建立日期': createdAt.toISOString(),
+          '上次登入日期': '',
+        },
+      ];
+      const insertResult = await service.processImportFromFile(app.id, rawRows);
+      expect(insertResult.toInsertCount).toBe(1);
+      expect(insertResult.insertedCount).toBe(1);
+      expect(insertResult.failedCount).toBe(0);
+      expect(insertResult.failedErrors.length).toBe(0);
+
+      const member = await memberRepo.findOne({
+        where: { id: memberId },
+        relations: {
+          memberCategories: { category: true },
+          memberProperties: { property: true },
+          memberPhones: true,
+          memberTags: { tagName2: true },
+        },
+      },);
+      expect(member).not.toBeUndefined();
+      expect(member.id).toBe(memberId);
+      expect(member.name).toBe('');
+      expect(member.username).toBe('test_account');
+      expect(member.email).toBe('test_email@test.com');
+      expect(member.memberPhones.length).toBe(0);
+      expect(member.memberCategories.length).toBe(0);
+      member.memberProperties.forEach((inMemberProperty) => {
+        if (inMemberProperty.property.id === memberProperty.id) {
+          expect(inMemberProperty.value).toEqual('test_value1');
+        } else {
+          expect(inMemberProperty.value).toEqual('test_property2');
+        }
+      });
+      expect(member.memberTags.length).toBe(0);
+      expect(member.star).toBe(0);
+      expect(member.createdAt).toStrictEqual(createdAt);
+    });
+
     it('Should update values if given member is exists', async () => {
       const insertedMember = new Member();
       insertedMember.appId = app.id;
@@ -250,6 +325,10 @@ describe('MemberService (e2e)', () => {
       ];
 
       const result = await service.processImportFromFile(app.id, rawRows);
+      expect(result.toInsertCount).toBe(1);
+      expect(result.insertedCount).toBe(1);
+      expect(result.failedCount).toBe(0);
+      expect(result.failedErrors.length).toBe(0);
       const member = await memberRepo.findOne({
         where: { id: insertedMember.id },
         relations: {
@@ -259,10 +338,6 @@ describe('MemberService (e2e)', () => {
           memberTags: { tagName2: true },
         },
       });
-      expect(result.toInsertCount).toBe(1);
-      expect(result.insertedCount).toBe(1);
-      expect(result.failedCount).toBe(0);
-      expect(result.failedErrors.length).toBe(0);
       expect(member.id).toBe(insertedMember.id);
       expect(member.name).toBe(insertedMember.name);
       expect(member.username).toBe(insertedMember.username);
