@@ -1,5 +1,19 @@
 import { v4 } from 'uuid';
-import { IsString, IsArray, IsObject, IsUUID, IsNotEmpty, IsNumber, IsDate, IsEmail, validateSync, isEmpty, isNotEmpty, ValidateIf } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsObject,
+  IsUUID,
+  IsNotEmpty,
+  IsDate,
+  IsEmail,
+  validateSync,
+  isEmpty,
+  isNotEmpty,
+  ValidateIf,
+  IsNumber,
+  ValidationError,
+} from 'class-validator';
 
 import { MemberCsvHeaderMapping } from './csvHeaderMapping';
 
@@ -7,24 +21,12 @@ import { MemberCsvHeaderMapping } from './csvHeaderMapping';
  * Formats represents raw rows inside csv file for member import.
  */
 export class CsvRawMember {  
-  @IsUUID()
-  @IsNotEmpty()
-  id: string;
-  
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-  
-  @IsString()
-  @IsNotEmpty()
-  username: string;
-  
-  @IsEmail()
-  email: string;
+  @IsUUID() @IsNotEmpty() id: string;
+  @IsString() name: string;
+  @IsString() @IsNotEmpty() username: string;
+  @IsEmail() @IsNotEmpty() email: string;
 
-  @IsString()
-  @IsNotEmpty()
-  role: string;
+  @IsString() @IsNotEmpty() role: string;
 
   @IsArray()
   @IsString({ each: true })
@@ -42,10 +44,10 @@ export class CsvRawMember {
   tags: Array<string>;
   
   @IsNumber()
-  star: number;
-  
-  @IsDate()
-  createdAt: Date;
+  @ValidateIf((_, value) => value !== null)
+  star: number | null;
+
+  @IsDate() createdAt: Date;
 
   @IsDate()
   @ValidateIf((_, value) => value !== null)
@@ -94,7 +96,9 @@ export class CsvRawMember {
     this.name = row[header.name];
     this.username = row[header.username];
     this.email = row[header.email];
-    this.star = parseInt(row[header.star]);
+    this.star = isEmpty(row[header.star])
+      ? (row[header.star] === null ? null : 0)
+      : parseInt(row[header.star]);
     this.role = isEmpty(row[header.role]) ? 'general-member' : row[header.role];
     this.createdAt = isEmpty(row[header.createdAt]) ? new Date() : new Date(row[header.createdAt]);
     this.loginedAt = isEmpty(row[header.loginedAt]) ? null : new Date(row[header.loginedAt]);
