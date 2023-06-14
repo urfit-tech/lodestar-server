@@ -206,11 +206,15 @@ export class MemberService {
     });
 
     if (inDbMember === null) {
-      return newMember;
+      return {
+        ...newMember,
+        role: newMember.role ? newMember.role : 'general-member',
+      };
     }
 
-    const { memberProperties: inDbProperties } = inDbMember;
-    const { memberProperties: newProperties } = newMember;
+    const { role: inDbRole, memberProperties: inDbProperties } = inDbMember;
+    const { role: newRole, memberProperties: newProperties } = newMember;
+    newMember.role = newRole ? newRole : inDbRole;
     newMember.memberProperties = newProperties.map((newProperty) => {
       const found = inDbProperties.find((inDbProperty) => newProperty.id === inDbProperty.id);
       if (found) {
