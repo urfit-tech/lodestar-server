@@ -26,7 +26,9 @@ export class CsvRawMember {
   @IsString() @IsNotEmpty() username: string;
   @IsEmail() @IsNotEmpty() email: string;
 
-  @IsString() @IsNotEmpty() role: string;
+  @IsString()
+  @ValidateIf((_, value) => value !== null)
+  role: string | null;
 
   @IsArray()
   @IsString({ each: true })
@@ -47,7 +49,9 @@ export class CsvRawMember {
   @ValidateIf((_, value) => value !== null)
   star: number | null;
 
-  @IsDate() createdAt: Date;
+  @IsDate()
+  @ValidateIf((_, value) => value !== null)
+  createdAt: Date | null;
 
   @IsDate()
   @ValidateIf((_, value) => value !== null)
@@ -91,7 +95,7 @@ export class CsvRawMember {
   public deserializedFromCsvRawRow(
     header: MemberCsvHeaderMapping,
     row: Record<string, any>,
-  ): CsvRawMember {
+  ): [CsvRawMember, Array<ValidationError>] {
     this.id = isEmpty(row[header.id]) ? v4() : row[header.id];
     this.name = row[header.name];
     this.username = row[header.username];
@@ -99,7 +103,7 @@ export class CsvRawMember {
     this.star = isEmpty(row[header.star])
       ? (row[header.star] === null ? null : 0)
       : parseInt(row[header.star]);
-    this.role = isEmpty(row[header.role]) ? 'general-member' : row[header.role];
+    this.role = isEmpty(row[header.role]) ? null : row[header.role];
     this.createdAt = isEmpty(row[header.createdAt]) ? new Date() : new Date(row[header.createdAt]);
     this.loginedAt = isEmpty(row[header.loginedAt]) ? null : new Date(row[header.loginedAt]);
     this.phones = header.phones
@@ -122,7 +126,6 @@ export class CsvRawMember {
     this.tags = header.tags
       .map((each) => row[each])
       .filter(isNotEmpty);
-    validateSync(this);
-    return this;
+    return [this, validateSync(this)];
   }
 }
