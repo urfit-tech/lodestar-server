@@ -15,61 +15,61 @@ export class MemberCsvHeaderMapping {
   
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   name: string;
   
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   username: string;
   
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   email: string;
 
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   role: string;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   categories: Array<string>;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   properties: Array<string>;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   phones: Array<string>;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   tags: Array<string>;
 
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   star: string;
 
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   createdAt: string;
 
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((_, value) => value === undefined)
+  @ValidateIf((_, value) => value !== undefined)
   loginedAt: string;
 
   public deserializeFromRaw(
