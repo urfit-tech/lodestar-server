@@ -39,8 +39,11 @@ export class MemberService {
       };
     }
 
-    const membersToImport = await this.rawCsvToMember(appId, headerInfos, rawRows);
-    const results = await Promise.allSettled(membersToImport.map((member) => {
+    const rawDeserializeResult = await this.rawCsvToMember(appId, headerInfos, rawRows);
+    const membersToImport = rawDeserializeResult.filter(([_, errors]) => errors.length === 0);
+    // TODO: Process rawCsvToMember deserialization failure.
+    const deserializationFailed = rawDeserializeResult.filter(([_, errors]) => errors.length !== 0);
+    const results = await Promise.allSettled(membersToImport.map(([member]) => {
       return this.entityManager.transaction(async (manager) => {
         try {
           const memberRepo = manager.getRepository(Member);
@@ -105,7 +108,7 @@ export class MemberService {
     appId: string,
     headerInfos: MemberCsvHeaderMapping,
     rawRows: Array<Record<string, string>>,
-  ): Promise<Array<Member>> {
+  ): Promise<Array<[Member | null, Array<ValidationError>]>> {
     const appCategories: Array<Category> = await this.definitionInfra.getCategories(
       appId, this.entityManager,
     );
@@ -118,8 +121,11 @@ export class MemberService {
       .map((rawRow) => new CsvRawMember().deserializedFromCsvRawRow(
         headerInfos, rawRow,
       ))
-      .filter(([_, errors]: [CsvRawMember, Array<ValidationError>]) => errors.length === 0)
-      .map(([eachRow, _]: [CsvRawMember, Array<ValidationError>]) => {
+      .map(([eachRow, errors]: [CsvRawMember, Array<ValidationError>]) => {
+        if (errors.length > 0) {
+          return [null, errors];
+        }
+
         const member = new Member();
         member.appId = appId;
         member.id = eachRow.id;
@@ -171,7 +177,7 @@ export class MemberService {
             return memberTag;
           });
 
-        return member;
+        return [member, errors];
       });
   }
 
