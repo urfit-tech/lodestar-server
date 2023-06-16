@@ -412,9 +412,20 @@ describe('MemberService', () => {
       ]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
-      const members = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
-      expect(members.length).toBe(1);
-      const [member] = members;
+      const deserializeResults = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const errorResults = deserializeResults.filter(([member]) => member === null);
+      const [errorResult] = errorResults;
+      const [errorMember, errors] = errorResult;
+      expect(errorMember).toBeNull();
+      expect(errors[0].property).toBe('email');
+      expect(errors[0].constraints.isNotEmpty).not.toBeUndefined();
+      expect(errors[0].constraints.isEmail).not.toBeUndefined();
+
+      const successResults = deserializeResults.filter(([member]) => member !== null);
+      expect(successResults.length).toBe(1);
+      const [successResult] = successResults;
+      const [member, error] = successResult;
+      expect(error.length).toBe(0);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_normal');
       expect(member.username).toBe('test_normal_account');
