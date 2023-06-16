@@ -43,147 +43,81 @@ describe('Class CsvHeaderMapping', () => {
         const [_, errors]: [
           MemberCsvHeaderMapping, Array<ValidationError>,
         ] = new MemberCsvHeaderMapping().deserializeFromRaw(header);
-
-        expect(errors.length).toBeGreaterThan(0);
-        const { constraints } = errors.find(({ property }) => fullMatch
+        const error = errors.find(({ property }) => fullMatch
           ? property === testFieldName
           : property.includes(testFieldName)
         );
-        toExpect(constraints);
+        toExpect(error);
       }
+      const setUndefined = (key: string, value: Record<string, string>) =>
+        delete value[key];
+      const setBlank = (key: string, value: Record<string, string>) =>
+        value[key] = '';
+      const expectUndefined = (error: ValidationError | undefined) =>
+        expect(error).toBeUndefined();
 
       it('Missing id field', async () => testField(
         'id',
-        (key: string, value: Record<string, string>) => delete value[key],
-        (constraints: Record<string, string>) => {
+        setUndefined,
+        ({ constraints }: { constraints: Record<string, string> }) => {
           expect(constraints.isString).not.toBeUndefined();
           expect(constraints.isNotEmpty).not.toBeUndefined();
         },
       ));
 
-      it('Invalid name field', async () => {
-        testField(
-          'name',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-        );
+      it('Optional name field', async () => {
+        testField('name', setUndefined, expectUndefined);
+        testField('name', setBlank, expectUndefined);
       });
 
-      it('Invalid username field', async () => {
-        testField(
-          'username',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-        );
+      it('Optional username field', async () => {
+        testField('username', setUndefined, expectUndefined);
+        testField('username', setBlank, expectUndefined);
       });
 
-      it('Invalid email field', async () => {
-        testField(
-          'email',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-        );
+      it('Optional email field', async () => {
+        testField('email', setUndefined, expectUndefined);
+        testField('email', setBlank, expectUndefined);
       });
 
-      it('Invalid role field', async () => {
-        testField(
-          'role',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-        );
+      it('Optional role field', async () => {
+        testField('role', setUndefined, expectUndefined);
+        testField('role', setBlank, expectUndefined);
+    });
+
+      it('Optional categories field', async () => {
+        testField('categories', setUndefined, expectUndefined, false);
+        testField('categories', setBlank, expectUndefined, false);
       });
 
-      it('Invalid categories field', async () => {
-        testField(
-          'categories',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-          false,
-        );
+      it('Optional properties field', async () => {
+        testField('properties', setUndefined, expectUndefined, false);
+        testField('properties', setBlank, expectUndefined, false);
       });
 
-      it('Invalid properties field', async () => {
-        testField(
-          'properties',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-          false,
-        );
+      it('Optional phones field', async () => {
+        testField('phones', setUndefined, expectUndefined, false);
+        testField('phones', setBlank, expectUndefined, false);
       });
 
-      it('Invalid phones field', async () => {
-        testField(
-          'phones',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-          false,
-        );
+      it('Optional tags field', async () => {
+        testField('tags', setUndefined, expectUndefined, false);
+        testField('tags', setBlank, expectUndefined, false);
       });
 
-      it('Invalid tags field', async () => {
-        testField(
-          'tags',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-          false,
-        );
+      it('Optional star field', async () => {
+        testField('star', setUndefined, expectUndefined);
+        testField('star', setBlank, expectUndefined);
       });
 
-      it('Invalid star field', async () => {
-        testField(
-          'star',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-        );
+      it('Optional createdAt field', async () => {
+        testField('createdAt', setUndefined, expectUndefined);
+        testField('createdAt', setBlank, expectUndefined);
       });
 
-      it('Invalid createdAt field', async () => {
-        testField(
-          'createdAt',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-        );
-      });
-
-      it('Invalid loginedAt field', async () => {
-        testField(
-          'loginedAt',
-          (key: string, value: Record<string, string>) => value[key] = '',
-          (constraints: Record<string, string>) => {
-            expect(constraints.isString).not.toBeUndefined();
-            expect(constraints.isNotEmpty).not.toBeUndefined();
-          },
-        );
+      it('Optional loginedAt field', async () => {
+        testField('loginedAt', setUndefined, expectUndefined);
+        testField('loginedAt', setBlank, expectUndefined);
       });
     });
   });
