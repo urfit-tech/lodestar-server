@@ -41,7 +41,6 @@ export class MemberService {
 
     const rawDeserializeResult = await this.rawCsvToMember(appId, headerInfos, rawRows);
     const membersToImport = rawDeserializeResult.filter(([_, errors]) => errors.length === 0);
-    // TODO: Process rawCsvToMember deserialization failure.
     const deserializationFailed = rawDeserializeResult.filter(([_, errors]) => errors.length !== 0);
     const results = await Promise.allSettled(membersToImport.map(([member]) => {
       return this.entityManager.transaction(async (manager) => {
@@ -78,13 +77,28 @@ export class MemberService {
 
     const fulfilleds = results.filter(
       (result) => result.status === 'fulfilled');
-    const rejecteds = results.filter(
-      (result) => result.status === 'rejected') as Array<PromiseRejectedResult>;
+    const rejecteds: Array<any> = (results
+      .filter((result) => result.status === 'rejected') as Array<PromiseRejectedResult>)
+      .map(({ reason }) => reason);
+    deserializationFailed
+      .map(([_, errors]) => errors)
+      .forEach((errors) => {
+        const acc = {};
+        errors.forEach(({ target, property, constraints }) => {
+          const { id, username, email } = target as CsvRawMember;
+          const identity = `${id}/${username}/${email}`;
+          if (acc[identity] === undefined) {
+            acc[identity] = [];
+          }
+          acc[identity].push({ property, constraints });
+        });
+        rejecteds.push(acc);
+      });
     return {
-      toInsertCount: membersToImport.length,
+      toInsertCount: rawDeserializeResult.length,
       insertedCount: fulfilleds.length,
       failedCount: rejecteds.length,
-      failedErrors: rejecteds.map(({ reason }) => reason),
+      failedErrors: rejecteds,
     };
   }
 
