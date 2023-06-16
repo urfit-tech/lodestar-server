@@ -110,6 +110,55 @@ describe('MemberService (e2e)', () => {
       expect(missingIdError.constraints.isString).not.toBeUndefined();
     });
 
+    it('Should return data error', async () => {
+      const rawRows = [
+        {
+          '流水號': 'id',
+          '姓名': 'name',
+          '帳號': 'username',
+          '信箱': 'email',
+          '手機1': 'phones.0',
+          '手機2': 'phones.1',
+          '分類1': 'categories.0',
+          '分類2': 'categories.1',
+          '屬性1': 'properties.0',
+          '屬性2': 'properties.1',
+          '標籤1': 'tags.0',
+          '標籤2': 'tags.1',
+        },
+        {
+          '流水號': 'invalid-uuid-format',
+          '姓名': 'name',
+          '帳號': 'username',
+          '信箱': 'email@example.com',
+          '手機1': '',
+          '手機2': '',
+          '分類1': '',
+          '分類2': '',
+          '屬性1': '',
+          '屬性2': '',
+          '標籤1': '',
+          '標籤2': '',
+        },
+      ];
+      const {
+        toInsertCount, insertedCount, failedCount, failedErrors,
+      } = await service.processImportFromFile(app.id, rawRows);
+      expect(toInsertCount).toBe(1);
+      expect(insertedCount).toBe(0);
+      expect(failedCount).toBe(1);
+      expect(failedErrors.length).toBeGreaterThan(0);
+
+      const errors = failedErrors
+        .find((each: Record<string, Array<{
+          property: string;
+          constraints: Record<string, string>;
+        }>>) => Object.keys(each).find((key) => key.includes('invalid-uuid-format/username/email@example.com')));
+      const idError = errors['invalid-uuid-format/username/email@example.com'];
+      expect(idError[0].property).toBe('id');
+      expect(idError[0].constraints.isUuid).not.toBeUndefined();
+    });
+
     it('Should insert not exists members', async () => {
       const memberId = v4();
       const createdAt = new Date();
