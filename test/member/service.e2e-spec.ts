@@ -94,6 +94,22 @@ describe('MemberService (e2e)', () => {
   });
 
   describe('Method processImportFromFile', () => {
+    it('Should return header error', async () => {
+      const rawRows = [{}];
+      const {
+        toInsertCount, insertedCount, failedCount, failedErrors,
+      } = await service.processImportFromFile(app.id, rawRows);
+      expect(toInsertCount).toBe(0);
+      expect(insertedCount).toBe(0);
+      expect(failedCount).toBe(0);
+      expect(failedErrors.length).toBeGreaterThan(0);
+
+      const missingIdError = failedErrors.find(({ property }) => property === 'id');
+      expect(missingIdError).not.toBeUndefined();
+      expect(missingIdError.constraints.isNotEmpty).not.toBeUndefined();
+      expect(missingIdError.constraints.isString).not.toBeUndefined();
+    });
+
     it('Should insert not exists members', async () => {
       const memberId = v4();
       const createdAt = new Date();
