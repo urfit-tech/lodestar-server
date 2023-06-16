@@ -29,8 +29,16 @@ export class MemberService {
   async processImportFromFile(
     appId: string, rawRows: Array<Record<string, any>>,
   ): Promise<MemberImportResultDTO> {
-    // TODO: Process header deserialization failure.
-    const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
+    const [headerInfos, headerErrors] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
+    if (headerErrors.length > 0) {
+      return {
+        toInsertCount: rawRows.length,
+        insertedCount: 0,
+        failedCount: rawRows.length,
+        failedErrors: headerErrors,
+      };
+    }
+
     const membersToImport = await this.rawCsvToMember(appId, headerInfos, rawRows);
     const results = await Promise.allSettled(membersToImport.map((member) => {
       return this.entityManager.transaction(async (manager) => {
