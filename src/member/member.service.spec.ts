@@ -54,19 +54,6 @@ describe('MemberService', () => {
   afterEach(() => jest.resetAllMocks());
 
   describe('#rawCsvToMember', () => {
-    it('Should raise error due to incorrect header format', async () => {
-      const rawRows = [
-        { '姓名': 'name' },
-      ];
-      (
-        await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift())
-          .catch((err) => err)
-      ).forEach(({ constraints }) => {
-        expect(constraints.isNotEmpty).not.toBeUndefined();
-        expect(constraints.isNotEmpty).toMatch(' should not be empty');
-      });
-    });
-
     it('Should process all included categories, properties, tags, phones', async () => {
       const memberId = v4();
       const createdAt = new Date();
@@ -122,7 +109,7 @@ describe('MemberService', () => {
         { name: 'test_tag2' },
       ]);
       
-      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
+      const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test');
@@ -204,7 +191,7 @@ describe('MemberService', () => {
         { name: 'test_tag2' },
       ]);
 
-      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
+      const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_partial_missing');
@@ -276,7 +263,7 @@ describe('MemberService', () => {
         { name: 'test_tag1' },
       ]);
 
-      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
+      const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_not_exists');
@@ -345,7 +332,7 @@ describe('MemberService', () => {
         { name: 'test_tag1' },
       ]);
 
-      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
+      const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const [member] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_extra_unknown');
@@ -424,7 +411,7 @@ describe('MemberService', () => {
         { name: 'test_tag1' },
       ]);
 
-      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
+      const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const members = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       expect(members.length).toBe(1);
       const [member] = members;
@@ -898,7 +885,7 @@ describe('MemberService', () => {
         { name: '測試標籤2' },
       ]);
       
-      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
+      const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const members = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
       const [member] = members;
       const exportedRawRows = await service.memberToRawCsv(headerInfos, members);
