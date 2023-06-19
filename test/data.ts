@@ -6,6 +6,8 @@ import { App } from '~/entity/App';
 import { Category } from '~/definition/entity/category.entity';
 import { Property } from '~/definition/entity/property.entity';
 import { Tag } from '~/definition/entity/tag.entity';
+import { AppSetting } from '~/app/entity/app_setting.entity';
+import { AppSecret } from '~/app/entity/app_secret.entity';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -19,6 +21,16 @@ export const app = new App();
 app.id = 'test';
 app.symbol = 'TST';
 app.appPlan = appPlan;
+
+export const appSetting = new AppSetting();
+appSetting.appId = app.id;
+appSetting.key = 'auth.service.client_id';
+appSetting.value = 'test';
+
+export const appSecret = new AppSecret();
+appSecret.appId = app.id;
+appSecret.key = 'auth.service.key';
+appSecret.value = 'testKey';
 
 export const category = new Category();
 category.appId = app.id;

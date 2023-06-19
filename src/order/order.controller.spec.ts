@@ -15,41 +15,21 @@ import { EntityManager, Repository } from 'typeorm';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { v4 } from 'uuid';
 import { sign } from 'jsonwebtoken';
+import { role, app, appPlan, appSecret, appSetting } from '~/../test/data';
+import { ConfigService } from '@nestjs/config';
 
 const apiPath = {
   auth: {
     token: '/auth/token',
   },
   order: {
-    transferReceivedOrder: '/order/transfer-received-order',
+    transferReceivedOrder: '/orders/transfer-received-order',
   },
 };
 
-const role = new Role();
-role.name = 'app-owner';
-
-const appPlan = new AppPlan();
-appPlan.id = v4();
-appPlan.name = 'test-plan';
-appPlan.description = 'test plan description';
-
-const app = new App();
-app.id = 'test';
-app.appPlan = appPlan;
-app.symbol = 'TST';
-
-const appSetting = new AppSetting();
-appSetting.appId = app.id;
-appSetting.key = 'auth.service.client_id';
-appSetting.value = 'test';
-
-const appSecret = new AppSecret();
-appSecret.appId = app.id;
-appSecret.key = 'auth.service.key';
-appSecret.value = 'testKey';
-
 describe('OrderController (e2e)', () => {
   let application: INestApplication;
+  let configService: ConfigService;
   let manager: EntityManager;
   let roleRepo: Repository<Role>;
   let appPlanRepo: Repository<AppPlan>;
@@ -59,7 +39,7 @@ describe('OrderController (e2e)', () => {
   let memberRepo: Repository<Member>;
   let orderLogRepo: Repository<OrderLog>;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [OrderService],
       controllers: [OrderController],
@@ -67,6 +47,7 @@ describe('OrderController (e2e)', () => {
     }).compile();
 
     application = module.createNestApplication();
+    configService = application.get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService);
     manager = application.get<EntityManager>('phdbEntityManager');
     roleRepo = manager.getRepository(Role);
     appPlanRepo = manager.getRepository(AppPlan);
@@ -93,7 +74,7 @@ describe('OrderController (e2e)', () => {
     await application.init();
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await orderLogRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
@@ -101,8 +82,7 @@ describe('OrderController (e2e)', () => {
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await roleRepo.delete({});
-
-    application.close();
+    await application.close();
   });
 
   describe('Order Received Transfer Test ', () => {
@@ -162,7 +142,7 @@ describe('OrderController (e2e)', () => {
         .expect(/{"statusCode":400,"message":"E_TOKEN_INVALID"/);
     });
 
-    it('should orderId is invalid', async () => {
+    it('Should raise error due to orderId is not found', async () => {
       await memberRepo.save(firstMember);
       await memberRepo.save(secondMember);
       await orderLogRepo.save(orderLog);
@@ -175,7 +155,7 @@ describe('OrderController (e2e)', () => {
         ownerName: firstMember.name,
       };
 
-      const orderDataToken = await sign(orderData, process.env.HASURA_JWT_SECRET, {
+      const orderDataToken = await sign(orderData, configService.get('HASURA_JWT_SECRET'), {
         expiresIn: '30days',
       });
 
@@ -197,11 +177,9 @@ describe('OrderController (e2e)', () => {
         .send(requestBody)
         .expect(400)
         .expect(/{"statusCode":400,"message":"E_NULL_ORDER"/);
-      await orderLogRepo.delete({});
-      await memberRepo.delete({});
     });
 
-    it('should order received transfer success', async () => {
+    it('Should transfer received order successfully', async () => {
       await memberRepo.save(firstMember);
       await memberRepo.save(secondMember);
       await orderLogRepo.save(orderLog);
@@ -214,7 +192,7 @@ describe('OrderController (e2e)', () => {
         ownerName: firstMember.name,
       };
 
-      const orderDataToken = await sign(orderData, process.env.HASURA_JWT_SECRET, {
+      const orderDataToken = await sign(orderData, configService.get('HASURA_JWT_SECRET'), {
         expiresIn: '30days',
       });
 
@@ -236,8 +214,6 @@ describe('OrderController (e2e)', () => {
         .send(requestBody)
         .expect(200)
         .expect({ code: 'SUCCESS', message: { generatedMaps: [], raw: [], affected: 1 } });
-      await orderLogRepo.delete({});
-      await memberRepo.delete({});
     });
   });
 });
