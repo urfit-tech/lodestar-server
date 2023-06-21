@@ -17,6 +17,7 @@ import { v4 } from 'uuid';
 import { sign } from 'jsonwebtoken';
 import { role, app, appPlan, appSecret, appSetting } from '~/../test/data';
 import { ConfigService } from '@nestjs/config';
+import { getEntityManagerToken } from '@nestjs/typeorm';
 
 const apiPath = {
   auth: {
@@ -48,7 +49,7 @@ describe('OrderController (e2e)', () => {
 
     application = module.createNestApplication();
     configService = application.get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService);
-    manager = application.get<EntityManager>('phdbEntityManager');
+    manager = application.get<EntityManager>(getEntityManagerToken('phdb'));
     roleRepo = manager.getRepository(Role);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
@@ -85,7 +86,7 @@ describe('OrderController (e2e)', () => {
     await application.close();
   });
 
-  describe('Order Received Transfer Test ', () => {
+  describe('/orders/transfer-received-order (PUT)', () => {
     const firstMember = new Member();
     firstMember.id = v4();
     firstMember.appId = app.id;
