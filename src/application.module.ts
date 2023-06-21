@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module'
 import { MemberModule } from './member/member.module'
 import { MediaModule } from './media/media.module';
 import { UtilityModule } from './utility/utility.module'
+import { OrderModule } from './order/order.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -62,6 +63,7 @@ import { UtilityModule } from './utility/utility.module'
     MediaModule,
     UtilityModule,
     // TriggerModule,
+    OrderModule,
   ],
 })
 export class ApplicationModule {}
