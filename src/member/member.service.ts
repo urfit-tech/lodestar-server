@@ -247,7 +247,8 @@ export class MemberService {
         csvRawMember.name = each.name;
         csvRawMember.username = each.username;
         csvRawMember.email = each.email;
-        csvRawMember.star = each.star.toString();
+        csvRawMember.star = isNull(each.star)
+          ? 'N/A' : each.star.toString();
         csvRawMember.role = each.role;
         csvRawMember.createdAt = isNull(each.createdAt)
           ? 'N/A' : each.createdAt.toISOString();
