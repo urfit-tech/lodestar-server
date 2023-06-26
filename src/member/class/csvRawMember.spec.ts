@@ -27,7 +27,6 @@ describe('Class CsvRawMember', () => {
 
     describe('Should deserialize successfully', () => {
       it('Normal insert not exists one', async () => {
-        const id = v4();
         const [_, errors]: [CsvRawMember, Array<ValidationError>] = new CsvRawMember()
           .deserializedFromCsvRawRow(
             header,
@@ -50,6 +49,33 @@ describe('Class CsvRawMember', () => {
               '上次登入日期': new Date().toISOString(),
             },
           );
+        expect(errors.length).toBe(0);
+      });
+
+      it('Normal insert not exists one w/ duplicate phone numbers', async () => {
+        const [member, errors]: [CsvRawMember, Array<ValidationError>] = new CsvRawMember()
+          .deserializedFromCsvRawRow(
+            header,
+            {
+              '流水號': '',
+              '姓名': 'test',
+              '帳號': 'test_account',
+              '信箱': 'test_email@example.com',
+              '身份': 'general-member',
+              '手機1': '0912345678',
+              '手機2': '0912345678',
+              '分類1': 'test_category1',
+              '分類2': 'test_category2',
+              '屬性1': 'test_value1',
+              '屬性2': 'test_value2',
+              '標籤1': 'test_tag1',
+              '標籤2': 'test_tag2',
+              '星等': '99',
+              '建立日期': new Date().toISOString(),
+              '上次登入日期': new Date().toISOString(),
+            },
+          );
+        expect(member.phones.length).toBe(1);
         expect(errors.length).toBe(0);
       });
 
@@ -108,7 +134,6 @@ describe('Class CsvRawMember', () => {
       });
 
       it('Normal insert not exists one w/ optional createdAt field', async () => {
-        const id = v4();
         const [_, errors]: [CsvRawMember, Array<ValidationError>] = new CsvRawMember()
           .deserializedFromCsvRawRow(
             header,
@@ -135,7 +160,6 @@ describe('Class CsvRawMember', () => {
       });
 
       it('Normal insert not exists one w/ optional loginedAt field', async () => {
-        const id = v4();
         const [_, errors]: [CsvRawMember, Array<ValidationError>] = new CsvRawMember()
           .deserializedFromCsvRawRow(
             header,
@@ -162,7 +186,6 @@ describe('Class CsvRawMember', () => {
       });
 
       it('Normal insert not exists one w/ optional phones field', async () => {
-        const id = v4();
         const [_, errors]: [CsvRawMember, Array<ValidationError>] = new CsvRawMember()
           .deserializedFromCsvRawRow(
             header,
@@ -189,7 +212,6 @@ describe('Class CsvRawMember', () => {
       });
 
       it('Normal insert not exists one w/ optional categories field', async () => {
-        const id = v4();
         const [_, errors]: [CsvRawMember, Array<ValidationError>] = new CsvRawMember()
           .deserializedFromCsvRawRow(
             header,
@@ -216,7 +238,6 @@ describe('Class CsvRawMember', () => {
       });
 
       it('Normal insert not exists one w/ optional properties field', async () => {
-        const id = v4();
         const [_, errors]: [CsvRawMember, Array<ValidationError>] = new CsvRawMember()
           .deserializedFromCsvRawRow(
             header,
@@ -243,7 +264,6 @@ describe('Class CsvRawMember', () => {
       });
 
       it('Normal insert not exists one w/ optional tags field', async () => {
-        const id = v4();
         const [_, errors]: [CsvRawMember, Array<ValidationError>] = new CsvRawMember()
           .deserializedFromCsvRawRow(
             header,

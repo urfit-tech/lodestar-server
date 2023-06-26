@@ -285,7 +285,7 @@ describe('MemberService', () => {
       expect(member.loginedAt).toBeNull();
     });
 
-    it('Should skip extra unknown categories, properties, tags', async () => {
+    it('Should skip extra unknown categories, properties, tags & duplicate phones', async () => {
       const createdAt = new Date();
       const rawRows = [
         {
@@ -310,7 +310,7 @@ describe('MemberService', () => {
           '信箱': 'test_extra_unknown_email@test.com',
           '身份': 'general-member',
           '手機1': '0912345678',
-          '手機2': '',
+          '手機2': '0912345678',
           '分類1': 'test_category1',
           '多餘分類1': 'extra_unknown_category',
           '屬性1': 'test_property1',

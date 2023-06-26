@@ -188,7 +188,7 @@ describe('MemberService (e2e)', () => {
           '信箱': 'test_email@test.com',
           '身份': 'general-member',
           '手機1': '0912345678',
-          '手機2': '0923456789',
+          '手機2': '0912345678',
           '分類1': 'test_category1',
           '分類2': 'test_category2',
           [memberProperty.name]: 'test_value1',
@@ -219,9 +219,8 @@ describe('MemberService (e2e)', () => {
       expect(member.name).toBe('test');
       expect(member.username).toBe('test_account');
       expect(member.email).toBe('test_email@test.com');
-      member.memberPhones.forEach((memberPhone) => {
-        expect(['0912345678', '0923456789']).toContain(memberPhone.phone);
-      });
+      expect(member.memberPhones.length).toBe(1);
+      expect(member.memberPhones[0].phone).toBe('0912345678');
       member.memberCategories.forEach((memberCategory) => {
         expect(['test_category1_id', 'test_category2_id']).toContain(memberCategory.category.id);
       });
