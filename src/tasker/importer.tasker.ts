@@ -127,16 +127,21 @@ export class ImporterTasker extends Tasker {
     rawBin: Buffer,
   ): Promise<MemberImportResultDTO> {
     let rawRows: Array<Record<string, any>> = [];
-    const { Sheets, SheetNames } = XLSX.read(rawBin);
+    let data: XLSX.WorkBook;
 
     switch (mimeType){
       case 'application/vnd.ms-excel':
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        data = XLSX.read(rawBin);
+        break;
       case 'text/csv':
       default:
-        rawRows = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '', raw: false });
+        const decodedRaw = new TextDecoder().decode(rawBin);
+        data = XLSX.read(decodedRaw, { type: 'string'});
         break;
     }
+    const { Sheets, SheetNames } = data;
+    rawRows = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '', raw: false });
 
     switch (category) {
       case 'member':
