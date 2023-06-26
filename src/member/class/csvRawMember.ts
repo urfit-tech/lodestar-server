@@ -122,9 +122,11 @@ export class CsvRawMember {
     this.createdAt = parseNullableFieldFromRaw<string>(row[header.createdAt]);
     this.loginedAt = parseNullableFieldFromRaw<string>(row[header.loginedAt]);
 
-    this.phones = (header.phones === undefined ? [] : header.phones)
-      .map((each) => row[each].toString())
-      .filter(isNotEmpty);
+    this.phones = [
+      ...new Set((header.phones === undefined ? [] : header.phones)
+        .map((each) => row[each].toString())
+        .filter(isNotEmpty)),
+    ];
     this.categories = (header.categories === undefined ? [] : header.categories)
       .map((each) => row[each])
       .filter(isNotEmpty);
