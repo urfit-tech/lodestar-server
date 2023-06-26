@@ -1,4 +1,5 @@
 import { v4 } from 'uuid';
+import { EntityManager } from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
@@ -18,15 +19,19 @@ import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 
 describe('MemberService', () => {
   let service: MemberService;
+  let manager: EntityManager;
+
   let mockDefinitionInfra = {
     getCategories: jest.fn(),
     getProperties: jest.fn(),
     getTags: jest.fn(),
   };
   let mockMemberInfra = {
-    getMembersByConditions: jest.fn(),
+    getMembersByConditions: jest.fn()
   };
-  let mockEntityManager = jest.fn();
+  let mockMemberRepo = {
+    findOne: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -42,20 +47,19 @@ describe('MemberService', () => {
         },
         {
           provide: getEntityManagerToken('phdb'),
-          useValue: mockEntityManager,
-          
-        }
+          useValue: { getRepository: jest.fn().mockImplementation(() => mockMemberRepo) },
+        },
       ],
     }).compile();
 
     service = module.get<MemberService>(MemberService);
+    manager = module.get<EntityManager>(getEntityManagerToken('phdb'));
   });
 
   afterEach(() => jest.resetAllMocks());
 
   describe('#rawCsvToMember', () => {
     it('Should process all included categories, properties, tags, phones', async () => {
-      const memberId = v4();
       const createdAt = new Date();
       const rawRows = [
         {
@@ -77,7 +81,7 @@ describe('MemberService', () => {
           '上次登入日期': 'loginedAt',
         },
         {
-          '流水號': memberId,
+          '流水號': '',
           '姓名': 'test',
           '帳號': 'test_account',
           '信箱': 'test_email@test.com',
@@ -110,9 +114,8 @@ describe('MemberService', () => {
       ]);
       
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
-      const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       const [member] = deserializeResult;
-      expect(member.id).toBe(memberId);
       expect(member.name).toBe('test');
       expect(member.username).toBe('test_account');
       expect(member.email).toBe('test_email@test.com');
@@ -138,7 +141,6 @@ describe('MemberService', () => {
     });
 
     it('Should allow missing partial categories, properties, tags, phones', async () => {
-      const memberId = v4();
       const createdAt = new Date();
       const rawRows = [
         {
@@ -160,7 +162,7 @@ describe('MemberService', () => {
           '上次登入日期': 'loginedAt',
         },
         {
-          '流水號': memberId,
+          '流水號': '',
           '姓名': 'test_partial_missing',
           '帳號': 'test_partial_missing_account',
           '信箱': 'test_partial_missing_email@test.com',
@@ -193,9 +195,8 @@ describe('MemberService', () => {
       ]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
-      const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       const [member] = deserializeResult;
-      expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_partial_missing');
       expect(member.username).toBe('test_partial_missing_account');
       expect(member.email).toBe('test_partial_missing_email@test.com');
@@ -214,7 +215,6 @@ describe('MemberService', () => {
     });
 
     it('Should skip unknown categories, properties, tags', async () => {
-      const memberId = v4();
       const createdAt = new Date();
       const rawRows = [
         {
@@ -236,7 +236,7 @@ describe('MemberService', () => {
           '上次登入日期': 'loginedAt',
         },
         {
-          '流水號': memberId,
+          '流水號': '',
           '姓名': 'test_not_exists',
           '帳號': 'test_not_exists_account',
           '信箱': 'test_not_exists_email@test.com',
@@ -266,9 +266,8 @@ describe('MemberService', () => {
       ]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
-      const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       const [member] = deserializeResult;
-      expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_not_exists');
       expect(member.username).toBe('test_not_exists_account');
       expect(member.email).toBe('test_not_exists_email@test.com');
@@ -287,7 +286,6 @@ describe('MemberService', () => {
     });
 
     it('Should skip extra unknown categories, properties, tags', async () => {
-      const memberId = v4();
       const createdAt = new Date();
       const rawRows = [
         {
@@ -306,7 +304,7 @@ describe('MemberService', () => {
           '上次登入日期': 'loginedAt',
         },
         {
-          '流水號': memberId,
+          '流水號': '',
           '姓名': 'test_extra_unknown',
           '帳號': 'test_extra_unknown_account',
           '信箱': 'test_extra_unknown_email@test.com',
@@ -336,9 +334,8 @@ describe('MemberService', () => {
       ]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
-      const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       const [member] = deserializeResult;
-      expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_extra_unknown');
       expect(member.username).toBe('test_extra_unknown_account');
       expect(member.email).toBe('test_extra_unknown_email@test.com');
@@ -357,8 +354,6 @@ describe('MemberService', () => {
     });
 
     it('Should skip invalid raw rows', async () => {
-      const memberId = v4();
-      const invalidMemberId = v4();
       const createdAt = new Date();
       const rawRows = [
         {
@@ -376,7 +371,7 @@ describe('MemberService', () => {
           '上次登入日期': 'loginedAt',
         },
         {
-          '流水號': memberId,
+          '流水號': '',
           '姓名': 'test_normal',
           '帳號': 'test_normal_account',
           '信箱': 'test_normal_email@test.com',
@@ -390,10 +385,10 @@ describe('MemberService', () => {
           '上次登入日期': '',
         },
         {
-          '流水號': invalidMemberId,
+          '流水號': '',
           '姓名': 'test_invalid_email',
           '帳號': 'test_invalid_email_account',
-          '信箱': '',
+          '信箱': 'test_invalid_email',
           '身份': 'general-member',
           '手機1': '0912345678',
           '分類1': 'test_category1',
@@ -416,13 +411,12 @@ describe('MemberService', () => {
       ]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
-      const deserializeResults = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const deserializeResults = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       const errorResults = deserializeResults.filter(([member]) => member === null);
       const [errorResult] = errorResults;
       const [errorMember, errors] = errorResult;
       expect(errorMember).toBeNull();
       expect(errors[0].property).toBe('email');
-      expect(errors[0].constraints.isNotEmpty).not.toBeUndefined();
       expect(errors[0].constraints.isEmail).not.toBeUndefined();
 
       const successResults = deserializeResults.filter(([member]) => member !== null);
@@ -430,7 +424,6 @@ describe('MemberService', () => {
       const [successResult] = successResults;
       const [member, error] = successResult;
       expect(error.length).toBe(0);
-      expect(member.id).toBe(memberId);
       expect(member.name).toBe('test_normal');
       expect(member.username).toBe('test_normal_account');
       expect(member.email).toBe('test_normal_email@test.com');
@@ -471,6 +464,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
+      member.loginedAt = null;
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -500,9 +494,9 @@ describe('MemberService', () => {
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
       expect(raw['身份']).toEqual(member.role);
-      expect(raw['星等']).toEqual(member.star);
+      expect(raw['星等']).toEqual(member.star.toString());
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
-      expect(raw['上次登入日期']).toEqual('');
+      expect(raw['上次登入日期']).toEqual('N/A');
       expect(raw['分類1']).toEqual(member.memberCategories[0].category.name);
       expect(raw['測試屬性1']).toEqual(member.memberProperties[0].value);
       expect(raw['手機1']).toEqual(member.memberPhones[0].phone);
@@ -543,6 +537,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
+      member.loginedAt = null;
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -581,9 +576,9 @@ describe('MemberService', () => {
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
       expect(raw['身份']).toEqual(member.role);
-      expect(raw['星等']).toEqual(member.star);
+      expect(raw['星等']).toEqual(member.star.toString());
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
-      expect(raw['上次登入日期']).toEqual('');
+      expect(raw['上次登入日期']).toEqual('N/A');
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index].category.name);
         expect(raw[`測試屬性${index + 1}`]).toEqual(member.memberProperties[index].value);
@@ -628,6 +623,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
+      member.loginedAt = null;
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -658,9 +654,9 @@ describe('MemberService', () => {
       expect(raw['姓名']).toEqual(member.name);
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
-      expect(raw['星等']).toEqual(member.star);
+      expect(raw['星等']).toEqual(member.star.toString());
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
-      expect(raw['上次登入日期']).toEqual('');
+      expect(raw['上次登入日期']).toEqual('N/A');
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index]
           ? member.memberCategories[index].category.name : '',
@@ -708,6 +704,7 @@ describe('MemberService', () => {
       member.email = 'test@example.com';
       member.star = 999;
       member.createdAt = new Date();
+      member.loginedAt = null;
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -743,9 +740,9 @@ describe('MemberService', () => {
       expect(raw['姓名']).toEqual(member.name);
       expect(raw['帳號']).toEqual(member.username);
       expect(raw['信箱']).toEqual(member.email);
-      expect(raw['星等']).toEqual(member.star);
+      expect(raw['星等']).toEqual(member.star.toString());
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
-      expect(raw['上次登入日期']).toEqual('');
+      expect(raw['上次登入日期']).toEqual('N/A');
       Array(member.memberCategories.length).forEach((index) => {
         expect(raw[`分類${index + 1}`]).toEqual(index === 0
           ? member.memberCategories[index].category.name : '',
@@ -792,8 +789,10 @@ describe('MemberService', () => {
       member.name = 'test';
       member.username = 'test';
       member.email = 'test@example.com';
+      member.role = 'general-member';
       member.star = 999;
       member.createdAt = memberCreatedAt;
+      member.loginedAt = null;
 
       const memberPhone1 = new MemberPhone();
       memberPhone1.phone = '0912345678';
@@ -812,11 +811,13 @@ describe('MemberService', () => {
       memberTag1.tagName2 = tag1;
       member.memberTags = [memberTag1];
 
+      mockMemberRepo.findOne.mockReturnValueOnce(member);
+
       const rawRows = await service.memberToRawCsv(
         headerInfos,
         [member],
       );
-      const importedMembers = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const importedMembers = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       expect(importedMembers.length).toBe(1);
       const [deserializeResult] = importedMembers;
       const [importedMember] = deserializeResult;
@@ -824,6 +825,7 @@ describe('MemberService', () => {
       expect(importedMember.name).toEqual(member.name);
       expect(importedMember.username).toEqual(member.username);
       expect(importedMember.email).toEqual(member.email);
+      expect(importedMember.role).toEqual(member.role);
       expect(importedMember.star).toEqual(member.star);
       expect(importedMember.createdAt).toEqual(memberCreatedAt);
       expect(importedMember.loginedAt).toBeNull();
@@ -847,7 +849,6 @@ describe('MemberService', () => {
     });
 
     it('imported data can re-export with multiple', async () => {
-      const memberId = v4();
       const createdAt = new Date();
       const rawRows = [
         {
@@ -869,11 +870,11 @@ describe('MemberService', () => {
           '上次登入日期': 'loginedAt',
         },
         {
-          '流水號': memberId,
+          '流水號': '',
           '姓名': 'test',
           '帳號': 'test_account',
           '信箱': 'test_email@test.com',
-          '身份': 'general-member',
+          '身份': '',
           '手機1': '0912345678',
           '手機2': '0923456789',
           '分類1': '測試分類1',
@@ -902,7 +903,7 @@ describe('MemberService', () => {
       ]);
       
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
-      const deserializeResult = await service.rawCsvToMember('test-app-id', headerInfos, rawRows);
+      const deserializeResult = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       const members = deserializeResult.map(([member, _]) => member);
       const [member] = members;
       const exportedRawRows = await service.memberToRawCsv(headerInfos, members);
@@ -913,9 +914,9 @@ describe('MemberService', () => {
       expect(exportedRawRow['帳號']).toEqual(member.username);
       expect(exportedRawRow['信箱']).toEqual(member.email);
       expect(exportedRawRow['身份']).toEqual(member.role);
-      expect(exportedRawRow['星等']).toEqual(member.star);
+      expect(exportedRawRow['星等']).toEqual(member.star.toString());
       expect(exportedRawRow['建立日期']).toEqual(member.createdAt.toISOString());
-      expect(exportedRawRow['上次登入日期']).toEqual('');
+      expect(exportedRawRow['上次登入日期']).toEqual('N/A');
       expect(exportedRawRow['手機1']).toEqual(member.memberPhones[0].phone);
       expect(exportedRawRow['手機2']).toEqual(member.memberPhones[1].phone);
       expect(exportedRawRow['分類1']).toEqual(member.memberCategories[0].category.name);
