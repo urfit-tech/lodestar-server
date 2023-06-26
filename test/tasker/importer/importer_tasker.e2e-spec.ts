@@ -42,7 +42,7 @@ describe('ImporterTasker', () => {
   let propertyRepo: Repository<Property>;
   let tagRepo: Repository<Tag>;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         TaskerModule.forRoot({
@@ -89,7 +89,7 @@ describe('ImporterTasker', () => {
     await application.init();
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await memberPhoneRepo.delete({});
     await memberCategoryRepo.delete({});
     await memberPropertyRepo.delete({});
