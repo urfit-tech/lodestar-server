@@ -1,3 +1,4 @@
+import { v4 } from 'uuid';
 import { EntityManager, Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
 import { getEntityManagerToken } from '@nestjs/typeorm';
@@ -9,15 +10,14 @@ import { App } from '~/entity/App';
 import { Category } from '~/definition/entity/category.entity';
 import { Property } from '~/definition/entity/property.entity';
 import { Tag } from '~/definition/entity/tag.entity';
-
-import { anotherCategory, anotherMemberTag, app, appPlan, category, memberProperty, memberTag } from '../data';
-import { v4 } from 'uuid';
 import { MemberService } from '~/member/member.service';
 import { Member } from '~/member/entity/member.entity';
 import { MemberPhone } from '~/member/entity/member_phone.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
+
+import { anotherCategory, anotherMemberTag, app, appPlan, category, memberProperty, memberTag } from '../data';
 
 describe('MemberService (e2e)', () => {
   let application: INestApplication;
@@ -160,7 +160,6 @@ describe('MemberService (e2e)', () => {
     });
 
     it('Should insert not exists members', async () => {
-      const memberId = v4();
       const createdAt = new Date();
       const rawRows = [
         {
@@ -182,7 +181,7 @@ describe('MemberService (e2e)', () => {
           '上次登入日期': 'loginedAt',
         },
         {
-          '流水號': memberId,
+          '流水號': '',
           '姓名': 'test',
           '帳號': 'test_account',
           '信箱': 'test_email@test.com',
@@ -207,7 +206,7 @@ describe('MemberService (e2e)', () => {
       expect(insertResult.failedErrors.length).toBe(0);
 
       const member = await memberRepo.findOne({
-        where: { id: memberId },
+        where: { name: 'test', username: 'test_account' },
         relations: {
           memberCategories: { category: true },
           memberProperties: { property: true },
@@ -216,7 +215,6 @@ describe('MemberService (e2e)', () => {
         },
       },);
       expect(member).not.toBeUndefined();
-      expect(member.id).toBe(memberId);
       expect(member.name).toBe('test');
       expect(member.username).toBe('test_account');
       expect(member.email).toBe('test_email@test.com');
@@ -241,8 +239,41 @@ describe('MemberService (e2e)', () => {
     });
 
     it('Should update values with optional missing values', async () => {
-      const memberId = v4();
-      const createdAt = new Date();
+      const insertedMember = new Member();
+      insertedMember.appId = app.id;
+      insertedMember.id = v4();
+      insertedMember.name = 'inserted_name';
+      insertedMember.username = 'inserted_account';
+      insertedMember.email = 'inserted_email@example.com';
+      insertedMember.role = 'general-member';
+      insertedMember.star = 666;
+      insertedMember.createdAt = new Date();
+      insertedMember.loginedAt = null;
+
+      const insertedMemberPhone = new MemberPhone();
+      insertedMemberPhone.member = insertedMember;
+      insertedMemberPhone.phone = '0912345678';
+
+      const insertedMemberCategory = new MemberCategory();
+      insertedMemberCategory.member = insertedMember;
+      insertedMemberCategory.category = category;
+      insertedMemberCategory.position = 1;
+
+      const insertedMemberProperty = new MemberProperty();
+      insertedMemberProperty.member = insertedMember;
+      insertedMemberProperty.property = memberProperty;
+      insertedMemberProperty.value = 'test_property';
+
+      const insertedMemberTag = new MemberTag();
+      insertedMemberTag.member = insertedMember;
+      insertedMemberTag.tagName2 = memberTag;
+
+      await memberRepo.save(insertedMember);
+      await memberPhoneRepo.save(insertedMemberPhone);
+      await memberCategoryRepo.save(insertedMemberCategory);
+      await memberPropertyRepo.save(insertedMemberProperty);
+      await memberTagRepo.save(insertedMemberTag);
+
       const rawRows = [
         {
           '流水號': 'id',
@@ -263,7 +294,7 @@ describe('MemberService (e2e)', () => {
           '上次登入日期': 'loginedAt',
         },
         {
-          '流水號': memberId,
+          '流水號': insertedMember.id,
           '姓名': '',
           '帳號': 'test_account',
           '信箱': 'test_email@test.com',
@@ -277,7 +308,7 @@ describe('MemberService (e2e)', () => {
           '標籤1': '',
           '標籤2': '',
           '星等': '',
-          '建立日期': createdAt.toISOString(),
+          '建立日期': insertedMember.createdAt.toISOString(),
           '上次登入日期': '',
         },
       ];
@@ -288,7 +319,7 @@ describe('MemberService (e2e)', () => {
       expect(insertResult.failedErrors.length).toBe(0);
 
       const member = await memberRepo.findOne({
-        where: { id: memberId },
+        where: { id: insertedMember.id },
         relations: {
           memberCategories: { category: true },
           memberProperties: { property: true },
@@ -297,8 +328,7 @@ describe('MemberService (e2e)', () => {
         },
       },);
       expect(member).not.toBeUndefined();
-      expect(member.id).toBe(memberId);
-      expect(member.name).toBe('');
+      expect(member.name).toBe('inserted_name');
       expect(member.username).toBe('test_account');
       expect(member.email).toBe('test_email@test.com');
       expect(member.memberPhones.length).toBe(0);
@@ -311,8 +341,8 @@ describe('MemberService (e2e)', () => {
         }
       });
       expect(member.memberTags.length).toBe(0);
-      expect(member.star).toBe('0');
-      expect(member.createdAt).toStrictEqual(createdAt);
+      expect(member.star).toBe('666');
+      expect(member.createdAt).toStrictEqual(insertedMember.createdAt);
     });
 
     it('Should update values if given member is exists', async () => {
@@ -325,6 +355,7 @@ describe('MemberService (e2e)', () => {
       insertedMember.role = 'general-member';
       insertedMember.star = 555;
       insertedMember.createdAt = new Date();
+      insertedMember.loginedAt = null;
 
       const insertedMemberPhone = new MemberPhone();
       insertedMemberPhone.member = insertedMember;
@@ -384,7 +415,7 @@ describe('MemberService (e2e)', () => {
           '標籤1': 'test_tag1',
           '標籤2': anotherMemberTag.name,
           '星等': '999',
-          '建立日期': insertedMember.createdAt,
+          '建立日期': insertedMember.createdAt.toISOString(),
           '上次登入日期': '',
         },
       ];
@@ -407,6 +438,9 @@ describe('MemberService (e2e)', () => {
       expect(member.name).toBe(insertedMember.name);
       expect(member.username).toBe(insertedMember.username);
       expect(member.email).toBe(insertedMember.email);
+      expect(member.star).toBe('999');
+      expect(member.createdAt).toStrictEqual(insertedMember.createdAt);
+      expect(member.loginedAt).toBeNull();
       expect(member.memberPhones.length).toBe(1);
       expect(member.memberPhones.find(({ phone }) => phone === insertedMemberPhone.phone)).toBeUndefined();
       expect(member.memberPhones.find(({ phone }) => phone === '0900000008')).not.toBeUndefined();

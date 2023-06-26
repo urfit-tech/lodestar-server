@@ -134,7 +134,7 @@ export class ImporterTasker extends Tasker {
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
       case 'text/csv':
       default:
-        rawRows = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
+        rawRows = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '', raw: false });
         break;
     }
 
