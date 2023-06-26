@@ -503,6 +503,66 @@ describe('MemberService', () => {
       expect(raw['標籤1']).toEqual(member.memberTags[0].tagName2.name);
     });
 
+    it('Should process all member fields and generate csv rows with null star field', async () => {
+      const category1 = new Category();
+      category1.id = 'test_category1_id';
+      category1.name = '測試分類1';
+
+      const property1 = new Property();
+      property1.id = 'test_property1_id';
+      property1.name = '測試屬性1';
+
+      const tag1 = new Tag();
+      tag1.name = '測試標籤1';
+
+      const headerInfos = await new MemberCsvHeaderMapping()
+        .deserializeFromDataBase(5, 5, [category1], [property1]);
+      const member = new Member();
+      member.id = v4();
+      member.name = 'test';
+      member.username = 'test';
+      member.email = 'test@example.com';
+      member.star = null;
+      member.createdAt = new Date();
+      member.loginedAt = null;
+
+      const memberPhone1 = new MemberPhone();
+      memberPhone1.phone = '0912345678';
+      member.memberPhones = [memberPhone1];
+
+      const memberProperty1 = new MemberProperty();
+      memberProperty1.property = property1;
+      memberProperty1.value = '測試屬性值1';
+      member.memberProperties = [memberProperty1];
+
+      const memberCategory1 = new MemberCategory();
+      memberCategory1.category = category1;
+      member.memberCategories = [memberCategory1];
+
+      const memberTag1 = new MemberTag();
+      memberTag1.tagName2 = tag1;
+      member.memberTags = [memberTag1];
+
+      const raws = await service.memberToRawCsv(
+        headerInfos,
+        [member],
+      );
+      const [raw] = raws;
+      expect(raws.length).toBe(1);
+      expect(raw['流水號']).toEqual(member.id);
+      expect(raw['姓名']).toEqual(member.name);
+      expect(raw['帳號']).toEqual(member.username);
+      expect(raw['信箱']).toEqual(member.email);
+      expect(raw['身份']).toEqual(member.role);
+      expect(raw['星等']).toEqual('N/A');
+      expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
+      expect(raw['上次登入日期']).toEqual('N/A');
+      expect(raw['分類1']).toEqual(member.memberCategories[0].category.name);
+      expect(raw['測試屬性1']).toEqual(member.memberProperties[0].value);
+      expect(raw['手機1']).toEqual(member.memberPhones[0].phone);
+      expect(raw['標籤1']).toEqual(member.memberTags[0].tagName2.name);
+    });
+
     it('Should process all member fields and generate csv rows with multiple field values', async () => {
       const category1 = new Category();
       category1.id = 'test_category1_id';
