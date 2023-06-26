@@ -1,5 +1,21 @@
-import { v4 } from 'uuid';
-import { IsString, IsArray, IsObject, IsUUID, IsNotEmpty, IsNumber, IsDate, IsEmail, validateSync, isEmpty, isNotEmpty, ValidateIf } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsObject,
+  IsUUID,
+  IsEmail,
+  validateSync,
+  isEmpty,
+  isNotEmpty,
+  ValidationError,
+  IsOptional,
+  IsNumberString,
+  IsDateString,
+  IsNotEmpty,
+  IsEmpty,
+} from 'class-validator';
+
+import { parseFieldFromRaw, parseNullableFieldFromRaw } from '~/utils';
 
 import { MemberCsvHeaderMapping } from './csvHeaderMapping';
 
@@ -7,49 +23,55 @@ import { MemberCsvHeaderMapping } from './csvHeaderMapping';
  * Formats represents raw rows inside csv file for member import.
  */
 export class CsvRawMember {  
-  @IsUUID()
-  @IsNotEmpty()
-  id: string;
-  
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-  
-  @IsString()
-  @IsNotEmpty()
-  username: string;
-  
-  @IsEmail()
-  email: string;
+  @IsUUID(4, { groups: ['import-exists'] })
+  @IsEmpty({ groups: ['import-new'] })
+  id: string | null | undefined;
 
-  @IsString()
-  @IsNotEmpty()
-  role: string;
+  @IsString() @IsOptional() name: string | undefined;
 
+  @IsString({ always: true })
+  @IsOptional({ groups: ['import-exists'] })
+  @IsNotEmpty({ groups: ['import-new'] })
+  username: string | null | undefined;
+
+  @IsEmail(undefined, { always: true })
+  @IsOptional({ groups: ['import-exists'] })
+  @IsNotEmpty({ groups: ['import-new'] })
+  email: string | null | undefined;
+
+  @IsString() @IsOptional() role: string | undefined;
+
+  @IsNumberString(undefined, { always: true })
+  @IsOptional({ groups: ['import-exists'] })
+  @IsNotEmpty({ groups: ['import-new'] })
+  star: string | null | undefined;
+
+  @IsDateString(undefined, { always: true })
+  @IsOptional({ always: true })
+  createdAt: string | null | undefined;
+
+  @IsDateString(undefined, { always: true })
+  @IsOptional({ always: true })
+  loginedAt: string | null | undefined;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  categories: Array<string>;
+  categories: Array<string> | undefined;
   
+  @IsOptional()
   @IsObject()
-  properties: Record<string, string>;
+  properties: Record<string, string> | undefined;
   
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  phones: Array<string>;
+  phones: Array<string> | undefined;
   
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  tags: Array<string>;
-  
-  @IsNumber()
-  star: number;
-  
-  @IsDate()
-  createdAt: Date;
-
-  @IsDate()
-  @ValidateIf((_, value) => value !== null)
-  loginedAt: Date | null;
+  tags: Array<string> | undefined;
 
   public serializeToCsvRawRow(
     header: MemberCsvHeaderMapping,
@@ -77,8 +99,8 @@ export class CsvRawMember {
       [header.email]: this.email,
       [header.star]: this.star,
       [header.role]: this.role,
-      [header.createdAt]: this.createdAt.toISOString(),
-      [header.loginedAt]: this.loginedAt ? this.loginedAt.toISOString() : '',
+      [header.createdAt]: this.createdAt,
+      [header.loginedAt]: this.loginedAt,
       ...phones,
       ...categories,
       ...properties,
@@ -89,22 +111,26 @@ export class CsvRawMember {
   public deserializedFromCsvRawRow(
     header: MemberCsvHeaderMapping,
     row: Record<string, any>,
-  ): CsvRawMember {
-    this.id = isEmpty(row[header.id]) ? v4() : row[header.id];
-    this.name = row[header.name];
-    this.username = row[header.username];
-    this.email = row[header.email];
-    this.star = parseInt(row[header.star]);
-    this.role = isEmpty(row[header.role]) ? 'general-member' : row[header.role];
-    this.createdAt = isEmpty(row[header.createdAt]) ? new Date() : new Date(row[header.createdAt]);
-    this.loginedAt = isEmpty(row[header.loginedAt]) ? null : new Date(row[header.loginedAt]);
-    this.phones = header.phones
-      .map((each) => row[each].toString())
-      .filter(isNotEmpty);
-    this.categories = header.categories
+  ): [CsvRawMember, Array<ValidationError>] {
+    this.id = parseNullableFieldFromRaw<string>(row[header.id]);
+    this.name = parseFieldFromRaw<string>(row[header.name]);
+    this.username = parseFieldFromRaw<string>(row[header.username]);
+    this.email = parseFieldFromRaw<string>(row[header.email]);
+    
+    this.star = parseNullableFieldFromRaw<string>(row[header.star]);
+    this.role = parseNullableFieldFromRaw<string>(row[header.role]);
+    this.createdAt = parseNullableFieldFromRaw<string>(row[header.createdAt]);
+    this.loginedAt = parseNullableFieldFromRaw<string>(row[header.loginedAt]);
+
+    this.phones = [
+      ...new Set((header.phones === undefined ? [] : header.phones)
+        .map((each) => row[each].toString())
+        .filter(isNotEmpty)),
+    ];
+    this.categories = (header.categories === undefined ? [] : header.categories)
       .map((each) => row[each])
       .filter(isNotEmpty);
-    this.properties = header.properties
+    this.properties = (header.properties === undefined ? [] : header.properties)
       .reduce(
         (acc, current) => {
           const value = row[current];
@@ -115,10 +141,11 @@ export class CsvRawMember {
         },
         {},
       );
-    this.tags = header.tags
+    this.tags = (header.tags === undefined ? [] : header.tags)
       .map((each) => row[each])
       .filter(isNotEmpty);
-    validateSync(this);
-    return this;
+    return [this, validateSync(this, { groups: [
+      isEmpty(row[header.id]) ? 'import-new' : 'import-exists',
+    ]})];
   }
 }

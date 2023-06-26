@@ -36,7 +36,7 @@ export const category = new Category();
 category.appId = app.id;
 category.class = '';
 category.position = 0;
-category.name = 'test-category';
+category.name = '測試分類';
 
 export const anotherCategory = new Category();
 anotherCategory.appId = app.id;

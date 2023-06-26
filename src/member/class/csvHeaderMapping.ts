@@ -1,43 +1,80 @@
-import { IsArray, IsNotEmpty, IsString, validateOrReject } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsString,
+  validateSync,
+  ValidationError,
+  ValidateIf,
+} from 'class-validator';
 
 import { Category } from '~/definition/entity/category.entity';
 import { Property } from '~/definition/entity/property.entity';
-import { Tag } from '~/definition/entity/tag.entity';
 
 export class MemberCsvHeaderMapping {
   @IsString() @IsNotEmpty() id: string;
-  @IsString() @IsNotEmpty() name: string;
-  @IsString() @IsNotEmpty() username: string;
-  @IsString() @IsNotEmpty() email: string;
-  @IsString() @IsNotEmpty() role: string;
+  
+  @IsString()
+  @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
+  name: string;
+  
+  @IsString()
+  @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
+  username: string;
+  
+  @IsString()
+  @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
+  role: string;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
   categories: Array<string>;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
   properties: Array<string>;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
   phones: Array<string>;
 
   @IsArray()
   @IsString({ each: true })
   @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
   tags: Array<string>;
 
-  @IsString() @IsNotEmpty() star: string;
-  @IsString() @IsNotEmpty() createdAt: string;
-  @IsString() @IsNotEmpty() loginedAt: string;
+  @IsString()
+  @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
+  star: string;
 
-  public async deserializeFromRaw(
+  @IsString()
+  @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
+  createdAt: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ValidateIf((_, value) => value !== undefined)
+  loginedAt: string;
+
+  public deserializeFromRaw(
     headerRow: Record<string, string>,
-  ): Promise<MemberCsvHeaderMapping> {
+  ): [MemberCsvHeaderMapping, Array<ValidationError>] {
     for (const humanReadable in headerRow) {
       const codeReadable = headerRow[humanReadable];
       const [key] = codeReadable.split('.');
@@ -73,7 +110,28 @@ export class MemberCsvHeaderMapping {
       }
     }
 
-    await validateOrReject(this);
+    return [this, validateSync(this)];
+  }
+
+  public async deserializeFromDataBase(
+    maxPhoneCount: number,
+    maxTagCount: number,
+    appCategories: Array<Category>,
+    appProperties: Array<Property>,
+  ) {
+    this.id = '流水號';
+    this.name = '姓名';
+    this.username = '帳號';
+    this.email = '信箱';
+    this.categories = [...Array(appCategories.length).keys()].map((each) => `分類${(each + 1).toString()}`);
+    this.properties = appProperties.map(({ name }) => name);
+    this.phones = [...Array(maxPhoneCount).keys()].map((each) => `手機${(each + 1).toString()}`);
+    this.tags = [...Array(maxTagCount).keys()].map((each) => `標籤${(each + 1).toString()}`);
+    this.star = '星等';
+    this.role = '身份';
+    this.createdAt = '建立日期';
+    this.loginedAt = '上次登入日期';
+
     return this;
   }
 
@@ -108,27 +166,5 @@ export class MemberCsvHeaderMapping {
       ...properties,
       ...tags,
     };
-  }
-
-  public async deserializeFromDataBase(
-    maxPhoneCount: number,
-    maxTagCount: number,
-    appCategories: Array<Category>,
-    appProperties: Array<Property>,
-  ) {
-    this.id = '流水號';
-    this.name = '姓名';
-    this.username = '帳號';
-    this.email = '信箱';
-    this.categories = [...Array(appCategories.length).keys()].map((each) => `分類${(each + 1).toString()}`);
-    this.properties = appProperties.map(({ name }) => name);
-    this.phones = [...Array(maxPhoneCount).keys()].map((each) => `手機${(each + 1).toString()}`);
-    this.tags = [...Array(maxTagCount).keys()].map((each) => `標籤${(each + 1).toString()}`);
-    this.star = '星等';
-    this.role = '身份';
-    this.createdAt = '建立日期';
-    this.loginedAt = '上次登入日期';
-
-    return this;
   }
 }
