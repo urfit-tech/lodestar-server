@@ -69,6 +69,9 @@ export class ImporterTasker extends Tasker {
       const invokers = await this.memberInfra.getMembersByConditions(
         appId, { id: invokerMemberId }, this.entityManager,
       );
+      const admins = await this.memberInfra.getMembersByConditions(
+        appId, { role: 'app-owner' }, this.entityManager,
+      );
       const processResult: Record<string, MemberImportResultDTO | Error> = {};
 
       for (const fileInfo of fileInfos) {
@@ -90,7 +93,7 @@ export class ImporterTasker extends Tasker {
 
       await this.putEmailQueue(
         appId,
-        invokers,
+        [...invokers, ...admins],
         '匯入結果(MemberImport)',
         JSON.stringify(processResult),
       );

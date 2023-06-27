@@ -71,6 +71,9 @@ export class ExporterTasker extends Tasker {
       const invokers = await this.memberInfra.getMembersByConditions(
         appId, { id: invokerMemberId }, this.entityManager,
       );
+      const admins = await this.memberInfra.getMembersByConditions(
+        appId, { role: 'app-owner' }, this.entityManager,
+      );
 
       const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}`;
       const { ETag } = await this.storageService.saveFilesInBucketStorage({
@@ -84,7 +87,7 @@ export class ExporterTasker extends Tasker {
         .getSignedUrlForDownloadStorage(fileKey, 7 * 24 * 60 * 60);
       this.putEmailQueue(
         appId,
-        invokers,
+        [...invokers, ...admins],
         '匯出結果(MemberExport)',
         `檔案下載連結: ${signedDownloadUrl}</br>請在24小時內下載，逾時連結將失效。`,
       );
