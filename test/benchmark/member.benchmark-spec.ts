@@ -15,6 +15,7 @@ import { MemberPhone } from '~/member/entity/member_phone.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
+import { getMemoryUsageString } from '~/utils';
 
 import { anotherCategory, anotherMemberTag, app, appPlan, category, memberProperty, memberTag } from '../data';
 
@@ -35,6 +36,7 @@ describe('MemberService (benchmark)', () => {
   let tagRepo: Repository<Tag>;
 
   beforeEach(async () => {
+    console.log(getMemoryUsageString());
     const moduleFixture = await Test.createTestingModule({
       imports: [ApplicationModule],
     }).compile();
@@ -90,6 +92,7 @@ describe('MemberService (benchmark)', () => {
     await appPlanRepo.delete({});
 
     await application.close();
+    console.log(`Test completed with: ${getMemoryUsageString()}`);
   });
 
   describe('Method processImportFromFile', () => {
@@ -148,7 +151,10 @@ describe('MemberService (benchmark)', () => {
       expect(failedErrors.length).toBe(0);
 
       const toExpectSampleCount = 20;
-      const randomNumbers = [...new Array(toExpectSampleCount)].map(() => Math.floor(Math.random() * sampleCount));
+      const randomNumbers = [...new Set(Array.from(
+        { length: toExpectSampleCount },
+        () => Math.floor(Math.random() * sampleCount),
+      ))];
       const members = await memberRepo.find({
         where: {
           name: In(randomNumbers.map((i) => `test${i}`)),
@@ -256,9 +262,10 @@ describe('MemberService (benchmark)', () => {
       expect(failedErrors.length).toBe(corruptCount);
 
       const toExpectSampleCount = 20;
-      const randomNumbers = [...new Array(toExpectSampleCount)]
-        .map(() => Math.floor(Math.random() * sampleCount))
-        .filter((each) => !corruptedNumbers.includes(each));
+      const randomNumbers = [...new Set(Array.from(
+        { length: toExpectSampleCount },
+        () => Math.floor(Math.random() * sampleCount),
+      ))].filter((each) => !corruptedNumbers.includes(each));
       const members = await memberRepo.find({
         where: {
           name: In(randomNumbers.map((i) => `test${i}`)),

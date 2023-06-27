@@ -1,3 +1,11 @@
+export function getMemoryUsageString(): string {
+  const used = process.memoryUsage();
+  const output = Object
+    .keys(used)
+    .map((key) => `${key}: ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`).join(',');
+  return `[MemoryUsage] ${output}`;
+}
+
 export function isEmptyString(value: string): boolean {
   return value === '';
 }
