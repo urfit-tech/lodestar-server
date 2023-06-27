@@ -174,7 +174,7 @@ describe('MemberService (benchmark)', () => {
       });
     });
 
-    it.only('Should import with 100K rows but 10K is corrupted', async () => {
+    it('Should import with 100K rows but 10K is corrupted', async () => {
       const sampleCount = 100 * 1000;
       const corruptCount = sampleCount * 0.01;
       const createdAt = new Date();
