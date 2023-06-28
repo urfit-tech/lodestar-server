@@ -25,6 +25,7 @@ const apiPath = {
   },
   order: {
     transferReceivedOrder: '/orders/transfer-received-order',
+    orders: '/orders',
   },
 };
 
@@ -42,8 +43,6 @@ describe('OrderController (e2e)', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [OrderService],
-      controllers: [OrderController],
       imports: [ApplicationModule],
     }).compile();
 
@@ -214,7 +213,77 @@ describe('OrderController (e2e)', () => {
         .set(requestHeader)
         .send(requestBody)
         .expect(200)
-        .expect({ code: 'SUCCESS', message: { generatedMaps: [], raw: [], affected: 1 } });
+        .expect({
+          code: 'SUCCESS',
+          message: 'transfer order successfully',
+          result: { generatedMaps: [], raw: [], affected: 1 },
+        });
+    });
+  });
+
+  describe('/orders/:orderId (GET)', () => {
+    const member = new Member();
+    member.id = v4();
+    member.appId = app.id;
+    member.email = 'owner@example.com';
+    member.username = 'owner';
+    member.role = role.name;
+    member.name = 'firstMember';
+
+    const orderLog = new OrderLog();
+    orderLog.id = app.symbol + '111111111111111';
+    orderLog.member = member;
+    orderLog.invoiceOptions = {};
+
+    it('should AuthToken is invalid', async () => {
+      const requestHeader = {
+        authorization: 'Bearer ' + '',
+      };
+
+      await request(application.getHttpServer())
+        .get(apiPath.order.orders + '/' + orderLog.id)
+        .set(requestHeader)
+        .expect(400)
+        .expect(/{"statusCode":400,"message":"E_TOKEN_INVALID"}/);
+    });
+
+    it('should raise error due to order not found', async () => {
+      const tokenResponse = await request(application.getHttpServer())
+        .post(apiPath.auth.token)
+        .send({ clientId: 'test', key: 'testKey', permissions: [] });
+      const {
+        result: { authToken },
+      } = tokenResponse.body;
+
+      const requestHeader = {
+        authorization: 'Bearer ' + authToken,
+      };
+
+      await request(application.getHttpServer())
+        .get(apiPath.order.orders + '/' + null)
+        .set(requestHeader)
+        .expect(400)
+        .expect(/{"statusCode":400,"message":"E_DB_GET_ORDER_NOT_FOUND"}/);
+    });
+
+    it('Should get order successfully', async () => {
+      await memberRepo.save(member);
+      await orderLogRepo.save(orderLog);
+      const tokenResponse = await request(application.getHttpServer())
+        .post(apiPath.auth.token)
+        .send({ clientId: 'test', key: 'testKey', permissions: [] });
+      const {
+        result: { authToken },
+      } = tokenResponse.body;
+
+      const requestHeader = {
+        authorization: 'Bearer ' + authToken,
+      };
+
+      await request(application.getHttpServer())
+        .get(apiPath.order.orders + '/' + orderLog.id)
+        .set(requestHeader)
+        .expect(200);
     });
   });
 });
