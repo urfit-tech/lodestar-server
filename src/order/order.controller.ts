@@ -1,4 +1,4 @@
-import { Body, Controller, Headers, Put } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Put } from '@nestjs/common';
 import { verify } from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { APIException } from '~/api.excetion';
@@ -40,6 +40,23 @@ export class OrderController {
     const transferOrderDTO: TransferReceivedOrderDTO = { memberId, orderId: orderLogId };
     const updateResult = await this.orderService.transferReceivedOrder(transferOrderDTO);
 
-    return { code: 'SUCCESS', message: updateResult };
+    return { code: 'SUCCESS', message: 'transfer order successfully', result: updateResult };
+  }
+
+  @Get(':orderId')
+  async getOrderById(@Param('orderId') orderId: string, @Headers() headers) {
+    try {
+      const { authorization } = headers;
+      await verify(authorization.split(' ')[1], this.configService.get('HASURA_JWT_SECRET'));
+    } catch {
+      throw new APIException({ code: 'E_TOKEN_INVALID', message: 'authToken is invalid' });
+    }
+
+    if (!orderId) {
+      throw new APIException({ code: 'E_NULL_ORDER', message: 'orderId is null or undefined' });
+    }
+
+    const order = await this.orderService.getOrderById(orderId);
+    return { code: 'SUCCESS', message: 'Get order successfully.', result: order };
   }
 }
