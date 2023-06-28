@@ -27,4 +27,18 @@ export class OrderService {
       throw new APIException({ code: 'E_DB_UPDATE', message: 'data update failed' });
     }
   }
+  async getOrderById(orderId: string) {
+    const OrderLogRepo = this.entityManager.getRepository(OrderLog);
+    let orderLog;
+    try {
+      orderLog = await OrderLogRepo.findOneBy({ id: orderId });
+    } catch {
+      throw new APIException({ code: 'E_DB_GET_ORDER_ERROR', message: 'get order error.' });
+    }
+
+    if (!orderLog) {
+      throw new APIException({ code: 'E_DB_GET_ORDER_NOT_FOUND', message: 'order not found.' });
+    }
+    return orderLog;
+  }
 }
