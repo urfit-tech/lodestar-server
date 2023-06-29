@@ -1600,7 +1600,8 @@ CREATE TABLE public.product (
     coin_period_amount integer,
     coin_period_type text,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    level numeric DEFAULT '0'::numeric NOT NULL
 );
 COMMENT ON COLUMN public.product.id IS '{type}_{target}, ex: Program_123-456, ProgramPlan_123-456';
 COMMENT ON COLUMN public.product.type IS 'ProgramPlan / ProgramContent / ProgramPackagePlan / ActivityTicket / Card / Merchandise / MerchandiseSpec / ProjectPlan / PodcastProgram / PodcastPlan / AppointmentServicePlan / VoucherPlan';
@@ -1644,6 +1645,9 @@ CREATE TABLE public.member (
     is_business boolean DEFAULT false NOT NULL,
     last_member_note_answered timestamp with time zone,
     last_member_note_called timestamp with time zone,
+    followed_at timestamp with time zone,
+    closed_at timestamp with time zone,
+    completed_at timestamp with time zone,
     CONSTRAINT role CHECK (((role = 'app-owner'::text) OR (role = 'content-creator'::text) OR (role = 'general-member'::text))),
     CONSTRAINT status CHECK ((status = ANY (ARRAY['invited'::text, 'verified'::text, 'activated'::text, 'engaged'::text])))
 );
@@ -2009,7 +2013,8 @@ CREATE TABLE public.project (
     creator_id text,
     target_unit text DEFAULT 'funds'::text NOT NULL,
     introduction_desktop text,
-    views numeric DEFAULT '0'::numeric NOT NULL
+    views numeric DEFAULT '0'::numeric NOT NULL,
+    meta_tag jsonb
 );
 COMMENT ON COLUMN public.project.type IS 'funding / pre-order / on-sale / modular / portfolio';
 COMMENT ON COLUMN public.project.cover_type IS 'image / video';
@@ -2204,6 +2209,7 @@ CREATE TABLE public.app (
     started_at timestamp with time zone,
     ended_at timestamp with time zone,
     org_id text,
+    options jsonb DEFAULT jsonb_build_object(),
     CONSTRAINT "symbol rule" CHECK (((length(symbol) >= 2) AND (length(symbol) <= 3) AND (upper(symbol) = symbol)))
 );
 CREATE TABLE public.app_achievement (
@@ -2522,25 +2528,6 @@ CREATE TABLE public.app_webhook (
     url text NOT NULL,
     enabled boolean DEFAULT false NOT NULL
 );
-CREATE VIEW public.appointment_enrollment AS
- SELECT (product.target)::uuid AS appointment_plan_id,
-    order_log.member_id,
-    order_product.started_at,
-    order_product.ended_at,
-    order_product.id AS order_product_id,
-    (order_product.deliverables ->> 'start_url'::text) AS start_url,
-    (order_product.deliverables ->> 'join_url'::text) AS join_url,
-    (order_log.invoice_options ->> 'name'::text) AS member_name,
-    (order_log.invoice_options ->> 'email'::text) AS member_email,
-    (order_log.invoice_options ->> 'phone'::text) AS member_phone,
-    (order_product.options ->> 'appointmentResult'::text) AS result,
-    (order_product.options ->> 'appointmentIssue'::text) AS issue,
-    order_log.created_at,
-    (order_product.options ->> 'appointmentCanceledAt'::text) AS canceled_at,
-    order_product.id
-   FROM ((public.order_log
-     JOIN public.order_product ON (((order_product.delivered_at < now()) AND (order_product.order_id = order_log.id))))
-     JOIN public.product ON (((product.id = order_product.product_id) AND (product.type = 'AppointmentPlan'::text))));
 CREATE TABLE public.appointment_plan (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     title text NOT NULL,
@@ -2556,10 +2543,34 @@ CREATE TABLE public.appointment_plan (
     currency_id text DEFAULT 'TWD'::text NOT NULL,
     is_private boolean DEFAULT false NOT NULL,
     reservation_amount numeric DEFAULT 0 NOT NULL,
-    reservation_type text
+    reservation_type text,
+    capacity integer DEFAULT 1 NOT NULL,
+    meet_generation_method text DEFAULT 'auto'::text NOT NULL
 );
 COMMENT ON COLUMN public.appointment_plan.duration IS 'minutes';
 COMMENT ON COLUMN public.appointment_plan.reservation_type IS 'hour / day';
+CREATE VIEW public.appointment_enrollment AS
+ SELECT (split_part(order_product.product_id, '_'::text, 2))::uuid AS appointment_plan_id,
+    order_log.member_id,
+    order_product.started_at,
+    order_product.ended_at,
+    order_product.id AS order_product_id,
+    (order_product.deliverables ->> 'start_url'::text) AS start_url,
+    (order_product.deliverables ->> 'join_url'::text) AS join_url,
+    (order_log.invoice_options ->> 'name'::text) AS member_name,
+    (order_log.invoice_options ->> 'email'::text) AS member_email,
+    (order_log.invoice_options ->> 'phone'::text) AS member_phone,
+    (order_product.options ->> 'appointmentResult'::text) AS result,
+    (order_product.options ->> 'appointmentIssue'::text) AS issue,
+    order_log.created_at,
+    (order_product.options ->> 'appointmentCanceledAt'::text) AS canceled_at,
+    order_product.id,
+    member.app_id,
+    ap.published_at
+   FROM (((public.order_log
+     JOIN public.order_product ON (((order_product.delivered_at < now()) AND (order_product.order_id = order_log.id))))
+     JOIN public.member ON ((member.id = order_log.member_id)))
+     JOIN public.appointment_plan ap ON (((split_part(order_product.product_id, '_'::text, 1) = 'AppointmentPlan'::text) AND (ap.id = (split_part(order_product.product_id, '_'::text, 2))::uuid))));
 CREATE VIEW public.appointment_plan_enrollment AS
  SELECT (product.target)::uuid AS appointment_plan_id,
     order_product.started_at
@@ -2588,11 +2599,8 @@ CREATE VIEW public.appointment_period AS
      JOIN ( SELECT t1.appointment_plan_id,
             t1.appointment_schedule_id,
             t1.started_at,
-                CASE COALESCE(t2.available, true)
-                    WHEN (COALESCE(t3.booked, false) = true) THEN false
-                    ELSE COALESCE(t2.available, true)
-                END AS available,
-            COALESCE(t3.booked, false) AS booked
+            COALESCE(t2.available, true) AS available,
+            COALESCE(t3.booked, (0)::bigint) AS booked
            FROM ((( SELECT appointment_schedule.appointment_plan_id,
                     appointment_schedule.id AS appointment_schedule_id,
                     appointment_schedule.started_at
@@ -2616,8 +2624,9 @@ CREATE VIEW public.appointment_period AS
                    FROM public.appointment_schedule) t2 ON (((t2.id = t1.appointment_schedule_id) AND (t1.started_at = t2.started_at))))
              LEFT JOIN ( SELECT appointment_plan_enrollment.appointment_plan_id,
                     appointment_plan_enrollment.started_at,
-                    true AS booked
-                   FROM public.appointment_plan_enrollment) t3 ON (((t3.appointment_plan_id = t1.appointment_plan_id) AND (t3.started_at = t1.started_at))))) t ON ((t.appointment_plan_id = appointment_plan.id)));
+                    count(appointment_plan_enrollment.appointment_plan_id) AS booked
+                   FROM public.appointment_plan_enrollment
+                  GROUP BY appointment_plan_enrollment.appointment_plan_id, appointment_plan_enrollment.started_at) t3 ON (((t3.appointment_plan_id = t1.appointment_plan_id) AND (t3.started_at = t1.started_at))))) t ON ((t.appointment_plan_id = appointment_plan.id)));
 CREATE TABLE public.attend (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -3214,7 +3223,10 @@ CREATE TABLE public.member_task (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     category_id text,
-    author_id text
+    author_id text,
+    has_meeting boolean DEFAULT false NOT NULL,
+    meet_id uuid,
+    meeting_hours numeric DEFAULT '0'::numeric NOT NULL
 );
 COMMENT ON COLUMN public.member_task.priority IS 'high / medium / low';
 COMMENT ON COLUMN public.member_task.status IS 'pending / in-progress / done';
@@ -3489,6 +3501,13 @@ CREATE VIEW public.manager_score AS
      LEFT JOIN manager_performance ON ((manager_performance.manager_id = sales.member_id)))
      LEFT JOIN manager_effort ON ((manager_effort.manager_id = sales.member_id)))
      LEFT JOIN manager_invitation ON ((manager_invitation.manager_id = sales.member_id)));
+CREATE TABLE public.material_audit_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    target uuid NOT NULL,
+    action text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
 CREATE TABLE public.media (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -3519,6 +3538,15 @@ CREATE TABLE public.member_achievement (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
+CREATE TABLE public.member_audit_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    action text NOT NULL,
+    target text NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT action CHECK ((action = ANY (ARRAY['upload'::text, 'download'::text])))
+);
+COMMENT ON COLUMN public.member_audit_log.action IS 'upload | download';
 CREATE TABLE public.member_card (
     id text DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -4795,6 +4823,81 @@ CREATE TABLE public.program_content_body (
     data jsonb,
     target uuid
 );
+CREATE MATERIALIZED VIEW public.program_content_enrollment_mv AS
+ WITH program_content_info(program_id, program_content_id, app_id) AS (
+         SELECT program.id AS program_id,
+            program_content.id AS program_content_id,
+            program.app_id
+           FROM ((public.program_content
+             JOIN public.program_content_section ON ((program_content_section.id = program_content.content_section_id)))
+             JOIN public.program ON ((program.id = program_content_section.program_id)))
+        )
+ SELECT program_enrollment.program_id,
+    program_content.id AS program_content_id,
+    program_enrollment.member_id,
+    program_enrollment.product_delivered_at
+   FROM ((public.program_enrollment
+     JOIN public.program_content_section ON ((program_content_section.program_id = program_enrollment.program_id)))
+     JOIN public.program_content ON ((program_content_section.id = program_content.content_section_id)))
+UNION
+ SELECT program_plan.program_id,
+    program_content_plan.program_content_id,
+    program_plan_enrollment.member_id,
+    program_plan_enrollment.product_delivered_at
+   FROM (((public.program_plan_enrollment
+     JOIN public.program_plan ON ((program_plan.id = program_plan_enrollment.program_plan_id)))
+     JOIN public.program_content_plan ON ((program_plan_enrollment.program_plan_id = program_content_plan.program_plan_id)))
+     JOIN public.program_content ON ((program_content.id = program_content_plan.program_content_id)))
+  WHERE (((program_plan_enrollment.ended_at IS NULL) OR (program_plan_enrollment.ended_at > program_content.published_at)) AND ((program_plan_enrollment.started_at IS NULL) OR (program_plan_enrollment.started_at <= program_content.published_at)))
+UNION
+ SELECT program_plan.program_id,
+    program_content.id AS program_content_id,
+    program_plan_enrollment.member_id,
+    program_plan_enrollment.product_delivered_at
+   FROM (((public.program_plan_enrollment
+     JOIN public.program_plan ON ((program_plan.id = program_plan_enrollment.program_plan_id)))
+     JOIN public.program_content_section ON ((program_content_section.program_id = program_plan.program_id)))
+     JOIN public.program_content ON ((program_content.content_section_id = program_content_section.id)))
+  WHERE ((program_plan.type = 3) AND (((program_plan_enrollment.ended_at IS NULL) OR (program_plan_enrollment.ended_at > now())) AND ((program_plan_enrollment.started_at IS NULL) OR (program_plan_enrollment.started_at <= now()))))
+UNION
+ SELECT program_content_info.program_id,
+    program_content_info.program_content_id,
+    member.id AS member_id,
+    NULL::timestamp with time zone AS product_delivered_at
+   FROM ((program_content_info
+     JOIN public.program_role ON ((program_role.program_id = program_content_info.program_id)))
+     JOIN public.member ON ((member.id = program_role.member_id)))
+  WHERE (program_role.name = 'instructor'::text)
+UNION
+ SELECT program_content_info.program_id,
+    program_content_info.program_content_id,
+    member.id AS member_id,
+    NULL::timestamp with time zone AS product_delivered_at
+   FROM (program_content_info
+     JOIN public.member ON ((member.app_id = program_content_info.app_id)))
+  WHERE (member.role = 'app-owner'::text)
+UNION
+ SELECT program_package_program.program_id,
+    program_content.id AS program_content_id,
+    program_package_plan_enrollment.member_id,
+    program_package_plan_enrollment.product_delivered_at
+   FROM (((((public.program_package_plan_enrollment
+     JOIN public.program_package_plan ON ((program_package_plan.id = program_package_plan_enrollment.program_package_plan_id)))
+     JOIN public.program_package ON ((program_package_plan.program_package_id = program_package.id)))
+     JOIN public.program_package_program ON ((program_package.id = program_package_program.program_package_id)))
+     JOIN public.program_content_section ON ((program_package_program.program_id = program_content_section.program_id)))
+     JOIN public.program_content ON ((program_content.content_section_id = program_content_section.id)))
+  WHERE (program_package_plan.is_tempo_delivery = false)
+UNION
+ SELECT program_tempo_delivery_enrollment.program_id,
+    program_content.id AS program_content_id,
+    program_tempo_delivery_enrollment.member_id,
+    program_tempo_delivery_enrollment.product_delivered_at
+   FROM ((public.program_tempo_delivery_enrollment
+     JOIN public.program_content_section ON ((program_content_section.program_id = program_tempo_delivery_enrollment.program_id)))
+     JOIN public.program_content ON ((program_content.content_section_id = program_content_section.id)))
+  WHERE ((program_tempo_delivery_enrollment.delivered_at IS NOT NULL) OR (program_tempo_delivery_enrollment.delivered_at < now()))
+  WITH NO DATA;
 CREATE VIEW public.program_content_exam AS
  SELECT exam.id AS exam_id,
     pc.id AS program_content_id
@@ -4977,8 +5080,10 @@ CREATE TABLE public.program_timetable (
     "position" integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    id uuid DEFAULT public.gen_random_uuid() NOT NULL
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    status text DEFAULT 'undelivered'::text NOT NULL
 );
+COMMENT ON COLUMN public.program_timetable.status IS 'undelivered | delivered | fail';
 CREATE VIEW public.project_plan_enrollment AS
  SELECT (product.target)::uuid AS project_plan_id,
     order_log.member_id,
@@ -5992,6 +6097,7 @@ CREATE TABLE public.service (
     options jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    app_id text NOT NULL,
     CONSTRAINT catalog_constraint CHECK ((catalog = 'meeting'::text)),
     CONSTRAINT gateway_constraint CHECK ((gateway = ANY (ARRAY['zoom'::text, 'webex'::text])))
 );
@@ -6550,6 +6656,8 @@ ALTER TABLE ONLY public.iszn_user
     ADD CONSTRAINT iszn_user_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.locale
     ADD CONSTRAINT locale_pkey PRIMARY KEY (key);
+ALTER TABLE ONLY public.material_audit_log
+    ADD CONSTRAINT material_audit_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.media
     ADD CONSTRAINT media_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.meet
@@ -6560,6 +6668,8 @@ ALTER TABLE ONLY public.member
     ADD CONSTRAINT member_app_id_email_key UNIQUE (app_id, email);
 ALTER TABLE ONLY public.member
     ADD CONSTRAINT member_app_id_username_key UNIQUE (app_id, username);
+ALTER TABLE ONLY public.member_audit_log
+    ADD CONSTRAINT member_audit_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.member_card
     ADD CONSTRAINT member_card_id_key UNIQUE (id);
 ALTER TABLE ONLY public.member_card
@@ -7657,6 +7767,8 @@ ALTER TABLE ONLY public.member_task
 ALTER TABLE ONLY public.member_task
     ADD CONSTRAINT member_task_executor_id_fkey FOREIGN KEY (executor_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.member_task
+    ADD CONSTRAINT member_task_meet_id_fkey FOREIGN KEY (meet_id) REFERENCES public.meet(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.member_task
     ADD CONSTRAINT member_task_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.member_tracking_log
     ADD CONSTRAINT member_tracking_log_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
@@ -7924,6 +8036,8 @@ ALTER TABLE ONLY public.role_permission
     ADD CONSTRAINT role_permission_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES public.permission(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.role_permission
     ADD CONSTRAINT role_permission_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.role(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.service
+    ADD CONSTRAINT service_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.app(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.setting
     ADD CONSTRAINT setting_module_id_fkey FOREIGN KEY (module_id) REFERENCES public.module(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.sharing_code
