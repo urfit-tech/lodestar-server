@@ -89,6 +89,12 @@ export class ImporterTasker extends Tasker {
           processResult[fileName] = err;
         }
       }
+      await this.memberInfra.insertMemberAuditLog(
+        invokers,
+        fileInfos.map(({ fileName }) => fileName).join(', '),
+        'upload',
+        this.entityManager,
+      );
       this.logger.log(`import process result: ${JSON.stringify(processResult)}`);
 
       await this.putEmailQueue(
