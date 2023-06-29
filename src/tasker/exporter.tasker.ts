@@ -67,7 +67,7 @@ export class ExporterTasker extends Tasker {
       this.logger.log(`Export task: ${id} processing.`);
 
       const { appId, invokerMemberId, category, exportMime }: ExportJob = job.data;
-      const csvRawData = await this.exportFromDatabase(appId, job.data);
+      const { raw, ext } = await this.exportFromDatabase(appId, job.data);
       const invokers = await this.memberInfra.getMembersByConditions(
         appId, { id: invokerMemberId }, this.entityManager,
       );
@@ -75,10 +75,10 @@ export class ExporterTasker extends Tasker {
         appId, { role: 'app-owner' }, this.entityManager,
       );
 
-      const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}`;
+      const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}.${ext}`;
       const { ETag } = await this.storageService.saveFilesInBucketStorage({
         Key: fileKey,
-        Body: csvRawData,
+        Body: raw,
         ContentType: exportMime,
       });
       this.logger.log(`[File]: ${fileKey} saved with ETag: ${ETag} into S3.`);
@@ -100,7 +100,7 @@ export class ExporterTasker extends Tasker {
     }
   }
 
-  private async exportFromDatabase(appId: string, data: ExportJob) {
+  private async exportFromDatabase(appId: string, data: ExportJob): Promise<{ raw: any; ext: string; }> {
     let rawRows: Array<Record<string, any>> = [];
     switch (data.category) {
       case 'member':
@@ -112,15 +112,21 @@ export class ExporterTasker extends Tasker {
     return this.writeToFile(rawRows, data.exportMime);
   }
 
-  private writeToFile(rawRows: Array<Record<string, any>>, mimeType?: string) {
+  private writeToFile(rawRows: Array<Record<string, any>>, mimeType?: string): { raw: any; ext: string; } {
     const newBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(newBook, XLSX.utils.json_to_sheet(rawRows));
 
     switch (mimeType) {
       case 'text/csv':
-        return XLSX.write(newBook, { type: 'buffer', bookType: 'csv' });
+        return {
+          raw: XLSX.write(newBook, { type: 'buffer', bookType: 'csv' }),
+          ext: 'csv',
+        };
       default:
-        return XLSX.write(newBook, { type: 'buffer', bookType: 'xlsx' });
+        return {
+          raw: XLSX.write(newBook, { type: 'buffer', bookType: 'xlsx' }),
+          ext: 'xlsx',
+        };
     }
   }
 
