@@ -13,7 +13,7 @@ export class TableLogModule implements OnModuleInit {
   constructor(
     private readonly logger: Logger,
     private readonly tableLogService: TableLogService,
-    @InjectEntityManager('phdb') private entityManager: EntityManager,
+    @InjectEntityManager() private entityManager: EntityManager,
   ) {}
 
   async onModuleInit() {

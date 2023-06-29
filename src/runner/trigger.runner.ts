@@ -25,7 +25,7 @@ export class TriggerRunner extends Runner {
     protected readonly distributedLockService: DistributedLockService,
     protected readonly shutdownService: ShutdownService,
     private readonly triggerService: TriggerService,
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     super(
       TriggerRunner.name,

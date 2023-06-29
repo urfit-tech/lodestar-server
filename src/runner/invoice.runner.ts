@@ -33,7 +33,7 @@ export class InvoiceRunner extends Runner {
     private readonly appService: AppService,
     private readonly invoiceService: InvoiceService,
     private readonly utilityService: UtilityService,
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     super(
       InvoiceRunner.name,

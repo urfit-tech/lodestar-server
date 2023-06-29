@@ -48,7 +48,7 @@ describe('OrderController (e2e)', () => {
 
     application = module.createNestApplication();
     configService = application.get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService);
-    manager = application.get<EntityManager>(getEntityManagerToken('phdb'));
+    manager = application.get<EntityManager>(getEntityManagerToken());
     roleRepo = manager.getRepository(Role);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);

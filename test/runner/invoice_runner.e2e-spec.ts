@@ -21,6 +21,7 @@ import { Invoice } from '~/invoice/invoice.entity';
 
 import { app, appPlan, role } from '../data';
 import { autoRollbackTransaction } from '../utils';
+import { getEntityManagerToken } from '@nestjs/typeorm';
 
 describe('InvoiceRunner (e2e)', () => {
   let application: INestApplication;
@@ -58,7 +59,7 @@ describe('InvoiceRunner (e2e)', () => {
 
     application = moduleFixture.createNestApplication();
 
-    manager = application.get<EntityManager>('phdbEntityManager');
+    manager = application.get<EntityManager>(getEntityManagerToken());
     moduleRepo = manager.getRepository(Module);
     roleRepo = manager.getRepository(Role);
     appPlanRepo = manager.getRepository(AppPlan);

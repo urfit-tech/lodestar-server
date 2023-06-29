@@ -7,7 +7,7 @@ import { APIException } from '~/api.excetion';
 
 @Injectable()
 export class OrderService {
-  constructor(@InjectEntityManager('phdb') private readonly entityManager: EntityManager) {}
+  constructor(@InjectEntityManager() private readonly entityManager: EntityManager) {}
   async transferReceivedOrder(dto: TransferReceivedOrderDTO) {
     const OrderLogRepo = this.entityManager.getRepository(OrderLog);
     const { orderId, memberId } = dto;

@@ -53,7 +53,7 @@ export class ImporterTasker extends Tasker {
     private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     super(logger);
   }

@@ -57,7 +57,7 @@ describe('ExporterTasker', () => {
     
     application = moduleFixture.createNestApplication();
 
-    manager = application.get<EntityManager>(getEntityManagerToken('phdb'));
+    manager = application.get<EntityManager>(getEntityManagerToken());
     memberPhoneRepo = manager.getRepository(MemberPhone);
     memberCategoryRepo = manager.getRepository(MemberCategory);
     memberPropertyRepo = manager.getRepository(MemberProperty);
