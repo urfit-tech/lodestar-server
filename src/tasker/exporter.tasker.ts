@@ -48,7 +48,7 @@ export class ExporterTasker extends Tasker {
   }
 
   constructor(
-    private readonly logger: Logger,
+    protected readonly logger: Logger,
     private readonly storageService: StorageService,
     private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
@@ -56,11 +56,12 @@ export class ExporterTasker extends Tasker {
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {
-    super();
+    super(logger);
   }
 
   @Process()
   async process(job: Job<ExportJob>): Promise<void> {
+    this.preProcess();
     try {
       const { id } = job;
       this.logger.log(`Export task: ${id} processing.`);
@@ -91,6 +92,8 @@ export class ExporterTasker extends Tasker {
     } catch (error) {
       this.logger.error('Export task error:');
       this.logger.error(error);
+    } finally {
+      this.postProcess();
     }
   }
 

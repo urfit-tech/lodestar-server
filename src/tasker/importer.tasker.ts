@@ -48,18 +48,19 @@ export class ImporterTasker extends Tasker {
   }
 
   constructor(
-    private readonly logger: Logger,
+    protected readonly logger: Logger,
     private readonly storageService: StorageService,
     private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
   ) {
-    super();
+    super(logger);
   }
 
   @Process()
   async process(job: Job<ImportJob>): Promise<void> {
+    this.preProcess();
     try {
       const { id } = job;
       this.logger.log(`Import task: ${id} processing.`);
@@ -97,6 +98,8 @@ export class ImporterTasker extends Tasker {
     } catch (error) {
       this.logger.error('Import task error:');
       this.logger.error(error);
+    } finally {
+      this.postProcess();
     }
   }
 
