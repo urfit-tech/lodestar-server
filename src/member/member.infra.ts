@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { MemberProperty } from './entity/member_property.entity';
 import { Member } from './entity/member.entity';
+import { MemberAuditLog } from './entity/member_audit_log.entity';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -38,5 +39,22 @@ export class MemberInfrastructure {
       where: { id: In(propertyIds), memberId },
     });
     return founds;
+  }
+
+  async insertMemberAuditLog(
+    invokers: Array<Member>,
+    target: string,
+    action: 'upload' | 'download',
+    manager: EntityManager) {
+      const memberAuditLogRepo = manager.getRepository(MemberAuditLog);
+
+      return Promise.allSettled(invokers.map((invoker) => {
+        const toInsert = new MemberAuditLog();
+        toInsert.memberId = invoker.id;
+        toInsert.target = target;
+        toInsert.action = action;
+
+        return memberAuditLogRepo.save(toInsert);
+      }));
   }
 }

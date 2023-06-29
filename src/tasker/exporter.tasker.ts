@@ -85,7 +85,15 @@ export class ExporterTasker extends Tasker {
 
       const signedDownloadUrl = await this.storageService
         .getSignedUrlForDownloadStorage(fileKey, 7 * 24 * 60 * 60);
-      this.putEmailQueue(
+
+      await this.memberInfra.insertMemberAuditLog(
+        invokers,
+        signedDownloadUrl,
+        'download',
+        this.entityManager,
+      );
+
+      await this.putEmailQueue(
         appId,
         [...invokers, ...admins],
         '匯出結果(MemberExport)',
