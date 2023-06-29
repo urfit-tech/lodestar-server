@@ -13,9 +13,10 @@ const config: Config = {
   coveragePathIgnorePatterns: [
     "<rootDir>/src/entity/*",
     ".spec.ts",
+    ".e2e-spec.ts",
     ".entity.ts"
   ],
-  coverageDirectory: '../coverage',
+  coverageDirectory: '<rootDir>/coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
     '^~/(.*)$': '<rootDir>/src/$1'
