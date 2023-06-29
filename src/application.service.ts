@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { EntityManager } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { Injectable } from '@nestjs/common'
 import { InjectEntityManager } from '@nestjs/typeorm';
 
@@ -10,7 +10,7 @@ import { CacheService } from './utility/cache/cache.service'
 export class ApplicationService {
   constructor(
     private cacheService: CacheService,
-    @InjectEntityManager('phdb') private entityManager: EntityManager,
+    @InjectEntityManager() private entityManager: EntityManager,
   ) {}
 
   async healthz(): Promise<string> {

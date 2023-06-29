@@ -7,7 +7,7 @@ import { ProgramContent } from './entity/program_content.entity';
 @Injectable()
 export class ProgramService {
   constructor(
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
   public async getProgramContentByAttachmentId(attachmentId: string): Promise<Array<ProgramContent>> {

@@ -10,7 +10,7 @@ import CreateOrReplaceTrigger from './sql/create_or_replace_trigger';
 @Injectable()
 export class TableLogService {
   constructor(
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
   public async initTableLogPgFunction(entityManager?: EntityManager): Promise<void> {

@@ -11,7 +11,7 @@ import { AppModule } from './entity/app_module.entity';
 @Injectable()
 export class AppService {
   constructor(
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
   async getAppByClientId(clientId: string, entityManager?: EntityManager): Promise<App | null> {

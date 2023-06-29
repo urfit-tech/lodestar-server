@@ -5,6 +5,7 @@ import { Logger } from '@nestjs/common';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
+import { getMemoryUsageString } from '~/utils';
 
 export abstract class Runner {
   public readonly uuid: string;
@@ -33,6 +34,7 @@ export abstract class Runner {
   abstract execute(manager?: EntityManager): Promise<void>;
 
   async run(): Promise<void> {
+    this.preRun();
     let isCompleted = false;
     try {
       await this.lockService.occupyLock(
@@ -55,6 +57,8 @@ export abstract class Runner {
       this.previousExecutedTime = dayjs().toDate();
     } catch {
       return;
+    } finally {
+      this.postRun();
     }
   }
 
@@ -68,6 +72,15 @@ export abstract class Runner {
 
   getPreviousExecutedTime(): Date {
     return this.previousExecutedTime;
+  }
+
+  private preRun(): void {
+    this.logger.log(getMemoryUsageString());
+  }
+
+  private postRun(): void {
+    this.logger.log('Runner execution finished');
+    this.logger.log(getMemoryUsageString());
   }
 
   private async suicide() {
