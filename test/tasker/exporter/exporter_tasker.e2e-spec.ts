@@ -16,6 +16,7 @@ import { MemberCategory } from '~/member/entity/member_category.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
 import { Member } from '~/member/entity/member.entity';
+import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { StorageService } from '~/utility/storage/storage.service';
 import { TaskerModule } from '~/tasker/tasker.module';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
@@ -36,6 +37,7 @@ describe('ExporterTasker', () => {
   let memberPropertyRepo: Repository<MemberProperty>;
   let memberTagRepo: Repository<MemberTag>;
   let memberRepo: Repository<Member>;
+  let memberAuditLogRepo: Repository<MemberAuditLog>;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
   let categoryRepo: Repository<Category>;
@@ -63,6 +65,7 @@ describe('ExporterTasker', () => {
     memberPropertyRepo = manager.getRepository(MemberProperty);
     memberTagRepo = manager.getRepository(MemberTag);
     memberRepo = manager.getRepository(Member);
+    memberAuditLogRepo = manager.getRepository(MemberAuditLog);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
     categoryRepo = manager.getRepository(Category);
@@ -74,6 +77,7 @@ describe('ExporterTasker', () => {
     await memberPropertyRepo.delete({});
     await memberTagRepo.delete({});
     await memberRepo.delete({});
+    await memberAuditLogRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await categoryRepo.delete({});
@@ -95,6 +99,7 @@ describe('ExporterTasker', () => {
     await memberPropertyRepo.delete({});
     await memberTagRepo.delete({});
     await memberRepo.delete({});
+    await memberAuditLogRepo.delete({});
     await categoryRepo.delete({});
     await propertyRepo.delete({});
     await tagRepo.delete({});
@@ -125,6 +130,15 @@ describe('ExporterTasker', () => {
       return 'someUrl';
     });
 
+    const invoker = new Member();
+    invoker.id = v4();
+    invoker.app = app;
+    invoker.name = 'invoker';
+    invoker.username = 'invoker_account';
+    invoker.email = 'invoker_email@example.com';
+    invoker.role = 'general-member';
+    invoker.loginedAt = new Date();
+
     const testMember = new Member();
     testMember.id = v4();
     testMember.app = app;
@@ -134,12 +148,13 @@ describe('ExporterTasker', () => {
     testMember.role = 'general-member';
     testMember.loginedAt = new Date();
 
-    await manager.save(testMember);
+    await manager.save([invoker, testMember]);
 
     await exporterTasker.process({
       data: {
         appId: app.id,
         category: 'member',
+        invokerMemberId: invoker.id,
         memberIds: [
           testMember.id,
         ],
@@ -154,5 +169,12 @@ describe('ExporterTasker', () => {
     expect(data['姓名']).toBe(testMember.name);
     expect(data['帳號']).toBe(testMember.username);
     expect(data['信箱']).toBe(testMember.email);
+
+    const auditLogs = await memberAuditLogRepo.find({});
+    expect(auditLogs.length).toBe(1);
+    const [auditLog] = auditLogs;
+    expect(auditLog.memberId).toBe(invoker.id);
+    expect(auditLog.target).toBe('someUrl');
+    expect(auditLog.action).toBe('download');
   });
 });
