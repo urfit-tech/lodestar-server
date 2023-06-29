@@ -8,9 +8,20 @@ import { PostgresEntities } from './entity';
 config({ path: `.env${env.NODE_ENV ? `.${env.NODE_ENV}` : ''}`});
 
 export const PostgresDataSourceConfig: DataSourceOptions = {
-  name: 'phdb',
   type: 'postgres',
-  url: process.env.POSTGRES_URI,
+  replication: {
+    master: {
+      url: process.env.POSTGRES_URI,
+    },
+    slaves: [
+      {
+        url: process.env.POSTGRES_REPLICA1_URI,
+      },
+      {
+        url: process.env.POSTGRES_REPLICA2_URI,
+      },
+    ],
+  },
   synchronize: false,
   logging: true,
   entities: PostgresEntities,

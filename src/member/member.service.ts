@@ -26,7 +26,7 @@ export class MemberService {
   constructor(
     private readonly definitionInfra: DefinitionInfrastructure,
     private readonly memberInfra: MemberInfrastructure,
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
   async processImportFromFile(

@@ -27,7 +27,7 @@ export class VideoService {
     private readonly mediaInfra: MediaInfrastructure,
     private readonly programService: ProgramService,
     private readonly utilityService: UtilityService,
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     this.cfStreamingKeyId = configService.getOrThrow('CF_STREAMING_KEY_ID');
     this.cfStreamingJwk = configService.getOrThrow('CF_STREAMING_JWK');

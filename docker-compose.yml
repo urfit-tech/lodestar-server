@@ -7,9 +7,7 @@ x-redis: &redis
   restart: always
 
 x-postgres: &postgres
-  image: postgres:latest
-  ports:
-    - 127.0.0.1:5432:5432
+  image: bitnami/postgresql:latest
 
 x-pgadmin: &pgadmin
   image: dpage/pgadmin4
@@ -36,13 +34,36 @@ services:
     profiles: ["dev", "all"]
     command: redis-server --requirepass dev-redis-passwd
 
-  postgres-test:
+  postgres-test-master:
     <<: *postgres
     profiles: ["test", "all"]
+    ports:
+      - 127.0.0.1:5432:5432
     environment:
-      POSTGRES_DB: 'test'
-      POSTGRES_USER: 'user'
-      POSTGRES_PASSWORD: '1234'
+      POSTGRESQL_USERNAME: 'user'
+      POSTGRESQL_DATABASE: 'test'
+      POSTGRESQL_PASSWORD: '1234'
+      POSTGRESQL_PGAUDIT_LOG: 'READ,WRITE'
+      POSTGRESQL_LOG_HOSTNAME: 'true'
+      POSTGRESQL_REPLICATION_MODE: 'master'
+      POSTGRESQL_REPLICATION_USER: 'repl_user'
+      POSTGRESQL_REPLICATION_PASSWORD: 'repl_password'
+  
+  postgres-test-slave-1:
+    <<: *postgres
+    profiles: ["test", "all"]
+    ports:
+      - 127.0.0.1:5433:5432
+    environment:
+      POSTGRESQL_USERNAME: 'user'
+      POSTGRESQL_PASSWORD: '1234'
+      POSTGRESQL_MASTER_HOST: 'postgres-test-master'
+      POSTGRESQL_PGAUDIT_LOG: 'READ,WRITE'
+      POSTGRESQL_LOG_HOSTNAME: 'true'
+      POSTGRESQL_REPLICATION_MODE: 'slave'
+      POSTGRESQL_REPLICATION_USER: 'repl_user'
+      POSTGRESQL_REPLICATION_PASSWORD: 'repl_password'
+      POSTGRESQL_MASTER_PORT_NUMBER: '5432'
 
   postgres-dev:
     <<: *postgres
@@ -59,7 +80,7 @@ services:
     <<: *pgadmin
     profiles: ["test-gui", "all"]
     depends_on:
-      - postgres-test
+      - postgres-test-master
 
   pgadmin-dev:
     <<: *pgadmin
@@ -72,10 +93,10 @@ services:
     profiles: ["test", "all"]
     environment:
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
-      HASURA_GRAPHQL_DATABASE_URL: postgres://user:1234@postgres-test:5432/test
-      PG_DATABASE_URL: postgres://user:1234@postgres-test:5432/test
+      HASURA_GRAPHQL_DATABASE_URL: postgres://user:1234@postgres-test-master:5432/test
+      PG_DATABASE_URL: postgres://user:1234@postgres-test-master:5432/test
     depends_on:
-      - postgres-test
+      - postgres-test-master
 
   hasura-dev:
     <<: *hasura

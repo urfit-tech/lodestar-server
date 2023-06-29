@@ -30,7 +30,7 @@ type InvoiceOptions = {
 export class InvoiceService {
   constructor(
     private readonly ezpayClient: EzpayClient,
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly invoiceInfra: InvoiceInfrastructure,
     private readonly orderInfra: OrderInfrastructure,
     private readonly paymentInfra: PaymentInfrastructure,

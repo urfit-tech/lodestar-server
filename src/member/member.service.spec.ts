@@ -46,14 +46,14 @@ describe('MemberService', () => {
           useValue: mockMemberInfra,
         },
         {
-          provide: getEntityManagerToken('phdb'),
+          provide: getEntityManagerToken(),
           useValue: { getRepository: jest.fn().mockImplementation(() => mockMemberRepo) },
         },
       ],
     }).compile();
 
     service = module.get<MemberService>(MemberService);
-    manager = module.get<EntityManager>(getEntityManagerToken('phdb'));
+    manager = module.get<EntityManager>(getEntityManagerToken());
   });
 
   afterEach(() => jest.resetAllMocks());

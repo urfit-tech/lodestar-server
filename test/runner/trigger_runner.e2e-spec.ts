@@ -15,6 +15,7 @@ import { CacheService } from '~/utility/cache/cache.service';
 
 import { autoRollbackTransaction } from '../utils';
 import { appPlan } from '../data';
+import { getEntityManagerToken } from '@nestjs/typeorm';
 
 describe.skip('TriggerRunner (e2e)', () => {
   let application: INestApplication;
@@ -42,7 +43,7 @@ describe.skip('TriggerRunner (e2e)', () => {
     application = moduleFixture.createNestApplication();
 
     cacheService = application.get<CacheService>(CacheService);
-    manager = application.get<EntityManager>('phdbEntityManager');
+    manager = application.get<EntityManager>(getEntityManagerToken());
     settingRepo = manager.getRepository(Setting);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);

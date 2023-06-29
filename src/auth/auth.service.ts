@@ -22,7 +22,7 @@ export class AuthService {
     private readonly appService: AppService,
     private readonly permissionService: PermissionService,
     private readonly memberInfra: MemberInfrastructure,
-    @InjectEntityManager('phdb') private readonly entityManager: EntityManager,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
