@@ -75,7 +75,8 @@ import { IsznUser } from './IsznUser';
 import { Locale } from './Locale';
 import { Media } from './Media';
 import { Meet } from './Meet';
-import { Member } from '~/member/entity/member.entity';;
+import { Member } from '~/member/entity/member.entity';
+import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { MemberCard } from './MemberCard';
 import { MemberCertificate } from './MemberCertificate';
 import { MemberContract } from './MemberContract';
@@ -303,6 +304,7 @@ export const PostgresEntities = [
   Media,
   Meet,
   Member,
+  MemberAuditLog,
   MemberCard,
   MemberCategory,
   MemberCertificate,
