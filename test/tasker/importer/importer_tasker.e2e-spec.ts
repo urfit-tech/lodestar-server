@@ -1,7 +1,8 @@
+import { v4 } from 'uuid';
 import { readFileSync } from 'fs';
 import { Job } from 'bull';
 import { join } from 'path';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Equal, Not, Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
@@ -12,6 +13,7 @@ import { Tag } from '~/definition/entity/tag.entity';
 import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { Member } from '~/member/entity/member.entity';
+import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
 import { MemberPhone } from '~/member/entity/member_phone.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
@@ -36,6 +38,7 @@ describe('ImporterTasker', () => {
   let memberPropertyRepo: Repository<MemberProperty>;
   let memberTagRepo: Repository<MemberTag>;
   let memberRepo: Repository<Member>;
+  let memberAuditLogRepo: Repository<MemberAuditLog>;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
   let categoryRepo: Repository<Category>;
@@ -63,6 +66,7 @@ describe('ImporterTasker', () => {
     memberPropertyRepo = manager.getRepository(MemberProperty);
     memberTagRepo = manager.getRepository(MemberTag);
     memberRepo = manager.getRepository(Member);
+    memberAuditLogRepo = manager.getRepository(MemberAuditLog);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
     categoryRepo = manager.getRepository(Category);
@@ -74,6 +78,7 @@ describe('ImporterTasker', () => {
     await memberPropertyRepo.delete({});
     await memberTagRepo.delete({});
     await memberRepo.delete({});
+    await memberAuditLogRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await categoryRepo.delete({});
@@ -95,6 +100,7 @@ describe('ImporterTasker', () => {
     await memberPropertyRepo.delete({});
     await memberTagRepo.delete({});
     await memberRepo.delete({});
+    await memberAuditLogRepo.delete({});
     await categoryRepo.delete({});
     await propertyRepo.delete({});
     await tagRepo.delete({});
@@ -120,9 +126,21 @@ describe('ImporterTasker', () => {
           };
         });
 
+        const invoker = new Member();
+        invoker.id = v4();
+        invoker.app = app;
+        invoker.name = 'invoker';
+        invoker.username = 'invoker_account';
+        invoker.email = 'invoker_email@example.com';
+        invoker.role = 'general-member';
+        invoker.loginedAt = new Date();
+
+        await manager.save(invoker);
+
         await importerTasker.process({
           data: {
             appId: app.id,
+            invokerMemberId: invoker.id,
             category: 'member',
             fileInfos: [{
               fileName: 'test-data.csv',
@@ -131,7 +149,7 @@ describe('ImporterTasker', () => {
           },
         }  as Job<ImportJob>);
         const members = await memberRepo.find({
-          where: {},
+          where: { username: Not(Equal(invoker.username)) },
           relations:{
             memberPhones: true,
             memberCategories: true,
@@ -161,6 +179,13 @@ describe('ImporterTasker', () => {
         expect(zzMember.memberProperties.length).toBe(0);
         expect(kkMember.memberTags.length).toBe(0);
         expect(zzMember.memberTags[0].tagName).toBe(memberTag.name);
+
+        const auditLogs = await memberAuditLogRepo.find({});
+        expect(auditLogs.length).toBe(1);
+        const [auditLog] = auditLogs;
+        expect(auditLog.memberId).toBe(invoker.id);
+        expect(auditLog.target).toBe('test-data.csv');
+        expect(auditLog.action).toBe('upload');
       });
     });
 
@@ -179,9 +204,21 @@ describe('ImporterTasker', () => {
           };
         });
 
+        const invoker = new Member();
+        invoker.id = v4();
+        invoker.app = app;
+        invoker.name = 'invoker';
+        invoker.username = 'invoker_account';
+        invoker.email = 'invoker_email@example.com';
+        invoker.role = 'general-member';
+        invoker.loginedAt = new Date();
+
+        await manager.save(invoker);
+
         await importerTasker.process({
           data: {
             appId: app.id,
+            invokerMemberId: invoker.id,
             category: 'member',
             fileInfos: [{
               fileName: 'test-data.xlsx',
@@ -190,7 +227,7 @@ describe('ImporterTasker', () => {
           },
         }  as Job<ImportJob>);
         const members = await memberRepo.find({
-          where: {},
+          where: { username: Not(Equal(invoker.username)) },
           relations:{
             memberPhones: true,
             memberCategories: true,
@@ -220,6 +257,13 @@ describe('ImporterTasker', () => {
         expect(zzMember.memberProperties.length).toBe(0);
         expect(kkMember.memberTags.length).toBe(0);
         expect(zzMember.memberTags[0].tagName).toBe(memberTag.name);
+
+        const auditLogs = await memberAuditLogRepo.find({});
+        expect(auditLogs.length).toBe(1);
+        const [auditLog] = auditLogs;
+        expect(auditLog.memberId).toBe(invoker.id);
+        expect(auditLog.target).toBe('test-data.xlsx');
+        expect(auditLog.action).toBe('upload');
       });
     });
   });
