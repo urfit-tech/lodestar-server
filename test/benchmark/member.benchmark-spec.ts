@@ -1,3 +1,5 @@
+import { v4 } from 'uuid';
+import { chunk } from 'lodash';
 import { EntityManager, In, Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
 import { getEntityManagerToken } from '@nestjs/typeorm';
@@ -98,6 +100,8 @@ describe('MemberService (benchmark)', () => {
   describe('Method processImportFromFile', () => {
     it('Should import with 100K data rows', async () => {
       const sampleCount = 100 * 1000;
+      const examRatio = 0.02;
+      expect(examRatio).toBeLessThan(1);
       const createdAt = new Date();
       const rawRows = [
         {
@@ -150,7 +154,7 @@ describe('MemberService (benchmark)', () => {
       expect(failedCount).toBe(0);
       expect(failedErrors.length).toBe(0);
 
-      const toExpectSampleCount = 20;
+      const toExpectSampleCount = sampleCount * examRatio;
       const randomNumbers = [...new Set(Array.from(
         { length: toExpectSampleCount },
         () => Math.floor(Math.random() * sampleCount),
@@ -183,6 +187,8 @@ describe('MemberService (benchmark)', () => {
     it('Should import with 100K rows but 10% is corrupted', async () => {
       const sampleCount = 100 * 1000;
       const corruptCount = sampleCount * 0.01;
+      const examRatio = 0.2;
+      expect(examRatio).toBeLessThan(1);
       const createdAt = new Date();
       const rawRows = [
         {
@@ -261,7 +267,7 @@ describe('MemberService (benchmark)', () => {
       expect(failedCount).toBe(corruptCount);
       expect(failedErrors.length).toBe(corruptCount);
 
-      const toExpectSampleCount = 20;
+      const toExpectSampleCount = sampleCount * examRatio;
       const randomNumbers = [...new Set(Array.from(
         { length: toExpectSampleCount },
         () => Math.floor(Math.random() * sampleCount),
@@ -310,6 +316,69 @@ describe('MemberService (benchmark)', () => {
         expect(starError).not.toBeUndefined();
         expect(starError.value).toBe(`invalid-star-format-${i}`);
         expect(starError.constraints.isNumberString).not.toBeUndefined();
+      });
+    });
+  });
+
+  describe('Method processExportFromDatabase', () => {
+    it('Should export with 100K members', async () => {
+      const sampleCount = 100 * 1000;
+      const examRatio = 0.2;
+      expect(examRatio).toBeLessThan(1);
+
+      const toImportMembers = Array.from(
+        { length: sampleCount },
+        (_, i) => {
+          const member = new Member();
+          member.app = app;
+          member.id = v4();
+          member.name = `test${i}`;
+          member.username = `test${i}_account`;
+          member.email = `test${i}_email@test.com`;
+          member.role = 'general-member';
+          member.star = i;
+          return member;
+        },
+      );
+      await Promise.allSettled(
+        chunk(toImportMembers, 5000)
+          .map((members) => memberRepo.save(members)),
+      );
+
+      const memberIds = toImportMembers.map(({ id }) => id);
+      const result = await service.processExportFromDatabase(app.id, memberIds);
+      const [header, ...results] = result;
+      expect(results.length).toBe(sampleCount);
+
+      const toExpectSampleCount = sampleCount * examRatio;
+      const randomNumbers = [...new Set(Array.from(
+        { length: toExpectSampleCount },
+        () => Math.floor(Math.random() * sampleCount),
+      ))];
+
+      let nameHeader: string, userNameHeader: string, emailHeader: string, starHeader: string;
+      Object.keys(header).forEach((each) => {
+        switch (header[each]) {
+          case 'name':
+            nameHeader = each;
+            break;
+          case 'username':
+            userNameHeader = each;
+            break;
+          case 'email':
+            emailHeader = each;
+            break;
+          case 'star':
+            starHeader = each;
+            break;
+        }
+      });
+      randomNumbers.forEach((i) => {
+        const found = results.find((each) => each[starHeader] === `${i}`);
+        expect(found).not.toBeUndefined();
+        expect(found[nameHeader]).toBe(`test${i}`);
+        expect(found[userNameHeader]).toBe(`test${i}_account`);
+        expect(found[emailHeader]).toBe(`test${i}_email@test.com`);
       });
     });
   });
