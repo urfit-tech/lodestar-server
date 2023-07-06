@@ -117,20 +117,17 @@ export class MemberService {
     );
     const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 20, appCategories, appProperties);
 
-    const exportPromises = chunk(memberIds, 5000).map((chunkedMemberIds) => new Promise(async (resolve) => {
+    const results = [];
+    for (let chunkedMemberIds of chunk(memberIds, 1000)) {
       const fetchedMembers = await this.memberInfra.getMembersByConditions(
         appId, { id: In(chunkedMemberIds) },
         this.entityManager,
       );
-      const result = await this.memberToRawCsv(headerInfos, fetchedMembers);
-      return resolve(result);
-    }));
-    const promiseResults = flatten((await Promise.allSettled(exportPromises))
-      .map(({ value }: PromiseFulfilledResult<Array<Record<string, any>>>) => value));
-
+      results.push(await this.memberToRawCsv(headerInfos, fetchedMembers));
+    }
     return [
       await headerInfos.serializeToRawRow(),
-      ...promiseResults,
+      ...flatten(results),
     ];
   }
 
