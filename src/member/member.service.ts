@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { isNull } from 'lodash';
+import { chunk, flatten, isNull } from 'lodash';
 import { EntityManager, In } from 'typeorm';
 import { ValidationError, isDateString, isEmpty } from 'class-validator';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -116,11 +116,18 @@ export class MemberService {
       appId, this.entityManager,
     );
     const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 20, appCategories, appProperties);
-    const fetchedMembers = await this.memberInfra.getMembersByConditions(appId, { id: In(memberIds) }, this.entityManager);
 
+    const results = [];
+    for (let chunkedMemberIds of chunk(memberIds, 1000)) {
+      const fetchedMembers = await this.memberInfra.getMembersByConditions(
+        appId, { id: In(chunkedMemberIds) },
+        this.entityManager,
+      );
+      results.push(await this.memberToRawCsv(headerInfos, fetchedMembers));
+    }
     return [
       await headerInfos.serializeToRawRow(),
-      ...(await this.memberToRawCsv(headerInfos, fetchedMembers)),
+      ...flatten(results),
     ];
   }
 
