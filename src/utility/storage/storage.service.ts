@@ -10,6 +10,12 @@ import {
   ListObjectsV2Command,
   DeleteObjectCommandInput,
   DeleteObjectCommand,
+  CreateMultipartUploadCommand,
+  CreateMultipartUploadCommandInput,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  CompleteMultipartUploadCommandInput,
+  UploadPartCommandInput,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
@@ -18,17 +24,20 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class StorageService {
   private readonly awsS3RegionStorage: string;
+  private readonly awsS3RegionStatic: string;
   private readonly awsS3BucketStatic: string;
   private readonly awsS3BucketStorage: string;
 
   constructor(
     private readonly configService: ConfigService<{
       AWS_S3_BUCKET_STATIC: string;
+      AWS_S3_REGION_STATIC: string;
       AWS_S3_REGION_STORAGE: string;
       AWS_S3_BUCKET_STORAGE: string;
     }>,
   ) {
     this.awsS3BucketStatic = configService.getOrThrow('AWS_S3_BUCKET_STATIC');
+    this.awsS3RegionStatic = configService.getOrThrow('AWS_S3_REGION_STATIC');
     this.awsS3RegionStorage = configService.getOrThrow('AWS_S3_REGION_STORAGE');
     this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
   }
@@ -79,6 +88,21 @@ export class StorageService {
       ...data,
       Bucket: this.awsS3BucketStorage,
     });
+  }
+
+  async createMultipartUpload(params: Omit<CreateMultipartUploadCommandInput, 'Bucket'>) {
+    const command = new CreateMultipartUploadCommand({ Bucket: this.awsS3BucketStatic, ...params });
+    return this.s3(this.awsS3RegionStatic).send(command);
+  }
+
+  async completeMultipartUpload(params: Omit<CompleteMultipartUploadCommandInput, 'Bucket'>) {
+    const command = new CompleteMultipartUploadCommand({ Bucket: this.awsS3BucketStatic, ...params });
+    return this.s3(this.awsS3RegionStatic).send(command);
+  }
+
+  getSignedUrlForUploadPartStatic(params: Omit<UploadPartCommandInput, 'Bucket'>, expiresIn: number): Promise<string> {
+    const command = new UploadPartCommand({ Bucket: this.awsS3BucketStatic, ...params });
+    return getSignedUrl(this.s3(this.awsS3RegionStatic), command, { expiresIn });
   }
 
   private async getFileFromBucket(region: string, data: GetObjectCommandInput) {
