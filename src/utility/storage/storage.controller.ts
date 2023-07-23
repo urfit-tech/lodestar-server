@@ -46,7 +46,7 @@ export class StorageController {
     },
   ) {
     const { params } = body;
-    const presignedUrl = await this.storageService.getSignedUrlForUploadPartStatic(params, 60);
+    const presignedUrl = await this.storageService.getSignedUrlForUploadPartStorage(params, 60);
     return { presignedUrl };
   }
 
@@ -59,10 +59,19 @@ export class StorageController {
         UploadId: string;
         MultipartUpload: CompletedMultipartUpload;
       };
+      file: {
+        name: string;
+        type: string;
+        size: number;
+      };
+      appId: string;
+      authorId: string;
+      attachmentId: string;
     },
   ) {
-    const { params } = body;
+    const { params, file, appId, authorId, attachmentId } = body;
     const result = await this.storageService.completeMultipartUpload(params);
+    await this.storageService.insertVideoAttachment(appId, authorId, attachmentId, file);
     return { location: result.Location };
   }
 }

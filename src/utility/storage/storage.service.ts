@@ -20,6 +20,9 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectEntityManager } from '@nestjs/typeorm';
+import { EntityManager } from 'typeorm';
+import { Attachment } from '~/media/attachment.entity';
 
 @Injectable()
 export class StorageService {
@@ -29,6 +32,7 @@ export class StorageService {
   private readonly awsS3BucketStorage: string;
 
   constructor(
+    @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly configService: ConfigService<{
       AWS_S3_BUCKET_STATIC: string;
       AWS_S3_REGION_STATIC: string;
@@ -91,18 +95,37 @@ export class StorageService {
   }
 
   async createMultipartUpload(params: Omit<CreateMultipartUploadCommandInput, 'Bucket'>) {
-    const command = new CreateMultipartUploadCommand({ Bucket: this.awsS3BucketStatic, ...params });
-    return this.s3(this.awsS3RegionStatic).send(command);
+    const command = new CreateMultipartUploadCommand({ Bucket: this.awsS3BucketStorage, ...params });
+    return this.s3(this.awsS3RegionStorage).send(command);
   }
 
   async completeMultipartUpload(params: Omit<CompleteMultipartUploadCommandInput, 'Bucket'>) {
-    const command = new CompleteMultipartUploadCommand({ Bucket: this.awsS3BucketStatic, ...params });
-    return this.s3(this.awsS3RegionStatic).send(command);
+    const command = new CompleteMultipartUploadCommand({ Bucket: this.awsS3BucketStorage, ...params });
+    return this.s3(this.awsS3RegionStorage).send(command);
   }
 
-  getSignedUrlForUploadPartStatic(params: Omit<UploadPartCommandInput, 'Bucket'>, expiresIn: number): Promise<string> {
-    const command = new UploadPartCommand({ Bucket: this.awsS3BucketStatic, ...params });
-    return getSignedUrl(this.s3(this.awsS3RegionStatic), command, { expiresIn });
+  getSignedUrlForUploadPartStorage(params: Omit<UploadPartCommandInput, 'Bucket'>, expiresIn: number): Promise<string> {
+    const command = new UploadPartCommand({ Bucket: this.awsS3BucketStorage, ...params });
+    return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
+  }
+
+  async insertVideoAttachment(
+    appId: string,
+    authorId: string,
+    attachmentId: string,
+    file: { name: string; type: string; size: number },
+  ) {
+    const AttachmentRepo = this.entityManager.getRepository(Attachment);
+    return await AttachmentRepo.insert({
+      id: attachmentId,
+      appId,
+      author: { id: authorId },
+      name: file.name,
+      filename: file.name,
+      contentType: file.type,
+      size: file.size,
+      options: [{ source: 's3' }],
+    });
   }
 
   private async getFileFromBucket(region: string, data: GetObjectCommandInput) {
