@@ -11,6 +11,7 @@ import { VideoController } from './video/video.controller';
 import { MediaInfrastructure } from './media.infra';
 import { MemberModule } from '~/member/member.module';
 import { ProgramInfrastructure } from '~/program/program.infra';
+import { MediaService } from './media.service';
 
 @Module({
   controllers: [VideoController],
@@ -23,7 +24,9 @@ import { ProgramInfrastructure } from '~/program/program.infra';
     ProgramService,
     UtilityService,
     VideoService,
+    MediaService,
     ProgramInfrastructure,
   ],
+  exports: [MediaService],
 })
 export class MediaModule {}

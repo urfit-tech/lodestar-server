@@ -3,13 +3,14 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { StorageService } from './storage.service';
 import { UploadDTO } from './storage.dto';
 import { CompletedMultipartUpload } from '@aws-sdk/client-s3';
+import { MediaService } from '~/media/media.service';
 
 @Controller({
   path: 'storage',
   version: ['2'],
 })
 export class StorageController {
-  constructor(private readonly storageService: StorageService) {}
+  constructor(private readonly storageService: StorageService, private readonly mediaService: MediaService) {}
 
   @Post('storage/upload')
   uploadFileToStorageBucket(@Body() body: UploadDTO) {
@@ -71,7 +72,9 @@ export class StorageController {
   ) {
     const { params, file, appId, authorId, attachmentId } = body;
     const result = await this.storageService.completeMultipartUpload(params);
-    await this.storageService.insertVideoAttachment(appId, authorId, attachmentId, file);
+    await this.mediaService.insertAttachment(appId, authorId, attachmentId, file.name, file.type, file.size, {
+      source: 's3',
+    });
     return { location: result.Location };
   }
 }
