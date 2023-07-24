@@ -318,6 +318,13 @@
     fast-xml-parser "4.1.2"
     tslib "^2.5.0"
 
+"@aws-sdk/cloudfront-signer@^3.363.0":
+  version "3.363.0"
+  resolved "https://registry.yarnpkg.com/@aws-sdk/cloudfront-signer/-/cloudfront-signer-3.363.0.tgz#ef70574257861986d825b319e1deee0c4c81ed15"
+  integrity sha512-MqsFKsf0WMTD4/uKC1INjhnNInw627kkznr+mGgmYK4QSfI7lZXOLNP956jvpMi+hdDrStTCh7diGtdyuA4Sig==
+  dependencies:
+    "@smithy/url-parser" "^1.0.1"
+
 "@aws-sdk/config-resolver@3.341.0":
   version "3.341.0"
   resolved "https://registry.npmjs.org/@aws-sdk/config-resolver/-/config-resolver-3.341.0.tgz#4bc4f901b2cb9a5aed2031266b48046b52526b43"
@@ -1863,11 +1870,35 @@
     "@smithy/types" "^1.0.0"
     tslib "^2.5.0"
 
+"@smithy/querystring-parser@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@smithy/querystring-parser/-/querystring-parser-1.0.2.tgz#559d09c46b21e6fbda71e95deda4bcd8a46bdecc"
+  integrity sha512-IWxwxjn+KHWRRRB+K2Ngl+plTwo2WSgc2w+DvLy0DQZJh9UGOpw40d6q97/63GBlXIt4TEt5NbcFrO30CKlrsA==
+  dependencies:
+    "@smithy/types" "^1.1.1"
+    tslib "^2.5.0"
+
 "@smithy/types@^1.0.0":
   version "1.0.0"
   resolved "https://registry.npmjs.org/@smithy/types/-/types-1.0.0.tgz#87ab6131fe5e19cbd4d383ffb94d2b806d027d38"
   integrity sha512-kc1m5wPBHQCTixwuaOh9vnak/iJm21DrSf9UK6yDE5S3mQQ4u11pqAUiKWnlrZnYkeLfAI9UEHj9OaMT1v5Umg==
   dependencies:
+    tslib "^2.5.0"
+
+"@smithy/types@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@smithy/types/-/types-1.1.1.tgz#949394a22e13e7077471bae0d18c146e5f62c456"
+  integrity sha512-tMpkreknl2gRrniHeBtdgQwaOlo39df8RxSrwsHVNIGXULy5XP6KqgScUw2m12D15wnJCKWxVhCX+wbrBW/y7g==
+  dependencies:
+    tslib "^2.5.0"
+
+"@smithy/url-parser@^1.0.1":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@smithy/url-parser/-/url-parser-1.0.2.tgz#fb59be6f2283399443d9e7afe08ebf63b3c266bb"
+  integrity sha512-0JRsDMQe53F6EHRWksdcavKDRjyqp8vrjakg8EcCUOa7PaFRRB1SO/xGZdzSlW1RSTWQDEksFMTCEcVEKmAoqA==
+  dependencies:
+    "@smithy/querystring-parser" "^1.0.2"
+    "@smithy/types" "^1.1.1"
     tslib "^2.5.0"
 
 "@sqltools/formatter@^1.2.5":

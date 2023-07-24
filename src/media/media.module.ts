@@ -12,9 +12,10 @@ import { MediaInfrastructure } from './media.infra';
 import { MemberModule } from '~/member/member.module';
 import { ProgramInfrastructure } from '~/program/program.infra';
 import { MediaService } from './media.service';
+import { MediaController } from './media.controller';
 
 @Module({
-  controllers: [VideoController],
+  controllers: [VideoController, MediaController],
   imports: [AuthModule, MemberModule],
   providers: [
     Logger,

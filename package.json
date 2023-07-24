@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.341.0",
+    "@aws-sdk/cloudfront-signer": "^3.363.0",
     "@aws-sdk/s3-request-presigner": "^3.341.0",
     "@nestjs/bull": "^0.6.3",
     "@nestjs/common": "^9.0.0",
