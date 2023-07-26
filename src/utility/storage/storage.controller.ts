@@ -1,16 +1,30 @@
 import { Body, Controller, Post } from '@nestjs/common';
 
 import { StorageService } from './storage.service';
-import { UploadDTO } from './storage.dto';
-import { CompletedMultipartUpload } from '@aws-sdk/client-s3';
+import {
+  CompleteMultipartUploadDTO,
+  CreateMultipartUploadDTO,
+  MultipartUploadSignUrlDTO,
+  UploadDTO,
+} from './storage.dto';
 import { MediaService } from '~/media/media.service';
+import { ConfigService } from '@nestjs/config';
 
 @Controller({
   path: 'storage',
   version: ['2'],
 })
 export class StorageController {
-  constructor(private readonly storageService: StorageService, private readonly mediaService: MediaService) {}
+  private readonly awsS3BucketStorage: string;
+  constructor(
+    private readonly configService: ConfigService<{
+      AWS_S3_BUCKET_STORAGE: string;
+    }>,
+    private readonly storageService: StorageService,
+    private readonly mediaService: MediaService,
+  ) {
+    this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
+  }
 
   @Post('storage/upload')
   uploadFileToStorageBucket(@Body() body: UploadDTO) {
@@ -21,59 +35,42 @@ export class StorageController {
   @Post('/multipart/create')
   async createMultipartUpload(
     @Body()
-    body: {
-      params: {
-        Key: string;
-        ContentType: string;
-      };
-    },
+    body: CreateMultipartUploadDTO,
   ) {
-    const { params } = body;
-    const { UploadId } = await this.storageService.createMultipartUpload(params);
+    const { Key, ContentType } = body;
+    const { UploadId: uploadId } = await this.storageService.createMultipartUpload(Key, ContentType);
     return {
-      uploadId: UploadId,
+      uploadId,
     };
   }
 
   @Post('/multipart/sign-url')
   async getSignedUrl(
     @Body()
-    body: {
-      params: {
-        Key: string;
-        UploadId: string;
-        PartNumber: number;
-      };
-    },
+    body: MultipartUploadSignUrlDTO,
   ) {
-    const { params } = body;
-    const presignedUrl = await this.storageService.getSignedUrlForUploadPartStorage(params, 60);
+    const {
+      params: { Key, UploadId, PartNumber },
+    } = body;
+    const presignedUrl = await this.storageService.getSignedUrlForUploadPartStorage(Key, UploadId, PartNumber, 60);
     return { presignedUrl };
   }
 
   @Post('/multipart/complete')
   async completeMultipartUpload(
     @Body()
-    body: {
-      params: {
-        Key: string;
-        UploadId: string;
-        MultipartUpload: CompletedMultipartUpload;
-      };
-      file: {
-        name: string;
-        type: string;
-        size: number;
-      };
-      appId: string;
-      authorId: string;
-      attachmentId: string;
-    },
+    body: CompleteMultipartUploadDTO,
   ) {
-    const { params, file, appId, authorId, attachmentId } = body;
-    const result = await this.storageService.completeMultipartUpload(params);
-    await this.mediaService.insertAttachment(appId, authorId, attachmentId, file.name, file.type, file.size, {
-      source: 's3',
+    const {
+      params: { Key, UploadId, MultipartUpload },
+      file: { name, type, size },
+      appId,
+      authorId,
+      attachmentId,
+    } = body;
+    const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);
+    await this.mediaService.insertAttachment(appId, authorId, attachmentId, name, type, size, {
+      source: `s3://${this.awsS3BucketStorage}/${Key}`,
     });
     return { location: result.Location };
   }
