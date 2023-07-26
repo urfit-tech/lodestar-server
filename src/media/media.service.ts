@@ -45,8 +45,6 @@ export class MediaService {
   }
 
   signCookies(url: string) {
-    console.log(this.awsCloudfrontPrivateKey);
-
     const cookies = getSignedCookies({
       url,
       keyPairId: this.awsCloudfrontKeyPairId,
