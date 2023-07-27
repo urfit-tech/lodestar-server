@@ -13,13 +13,7 @@ import DeviceService from './device/device.service';
 
 @Module({
   controllers: [AuthController],
-  imports: [
-    AppModule,
-    forwardRef(() => MemberModule),
-    PermissionModule,
-    MailerModule,
-    UtilityModule,
-  ],
+  imports: [AppModule, forwardRef(() => MemberModule), PermissionModule, MailerModule, forwardRef(() => UtilityModule)],
   providers: [Logger, AuthService, DeviceService, AuthInfrastructure],
   exports: [AuthService],
 })

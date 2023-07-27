@@ -10,8 +10,10 @@ export class UploadDTO {
 }
 
 export interface CreateMultipartUploadDTO {
-  Key: string;
-  ContentType: string;
+  params: {
+    Key: string;
+    ContentType: string;
+  };
 }
 export interface CompleteMultipartUploadDTO {
   params: {

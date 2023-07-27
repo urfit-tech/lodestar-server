@@ -24,6 +24,7 @@ import { AppCache } from '~/app/app.type';
 import { AuthAuditLog } from './entity/auth_audit_log.entity';
 import { JwtDTO } from './auth.dto';
 import { CrossServerTokenDTO, LoginStatus, RefreshStatus } from './auth.type';
+import { getSignedCookies } from '@aws-sdk/cloudfront-signer';
 import { AuthInfrastructure } from './auth.infra';
 import DeviceService from './device/device.service';
 
@@ -31,12 +32,16 @@ import DeviceService from './device/device.service';
 export class AuthService {
   private readonly nodeEnv: string;
   private readonly hasuraJwtSecret: string;
+  private readonly awsCloudfrontKeyPairId: string;
+  private readonly awsCloudfrontPrivateKey: string;
 
   constructor(
     private readonly logger: Logger,
     private readonly configService: ConfigService<{
       NODE_ENV: string;
       HASURA_JWT_SECRET: string;
+      AWS_CLOUDFRONT_KEY_PAIR_ID: string;
+      AWS_CLOUDFRONT_PRIVATE_KEY: string;
     }>,
     private readonly appService: AppService,
     private readonly deviceService: DeviceService,
@@ -50,6 +55,8 @@ export class AuthService {
   ) {
     this.nodeEnv = configService.getOrThrow('NODE_ENV');
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
+    this.awsCloudfrontKeyPairId = configService.getOrThrow('AWS_CLOUDFRONT_KEY_PAIR_ID');
+    this.awsCloudfrontPrivateKey = configService.getOrThrow('AWS_CLOUDFRONT_PRIVATE_KEY');
   }
 
   async generalLogin(
@@ -341,5 +348,15 @@ export class AuthService {
     authAuditLog.target = userMemberId;
     authAuditLog.metadata = { reason: purpose };
     await this.authInfra.insertAuthAuditLog(authAuditLog, this.entityManager);
+  }
+
+  public async signCloudfrontCookies(url: string) {
+    const cookies = getSignedCookies({
+      url,
+      keyPairId: this.awsCloudfrontKeyPairId,
+      dateLessThan: dayjs().add(1, 'day').format('YYYY-MM-DD'),
+      privateKey: this.awsCloudfrontPrivateKey,
+    });
+    return cookies;
   }
 }

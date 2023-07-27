@@ -37,7 +37,7 @@ export class StorageController {
     @Body()
     body: CreateMultipartUploadDTO,
   ) {
-    const { Key, ContentType } = body;
+    const { Key, ContentType } = body.params;
     const { UploadId: uploadId } = await this.storageService.createMultipartUpload(Key, ContentType);
     return {
       uploadId,
