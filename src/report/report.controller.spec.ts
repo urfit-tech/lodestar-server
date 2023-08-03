@@ -90,7 +90,7 @@ describe('ReportController (e2e)', () => {
       };
 
       await request(application.getHttpServer())
-        .get(`report/${v4()}`)
+        .get(`/report/${v4()}`)
         .set(requestHeader)
         .expect(400)
         .expect(/{"statusCode":400,"message":"E_TOKEN_INVALID"}/);
@@ -112,7 +112,7 @@ describe('ReportController (e2e)', () => {
         authorization: 'Bearer ' + authToken,
       };
 
-      await request(application.getHttpServer()).get(`report/${metabaseReport.id}`).set(requestHeader).expect(200);
+      await request(application.getHttpServer()).get(`/report/${metabaseReport.id}`).set(requestHeader).expect(200);
     });
   });
 });
