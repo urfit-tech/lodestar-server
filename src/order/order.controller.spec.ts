@@ -1,8 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { OrderController } from './order.controller';
-import { OrderService } from './order.service';
 import { ApplicationModule } from '~/application.module';
 import { TransferReceivedOrderBodyDTO } from './order.type';
 import { Role } from '~/entity/Role';

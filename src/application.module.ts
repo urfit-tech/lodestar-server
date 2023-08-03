@@ -12,6 +12,7 @@ import { MemberModule } from './member/member.module';
 import { MediaModule } from './media/media.module';
 import { UtilityModule } from './utility/utility.module';
 import { OrderModule } from './order/order.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -68,6 +69,7 @@ import { OrderModule } from './order/order.module';
     UtilityModule,
     // TriggerModule,
     OrderModule,
+    ReportModule,
   ],
 })
 export class ApplicationModule {}

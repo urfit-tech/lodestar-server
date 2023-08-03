@@ -218,6 +218,7 @@ import { PaymentLog } from '~/payment/payment_log.entity';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { TableLog } from '~/table_log/table_log.entity';
 import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
+import { Report } from '~/report/entity/report.entity';
 
 export const PostgresEntities = [
   Activity,
@@ -415,6 +416,7 @@ export const PostgresEntities = [
   Review,
   ReviewReaction,
   ReviewReply,
+  Report,
   Role,
   RolePermission,
   SearchTag,

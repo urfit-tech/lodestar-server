@@ -31,6 +31,7 @@ import { Property } from '~/definition/entity/property.entity';
 import { SharingCode } from './SharingCode';
 import { SmsVerificationCode } from './SmsVerificationCode';
 import { VoucherPlan } from './VoucherPlan';
+import { Report } from '~/report/entity/report.entity';
 
 @Index('App_pkey', ['id'], { unique: true })
 @Index('app_symbol_key', ['symbol'], { unique: true })
@@ -191,4 +192,7 @@ export class App {
 
   @OneToMany(() => VoucherPlan, (voucherPlan) => voucherPlan.app)
   voucherPlans: VoucherPlan[];
+
+  @OneToMany(() => Report, (report) => report.app)
+  reports: Report[];
 }
