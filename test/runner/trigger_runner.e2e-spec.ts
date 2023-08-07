@@ -1,6 +1,7 @@
 import { EntityManager, Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getEntityManagerToken } from '@nestjs/typeorm';
 
 import { Setting } from '~/entity/Setting';
 import { AppPlan } from '~/entity/AppPlan';
@@ -15,9 +16,8 @@ import { CacheService } from '~/utility/cache/cache.service';
 
 import { autoRollbackTransaction } from '../utils';
 import { appPlan } from '../data';
-import { getEntityManagerToken } from '@nestjs/typeorm';
 
-describe.skip('TriggerRunner (e2e)', () => {
+describe('TriggerRunner (e2e)', () => {
   let application: INestApplication;
   
   let cacheService: CacheService;

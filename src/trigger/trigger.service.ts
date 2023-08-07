@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { EntityManager, LessThanOrEqual } from 'typeorm';
+import { EntityManager, In, LessThanOrEqual } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { TableLog } from '~/table_log/table_log.entity';
@@ -28,7 +28,10 @@ export class TriggerService {
     });
     const lastTriggerExecutedAt = triggerLog ? triggerLog.createdAt : dayjs.utc().toDate();
     const tableLogs = await tableLogRepo.find({
-      where: { createdAt: LessThanOrEqual(lastTriggerExecutedAt) },
+      where: {
+        tableName: In(['app_setting', 'app_secret', 'app_host']),
+        createdAt: LessThanOrEqual(lastTriggerExecutedAt),
+      },
       take: limit,
     });
 
