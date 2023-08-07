@@ -34,6 +34,8 @@ export class TriggerService {
       },
       take: limit,
     });
+    console.log('test');
+    console.log(tableLogs);
 
     for (const tableLog of tableLogs) {
       const { tableName } = tableLog;
