@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { TableLog } from '~/table_log/table_log.entity';
 
@@ -14,6 +14,6 @@ export class TriggerLog {
   @Column({ type: 'jsonb' })
   result: any;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @Column({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;
 }
