@@ -13,6 +13,7 @@ import { Runner } from '~/runner/runner';
 import { RunnerModule } from '~/runner/runner.module';
 import { TriggerRunner } from '~/runner/trigger.runner';
 import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
+import { TableLog } from '~/table_log/table_log.entity';
 import { CacheService } from '~/utility/cache/cache.service';
 
 import { autoRollbackTransaction } from '../utils';
@@ -26,6 +27,8 @@ describe('TriggerRunner (e2e)', () => {
   let settingRepo: Repository<Setting>;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
+  let tableLogRepo: Repository<TableLog>;
+  let triggerLogRepo: Repository<TriggerLog>;
 
   let setting: Setting;
 
@@ -48,7 +51,11 @@ describe('TriggerRunner (e2e)', () => {
     settingRepo = manager.getRepository(Setting);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
+    tableLogRepo = manager.getRepository(TableLog);
+    triggerLogRepo = manager.getRepository(TriggerLog);
 
+    await triggerLogRepo.delete({});
+    await tableLogRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
@@ -59,6 +66,8 @@ describe('TriggerRunner (e2e)', () => {
   });
 
   afterAll(async () => {
+    await triggerLogRepo.delete({});
+    await tableLogRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
