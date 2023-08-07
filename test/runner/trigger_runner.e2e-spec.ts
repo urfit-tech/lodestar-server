@@ -64,7 +64,7 @@ describe('TriggerRunner (e2e)', () => {
     await application.close();
   });
 
-  describe.skip('AppSetting Handler', () => {
+  describe('AppSetting Handler', () => {
     it('Should erase app setting when update', async () => {
       const triggerRunner = application.get<TriggerRunner>(Runner);
       const updatedApp = new App();
