@@ -1648,6 +1648,8 @@ CREATE TABLE public.member (
     followed_at timestamp with time zone,
     closed_at timestamp with time zone,
     completed_at timestamp with time zone,
+    recycled_at timestamp with time zone,
+    excluded_at timestamp with time zone,
     CONSTRAINT role CHECK (((role = 'app-owner'::text) OR (role = 'content-creator'::text) OR (role = 'general-member'::text))),
     CONSTRAINT status CHECK ((status = ANY (ARRAY['invited'::text, 'verified'::text, 'activated'::text, 'engaged'::text])))
 );
@@ -1690,7 +1692,11 @@ CREATE TABLE public.order_log (
     custom_id text,
     invoice_issued_at timestamp with time zone
 );
+COMMENT ON COLUMN public.order_log.discount_type IS 'abandoned';
+COMMENT ON COLUMN public.order_log.discount_point IS 'abandoned';
+COMMENT ON COLUMN public.order_log.discount_coupon_id IS 'abandoned';
 COMMENT ON COLUMN public.order_log.invoice_options IS 'name | email | phone | address | postCode | buyerPhone | uniformTitle | uniformNumber | status | invoiceNumber | invoiceTransNo';
+COMMENT ON COLUMN public.order_log.discount_price IS 'abandoned';
 COMMENT ON COLUMN public.order_log.payment_model IS '{type: "perpetual" | "subscription" | "groupBuying", gateway: "spgateway" | "parenting" | "tappay", method: "credit" | "vacc" | "cvs" | "instflag" | "unionpay" | "webatm" | "barcode" }';
 COMMENT ON COLUMN public.order_log.delivered_at IS 'merchandise shipping advice';
 COMMENT ON COLUMN public.order_log.retried_at IS 'the time failed order retry next time';
@@ -2090,7 +2096,9 @@ CREATE TABLE public.voucher_plan (
     updated_at timestamp with time zone DEFAULT now(),
     sale_price numeric,
     sale_amount integer,
-    editor_id text
+    editor_id text,
+    pin_code text,
+    bonus_coins jsonb
 );
 CREATE TABLE public.app_host (
     host text NOT NULL,
@@ -2429,7 +2437,8 @@ CREATE TABLE public.podcast_program (
     support_locales jsonb,
     filename text,
     duration_second numeric DEFAULT 0 NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    is_individually_sale boolean DEFAULT true NOT NULL
 );
 COMMENT ON COLUMN public.podcast_program.podcast_id IS 'we will use this in the future!!!';
 CREATE TABLE public.podcast_program_tag (
@@ -2700,7 +2709,8 @@ CREATE TABLE public.cart_product (
     product_id text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    app_id text NOT NULL
+    app_id text NOT NULL,
+    options jsonb
 );
 CREATE TABLE public.certificate (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -4019,6 +4029,7 @@ CREATE VIEW public.order_group_buying_log AS
     order_product.started_at,
     order_product.ended_at,
     order_sub_log.transferred_at,
+    order_sub_log.options,
     order_product.product_id AS program_plan_id,
     order_product.name,
         CASE
@@ -5201,6 +5212,13 @@ CREATE TABLE public.question_option (
     deleted_at timestamp with time zone
 );
 COMMENT ON TABLE public.question_option IS '題目選項';
+CREATE TABLE public.report (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    title text NOT NULL,
+    options jsonb,
+    app_id text NOT NULL,
+    type text
+);
 CREATE MATERIALIZED VIEW public.resource AS
  WITH program_owners AS (
          SELECT program_role.program_id,
@@ -6954,6 +6972,8 @@ ALTER TABLE ONLY public.question_option
     ADD CONSTRAINT question_option_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.question
     ADD CONSTRAINT question_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.report
+    ADD CONSTRAINT report_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.review
     ADD CONSTRAINT review_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.review_reaction
@@ -7336,23 +7356,23 @@ CREATE OR REPLACE VIEW public.coin_usage_export AS
   WHERE (mc.revoked_at IS NULL)
   GROUP BY m.app_id, mc.id, o.invoice_issued_at, o.invoice_options, m.id, m.email, m.name
   ORDER BY mc.agreed_at DESC;
-CREATE TRIGGER app_setting_audit_delete AFTER DELETE ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
-CREATE TRIGGER app_setting_audit_insert AFTER INSERT ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
-CREATE TRIGGER app_setting_audit_update AFTER UPDATE ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
-CREATE TRIGGER member_audit_delete AFTER DELETE ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
-CREATE TRIGGER member_audit_insert AFTER INSERT ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
-CREATE TRIGGER member_audit_update AFTER UPDATE ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
-CREATE TRIGGER member_property_audit_delete AFTER DELETE ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
-CREATE TRIGGER member_property_audit_insert AFTER INSERT ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
-CREATE TRIGGER member_property_audit_update AFTER UPDATE ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
-CREATE TRIGGER order_log_audit_delete AFTER DELETE ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
-CREATE TRIGGER order_log_audit_insert AFTER INSERT ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
-CREATE TRIGGER order_log_audit_update AFTER UPDATE ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
-CREATE TRIGGER order_product_audit_insert AFTER INSERT ON public.order_product FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_product');
-CREATE TRIGGER order_product_audit_update AFTER UPDATE ON public.order_product FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_product');
-CREATE TRIGGER payment_log_audit_delete AFTER DELETE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
-CREATE TRIGGER payment_log_audit_insert AFTER INSERT ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
-CREATE TRIGGER payment_log_audit_update AFTER UPDATE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
+CREATE TRIGGER lodestar_app_setting_audit_delete AFTER DELETE ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
+CREATE TRIGGER lodestar_app_setting_audit_insert AFTER INSERT ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
+CREATE TRIGGER lodestar_app_setting_audit_update AFTER UPDATE ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
+CREATE TRIGGER lodestar_member_audit_delete AFTER DELETE ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
+CREATE TRIGGER lodestar_member_audit_insert AFTER INSERT ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
+CREATE TRIGGER lodestar_member_audit_update AFTER UPDATE ON public.member FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member');
+CREATE TRIGGER lodestar_member_property_audit_delete AFTER DELETE ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
+CREATE TRIGGER lodestar_member_property_audit_insert AFTER INSERT ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
+CREATE TRIGGER lodestar_member_property_audit_update AFTER UPDATE ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('member_property');
+CREATE TRIGGER lodestar_order_log_audit_delete AFTER DELETE ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
+CREATE TRIGGER lodestar_order_log_audit_insert AFTER INSERT ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
+CREATE TRIGGER lodestar_order_log_audit_update AFTER UPDATE ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_log');
+CREATE TRIGGER lodestar_order_product_audit_insert AFTER INSERT ON public.order_product FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_product');
+CREATE TRIGGER lodestar_order_product_audit_update AFTER UPDATE ON public.order_product FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('order_product');
+CREATE TRIGGER lodestar_payment_log_audit_delete AFTER DELETE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
+CREATE TRIGGER lodestar_payment_log_audit_insert AFTER INSERT ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
+CREATE TRIGGER lodestar_payment_log_audit_update AFTER UPDATE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
 CREATE TRIGGER set_activity_ticket_product AFTER INSERT ON public.activity_ticket FOR EACH ROW EXECUTE PROCEDURE public.insert_product('ActivityTicket');
 CREATE TRIGGER set_appointment_plan_product AFTER INSERT ON public.appointment_plan FOR EACH ROW EXECUTE PROCEDURE public.insert_product('AppointmentPlan');
 CREATE TRIGGER set_card_product AFTER INSERT ON public.card FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Card');
@@ -8024,6 +8044,8 @@ ALTER TABLE ONLY public.question_option
     ADD CONSTRAINT question_option_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.question(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.question
     ADD CONSTRAINT question_question_group_id_fkey FOREIGN KEY (question_group_id) REFERENCES public.question_group(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.report
+    ADD CONSTRAINT report_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.app(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.review
     ADD CONSTRAINT review_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.review_reaction
