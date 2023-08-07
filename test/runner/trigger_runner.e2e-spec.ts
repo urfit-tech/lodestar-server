@@ -12,6 +12,8 @@ import { AppHost } from '~/app/entity/app_host.entity';
 import { Runner } from '~/runner/runner';
 import { RunnerModule } from '~/runner/runner.module';
 import { TriggerRunner } from '~/runner/trigger.runner';
+import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
+import { TableLog } from '~/table_log/table_log.entity';
 import { CacheService } from '~/utility/cache/cache.service';
 
 import { autoRollbackTransaction } from '../utils';
@@ -25,6 +27,8 @@ describe('TriggerRunner (e2e)', () => {
   let settingRepo: Repository<Setting>;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
+  let tableLogRepo: Repository<TableLog>;
+  let triggerLogRepo: Repository<TriggerLog>;
 
   let setting: Setting;
 
@@ -47,7 +51,11 @@ describe('TriggerRunner (e2e)', () => {
     settingRepo = manager.getRepository(Setting);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
+    tableLogRepo = manager.getRepository(TableLog);
+    triggerLogRepo = manager.getRepository(TriggerLog);
 
+    await triggerLogRepo.delete({});
+    await tableLogRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
@@ -58,6 +66,8 @@ describe('TriggerRunner (e2e)', () => {
   });
 
   afterAll(async () => {
+    await triggerLogRepo.delete({});
+    await tableLogRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
@@ -90,6 +100,19 @@ describe('TriggerRunner (e2e)', () => {
         await manager.save(appSetting);
 
         await triggerRunner.execute(manager);
+
+        const triggerLogRepo = manager.getRepository(TriggerLog);
+        const updateTriggerLogs = (await triggerLogRepo
+          .find({ relations: { tableLog: true } }))
+          .filter(({ tableLog }) => {
+            const { new: newData, old: oldData } = tableLog;
+            return newData !== null && oldData !== null;
+          });
+        expect(updateTriggerLogs.length).toEqual(1);
+        const [updateTriggerLog] = updateTriggerLogs;
+        expect(updateTriggerLog.tableLog.new.app_id).toEqual(updatedApp.id);
+        expect(updateTriggerLog.tableLog.new.key).toEqual(setting.key);
+        expect(updateTriggerLog.tableLog.new.value).toEqual(appSetting.value);
         
         const afterClearCacheValue = await cacheService.getClient().get(`app:${updatedApp.id}:settings`);
         expect(afterClearCacheValue).toBeNull();
@@ -120,6 +143,18 @@ describe('TriggerRunner (e2e)', () => {
         await manager.remove(appSetting);
 
         await triggerRunner.execute(manager);
+
+        const triggerLogRepo = manager.getRepository(TriggerLog);
+        const updateTriggerLogs = (await triggerLogRepo
+          .find({ relations: { tableLog: true } }))
+          .filter(({ tableLog }) => {
+            const { new: newData, old: oldData } = tableLog;
+            return newData === null && oldData !== null;
+          });
+        expect(updateTriggerLogs.length).toEqual(1);
+        const [updateTriggerLog] = updateTriggerLogs;
+        expect(updateTriggerLog.tableLog.old.app_id).toEqual(deletedApp.id);
+        expect(updateTriggerLog.tableLog.old.key).toEqual(setting.key);
         
         const afterClearCacheValue = await cacheService.getClient().get(`app:${deletedApp.id}:settings`);
         expect(afterClearCacheValue).toBeNull();
@@ -154,6 +189,19 @@ describe('TriggerRunner (e2e)', () => {
 
         await triggerRunner.execute(manager);
         
+        const triggerLogRepo = manager.getRepository(TriggerLog);
+        const updateTriggerLogs = (await triggerLogRepo
+          .find({ relations: { tableLog: true } }))
+          .filter(({ tableLog }) => {
+            const { new: newData, old: oldData } = tableLog;
+            return newData !== null && oldData !== null;
+          });
+        expect(updateTriggerLogs.length).toEqual(1);
+        const [updateTriggerLog] = updateTriggerLogs;
+        expect(updateTriggerLog.tableLog.new.app_id).toEqual(updatedApp.id);
+        expect(updateTriggerLog.tableLog.new.key).toEqual(setting.key);
+        expect(updateTriggerLog.tableLog.new.value).toEqual(appSecret.value);
+
         const afterClearCacheValue = await cacheService.getClient().get(`app:${updatedApp.id}:secrets`);
         expect(afterClearCacheValue).toBeNull();
       });
@@ -183,6 +231,18 @@ describe('TriggerRunner (e2e)', () => {
         await manager.remove(appSecret);
 
         await triggerRunner.execute(manager);
+        
+        const triggerLogRepo = manager.getRepository(TriggerLog);
+        const updateTriggerLogs = (await triggerLogRepo
+          .find({ relations: { tableLog: true } }))
+          .filter(({ tableLog }) => {
+            const { new: newData, old: oldData } = tableLog;
+            return newData === null && oldData !== null;
+          });
+        expect(updateTriggerLogs.length).toEqual(1);
+        const [updateTriggerLog] = updateTriggerLogs;
+        expect(updateTriggerLog.tableLog.old.app_id).toEqual(deletedApp.id);
+        expect(updateTriggerLog.tableLog.old.key).toEqual(setting.key);
         
         const afterClearCacheValue = await cacheService.getClient().get(`app:${deletedApp.id}:secrets`);
         expect(afterClearCacheValue).toBeNull();
@@ -217,6 +277,19 @@ describe('TriggerRunner (e2e)', () => {
 
         await triggerRunner.execute(manager);
         
+        const triggerLogRepo = manager.getRepository(TriggerLog);
+        const updateTriggerLogs = (await triggerLogRepo
+          .find({ relations: { tableLog: true } }))
+          .filter(({ tableLog }) => {
+            const { new: newData, old: oldData } = tableLog;
+            return newData !== null && oldData !== null;
+          });
+        expect(updateTriggerLogs.length).toEqual(1);
+        const [updateTriggerLog] = updateTriggerLogs;
+        expect(updateTriggerLog.tableLog.new.app_id).toEqual(updatedApp.id);
+        expect(updateTriggerLog.tableLog.new.host).toEqual(appHost.host);
+        expect(updateTriggerLog.tableLog.new.priority).toEqual(appHost.priority);
+
         const afterClearCacheValue = await cacheService.getClient().get(`host:${originHost}`);
         expect(afterClearCacheValue).toBeNull();
       });
@@ -246,6 +319,19 @@ describe('TriggerRunner (e2e)', () => {
         await manager.remove(appHost);
 
         await triggerRunner.execute(manager);
+        
+        const triggerLogRepo = manager.getRepository(TriggerLog);
+        const updateTriggerLogs = (await triggerLogRepo
+          .find({ relations: { tableLog: true } }))
+          .filter(({ tableLog }) => {
+            const { new: newData, old: oldData } = tableLog;
+            return newData === null && oldData !== null;
+          });
+        expect(updateTriggerLogs.length).toEqual(1);
+        const [updateTriggerLog] = updateTriggerLogs;
+        expect(updateTriggerLog.tableLog.old.app_id).toEqual(deletedApp.id);
+        expect(updateTriggerLog.tableLog.old.host).toEqual(originHost);
+        expect(updateTriggerLog.tableLog.old.priority).toEqual(appHost.priority);
         
         const afterClearCacheValue = await cacheService.getClient().get(`host:${originHost}`);
         expect(afterClearCacheValue).toBeNull();
