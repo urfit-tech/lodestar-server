@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import { EntityManager } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -41,7 +40,6 @@ export class InvoiceService {
     paymentNo: string,
     amount: number,
     options: InvoiceOptions,
-    entityManager?: EntityManager,
   ) {
     let invoiceAttrs: { [key: string]: any } = {}
     if (options.donationCode) {
@@ -153,29 +151,13 @@ export class InvoiceService {
       ...invoiceAttrs,
       ...taxOptions,
     })
-    const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber']
-
-    const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptions(
-      paymentNo,
-      {
-        status: invServiceResponse.Status,
-        invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
-        invoiceNumber: invoiceNumber,
-      },
-      invServiceResponse.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
-      entityManager,
-    );
-    if (invServiceResponse.Status !== 'SUCCESS') {
-      throw new Error(invServiceResponse.Message)
-    } else {
-      const orderId = orderLogs[0].id;
-      if (orderId && invoiceNumber) {
-        await this.insertInvoice(orderId, invoiceNumber, Amt, entityManager);
-      }
-    }
+    return {
+      Amt,
+      invServiceResponse,
+    };
   }
   
-  private updateOrderAndPaymentLogInvoiceOptions(
+  public updateOrderAndPaymentLogInvoiceOptions(
     paymentNo: string,
     invoiceOptions: any,
     invoiceIssueAt: Date,
@@ -210,11 +192,13 @@ export class InvoiceService {
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
   }
 
-  private async insertInvoice(orderId: string, invoiceNumber: string, price: number, manager: EntityManager): Promise<void> {
+  public async insertInvoice(orderId: string, invoiceNumber: string, price: number, manager: EntityManager): Promise<void> {
     const invoice = new Invoice();
+
     invoice.orderId = orderId;
     invoice.no = invoiceNumber;
     invoice.price = price;
+
     await this.invoiceInfra.save(invoice, manager);
   }
 }

@@ -1,4 +1,5 @@
 import { EntityManager } from 'typeorm';
+import dayjs from 'dayjs';
 import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
@@ -68,7 +69,8 @@ export class InvoiceRunner extends Runner {
           
           this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`)
           const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
-          await this.invoiceService.issueInvoice(appSecrets, paymentNo, price, {
+          
+          const { Amt, invServiceResponse } = await this.invoiceService.issueInvoice(appSecrets, paymentNo, price, {
             appId,
             name: invoiceOptions['name'] || member.name,
             email: invoiceOptions['email'] || member.email,
@@ -94,7 +96,27 @@ export class InvoiceRunner extends Runner {
             uniformNumber: invoiceOptions['uniformNumber'],
             uniformTitle: invoiceOptions['uniformTitle'],
             citizenCode: invoiceOptions['citizenCode'],
-          }, manager);
+          });
+          const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber']
+
+          const orderLogs = await this.invoiceService.updateOrderAndPaymentLogInvoiceOptions(
+            paymentNo,
+            {
+              status: invServiceResponse.Status,
+              invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
+              invoiceNumber: invoiceNumber,
+            },
+            invServiceResponse.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
+            manager,
+          );
+          if (invServiceResponse.Status !== 'SUCCESS') {
+            throw new Error(invServiceResponse.Message)
+          } else {
+            const orderId = orderLogs[0].id;
+            if (orderId && invoiceNumber) {
+              await this.invoiceService.insertInvoice(orderId, invoiceNumber, Amt, manager);
+            }
+          }
           await this.utilityService.sleep(100);
         } catch (error) {
           errors.push({ appId, error: error.message });
