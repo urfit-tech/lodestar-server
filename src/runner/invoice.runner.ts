@@ -99,27 +99,39 @@ export class InvoiceRunner extends Runner {
           });
           const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber']
 
+          const toUpdateInvoiceOptions = invServiceResponse.Status === 'SUCCESS' ? {
+            invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
+            invoiceNumber: invoiceNumber,
+          } : {
+            reason: invServiceResponse.Message,
+          };
+
           const orderLogs = await this.invoiceService.updateOrderAndPaymentLogInvoiceOptions(
             paymentNo,
             {
               status: invServiceResponse.Status,
-              invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
-              invoiceNumber: invoiceNumber,
+              ...toUpdateInvoiceOptions,
             },
             invServiceResponse.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
             manager,
           );
-          if (invServiceResponse.Status !== 'SUCCESS') {
-            throw new Error(invServiceResponse.Message)
-          } else {
+
+          if (invServiceResponse.Status === 'SUCCESS') {
             const orderId = orderLogs[0].id;
             if (orderId && invoiceNumber) {
               await this.invoiceService.insertInvoice(orderId, invoiceNumber, Amt, manager);
             }
           }
+
           await this.utilityService.sleep(100);
         } catch (error) {
           errors.push({ appId, error: error.message });
+          await this.invoiceService.updateOrderAndPaymentLogInvoiceOptions(
+            paymentNo, {
+              status: 'LODESTAR_FAIL',
+              reason: error.message,
+            }, undefined, manager,
+          );
           this.logger.error({
             error: JSON.stringify(error),
             appId,
