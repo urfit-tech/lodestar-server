@@ -143,13 +143,21 @@ describe('InvoiceRunner (e2e)', () => {
       await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
         { 'appId': notAllowedApp.id, 'error': 'Not allowed to use invoice module.'},
       ])));
+
+      const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: givenPayment.no } });
+        const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: givenPayment.no });
+        for (const each of [orderLog, paymentLog]) {
+          expect(each.invoiceIssuedAt).toBeNull();
+          expect(each.invoiceOptions['status']).toEqual('LODESTAR_FAIL');
+          expect(each.invoiceOptions['reason']).toEqual('Not allowed to use invoice module.');
+        }
     });
   });
 
   describe('Allow use invoice module App', () => {
     afterEach(() => jest.resetAllMocks());
 
-    it('Should create invoice with success status', async () => {
+    it('Should issue invoice with success status', async () => {
       ezpayClient.issue.mockImplementationOnce(() => {
         return {
           Status: 'SUCCESS',
@@ -223,7 +231,7 @@ describe('InvoiceRunner (e2e)', () => {
       });
     });
 
-    it('Should not invoice with fail status', async () => {
+    it('Should not issue invoice with fail status', async () => {
       ezpayClient.issue.mockImplementationOnce(() => {
         return {
           Status: 'LIB_SOMETHING_FAIL',
@@ -279,15 +287,14 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(order);
         await manager.save(payment);
 
-        await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-          { 'appId': app.id, 'error': 'fail message' },
-        ])));
+        await invoiceRunner.execute(manager);
         
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
         for (const each of [orderLog, paymentLog]) {
           expect(each.invoiceIssuedAt).toBeNull();
           expect(each.invoiceOptions['status']).toEqual('LIB_SOMETHING_FAIL');
+          expect(each.invoiceOptions['reason']).toEqual('fail message');
         }
       });
     });
@@ -363,9 +370,16 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(order);
         await manager.save(payment);
 
-        await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-          { 'appId': app.id, 'error': 'fail message' },
-        ])));
+        await invoiceRunner.execute(manager);
+        const failedOrderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
+        const failedPaymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
+        for (const { invoiceOptions } of [failedOrderLog, failedPaymentLog]) {
+          expect(invoiceOptions).toMatchObject({
+            status: 'LIB_SOMETHING_FAIL',
+            reason: 'fail message',
+            retry: 1,
+          });
+        }
         await invoiceRunner.execute(manager);
         await invoiceRunner.execute(manager);
         await invoiceRunner.execute(manager);
@@ -456,14 +470,29 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(order);
         await manager.save(payment);
 
+        let failedOrderLog: OrderLog, failedPaymentLog: PaymentLog;
         for (let i = 0; i < 4; i += 1) {
-          await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-            { 'appId': app.id, 'error': 'fail message' },
-          ])));
+          await invoiceRunner.execute(manager);
+          failedOrderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
+          failedPaymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
+          for (const { invoiceOptions } of [failedOrderLog, failedPaymentLog]) {
+            expect(invoiceOptions).toMatchObject({
+              status: 'LIB_SOMETHING_FAIL',
+              reason: 'fail message',
+              retry: i + 1,
+            });
+          }
         }
-        await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-          { 'appId': app.id, 'error': 'another fail message' },
-        ])));
+        await invoiceRunner.execute(manager);
+        failedOrderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
+        failedPaymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
+        for (const { invoiceOptions } of [failedOrderLog, failedPaymentLog]) {
+          expect(invoiceOptions).toMatchObject({
+            status: 'LIB_ANOTHER_FAIL',
+            reason: 'another fail message',
+            retry: 5,
+          });
+        }
         await invoiceRunner.execute(manager);
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
