@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
+import { AppService } from '~/app/app.service';
 import { OrderModule } from '~/order/order.module';
 import { PaymentModule } from '~/payment/payment.module';
 import { UtilityModule } from '~/utility/utility.module';
@@ -10,7 +11,13 @@ import { InvoiceInfrastructure } from './invoice.infra';
 
 @Module({
   imports: [OrderModule, PaymentModule, UtilityModule],
-  providers: [EzpayClient, InvoiceService, InvoiceInfrastructure],
+  providers: [
+    Logger,
+    EzpayClient,
+    AppService,
+    InvoiceService,
+    InvoiceInfrastructure,
+  ],
   exports: [EzpayClient, InvoiceService, InvoiceInfrastructure],
 })
 export class InvoiceModule {}

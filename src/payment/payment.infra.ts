@@ -16,7 +16,7 @@ export class PaymentInfrastructure {
         price: MoreThan(0),
         status: Equal('SUCCESS'),
         invoiceIssuedAt: IsNull(),
-        invoiceOptions: Raw((alias) => `${alias} ->> 'status' IS NULL OR (${alias} ->> 'status' != 'SUCCESS' AND (${alias} ->> 'retry')::numeric < 5)`),
+        invoiceOptions: Raw((alias) => `(${alias} ->> 'status' IS NULL OR (${alias} ->> 'status' != 'SUCCESS' AND (${alias} ->> 'retry')::numeric < 5))`),
         paidAt: And(
           LessThan(dayjs.utc().toDate()),
           MoreThan(dayjs.utc().subtract(3, 'day').toDate()),

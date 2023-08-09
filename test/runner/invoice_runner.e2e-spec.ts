@@ -134,22 +134,33 @@ describe('InvoiceRunner (e2e)', () => {
     givenPayment.invoiceOptions = {};
 
     await autoRollbackTransaction(manager, async (manager) => {
-
       await manager.save(notAllowedApp);
       await manager.save(givenMember);
       await manager.save(givenOrder);
       await manager.save(givenPayment);
 
       await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-        { 'appId': notAllowedApp.id, 'error': 'Not allowed to use invoice module.'},
+        { 'error': `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
       ])));
+      await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
+        { 'error': `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
+      ])));
+
+      const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: givenPayment.no } });
+        const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: givenPayment.no });
+        for (const each of [orderLog, paymentLog]) {
+          expect(each.invoiceIssuedAt).toBeNull();
+          expect(each.invoiceOptions['status']).toEqual('LODESTAR_FAIL');
+          expect(each.invoiceOptions['reason']).toEqual(`App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.`);
+          expect(each.invoiceOptions['retry']).toEqual(2);
+        }
     });
   });
 
   describe('Allow use invoice module App', () => {
     afterEach(() => jest.resetAllMocks());
 
-    it('Should create invoice with success status', async () => {
+    it('Should issue invoice with success status', async () => {
       ezpayClient.issue.mockImplementationOnce(() => {
         return {
           Status: 'SUCCESS',
@@ -223,7 +234,7 @@ describe('InvoiceRunner (e2e)', () => {
       });
     });
 
-    it('Should not invoice with fail status', async () => {
+    it('Should not issue invoice with fail status', async () => {
       ezpayClient.issue.mockImplementationOnce(() => {
         return {
           Status: 'LIB_SOMETHING_FAIL',
@@ -279,15 +290,85 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(order);
         await manager.save(payment);
 
-        await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-          { 'appId': app.id, 'error': 'fail message' },
-        ])));
+        await invoiceRunner.execute(manager);
         
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
         for (const each of [orderLog, paymentLog]) {
           expect(each.invoiceIssuedAt).toBeNull();
           expect(each.invoiceOptions['status']).toEqual('LIB_SOMETHING_FAIL');
+          expect(each.invoiceOptions['reason']).toEqual('fail message');
+        }
+      });
+    });
+
+    it('Should not contains PaymentLog less than 3 days', async () => {
+      ezpayClient.issue.mockImplementationOnce(() => {
+        return {
+          Status: 'SUCCESS',
+          Message: 'message',
+          Result: {
+            InvoiceNumber: 'invoice_number',
+            InvoiceTransNo: 'invoice_trans_no',
+          },
+        };
+      });
+
+      const invoiceRunner = application.get<InvoiceRunner>(Runner);
+
+      const appSecretSet = {
+        'invoice.merchant_id': 'test_merchant_id',
+        'invoice.hash_key': 'test_hash_key0000000000000000000',
+        'invoice.hash_iv': 'test_hash_iv0000',
+        'invoice.dry_run': 'true',
+      };
+      
+      const appExtendedModule = new AppExtendedModule();
+      appExtendedModule.app = app;
+      appExtendedModule.module = invoiceModule;
+
+      const member = new Member();
+      member.id = v4();
+      member.app = app;
+      member.email = 'member@example.com';
+      member.username = 'member';
+      member.role = role.name;
+      
+      const order = new OrderLog();
+      order.member = member;
+      order.invoiceOptions = {};
+      
+      const payment = new PaymentLog();
+      payment.no = 'to_fail_payment_no';
+      payment.order = order;
+      payment.status = 'SUCCESS';
+      payment.paidAt = dayjs.utc().subtract(4, 'day').toDate();
+      payment.price = 1;
+      payment.gateway = 'spgateway';
+      payment.invoiceIssuedAt = null;
+      payment.invoiceOptions = {};
+      
+      await autoRollbackTransaction(manager, async (manager) => {
+        for (const key in appSecretSet) {
+          const secret = new AppSecret();
+          secret.app = app;
+          secret.key = key;
+          secret.value = appSecretSet[key];
+          await manager.save(secret);
+        }
+        await manager.save(appExtendedModule);
+        await manager.save(member);
+        await manager.save(order);
+        await manager.save(payment);
+
+        await invoiceRunner.execute(manager);
+        
+        const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
+        const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
+        for (const each of [orderLog, paymentLog]) {
+          expect(each.invoiceIssuedAt).toBeNull();
+          expect(each.invoiceOptions['status']).toBeUndefined();
+          expect(each.invoiceOptions['reason']).toBeUndefined();
         }
       });
     });
@@ -363,9 +444,16 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(order);
         await manager.save(payment);
 
-        await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-          { 'appId': app.id, 'error': 'fail message' },
-        ])));
+        await invoiceRunner.execute(manager);
+        const failedOrderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
+        const failedPaymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
+        for (const { invoiceOptions } of [failedOrderLog, failedPaymentLog]) {
+          expect(invoiceOptions).toMatchObject({
+            status: 'LIB_SOMETHING_FAIL',
+            reason: 'fail message',
+            retry: 1,
+          });
+        }
         await invoiceRunner.execute(manager);
         await invoiceRunner.execute(manager);
         await invoiceRunner.execute(manager);
@@ -456,14 +544,29 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(order);
         await manager.save(payment);
 
+        let failedOrderLog: OrderLog, failedPaymentLog: PaymentLog;
         for (let i = 0; i < 4; i += 1) {
-          await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-            { 'appId': app.id, 'error': 'fail message' },
-          ])));
+          await invoiceRunner.execute(manager);
+          failedOrderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
+          failedPaymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
+          for (const { invoiceOptions } of [failedOrderLog, failedPaymentLog]) {
+            expect(invoiceOptions).toMatchObject({
+              status: 'LIB_SOMETHING_FAIL',
+              reason: 'fail message',
+              retry: i + 1,
+            });
+          }
         }
-        await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-          { 'appId': app.id, 'error': 'another fail message' },
-        ])));
+        await invoiceRunner.execute(manager);
+        failedOrderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
+        failedPaymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
+        for (const { invoiceOptions } of [failedOrderLog, failedPaymentLog]) {
+          expect(invoiceOptions).toMatchObject({
+            status: 'LIB_ANOTHER_FAIL',
+            reason: 'another fail message',
+            retry: 5,
+          });
+        }
         await invoiceRunner.execute(manager);
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
