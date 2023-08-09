@@ -141,7 +141,7 @@ describe('InvoiceRunner (e2e)', () => {
       await manager.save(givenPayment);
 
       await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-        { 'appId': notAllowedApp.id, 'error': 'Not allowed to use invoice module.'},
+        { 'error': `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
       ])));
 
       const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: givenPayment.no } });
@@ -149,7 +149,7 @@ describe('InvoiceRunner (e2e)', () => {
         for (const each of [orderLog, paymentLog]) {
           expect(each.invoiceIssuedAt).toBeNull();
           expect(each.invoiceOptions['status']).toEqual('LODESTAR_FAIL');
-          expect(each.invoiceOptions['reason']).toEqual('Not allowed to use invoice module.');
+          expect(each.invoiceOptions['reason']).toEqual(`App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.`);
         }
     });
   });
