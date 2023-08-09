@@ -134,12 +134,14 @@ describe('InvoiceRunner (e2e)', () => {
     givenPayment.invoiceOptions = {};
 
     await autoRollbackTransaction(manager, async (manager) => {
-
       await manager.save(notAllowedApp);
       await manager.save(givenMember);
       await manager.save(givenOrder);
       await manager.save(givenPayment);
 
+      await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
+        { 'error': `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
+      ])));
       await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
         { 'error': `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
       ])));
@@ -150,6 +152,7 @@ describe('InvoiceRunner (e2e)', () => {
           expect(each.invoiceIssuedAt).toBeNull();
           expect(each.invoiceOptions['status']).toEqual('LODESTAR_FAIL');
           expect(each.invoiceOptions['reason']).toEqual(`App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.`);
+          expect(each.invoiceOptions['retry']).toEqual(2);
         }
     });
   });
