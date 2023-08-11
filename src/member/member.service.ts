@@ -58,8 +58,8 @@ export class MemberService {
         appId,
         wrapCondition,
         {
-          createdAt: { direction: 'DESC', nulls: 'LAST' },
-          id: { direction: 'ASC', nulls: 'LAST' },
+          createdAt: { order: 'DESC', nulls: 'NULLS LAST' },
+          id: { order: 'ASC', nulls: 'NULLS LAST' },
         },
         limit,
         manager,

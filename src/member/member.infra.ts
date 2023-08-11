@@ -1,4 +1,9 @@
-import { EntityManager, FindOptionsOrder, FindOptionsWhere, In } from 'typeorm';
+import {
+  EntityManager,
+  FindOptionsWhere,
+  OrderByCondition,
+  In,
+} from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { MemberProperty } from './entity/member_property.entity';
@@ -10,22 +15,32 @@ export class MemberInfrastructure {
   async getSimpleMemberByConditions(
     appId: string,
     conditions: FindOptionsWhere<Member>,
-    order: FindOptionsOrder<Member>,
+    order: OrderByCondition,
     limit: number,
     entityManager: EntityManager,
   ) {
-    const memberRepo = entityManager.getRepository(Member);
-    return memberRepo.find({
-      where: {
-        ...conditions,
+    let queryBuilder = entityManager
+      .getRepository(Member)
+      .createQueryBuilder('member');
+    
+    if (conditions.manager || conditions.managerId) {
+      queryBuilder = queryBuilder
+        .leftJoinAndSelect('member.manager', 'manager');
+    }
+    return queryBuilder
+      .where({
         appId,
-      },
-      relations: {
-        ...((conditions.manager || conditions.managerId) && { manager: true }),
-      },
-      order,
-      take: limit,
-    });
+        ...conditions,
+      })
+      .orderBy(Object
+        .keys(order)
+        .reduce(
+          (prev, current) => (prev[`member.${current}`] = order[current], prev),
+          {},
+        )
+      )
+      .limit(limit)
+      .getMany();
   }
 
   async getMembersByConditions(
