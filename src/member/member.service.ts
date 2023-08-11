@@ -38,7 +38,7 @@ export class MemberService {
   async getMembersByCondition(
     appId: string,
     condition: MemberGetConditionDTO,
-    entityManager?: EntityManager,
+    limit: number = 10,
   ): Promise<Array<MemberGetResultDTO>> {
     const cb = async (manager: EntityManager) => {
       const wrapCondition: FindOptionsWhere<Member> = {
@@ -54,8 +54,15 @@ export class MemberService {
         ...(condition.managerId && { managerId: Equal(condition.managerId) }),
       };
 
-      return (await this.memberInfra.getMembersByConditions(
-        appId, wrapCondition, manager,
+      return (await this.memberInfra.getSimpleMemberByConditions(
+        appId,
+        wrapCondition,
+        {
+          createdAt: { direction: 'DESC', nulls: 'LAST' },
+          id: { direction: 'ASC', nulls: 'LAST' },
+        },
+        limit,
+        manager,
       )).map(({
         id,
         pictureUrl,
@@ -78,7 +85,7 @@ export class MemberService {
         manager_id: managerId,
       }));
     };
-    return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
+    return cb(this.entityManager);
   }
 
   async processImportFromFile(

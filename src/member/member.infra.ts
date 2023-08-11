@@ -1,4 +1,4 @@
-import { EntityManager, FindOptionsWhere, In } from 'typeorm';
+import { EntityManager, FindOptionsOrder, FindOptionsWhere, In } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { MemberProperty } from './entity/member_property.entity';
@@ -7,6 +7,27 @@ import { MemberAuditLog } from './entity/member_audit_log.entity';
 
 @Injectable()
 export class MemberInfrastructure {
+  async getSimpleMemberByConditions(
+    appId: string,
+    conditions: FindOptionsWhere<Member>,
+    order: FindOptionsOrder<Member>,
+    limit: number,
+    entityManager: EntityManager,
+  ) {
+    const memberRepo = entityManager.getRepository(Member);
+    return memberRepo.find({
+      where: {
+        ...conditions,
+        appId,
+      },
+      relations: {
+        ...((conditions.manager || conditions.managerId) && { manager: true }),
+      },
+      order,
+      take: limit,
+    });
+  }
+
   async getMembersByConditions(
     appId: string,
     conditions: FindOptionsWhere<Member>,
