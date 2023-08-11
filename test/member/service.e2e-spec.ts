@@ -19,6 +19,7 @@ import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
 
 import { anotherCategory, anotherMemberTag, app, appPlan, category, memberProperty, memberTag } from '../data';
+import { autoRollbackTransaction } from '../utils';
 
 describe('MemberService (e2e)', () => {
   let application: INestApplication;
@@ -92,6 +93,153 @@ describe('MemberService (e2e)', () => {
     await appPlanRepo.delete({});
 
     await application.close();
+  });
+
+
+  describe('#getMembersByCondition', () => {
+    it('Should get members with empty conditions', async () => {
+      await autoRollbackTransaction(manager, async (manager) => {
+        for (let i = 0; i < 5; i++) {
+          let insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = v4();
+          insertedMember.name = `name${i}`;
+          insertedMember.username = `username${i}`;
+          insertedMember.email = `email${i}@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = new Date();
+          await manager.save(insertedMember);
+        }
+
+        const fetched = await service.getMembersByCondition(app.id, {}, manager);
+        const names = fetched.map(({ name }) => name);
+
+        for (let i = 0; i < fetched.length; i++) {
+          expect(names.includes(`name${0}`)).toBeTruthy();
+        }
+      });
+    });
+
+    it('Should get members with name conditions', async () => {
+      await autoRollbackTransaction(manager, async (manager) => {
+        for (let i = 0; i < 5; i++) {
+          let insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = v4();
+          insertedMember.name = `name${i}`;
+          insertedMember.username = `username${i}`;
+          insertedMember.email = `email${i}@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = new Date();
+          await manager.save(insertedMember);
+        }
+
+        const fetched = await service.getMembersByCondition(app.id, {
+          name: 'name',
+        }, manager);
+        const names = fetched.map(({ name }) => name);
+
+        for (let i = 0; i < fetched.length; i++) {
+          expect(names.includes(`name${0}`)).toBeTruthy();
+        }
+      });
+    });
+
+    it('Should get members with name conditions', async () => {
+      await autoRollbackTransaction(manager, async (manager) => {
+        let managerMember = new Member();
+        managerMember.appId = app.id;
+        managerMember.id = v4();
+        managerMember.name = 'manager_name';
+        managerMember.username = 'manager_username';
+        managerMember.email = 'manager_email@example.com';
+        managerMember.role = 'general-member';
+        managerMember.star = 0;
+        managerMember.createdAt = new Date();
+        managerMember.loginedAt = new Date();
+        await manager.save(managerMember);
+
+        for (let i = 0; i < 5; i++) {
+          let insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = v4();
+          insertedMember.name = `name${i}`;
+          insertedMember.username = `username${i}`;
+          insertedMember.email = `email${i}@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = new Date();
+          insertedMember.manager = managerMember;
+          await manager.save(insertedMember);
+        }
+
+        const fetched = await service.getMembersByCondition(app.id, {
+          managerName: managerMember.name,
+        }, manager);
+
+        for (let i = 0; i < fetched.length; i++) {
+          const member = fetched[i];
+          expect(member.manager_id).toBe(managerMember.id);
+        }
+      });
+    });
+
+    it('Should get empty members with nested not matched conditions', async () => {
+      await autoRollbackTransaction(manager, async (manager) => {
+        for (let i = 0; i < 5; i++) {
+          let insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = v4();
+          insertedMember.name = `name${i}`;
+          insertedMember.username = `username${i}`;
+          insertedMember.email = `email${i}@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = new Date();
+          await manager.save(insertedMember);
+        }
+
+        const fetched = await service.getMembersByCondition(app.id, {
+          name: 'name',
+          username: 'unable-to-match-condition',
+        }, manager);
+        expect(fetched.length).toBe(0);
+      });
+    });
+
+    it('Should get members with matched nested conditions', async () => {
+      await autoRollbackTransaction(manager, async (manager) => {
+        for (let i = 0; i < 5; i++) {
+          let insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = v4();
+          insertedMember.name = `name${i}`;
+          insertedMember.username = `username${i}`;
+          insertedMember.email = `email${i}@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = new Date();
+          await manager.save(insertedMember);
+        }
+
+        const fetched = await service.getMembersByCondition(app.id, {
+          name: 'name',
+          username: 'user',
+        }, manager);
+        const names = fetched.map(({ name }) => name);
+
+        for (let i = 0; i < fetched.length; i++) {
+          expect(names.includes(`name${0}`)).toBeTruthy();
+        }
+      });
+    });
   });
 
   describe('Method processImportFromFile', () => {
