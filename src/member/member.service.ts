@@ -1,6 +1,12 @@
 import { v4 } from 'uuid';
 import { chunk, flatten, isNull } from 'lodash';
-import { EntityManager, In } from 'typeorm';
+import {
+  EntityManager,
+  Equal,
+  FindOptionsWhere,
+  ILike,
+  In,
+} from 'typeorm';
 import { ValidationError, isDateString, isEmpty } from 'class-validator';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -14,7 +20,7 @@ import { isNullString } from '~/utils';
 import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 import { CsvRawMember } from './class/csvRawMember';
 import { MemberInfrastructure } from './member.infra';
-import { MemberImportResultDTO } from './member.dto';
+import { MemberGetConditionDTO, MemberGetResultDTO, MemberImportResultDTO } from './member.dto';
 import { Member } from './entity/member.entity';
 import { MemberCategory } from './entity/member_category.entity';
 import { MemberProperty } from './entity/member_property.entity';
@@ -28,6 +34,52 @@ export class MemberService {
     private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
+
+  async getMembersByCondition(
+    appId: string,
+    condition: MemberGetConditionDTO,
+    entityManager?: EntityManager,
+  ): Promise<Array<MemberGetResultDTO>> {
+    const cb = async (manager: EntityManager) => {
+      const wrapCondition: FindOptionsWhere<Member> = {
+        ...(condition.role && { role: Equal(condition.role) }),
+        ...(condition.name && { name: ILike(condition.name) }),
+        ...(condition.username && { username: ILike(condition.username) }),
+        ...(condition.email && { email: ILike(condition.email) }),
+        ...(condition.managerName && {
+          manager: {
+            name: ILike(condition.managerName),
+          },
+        }),
+        ...(condition.managerId && { managerId: Equal(condition.managerId) }),
+      };
+
+      return (await this.memberInfra.getMembersByConditions(
+        appId, wrapCondition, manager,
+      )).map(({
+        id,
+        pictureUrl,
+        name,
+        email,
+        role,
+        createdAt,
+        username,
+        loginedAt,
+        managerId
+      }) => ({
+        id,
+        picture_url: pictureUrl,
+        name,
+        email,
+        role,
+        created_at: createdAt,
+        username,
+        logined_at: loginedAt,
+        manager_id: managerId,
+      }));
+    };
+    return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
+  }
 
   async processImportFromFile(
     appId: string, rawRows: Array<Record<string, any>>,
