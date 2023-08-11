@@ -155,7 +155,6 @@ describe('MemberController (e2e)', () => {
         'memberId': 'invoker_member_id',
         'permissions': ['MEMBER_ADMIN'],
       }, jwtSecret);
-      console.log(token);
 
       const res = await request(application.getHttpServer())
         .get(route)
