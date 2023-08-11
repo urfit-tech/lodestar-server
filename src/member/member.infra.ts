@@ -19,6 +19,7 @@ export class MemberInfrastructure {
         app: { id: appId },
       },
       relations: {
+        manager: true,
         memberPhones: true,
         memberCategories: {
           category: true,

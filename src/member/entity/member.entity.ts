@@ -118,6 +118,9 @@ export class Member {
   @Column('text', { name: 'passhash', nullable: true })
   passhash: string | null
 
+  @Column('text', { name: 'manager_id', nullable: true })
+  managerId: string;
+
   @Column('text', { name: 'facebook_user_id', nullable: true })
   facebookUserId: string | null
 
