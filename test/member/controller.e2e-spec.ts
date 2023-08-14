@@ -123,7 +123,7 @@ describe('MemberController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({})
         .expect(200);
-      const fetched: Array<MemberGetResultDTO> = res.body;
+      const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
       for (let i = 0; i < fetched.length; i++) {
@@ -159,9 +159,11 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
-        .send({ name: 'name' })
+        .send({
+          condition: { name: 'name' },
+        })
         .expect(200);
-      const fetched: Array<MemberGetResultDTO> = res.body;
+      const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
       for (let i = 0; i < fetched.length; i++) {
@@ -210,9 +212,11 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
-        .send({ managerName: managerMember.name })
+        .send({
+          condition: { managerName: managerMember.name },
+        })
         .expect(200);
-      const fetched: Array<MemberGetResultDTO> = res.body;
+      const { data: fetched }: MemberGetResultDTO = res.body;
 
       for (let i = 0; i < fetched.length; i++) {
         const member = fetched[i];
@@ -249,12 +253,14 @@ describe('MemberController (e2e)', () => {
         .get(route)
         .set('Authorization', `Bearer ${token}`)
         .send({
-          name: 'name',
-          username: 'unable-to-match-condition',
+          condition: {
+            name: 'name',
+            username: 'unable-to-match-condition',
+          },
         })
         .expect(200);
-      const fetched: Array<MemberGetResultDTO> = res.body;
-      expect(fetched.length).toBe(0);
+      const { data }: MemberGetResultDTO = res.body;
+      expect(data.length).toBe(0);
     });
 
     it('Should get members with matched nested conditions', async () => {
@@ -286,11 +292,13 @@ describe('MemberController (e2e)', () => {
         .get(route)
         .set('Authorization', `Bearer ${token}`)
         .send({
-          name: 'name',
-          username: 'user',
+          condition: {
+            name: 'name',
+            username: 'user',
+          },
         })
         .expect(200);
-      const fetched: Array<MemberGetResultDTO> = res.body;
+      const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
       for (let i = 0; i < fetched.length; i++) {
