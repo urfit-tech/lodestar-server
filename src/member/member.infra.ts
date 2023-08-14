@@ -16,7 +16,7 @@ export class MemberInfrastructure {
     appId: string,
     conditions: FindOptionsWhere<Member>,
     order: OrderByCondition,
-    limit: number,
+    limit: number = 10,
     entityManager: EntityManager,
   ) {
     let queryBuilder = entityManager

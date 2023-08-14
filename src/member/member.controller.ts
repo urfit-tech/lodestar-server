@@ -15,7 +15,12 @@ import { ConfigService } from '@nestjs/config';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
 
-import { MemberExportDTO, MemberGetConditionDTO, MemberGetResultDTO, MemberImportDTO } from './member.dto';
+import {
+  MemberExportDTO,
+  MemberGetDTO, 
+  MemberGetResultDTO,
+  MemberImportDTO,
+} from './member.dto';
 import { MemberService } from './member.service';
 
 @Controller({
@@ -50,8 +55,9 @@ export class MemberController {
   @Get()
   public async getMembers(
     @Headers('Authorization') authorization: string,
-    @Body() queryCondition: MemberGetConditionDTO,
-  ): Promise<Array<MemberGetResultDTO>> {
+    @Body() dto: MemberGetDTO,
+  ): Promise<MemberGetResultDTO> {
+    const { option, condition } = dto;
     const { appId, permissions } = this.verify(authorization);
 
     if (![
@@ -80,7 +86,7 @@ export class MemberController {
       );
     }
 
-    return this.memberService.getMembersByCondition(appId, queryCondition);
+    return this.memberService.getMembersByCondition(appId, option, condition);
   }
 
   @Post('import')

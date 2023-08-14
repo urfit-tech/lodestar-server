@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
+  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
@@ -13,6 +14,12 @@ class FileInfo {
 
   @IsString()
   checksum: string;
+}
+
+export class MemberGetQueryOptionsDTO {
+  @IsOptional()
+  @IsNumber()
+  limit?: number;
 }
 
 export class MemberGetConditionDTO {
@@ -41,16 +48,30 @@ export class MemberGetConditionDTO {
   managerId?: string;
 }
 
+export class MemberGetDTO {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MemberGetQueryOptionsDTO)
+  option?: MemberGetQueryOptionsDTO;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MemberGetConditionDTO)
+  condition?: MemberGetConditionDTO;
+}
+
 export class MemberGetResultDTO {
-  id: string;
-  picture_url: string;
-  name: string;
-  email: string;
-  role: string;
-  created_at: Date;
-  username: string;
-  logined_at: Date;
-  manager_id: string;
+  data: Array<{
+    id: string;
+    picture_url: string;
+    name: string;
+    email: string;
+    role: string;
+    created_at: Date;
+    username: string;
+    logined_at: Date;
+    manager_id: string;
+  }>;
 }
 
 export class MemberImportDTO {
