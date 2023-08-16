@@ -7,6 +7,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { Cursor } from 'typeorm-cursor-pagination';
 
 class FileInfo {
   @IsString()
@@ -17,6 +18,14 @@ class FileInfo {
 }
 
 export class MemberGetQueryOptionsDTO {
+  @IsOptional()
+  @IsString()
+  prevToken?: string;
+
+  @IsOptional()
+  @IsString()
+  nextToken?: string;
+
   @IsOptional()
   @IsNumber()
   limit?: number;
@@ -61,6 +70,7 @@ export class MemberGetDTO {
 }
 
 export class MemberGetResultDTO {
+  cursor: Cursor;
   data: Array<{
     id: string;
     picture_url: string;

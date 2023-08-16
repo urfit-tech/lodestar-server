@@ -4,6 +4,7 @@ import {
   OrderByCondition,
   In,
 } from 'typeorm';
+import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 
 import { MemberProperty } from './entity/member_property.entity';
@@ -16,9 +17,11 @@ export class MemberInfrastructure {
     appId: string,
     conditions: FindOptionsWhere<Member>,
     order: OrderByCondition,
+    prevToken: string | undefined,
+    nextToken: string | undefined,
     limit: number = 10,
     entityManager: EntityManager,
-  ) {
+  ): Promise<{ data: Array<Member>; cursor: Cursor; }> {
     let queryBuilder = entityManager
       .getRepository(Member)
       .createQueryBuilder('member');
@@ -27,7 +30,8 @@ export class MemberInfrastructure {
       queryBuilder = queryBuilder
         .leftJoinAndSelect('member.manager', 'manager');
     }
-    return queryBuilder
+
+    queryBuilder = queryBuilder
       .where({
         appId,
         ...conditions,
@@ -38,9 +42,19 @@ export class MemberInfrastructure {
           (prev, current) => (prev[`member.${current}`] = order[current], prev),
           {},
         )
-      )
-      .limit(limit)
-      .getMany();
+      );
+
+    const paginator = buildPaginator({
+      entity: Member,
+      paginationKeys: ['createdAt', 'id'],
+      query: {
+        limit,
+        order: 'DESC',
+        afterCursor: nextToken,
+        beforeCursor: prevToken,
+      },
+    });
+    return paginator.paginate(queryBuilder);
   }
 
   async getMembersByConditions(

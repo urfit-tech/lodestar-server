@@ -8,6 +8,7 @@ import {
   Get,
   Post,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
@@ -58,6 +59,10 @@ export class MemberController {
     @Body() dto: MemberGetDTO,
   ): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
+    if (option && option.nextToken && option.prevToken) {
+      throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
+    }
+
     const { appId, permissions } = this.verify(authorization);
 
     if (![

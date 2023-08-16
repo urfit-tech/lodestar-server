@@ -61,17 +61,20 @@ export class MemberService {
         }
         : {};
 
-      const data = await this.memberInfra.getSimpleMemberByConditions(
+      const { data, cursor } = await this.memberInfra.getSimpleMemberByConditions(
         appId,
         wrapCondition,
         {
           createdAt: { order: 'DESC', nulls: 'NULLS LAST' },
           id: { order: 'ASC', nulls: 'NULLS LAST' },
         },
+        option ? option.prevToken : undefined,
+        option ? option.nextToken : undefined,
         option ? option.limit : undefined,
         manager,
       );
       return {
+        cursor,
         data: data.map(({
           id,
           pictureUrl,
