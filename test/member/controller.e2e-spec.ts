@@ -93,6 +93,30 @@ describe('MemberController (e2e)', () => {
       expect(res.body.message).toBe('missing required permission');
     });
 
+    it('Should raise error due to incorrect payload of nextToken & prevToken', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign({
+        'appId': app.id,
+        'memberId': 'invoker_member_id',
+        'permissions': [],
+      }, jwtSecret);
+
+      const res = await request(application.getHttpServer())
+        .get(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          option: {
+            nextToken: '123',
+            prevToken: '456',
+          },
+        })
+        .expect(400);
+      expect(res.body.message).toBe('nextToken & prevToken cannot appear in the same request.');
+    });
+
     it('Should get members with empty conditions', async () => {
       for (let i = 0; i < 5; i++) {
         let insertedMember = new Member();
@@ -126,6 +150,7 @@ describe('MemberController (e2e)', () => {
       const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
+      expect(names.length).not.toBe(0);
       for (let i = 0; i < fetched.length; i++) {
         expect(names.includes(`name${0}`)).toBeTruthy();
       }
@@ -160,12 +185,13 @@ describe('MemberController (e2e)', () => {
         .get(route)
         .set('Authorization', `Bearer ${token}`)
         .send({
-          condition: { name: 'name' },
+          condition: { name: '%name%' },
         })
         .expect(200);
       const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
+      expect(names.length).not.toBe(0);
       for (let i = 0; i < fetched.length; i++) {
         expect(names.includes(`name${0}`)).toBeTruthy();
       }
@@ -213,11 +239,12 @@ describe('MemberController (e2e)', () => {
         .get(route)
         .set('Authorization', `Bearer ${token}`)
         .send({
-          condition: { managerName: managerMember.name },
+          condition: { managerName: `%${managerMember.name}%` },
         })
         .expect(200);
       const { data: fetched }: MemberGetResultDTO = res.body;
 
+      expect(fetched.length).not.toBe(0);
       for (let i = 0; i < fetched.length; i++) {
         const member = fetched[i];
         expect(member.manager_id).toBe(managerMember.id);
@@ -254,8 +281,8 @@ describe('MemberController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           condition: {
-            name: 'name',
-            username: 'unable-to-match-condition',
+            name: '%name%',
+            username: '%unable-to-match-condition%',
           },
         })
         .expect(200);
@@ -293,17 +320,67 @@ describe('MemberController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           condition: {
-            name: 'name',
-            username: 'user',
+            name: '%name%',
+            username: '%user%',
           },
         })
         .expect(200);
       const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
+      expect(names.length).not.toBe(0);
       for (let i = 0; i < fetched.length; i++) {
         expect(names.includes(`name${0}`)).toBeTruthy();
       }
+    });
+
+    it('Should get members with matched nested conditions & pagination', async () => {
+      for (let i = 0; i < 5; i++) {
+        let insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = v4();
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@example.com`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date(new Date().getTime() + i * 1000);
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign({
+        'appId': app.id,
+        'memberId': 'invoker_member_id',
+        'permissions': ['MEMBER_ADMIN'],
+      }, jwtSecret);
+
+      let res, data, cursor, names = [];
+      do {
+        const option = {
+          limit: 2,
+          ...(cursor && cursor.afterCursor && { nextToken: cursor.afterCursor }),
+        };
+        res = await request(application.getHttpServer())
+          .get(route)
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+            option,
+            condition: {
+              name: '%name%',
+              username: '%user%',
+            },
+          })
+          .expect(200);
+        ({ data, cursor } = res.body);
+        expect(data.length).not.toBe(0);
+        data.forEach(({ name }) => names.push(name));
+      } while (cursor !== null && cursor.afterCursor !== null); 
+      expect(names).toMatchObject(['name4','name3','name2', 'name1', 'name0']);
     });
   });
 
