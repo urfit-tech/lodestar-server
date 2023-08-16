@@ -20,7 +20,12 @@ import { isNullString } from '~/utils';
 import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 import { CsvRawMember } from './class/csvRawMember';
 import { MemberInfrastructure } from './member.infra';
-import { MemberGetConditionDTO, MemberGetResultDTO, MemberImportResultDTO } from './member.dto';
+import { 
+  MemberGetConditionDTO,
+  MemberGetQueryOptionsDTO,
+  MemberGetResultDTO,
+  MemberImportResultDTO,
+} from './member.dto';
 import { Member } from './entity/member.entity';
 import { MemberCategory } from './entity/member_category.entity';
 import { MemberProperty } from './entity/member_property.entity';
@@ -37,53 +42,61 @@ export class MemberService {
 
   async getMembersByCondition(
     appId: string,
-    condition: MemberGetConditionDTO,
-    limit: number = 10,
-  ): Promise<Array<MemberGetResultDTO>> {
-    const cb = async (manager: EntityManager) => {
-      const wrapCondition: FindOptionsWhere<Member> = {
-        ...(condition.role && { role: Equal(condition.role) }),
-        ...(condition.name && { name: ILike(condition.name) }),
-        ...(condition.username && { username: ILike(condition.username) }),
-        ...(condition.email && { email: ILike(condition.email) }),
-        ...(condition.managerName && {
-          manager: {
-            name: ILike(condition.managerName),
-          },
-        }),
-        ...(condition.managerId && { managerId: Equal(condition.managerId) }),
-      };
+    option?: MemberGetQueryOptionsDTO,
+    condition?: MemberGetConditionDTO,
+  ): Promise<MemberGetResultDTO> {
+    const cb = async (manager: EntityManager): Promise<MemberGetResultDTO> => {
+      const wrapCondition: FindOptionsWhere<Member> = condition
+        ? {
+          ...(condition.role && { role: Equal(condition.role) }),
+          ...(condition.name && { name: ILike(condition.name) }),
+          ...(condition.username && { username: ILike(condition.username) }),
+          ...(condition.email && { email: ILike(condition.email) }),
+          ...(condition.managerName && {
+            manager: {
+              name: ILike(condition.managerName),
+            },
+          }),
+          ...(condition.managerId && { managerId: Equal(condition.managerId) }),
+        }
+        : {};
 
-      return (await this.memberInfra.getSimpleMemberByConditions(
+      const { data, cursor } = await this.memberInfra.getSimpleMemberByConditions(
         appId,
         wrapCondition,
         {
-          createdAt: { direction: 'DESC', nulls: 'LAST' },
-          id: { direction: 'ASC', nulls: 'LAST' },
+          createdAt: { order: 'DESC', nulls: 'NULLS LAST' },
+          id: { order: 'ASC', nulls: 'NULLS LAST' },
         },
-        limit,
+        option ? option.prevToken : undefined,
+        option ? option.nextToken : undefined,
+        option ? option.limit : undefined,
         manager,
-      )).map(({
-        id,
-        pictureUrl,
-        name,
-        email,
-        role,
-        createdAt,
-        username,
-        loginedAt,
-        managerId
-      }) => ({
-        id,
-        picture_url: pictureUrl,
-        name,
-        email,
-        role,
-        created_at: createdAt,
-        username,
-        logined_at: loginedAt,
-        manager_id: managerId,
-      }));
+      );
+      return {
+        cursor,
+        data: data.map(({
+          id,
+          pictureUrl,
+          name,
+          email,
+          role,
+          createdAt,
+          username,
+          loginedAt,
+          managerId
+        }) => ({
+          id,
+          picture_url: pictureUrl,
+          name,
+          email,
+          role,
+          created_at: createdAt,
+          username,
+          logined_at: loginedAt,
+          manager_id: managerId,
+        })),
+      };
     };
     return cb(this.entityManager);
   }

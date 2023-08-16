@@ -1,4 +1,10 @@
-import { EntityManager, FindOptionsOrder, FindOptionsWhere, In } from 'typeorm';
+import {
+  EntityManager,
+  FindOptionsWhere,
+  OrderByCondition,
+  In,
+} from 'typeorm';
+import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 
 import { MemberProperty } from './entity/member_property.entity';
@@ -10,22 +16,45 @@ export class MemberInfrastructure {
   async getSimpleMemberByConditions(
     appId: string,
     conditions: FindOptionsWhere<Member>,
-    order: FindOptionsOrder<Member>,
-    limit: number,
+    order: OrderByCondition,
+    prevToken: string | undefined,
+    nextToken: string | undefined,
+    limit: number = 10,
     entityManager: EntityManager,
-  ) {
-    const memberRepo = entityManager.getRepository(Member);
-    return memberRepo.find({
-      where: {
-        ...conditions,
+  ): Promise<{ data: Array<Member>; cursor: Cursor; }> {
+    let queryBuilder = entityManager
+      .getRepository(Member)
+      .createQueryBuilder('member');
+    
+    if (conditions.manager || conditions.managerId) {
+      queryBuilder = queryBuilder
+        .leftJoinAndSelect('member.manager', 'manager');
+    }
+
+    queryBuilder = queryBuilder
+      .where({
         appId,
+        ...conditions,
+      })
+      .orderBy(Object
+        .keys(order)
+        .reduce(
+          (prev, current) => (prev[`member.${current}`] = order[current], prev),
+          {},
+        )
+      );
+
+    const paginator = buildPaginator({
+      entity: Member,
+      paginationKeys: ['createdAt', 'id'],
+      query: {
+        limit,
+        order: 'DESC',
+        afterCursor: nextToken,
+        beforeCursor: prevToken,
       },
-      relations: {
-        ...((conditions.manager || conditions.managerId) && { manager: true }),
-      },
-      order,
-      take: limit,
     });
+    return paginator.paginate(queryBuilder);
   }
 
   async getMembersByConditions(

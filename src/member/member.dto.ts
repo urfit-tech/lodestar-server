@@ -2,10 +2,12 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
+  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { Cursor } from 'typeorm-cursor-pagination';
 
 class FileInfo {
   @IsString()
@@ -13,6 +15,20 @@ class FileInfo {
 
   @IsString()
   checksum: string;
+}
+
+export class MemberGetQueryOptionsDTO {
+  @IsOptional()
+  @IsString()
+  prevToken?: string;
+
+  @IsOptional()
+  @IsString()
+  nextToken?: string;
+
+  @IsOptional()
+  @IsNumber()
+  limit?: number;
 }
 
 export class MemberGetConditionDTO {
@@ -41,16 +57,31 @@ export class MemberGetConditionDTO {
   managerId?: string;
 }
 
+export class MemberGetDTO {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MemberGetQueryOptionsDTO)
+  option?: MemberGetQueryOptionsDTO;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MemberGetConditionDTO)
+  condition?: MemberGetConditionDTO;
+}
+
 export class MemberGetResultDTO {
-  id: string;
-  picture_url: string;
-  name: string;
-  email: string;
-  role: string;
-  created_at: Date;
-  username: string;
-  logined_at: Date;
-  manager_id: string;
+  cursor: Cursor;
+  data: Array<{
+    id: string;
+    picture_url: string;
+    name: string;
+    email: string;
+    role: string;
+    created_at: Date;
+    username: string;
+    logined_at: Date;
+    manager_id: string;
+  }>;
 }
 
 export class MemberImportDTO {
