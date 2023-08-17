@@ -16,22 +16,22 @@ export class AppSettingHandler extends TriggerHandler<AppSetting> {
     super(logger);
   }
 
-  protected handleInsert(tableLog: TableLog, manager: EntityManager): Promise<any> {
-    return;
+  protected handleInsert(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>> {
+    return Promise.resolve({});
   }
 
-  protected async handleUpdate(tableLog: TableLog, manager: EntityManager): Promise<any> {
+  protected async handleUpdate(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>> {
     const newData = tableLog.new;
     const { app_id: appId } = newData;
     await this.clearCache(appId);
-    return;
+    return { 'message': 'clear cache successfully' };
   }
 
-  protected async handleDelete(tableLog: TableLog, manager: EntityManager): Promise<any> {
+  protected async handleDelete(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>> {
     const oldData = tableLog.old;
     const { app_id: appId } = oldData;
     await this.clearCache(appId);
-    return;
+    return { 'message': 'clear cache successfully' };
   }
 
   private async clearCache(appId: string): Promise<void> {

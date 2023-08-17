@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Cursor } from 'typeorm-cursor-pagination';
 
 class FileInfo {
   @IsString()
@@ -7,6 +15,73 @@ class FileInfo {
 
   @IsString()
   checksum: string;
+}
+
+export class MemberGetQueryOptionsDTO {
+  @IsOptional()
+  @IsString()
+  prevToken?: string;
+
+  @IsOptional()
+  @IsString()
+  nextToken?: string;
+
+  @IsOptional()
+  @IsNumber()
+  limit?: number;
+}
+
+export class MemberGetConditionDTO {
+  @IsString()
+  @IsOptional()
+  role?: string;
+
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  username?: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @IsOptional()
+  managerName?: string;
+
+  @IsString()
+  @IsOptional()
+  managerId?: string;
+}
+
+export class MemberGetDTO {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MemberGetQueryOptionsDTO)
+  option?: MemberGetQueryOptionsDTO;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MemberGetConditionDTO)
+  condition?: MemberGetConditionDTO;
+}
+
+export class MemberGetResultDTO {
+  cursor: Cursor;
+  data: Array<{
+    id: string;
+    picture_url: string;
+    name: string;
+    email: string;
+    role: string;
+    created_at: Date;
+    username: string;
+    logined_at: Date;
+    manager_id: string;
+  }>;
 }
 
 export class MemberImportDTO {

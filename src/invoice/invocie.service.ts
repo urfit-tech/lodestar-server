@@ -1,11 +1,13 @@
 import dayjs from 'dayjs';
 import { EntityManager } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
-import { Invoice } from '~/invoice/invoice.entity';
-import { PaymentInfrastructure } from '~/payment/payment.infra';
+import { AppService } from '~/app/app.service';
 import { OrderInfrastructure } from '~/order/order.infra';
+import { PaymentInfrastructure } from '~/payment/payment.infra';
+import { PaymentLog } from '~/payment/payment_log.entity';
+import { Invoice } from '~/invoice/invoice.entity';
 
 import { EzpayClient } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
@@ -29,19 +31,103 @@ type InvoiceOptions = {
 @Injectable()
 export class InvoiceService {
   constructor(
+    protected readonly logger: Logger,
     private readonly ezpayClient: EzpayClient,
     @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly invoiceInfra: InvoiceInfrastructure,
     private readonly orderInfra: OrderInfrastructure,
     private readonly paymentInfra: PaymentInfrastructure,
+    private readonly appService: AppService,
   ) {}
 
-  async issueInvoice(
+  public async issueInvoiceByPayment(payment: PaymentLog, manager: EntityManager) {
+    const { order, no: paymentNo, options, price } = payment;
+
+    try {
+      const { member } = order;
+      const appId = member.appId;
+      const card4No = options?.card4No;
+      const invoiceComment = card4No ? `信用卡末四碼 ${card4No}` : options?.paymentType || '';
+
+      const appSettings = await this.appService.getAppSettings(appId, manager);
+      const appSecrets = await this.appService.getAppSecrets(appId, manager);
+      const appModules = await this.appService.getAppModules(appId, manager);
+
+      if (!this.isAllowUseInvoiceModule(appSecrets, appModules)) {
+        throw new Error(`App: ${appId} invoice module is not enable or missing setting/secrets.`);
+      }
+      
+      this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`)
+      const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
+      
+      const { Amt, invServiceResponse } = await this.issueInvoice(appSecrets, paymentNo, price, {
+        appId,
+        name: invoiceOptions['name'] || member.name,
+        email: invoiceOptions['email'] || member.email,
+        comment: invoiceComment,
+        products: orderProducts.map((v) => ({
+          name: v.name.replace(/\|/g, '｜'),
+          price: v.price,
+          quantity: Number(v?.options?.quantity) || 1,
+        })),
+        discounts: orderDiscounts.map((v) => ({
+          name: v.name.replace(/\|/g, '｜'),
+          price: v.price,
+        })),
+        shipping: shipping
+          ? {
+              method: shipping?.shippingMethod?.replace(/\|/g, '｜'),
+              fee: Number(shipping?.fee) || 0,
+            }
+          : undefined,
+        isDutyFree: appSettings['feature.duty_free.enable'] === '1',
+        donationCode: invoiceOptions['donationCode'],
+        phoneBarCode: invoiceOptions['phoneBarCode'],
+        uniformNumber: invoiceOptions['uniformNumber'],
+        uniformTitle: invoiceOptions['uniformTitle'],
+        citizenCode: invoiceOptions['citizenCode'],
+      });
+      const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber']
+
+      const toUpdateInvoiceOptions = invServiceResponse.Status === 'SUCCESS' ? {
+        invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
+        invoiceNumber: invoiceNumber,
+      } : {
+        reason: invServiceResponse.Message,
+      };
+
+      const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptions(
+        paymentNo,
+        {
+          status: invServiceResponse.Status,
+          ...toUpdateInvoiceOptions,
+        },
+        invServiceResponse.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
+        manager,
+      );
+
+      if (invServiceResponse.Status === 'SUCCESS') {
+        const orderId = orderLogs[0].id;
+        if (orderId && invoiceNumber) {
+          await this.insertInvoice(orderId, invoiceNumber, Amt, manager);
+        }
+      }
+    } catch (error) {
+      await this.updateOrderAndPaymentLogInvoiceOptions(
+        paymentNo, {
+          status: 'LODESTAR_FAIL',
+          reason: error.message,
+        }, undefined, manager,
+      );
+      throw error;
+    }
+  }
+
+  private async issueInvoice(
     appSecrets: Record<string, string>,
     paymentNo: string,
     amount: number,
     options: InvoiceOptions,
-    entityManager?: EntityManager,
   ) {
     let invoiceAttrs: { [key: string]: any } = {}
     if (options.donationCode) {
@@ -153,26 +239,10 @@ export class InvoiceService {
       ...invoiceAttrs,
       ...taxOptions,
     })
-    const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber']
-
-    const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptions(
-      paymentNo,
-      {
-        status: invServiceResponse.Status,
-        invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
-        invoiceNumber: invoiceNumber,
-      },
-      invServiceResponse.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
-      entityManager,
-    );
-    if (invServiceResponse.Status !== 'SUCCESS') {
-      throw new Error(invServiceResponse.Message)
-    } else {
-      const orderId = orderLogs[0].id;
-      if (orderId && invoiceNumber) {
-        await this.insertInvoice(orderId, invoiceNumber, Amt, entityManager);
-      }
-    }
+    return {
+      Amt,
+      invServiceResponse,
+    };
   }
   
   private updateOrderAndPaymentLogInvoiceOptions(
@@ -212,9 +282,21 @@ export class InvoiceService {
 
   private async insertInvoice(orderId: string, invoiceNumber: string, price: number, manager: EntityManager): Promise<void> {
     const invoice = new Invoice();
+
     invoice.orderId = orderId;
     invoice.no = invoiceNumber;
     invoice.price = price;
+
     await this.invoiceInfra.save(invoice, manager);
+  }
+
+  private isAllowUseInvoiceModule(
+    appSecrets: Record<string, string>,
+    appModules: Array<string>,
+  ): boolean {
+    return Boolean(appSecrets['invoice.merchant_id'] &&
+      appSecrets['invoice.hash_key'] &&
+      appSecrets['invoice.hash_iv'] &&
+      appModules.includes('invoice'));
   }
 }

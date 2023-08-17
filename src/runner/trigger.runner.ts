@@ -34,7 +34,7 @@ export class TriggerRunner extends Runner {
       distributedLockService,
       shutdownService,
     );
-    this.batchSize = 10;
+    this.batchSize = 100;
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {

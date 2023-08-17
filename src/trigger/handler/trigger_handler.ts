@@ -1,7 +1,9 @@
 import { Logger } from '@nestjs/common';
+import dayjs from 'dayjs';
 import { EntityManager } from 'typeorm';
 
 import { TableLog } from '~/table_log/table_log.entity';
+import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
 
 export abstract class TriggerHandler<T> {
   protected readonly logger: Logger;
@@ -10,22 +12,36 @@ export abstract class TriggerHandler<T> {
     this.logger = logger;
   }
 
-  handler(tableLog: TableLog, manager: EntityManager){
+  async handler(tableLog: TableLog, manager: EntityManager) {
     const { tableName, new: newData, old: oldData } = tableLog;
     this.logger.log(`Handling ${tableName} trigger handler`);
 
     if (oldData === null) {
-      return this.handleInsert(tableLog, manager);
+      const insertResult = await this.handleInsert(tableLog, manager);
+      return this.log(tableLog, insertResult, manager);
     } else if (newData === null) {
-      return this.handleDelete(tableLog, manager);
+      const deleteResult = await this.handleDelete(tableLog, manager);
+      return this.log(tableLog, deleteResult, manager);
     } else {
-      return this.handleUpdate(tableLog, manager);
+      const updateResult = await this.handleUpdate(tableLog, manager);
+      return this.log(tableLog, updateResult, manager);
     }
   }
 
-  protected abstract handleInsert(tableLog: TableLog, manager: EntityManager): Promise<any>;
-  
-  protected abstract handleUpdate(tableLog: TableLog, manager: EntityManager): Promise<any>;
+  private async log(tableLog: TableLog, result: Record<string, any>, manager: EntityManager) {
+    const triggerLogRepo = manager.getRepository(TriggerLog);
+    const triggerLog = new TriggerLog();
 
-  protected abstract handleDelete(tableLog: TableLog, manager: EntityManager): Promise<any>;
+    triggerLog.tableLog = tableLog;
+    triggerLog.result = result;
+    triggerLog.createdAt = dayjs.utc().toDate();
+
+    return triggerLogRepo.save(triggerLog);
+  }
+
+  protected abstract handleInsert(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>>;
+  
+  protected abstract handleUpdate(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>>;
+
+  protected abstract handleDelete(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>>;
 }
