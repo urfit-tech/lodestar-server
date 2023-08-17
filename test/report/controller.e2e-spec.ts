@@ -7,7 +7,7 @@ import { Member } from '~/member/entity/member.entity';
 import { App } from '~/entity/App';
 import { AppPlan } from '~/entity/AppPlan';
 import { AppSetting } from '~/app/entity/app_setting.entity';
-import { Report } from './entity/report.entity';
+import { Report } from '../../src/report/entity/report.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { v4 } from 'uuid';
@@ -69,6 +69,8 @@ describe('ReportController (e2e)', () => {
   });
 
   describe('/report/:reportId (GET)', () => {
+    const getReportRoute = `/report`;
+    const authTokenRoute = '/auth/token';
     const member = new Member();
     member.id = v4();
     member.appId = app.id;
@@ -90,7 +92,7 @@ describe('ReportController (e2e)', () => {
       };
 
       await request(application.getHttpServer())
-        .get(`/report/${v4()}`)
+        .get(`${getReportRoute}/${v4()}`)
         .set(requestHeader)
         .expect(400)
         .expect(/{"statusCode":400,"message":"E_TOKEN_INVALID"}/);
@@ -102,17 +104,20 @@ describe('ReportController (e2e)', () => {
       await memberRepo.save(member);
       await reportRepo.save(metabaseReport);
       const tokenResponse = await request(application.getHttpServer())
-        .post('/auth/token')
+        .post(authTokenRoute)
         .send({ clientId: 'test', key: 'testKey', permissions: [] });
       const {
         result: { authToken },
       } = tokenResponse.body;
 
       const requestHeader = {
-        authorization: 'Bearer ' + authToken,
+        Authorization: 'Bearer ' + authToken,
       };
 
-      await request(application.getHttpServer()).get(`/report/${metabaseReport.id}`).set(requestHeader).expect(200);
+      await request(application.getHttpServer())
+        .get(`${getReportRoute}/${metabaseReport.id}`)
+        .set(requestHeader)
+        .expect(200);
     });
   });
 });

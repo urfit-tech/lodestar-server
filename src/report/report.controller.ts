@@ -16,10 +16,9 @@ export class ReportController {
   ) {}
 
   @Get('/:reportId')
-  async getReportSignedUrl(@Param('reportId') reportId: string, @Headers() headers) {
+  async getReportSignedUrl(@Param('reportId') reportId: string, @Headers('Authorization') authorization: string) {
     let result;
     try {
-      const { authorization } = headers;
       await verify(authorization.split(' ')[1], this.configService.get('HASURA_JWT_SECRET'));
     } catch {
       throw new APIException({ code: 'E_TOKEN_INVALID', message: 'authToken is invalid' });

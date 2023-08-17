@@ -7,7 +7,7 @@ export interface MetabasePayload {
 export interface Report {
   id: string;
   title: string;
-  type: string;
+  type: 'metabase';
   appId: string;
   options: ReportOptions;
 }
