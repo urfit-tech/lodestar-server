@@ -468,7 +468,7 @@ describe('MemberController (e2e)', () => {
         .post(route)
         .set('Authorization', `Bearer ${token}`)
         .send({})
-        .expect(200);
+        .expect(201);
       const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
@@ -509,7 +509,7 @@ describe('MemberController (e2e)', () => {
         .send({
           condition: { name: '%name%' },
         })
-        .expect(200);
+        .expect(201);
       const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
@@ -563,7 +563,7 @@ describe('MemberController (e2e)', () => {
         .send({
           condition: { managerName: `%${managerMember.name}%` },
         })
-        .expect(200);
+        .expect(201);
       const { data: fetched }: MemberGetResultDTO = res.body;
 
       expect(fetched.length).not.toBe(0);
@@ -607,7 +607,7 @@ describe('MemberController (e2e)', () => {
             username: '%unable-to-match-condition%',
           },
         })
-        .expect(200);
+        .expect(201);
       const { data }: MemberGetResultDTO = res.body;
       expect(data.length).toBe(0);
     });
@@ -646,7 +646,7 @@ describe('MemberController (e2e)', () => {
             username: '%user%',
           },
         })
-        .expect(200);
+        .expect(201);
       const { data: fetched }: MemberGetResultDTO = res.body;
       const names = fetched.map(({ name }) => name);
 
@@ -697,7 +697,7 @@ describe('MemberController (e2e)', () => {
               username: '%user%',
             },
           })
-          .expect(200);
+          .expect(201);
         ({ data, cursor } = res.body);
         expect(data.length).not.toBe(0);
         data.forEach(({ name }) => names.push(name));
