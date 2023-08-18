@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsEmail,
   IsNumber,
   IsOptional,
   IsString,
@@ -44,7 +43,7 @@ export class MemberGetConditionDTO {
   @IsOptional()
   username?: string;
 
-  @IsEmail()
+  @IsString()
   @IsOptional()
   email?: string;
 
