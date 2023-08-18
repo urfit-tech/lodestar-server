@@ -11,28 +11,28 @@ import { Program } from './Program';
 @Entity('program_tag', { schema: 'public' })
 export class ProgramTag {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'program_id' })
-  programId: string
+  programId: string;
 
   @Column('text', { name: 'tag_name' })
-  tagName: string
+  tagName: string;
 
   @Column('integer', { name: 'position', default: () => 0 })
-  position: number
+  position: number;
 
-  @ManyToOne(() => Program, program => program.programTags, {
+  @ManyToOne(() => Program, (program) => program.programTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
-  program: Program
+  program: Program;
 
-  @ManyToOne(() => Tag, tag => tag.programTags, {
+  @ManyToOne(() => Tag, (tag) => tag.programTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'tag_name', referencedColumnName: 'name' }])
-  tagName2: Tag
+  tagName2: Tag;
 }

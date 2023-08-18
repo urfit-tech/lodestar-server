@@ -5,4 +5,4 @@ export class PgTrigger {
   trigger_schema: string;
   trigger_name: string;
   event_manipulation: TableOperation;
-};
+}

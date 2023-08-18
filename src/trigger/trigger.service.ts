@@ -17,9 +17,7 @@ export class TriggerService {
     private readonly appHostHandler: AppHostHandler,
   ) {}
 
-  public async processTriggerThroughTableLog(
-    limit: number, manager: EntityManager,
-  ): Promise<void> {
+  public async processTriggerThroughTableLog(limit: number, manager: EntityManager): Promise<void> {
     const triggerLogRepo = manager.getRepository(TriggerLog);
     const tableLogRepo = manager.getRepository(TableLog);
     const triggerLog = await triggerLogRepo.findOne({

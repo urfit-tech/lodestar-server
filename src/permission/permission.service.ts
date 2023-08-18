@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { EntityManager, In } from "typeorm";
+import { Injectable } from '@nestjs/common';
+import { EntityManager, In } from 'typeorm';
 
-import { Permission } from "~/entity/Permission";
+import { Permission } from '~/entity/Permission';
 
 @Injectable()
 export class PermissionService {

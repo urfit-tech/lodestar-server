@@ -2,49 +2,49 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 
 import { ProgramContent } from '~/program/entity/program_content.entity';
 
-import { Member } from '~/member/entity/member.entity';;
+import { Member } from '~/member/entity/member.entity';
 
 @Index('exercise_pkey', ['id'], { unique: true })
 @Entity('exercise', { schema: 'public' })
 export class Exercise {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('jsonb', { name: 'answer', nullable: true })
-  answer: object | null
+  answer: object | null;
 
   @Column('uuid', { name: 'exam_id', nullable: true })
-  examId: string | null
+  examId: string | null;
 
   @Column('timestamp with time zone', { name: 'started_at', nullable: true })
-  startedAt: Date | null
+  startedAt: Date | null;
 
   @Column('timestamp with time zone', { name: 'ended_at', nullable: true })
-  endedAt: Date | null
+  endedAt: Date | null;
 
-  @ManyToOne(() => Member, member => member.exercises, {
+  @ManyToOne(() => Member, (member) => member.exercises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => ProgramContent, programContent => programContent.exercises, {
+  @ManyToOne(() => ProgramContent, (programContent) => programContent.exercises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_content_id', referencedColumnName: 'id' }])
-  programContent: ProgramContent
+  programContent: ProgramContent;
 }

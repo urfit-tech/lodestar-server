@@ -20,67 +20,67 @@ import { ProjectCategory } from '~/entity/ProjectCategory';
 @Entity('category', { schema: 'public' })
 export class Category {
   @Column('text', { name: 'name', unique: true })
-  name: string
+  name: string;
 
   @Column('text', { name: 'class', unique: true })
-  class: string
+  class: string;
 
   @Column('integer', { name: 'position' })
-  position: number
+  position: number;
 
   @Column('text', { name: 'app_id', unique: true })
-  appId: string
+  appId: string;
 
   @PrimaryGeneratedColumn()
-  id: string
+  id: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
     default: () => 'now()',
   })
-  createdAt: Date | null
+  createdAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     nullable: true,
     default: () => 'now()',
   })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
   @Column('boolean', { name: 'filterable', default: () => true })
-  filterable: boolean
+  filterable: boolean;
 
-  @OneToMany(() => ActivityCategory, activityCategory => activityCategory.category)
-  activityCategories: ActivityCategory[]
+  @OneToMany(() => ActivityCategory, (activityCategory) => activityCategory.category)
+  activityCategories: ActivityCategory[];
 
-  @OneToMany(() => CreatorCategory, creatorCategory => creatorCategory.category)
-  creatorCategories: CreatorCategory[]
+  @OneToMany(() => CreatorCategory, (creatorCategory) => creatorCategory.category)
+  creatorCategories: CreatorCategory[];
 
-  @OneToMany(() => MemberCategory, memberCategory => memberCategory.category)
-  memberCategories: MemberCategory[]
+  @OneToMany(() => MemberCategory, (memberCategory) => memberCategory.category)
+  memberCategories: MemberCategory[];
 
-  @OneToMany(() => MemberTask, memberTask => memberTask.category)
-  memberTasks: MemberTask[]
+  @OneToMany(() => MemberTask, (memberTask) => memberTask.category)
+  memberTasks: MemberTask[];
 
-  @OneToMany(() => MerchandiseCategory, merchandiseCategory => merchandiseCategory.category)
-  merchandiseCategories: MerchandiseCategory[]
+  @OneToMany(() => MerchandiseCategory, (merchandiseCategory) => merchandiseCategory.category)
+  merchandiseCategories: MerchandiseCategory[];
 
-  @OneToMany(() => PodcastAlbumCategory, podcastAlbumCategory => podcastAlbumCategory.category)
-  podcastAlbumCategories: PodcastAlbumCategory[]
+  @OneToMany(() => PodcastAlbumCategory, (podcastAlbumCategory) => podcastAlbumCategory.category)
+  podcastAlbumCategories: PodcastAlbumCategory[];
 
-  @OneToMany(() => PodcastProgramCategory, podcastProgramCategory => podcastProgramCategory.category)
-  podcastProgramCategories: PodcastProgramCategory[]
+  @OneToMany(() => PodcastProgramCategory, (podcastProgramCategory) => podcastProgramCategory.category)
+  podcastProgramCategories: PodcastProgramCategory[];
 
-  @OneToMany(() => PostCategory, postCategory => postCategory.category)
-  postCategories: PostCategory[]
+  @OneToMany(() => PostCategory, (postCategory) => postCategory.category)
+  postCategories: PostCategory[];
 
-  @OneToMany(() => ProgramCategory, programCategory => programCategory.category)
-  programCategories: ProgramCategory[]
+  @OneToMany(() => ProgramCategory, (programCategory) => programCategory.category)
+  programCategories: ProgramCategory[];
 
-  @OneToMany(() => ProgramPackageCategory, programPackageCategory => programPackageCategory.category)
-  programPackageCategories: ProgramPackageCategory[]
+  @OneToMany(() => ProgramPackageCategory, (programPackageCategory) => programPackageCategory.category)
+  programPackageCategories: ProgramPackageCategory[];
 
-  @OneToMany(() => ProjectCategory, projectCategory => projectCategory.category)
-  projectCategories: ProjectCategory[]
+  @OneToMany(() => ProjectCategory, (projectCategory) => projectCategory.category)
+  projectCategories: ProjectCategory[];
 }

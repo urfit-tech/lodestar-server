@@ -23,5 +23,5 @@ const rawSql = `
   RETURN NEW;
 
   END $$ LANGUAGE plpgsql;
-`
+`;
 export default rawSql;

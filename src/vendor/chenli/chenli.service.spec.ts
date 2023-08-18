@@ -1,18 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing'
-import { ChenliService } from './chenli.service'
+import { Test, TestingModule } from '@nestjs/testing';
+import { ChenliService } from './chenli.service';
 
 describe('ChenliService', () => {
-  let service: ChenliService
+  let service: ChenliService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [ChenliService],
-    }).compile()
+    }).compile();
 
-    service = module.get<ChenliService>(ChenliService)
-  })
+    service = module.get<ChenliService>(ChenliService);
+  });
 
   it('should be defined', () => {
-    expect(service).toBeDefined()
-  })
-})
+    expect(service).toBeDefined();
+  });
+});

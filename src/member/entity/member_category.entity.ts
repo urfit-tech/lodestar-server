@@ -9,28 +9,28 @@ import { Member } from './member.entity';
 @Entity('member_category', { schema: 'public' })
 export class MemberCategory {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('text', { name: 'category_id', unique: true })
-  categoryId: string
+  categoryId: string;
 
   @Column('integer', { name: 'position' })
-  position: number
+  position: number;
 
-  @ManyToOne(() => Member, member => member.memberCategories, {
+  @ManyToOne(() => Member, (member) => member.memberCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => Category, category => category.memberCategories, {
+  @ManyToOne(() => Category, (category) => category.memberCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'category_id', referencedColumnName: 'id' }])
-  category: Category
+  category: Category;
 }

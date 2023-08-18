@@ -1,5 +1,5 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm'
-import { App } from './App'
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { App } from './App';
 
 @Index('app_language_app_id_language_key', ['appId', 'language'], {
   unique: true,
@@ -12,21 +12,21 @@ export class AppLanguage {
     name: 'id',
     default: () => 'gen_random_uuid()',
   })
-  id: string
+  id: string;
 
   @Column('text', { name: 'app_id', unique: true })
-  appId: string
+  appId: string;
 
   @Column('text', { name: 'language', unique: true })
-  language: string
+  language: string;
 
   @Column('jsonb', { name: 'data', default: () => 'jsonb_build_object()' })
-  data: object
+  data: object;
 
-  @ManyToOne(() => App, app => app.appLanguages, {
+  @ManyToOne(() => App, (app) => app.appLanguages, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
-  app: App
+  app: App;
 }

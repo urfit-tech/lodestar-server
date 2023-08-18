@@ -15,9 +15,11 @@ export class PostgresModule {
         TypeOrmModule.forRootAsync({
           name: PostgresDataSourceConfig.name,
           imports: [ConfigModule],
-          useFactory: async (configService: ConfigService<{
-            POSTGRES_LOGGING: LoggerOptions;
-          }>) => {
+          useFactory: async (
+            configService: ConfigService<{
+              POSTGRES_LOGGING: LoggerOptions;
+            }>,
+          ) => {
             return {
               ...PostgresDataSourceConfig,
               logging: configService.get('POSTGRES_LOGGING') || false,

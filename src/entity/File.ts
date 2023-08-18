@@ -10,68 +10,68 @@ export class File {
     name: 'id',
     default: () => 'gen_random_uuid()',
   })
-  id: string
+  id: string;
 
   @Column('text', { name: 'name' })
-  name: string
+  name: string;
 
   @Column('text', { name: 'excerpt' })
-  excerpt: string
+  excerpt: string;
 
   @Column('text', { name: 'uri' })
-  uri: string
+  uri: string;
 
   @Column('numeric', { name: 'size' })
-  size: number
+  size: number;
 
   @Column('text', { name: 'status' })
-  status: string
+  status: string;
 
   @Column('text', { name: 'checksum' })
-  checksum: string
+  checksum: string;
 
   @Column('text', { name: 'mime_type' })
-  mimeType: string
+  mimeType: string;
 
   @Column('jsonb', { name: 'metadata', default: () => 'jsonb_build_object()' })
-  metadata: object
+  metadata: object;
 
   @Column('text', { name: 'thumbnail', nullable: true })
-  thumbnail: string | null
+  thumbnail: string | null;
 
   @Column('text', { name: 'acl', default: () => "'OWNED'" })
-  acl: string
+  acl: string;
 
   @Column('integer', { name: 'viewed_count', default: () => 0 })
-  viewedCount: number
+  viewedCount: number;
 
   @Column('timestamp with time zone', { name: 'viewed_at', nullable: true })
-  viewedAt: Date | null
+  viewedAt: Date | null;
 
   @Column('timestamp with time zone', { name: 'starred_at', nullable: true })
-  starredAt: Date | null
+  starredAt: Date | null;
 
   @Column('text', { name: 'created_by' })
-  createdBy: string
+  createdBy: string;
 
   @Column('text', { name: 'updated_by' })
-  updatedBy: string
+  updatedBy: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('timestamp with time zone', { name: 'purge_at', nullable: true })
-  purgeAt: Date | null
+  purgeAt: Date | null;
 
-  @OneToMany(() => Attachment, attachment => attachment.file)
-  attachments: Attachment[]
+  @OneToMany(() => Attachment, (attachment) => attachment.file)
+  attachments: Attachment[];
 }

@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
 import { Tag } from '~/definition/entity/tag.entity';
 
@@ -6,31 +6,31 @@ import { Tag } from '~/definition/entity/tag.entity';
 @Entity('member_speciality', { schema: 'public' })
 export class MemberSpeciality {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
-  @ManyToOne(() => Member, member => member.memberSpecialities, {
+  @ManyToOne(() => Member, (member) => member.memberSpecialities, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => Tag, tag => tag.memberSpecialities, {
+  @ManyToOne(() => Tag, (tag) => tag.memberSpecialities, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'tag_name', referencedColumnName: 'name' }])
-  tagName: Tag
+  tagName: Tag;
 }

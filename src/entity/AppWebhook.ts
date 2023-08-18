@@ -1,25 +1,25 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { App } from './App';
 
 @Index('app_webhook_pkey', ['id'], { unique: true })
 @Entity('app_webhook', { schema: 'public' })
 export class AppWebhook {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'event' })
-  event: string
+  event: string;
 
   @Column('text', { name: 'url' })
-  url: string
+  url: string;
 
   @Column('boolean', { name: 'enabled', default: () => false })
-  enabled: boolean
+  enabled: boolean;
 
-  @ManyToOne(() => App, app => app.appWebhooks, {
+  @ManyToOne(() => App, (app) => app.appWebhooks, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
-  app: App
+  app: App;
 }

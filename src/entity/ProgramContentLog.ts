@@ -9,37 +9,37 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('program_content_log', { schema: 'public' })
 export class ProgramContentLog {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id' })
-  memberId: string
+  memberId: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('numeric', { name: 'playback_rate' })
-  playbackRate: number
+  playbackRate: number;
 
   @Column('numeric', { name: 'started_at' })
-  startedAt: number
+  startedAt: number;
 
   @Column('numeric', { name: 'ended_at' })
-  endedAt: number
+  endedAt: number;
 
-  @ManyToOne(() => Member, member => member.programContentLogs, {
+  @ManyToOne(() => Member, (member) => member.programContentLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => ProgramContent, programContent => programContent.programContentLogs, {
+  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_content_id', referencedColumnName: 'id' }])
-  programContent: ProgramContent
+  programContent: ProgramContent;
 }

@@ -8,22 +8,22 @@ import { Project } from './Project';
 @Entity('project_category', { schema: 'public' })
 export class ProjectCategory {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('integer', { name: 'position' })
-  position: number
+  position: number;
 
-  @ManyToOne(() => Project, project => project.projectCategories, {
+  @ManyToOne(() => Project, (project) => project.projectCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'project_id', referencedColumnName: 'id' }])
-  project: Project
+  project: Project;
 
-  @ManyToOne(() => Category, category => category.projectCategories, {
+  @ManyToOne(() => Category, (category) => category.projectCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'category_id', referencedColumnName: 'id' }])
-  category: Category
+  category: Category;
 }

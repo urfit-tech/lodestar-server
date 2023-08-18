@@ -1,32 +1,32 @@
-import { Column, Entity, Index, PrimaryColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
 @Index('iszn_coupon_pkey', ['id'], { unique: true })
 @Entity('iszn_coupon', { schema: 'public' })
 export class IsznCoupon {
   @Column('timestamp with time zone', { name: 'startedat', nullable: true })
-  startedat: Date | null
+  startedat: Date | null;
 
   @Column('timestamp with time zone', { name: 'endedat', nullable: true })
-  endedat: Date | null
+  endedat: Date | null;
 
   @Column('integer', { name: 'amount' })
-  amount: number
+  amount: number;
 
   @Column('integer', { name: 'count' })
-  count: number
+  count: number;
 
   @Column('integer', { name: 'constraint', nullable: true })
-  constraint: number | null
+  constraint: number | null;
 
   @Column('text', { name: 'description', nullable: true })
-  description: string | null
+  description: string | null;
 
   @PrimaryColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('integer', { name: 'type', nullable: true })
-  type: number | null
+  type: number | null;
 }

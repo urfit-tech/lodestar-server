@@ -1,32 +1,32 @@
-import { Column, Entity, Index, PrimaryColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
 @Index('iszn_coursecontent_pkey', ['id'], { unique: true })
 @Entity('iszn_coursecontent', { schema: 'public' })
 export class IsznCoursecontent {
   @PrimaryColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('boolean', { name: 'istrial' })
-  istrial: boolean
+  istrial: boolean;
 
   @Column('timestamp with time zone', { name: 'createdat' })
-  createdat: Date
+  createdat: Date;
 
   @Column('timestamp with time zone', { name: 'updatedat' })
-  updatedat: Date
+  updatedat: Date;
 
   @Column('integer', { name: 'order' })
-  order: number
+  order: number;
 
   @Column('uuid', { name: 'unitid' })
-  unitid: string
+  unitid: string;
 
   @Column('uuid', { name: 'courseresourceid', nullable: true })
-  courseresourceid: string | null
+  courseresourceid: string | null;
 
   @Column('numeric', { name: 'duration', nullable: true })
-  duration: number | null
+  duration: number | null;
 }

@@ -11,28 +11,28 @@ import { ProgramPackageProgram } from './ProgramPackageProgram';
 @Entity('program_tempo_delivery', { schema: 'public' })
 export class ProgramTempoDelivery {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('uuid', { name: 'program_package_program_id', unique: true })
-  programPackageProgramId: string
+  programPackageProgramId: string;
 
   @Column('timestamp with time zone', { name: 'delivered_at' })
-  deliveredAt: Date
+  deliveredAt: Date;
 
-  @ManyToOne(() => Member, member => member.programTempoDeliveries, {
+  @ManyToOne(() => Member, (member) => member.programTempoDeliveries, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => ProgramPackageProgram, programPackageProgram => programPackageProgram.programTempoDeliveries, {
+  @ManyToOne(() => ProgramPackageProgram, (programPackageProgram) => programPackageProgram.programTempoDeliveries, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_package_program_id', referencedColumnName: 'id' }])
-  programPackageProgram: ProgramPackageProgram
+  programPackageProgram: ProgramPackageProgram;
 }

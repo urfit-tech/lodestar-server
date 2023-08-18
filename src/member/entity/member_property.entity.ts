@@ -9,40 +9,40 @@ import { Member } from './member.entity';
 @Entity('member_property', { schema: 'public' })
 export class MemberProperty {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('uuid', { name: 'property_id', unique: true })
-  propertyId: string
+  propertyId: string;
 
   @Column('text', { name: 'value' })
-  value: string
+  value: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
-  @ManyToOne(() => Member, member => member.memberProperties, {
+  @ManyToOne(() => Member, (member) => member.memberProperties, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => Property, property => property.memberProperties, {
+  @ManyToOne(() => Property, (property) => property.memberProperties, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'property_id', referencedColumnName: 'id' }])
-  property: Property
+  property: Property;
 }

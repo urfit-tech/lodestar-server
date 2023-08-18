@@ -5,10 +5,7 @@ import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class DistributedLockService {
-  constructor(
-    @Inject('KEY') private readonly key: string,
-    private readonly cacheService: CacheService,
-  ) {}
+  constructor(@Inject('KEY') private readonly key: string, private readonly cacheService: CacheService) {}
 
   async occupyLock(
     identityKey: string | undefined,

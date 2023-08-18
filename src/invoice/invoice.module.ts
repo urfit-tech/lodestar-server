@@ -11,13 +11,7 @@ import { InvoiceInfrastructure } from './invoice.infra';
 
 @Module({
   imports: [OrderModule, PaymentModule, UtilityModule],
-  providers: [
-    Logger,
-    EzpayClient,
-    AppService,
-    InvoiceService,
-    InvoiceInfrastructure,
-  ],
+  providers: [Logger, EzpayClient, AppService, InvoiceService, InvoiceInfrastructure],
   exports: [EzpayClient, InvoiceService, InvoiceInfrastructure],
 })
 export class InvoiceModule {}

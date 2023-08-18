@@ -1,6 +1,6 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
-import { SocialCard } from './SocialCard'
+import { SocialCard } from './SocialCard';
 
 @Index('member_social_type_channel_id_key', ['channelId', 'type'], {
   unique: true,
@@ -9,33 +9,33 @@ import { SocialCard } from './SocialCard'
 @Entity('member_social', { schema: 'public' })
 export class MemberSocial {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'type', unique: true })
-  type: string
+  type: string;
 
   @Column('text', { name: 'channel_id', unique: true })
-  channelId: string
+  channelId: string;
 
   @Column('text', { name: 'channel_url', nullable: true })
-  channelUrl: string | null
+  channelUrl: string | null;
 
   @Column('text', { name: 'name' })
-  name: string
+  name: string;
 
   @Column('text', { name: 'description', nullable: true })
-  description: string | null
+  description: string | null;
 
   @Column('text', { name: 'profile_url', nullable: true })
-  profileUrl: string | null
+  profileUrl: string | null;
 
-  @ManyToOne(() => Member, member => member.memberSocials, {
+  @ManyToOne(() => Member, (member) => member.memberSocials, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @OneToMany(() => SocialCard, socialCard => socialCard.memberSocial)
-  socialCards: SocialCard[]
+  @OneToMany(() => SocialCard, (socialCard) => socialCard.memberSocial)
+  socialCards: SocialCard[];
 }

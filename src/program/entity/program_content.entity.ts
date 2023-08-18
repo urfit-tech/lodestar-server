@@ -18,91 +18,91 @@ import { DisplayMode } from '../program.type';
 @Entity('program_content', { schema: 'public' })
 export class ProgramContent {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'content_section_id' })
-  contentSectionId: string
+  contentSectionId: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('text', { name: 'abstract', nullable: true })
-  abstract: string | null
+  abstract: string | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', { name: 'published_at', nullable: true })
-  publishedAt: Date | null
+  publishedAt: Date | null;
 
   @Column('integer', { name: 'position' })
-  position: number
+  position: number;
 
   @Column('numeric', { name: 'list_price', nullable: true })
-  listPrice: number | null
+  listPrice: number | null;
 
   @Column('numeric', { name: 'sale_price', nullable: true })
-  salePrice: number | null
+  salePrice: number | null;
 
   @Column('timestamp with time zone', { name: 'sold_at', nullable: true })
-  soldAt: Date | null
+  soldAt: Date | null;
 
   @Column('jsonb', { name: 'metadata', nullable: true })
-  metadata: object | null
+  metadata: object | null;
 
   @Column('numeric', { name: 'duration', nullable: true })
-  duration: number | null
+  duration: number | null;
 
   @Column('text', { name: 'content_type', nullable: true })
-  contentType: string | null
+  contentType: string | null;
 
   @Column('boolean', { name: 'is_notify_update', default: () => false })
-  isNotifyUpdate: boolean
+  isNotifyUpdate: boolean;
 
   @Column('timestamp with time zone', { name: 'notified_at', nullable: true })
-  notifiedAt: Date | null
+  notifiedAt: Date | null;
 
   @Column('text', { name: 'display_mode' })
   displayMode: DisplayMode;
 
-  @OneToMany(() => Exercise, exercise => exercise.programContent)
-  exercises: Exercise[]
+  @OneToMany(() => Exercise, (exercise) => exercise.programContent)
+  exercises: Exercise[];
 
-  @OneToMany(() => Practice, practice => practice.programContent)
-  practices: Practice[]
+  @OneToMany(() => Practice, (practice) => practice.programContent)
+  practices: Practice[];
 
-  @ManyToOne(() => ProgramContentBody, programContentBody => programContentBody.programContents, {
+  @ManyToOne(() => ProgramContentBody, (programContentBody) => programContentBody.programContents, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })
   @JoinColumn([{ name: 'content_body_id', referencedColumnName: 'id' }])
-  contentBody: ProgramContentBody
+  contentBody: ProgramContentBody;
 
-  @ManyToOne(() => ProgramContentSection, programContentSection => programContentSection.programContents, {
+  @ManyToOne(() => ProgramContentSection, (programContentSection) => programContentSection.programContents, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'content_section_id', referencedColumnName: 'id' }])
-  contentSection: ProgramContentSection
+  contentSection: ProgramContentSection;
 
-  @OneToMany(() => ProgramContentAudio, programContentAudio => programContentAudio.programContent)
-  programContentAudios: ProgramContentAudio[]
+  @OneToMany(() => ProgramContentAudio, (programContentAudio) => programContentAudio.programContent)
+  programContentAudios: ProgramContentAudio[];
 
-  @OneToMany(() => ProgramContentLog, programContentLog => programContentLog.programContent)
-  programContentLogs: ProgramContentLog[]
+  @OneToMany(() => ProgramContentLog, (programContentLog) => programContentLog.programContent)
+  programContentLogs: ProgramContentLog[];
 
-  @OneToMany(() => ProgramContentMaterial, programContentMaterial => programContentMaterial.programContent)
-  programContentMaterials: ProgramContentMaterial[]
+  @OneToMany(() => ProgramContentMaterial, (programContentMaterial) => programContentMaterial.programContent)
+  programContentMaterials: ProgramContentMaterial[];
 
-  @OneToMany(() => ProgramContentPlan, programContentPlan => programContentPlan.programContent)
-  programContentPlans: ProgramContentPlan[]
+  @OneToMany(() => ProgramContentPlan, (programContentPlan) => programContentPlan.programContent)
+  programContentPlans: ProgramContentPlan[];
 
-  @OneToMany(() => ProgramContentProgress, programContentProgress => programContentProgress.programContent)
-  programContentProgresses: ProgramContentProgress[]
+  @OneToMany(() => ProgramContentProgress, (programContentProgress) => programContentProgress.programContent)
+  programContentProgresses: ProgramContentProgress[];
 
-  @OneToMany(() => ProgramContentVideo, programContentVideo => programContentVideo.programContent)
-  programContentVideos: ProgramContentVideo[]
+  @OneToMany(() => ProgramContentVideo, (programContentVideo) => programContentVideo.programContent)
+  programContentVideos: ProgramContentVideo[];
 }

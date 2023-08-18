@@ -6,20 +6,20 @@ import { ProgramContent } from '~/program/entity/program_content.entity';
 @Entity('program_content_body', { schema: 'public' })
 export class ProgramContentBody {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'type', nullable: true })
-  type: string | null
+  type: string | null;
 
   @Column('text', { name: 'description', nullable: true })
-  description: string | null
+  description: string | null;
 
   @Column('jsonb', { name: 'data', nullable: true })
-  data: object | null
+  data: object | null;
 
   @Column('uuid', { name: 'target', nullable: true })
-  target: string | null
+  target: string | null;
 
-  @OneToMany(() => ProgramContent, programContent => programContent.contentBody)
-  programContents: ProgramContent[]
+  @OneToMany(() => ProgramContent, (programContent) => programContent.contentBody)
+  programContents: ProgramContent[];
 }

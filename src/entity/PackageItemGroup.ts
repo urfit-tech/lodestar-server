@@ -1,32 +1,32 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm'
-import { PackageItem } from './PackageItem'
-import { PackageSection } from './PackageSection'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
+import { PackageItem } from './PackageItem';
+import { PackageSection } from './PackageSection';
 
 @Index('package_item_group_pkey', ['id'], { unique: true })
 @Entity('package_item_group', { schema: 'public' })
 export class PackageItemGroup {
   @PrimaryColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('text', { name: 'subtitle' })
-  subtitle: string
+  subtitle: string;
 
   @Column('text', { name: 'type' })
-  type: string
+  type: string;
 
   @Column('boolean', { name: 'with_filter' })
-  withFilter: boolean
+  withFilter: boolean;
 
-  @OneToMany(() => PackageItem, packageItem => packageItem.packageItemGroup)
-  packageItems: PackageItem[]
+  @OneToMany(() => PackageItem, (packageItem) => packageItem.packageItemGroup)
+  packageItems: PackageItem[];
 
-  @ManyToOne(() => PackageSection, packageSection => packageSection.packageItemGroups, {
+  @ManyToOne(() => PackageSection, (packageSection) => packageSection.packageItemGroups, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'package_section_id', referencedColumnName: 'id' }])
-  packageSection: PackageSection
+  packageSection: PackageSection;
 }

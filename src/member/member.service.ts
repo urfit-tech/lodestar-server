@@ -1,12 +1,6 @@
 import { v4 } from 'uuid';
 import { chunk, flatten, isNull } from 'lodash';
-import {
-  EntityManager,
-  Equal,
-  FindOptionsWhere,
-  ILike,
-  In,
-} from 'typeorm';
+import { EntityManager, Equal, FindOptionsWhere, ILike, In } from 'typeorm';
 import { ValidationError, isDateString, isEmpty } from 'class-validator';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -20,7 +14,7 @@ import { isNullString } from '~/utils';
 import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 import { CsvRawMember } from './class/csvRawMember';
 import { MemberInfrastructure } from './member.infra';
-import { 
+import {
   MemberGetConditionDTO,
   MemberGetQueryOptionsDTO,
   MemberGetResultDTO,
@@ -48,17 +42,17 @@ export class MemberService {
     const cb = async (manager: EntityManager): Promise<MemberGetResultDTO> => {
       const wrapCondition: FindOptionsWhere<Member> = condition
         ? {
-          ...(condition.role && { role: Equal(condition.role) }),
-          ...(condition.name && { name: ILike(condition.name) }),
-          ...(condition.username && { username: ILike(condition.username) }),
-          ...(condition.email && { email: ILike(condition.email) }),
-          ...(condition.managerName && {
-            manager: {
-              name: ILike(condition.managerName),
-            },
-          }),
-          ...(condition.managerId && { managerId: Equal(condition.managerId) }),
-        }
+            ...(condition.role && { role: Equal(condition.role) }),
+            ...(condition.name && { name: ILike(condition.name) }),
+            ...(condition.username && { username: ILike(condition.username) }),
+            ...(condition.email && { email: ILike(condition.email) }),
+            ...(condition.managerName && {
+              manager: {
+                name: ILike(condition.managerName),
+              },
+            }),
+            ...(condition.managerId && { managerId: Equal(condition.managerId) }),
+          }
         : {};
 
       const { data, cursor } = await this.memberInfra.getSimpleMemberByConditions(
@@ -75,17 +69,7 @@ export class MemberService {
       );
       return {
         cursor,
-        data: data.map(({
-          id,
-          pictureUrl,
-          name,
-          email,
-          role,
-          createdAt,
-          username,
-          loginedAt,
-          managerId
-        }) => ({
+        data: data.map(({ id, pictureUrl, name, email, role, createdAt, username, loginedAt, managerId }) => ({
           id,
           picture_url: pictureUrl,
           name,
@@ -101,9 +85,7 @@ export class MemberService {
     return cb(this.entityManager);
   }
 
-  async processImportFromFile(
-    appId: string, rawRows: Array<Record<string, any>>,
-  ): Promise<MemberImportResultDTO> {
+  async processImportFromFile(appId: string, rawRows: Array<Record<string, any>>): Promise<MemberImportResultDTO> {
     const [headerInfos, headerErrors] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
     if (headerErrors.length > 0) {
       return {
@@ -114,50 +96,45 @@ export class MemberService {
       };
     }
 
-    const rawDeserializeResult = await this.rawCsvToMember(
-      appId,
-      headerInfos,
-      rawRows,
-      this.entityManager,
-    );
+    const rawDeserializeResult = await this.rawCsvToMember(appId, headerInfos, rawRows, this.entityManager);
     const membersToImport = rawDeserializeResult.filter(([_, errors]) => errors.length === 0);
     const deserializationFailed = rawDeserializeResult.filter(([_, errors]) => errors.length !== 0);
-    const results = await Promise.allSettled(membersToImport.map(([member]) => {
-      return this.entityManager.transaction(async (manager) => {
-        try {
-          const memberRepo = manager.getRepository(Member);
-          const memberPropertyRepo = manager.getRepository(MemberProperty);
-          const memberCategoryRepo = manager.getRepository(MemberCategory);
-          const memberPhoneRepo = manager.getRepository(MemberPhone);
-          const memberTagRepo = manager.getRepository(MemberTag);
+    const results = await Promise.allSettled(
+      membersToImport.map(([member]) => {
+        return this.entityManager.transaction(async (manager) => {
+          try {
+            const memberRepo = manager.getRepository(Member);
+            const memberPropertyRepo = manager.getRepository(MemberProperty);
+            const memberCategoryRepo = manager.getRepository(MemberCategory);
+            const memberPhoneRepo = manager.getRepository(MemberPhone);
+            const memberTagRepo = manager.getRepository(MemberTag);
 
-          await memberCategoryRepo.delete({ memberId: member.id });
-          await memberPhoneRepo.delete({ memberId: member.id });
-          await memberTagRepo.delete({ memberId: member.id });
+            await memberCategoryRepo.delete({ memberId: member.id });
+            await memberPhoneRepo.delete({ memberId: member.id });
+            await memberTagRepo.delete({ memberId: member.id });
 
-          await memberRepo.save(member);
-          await memberCategoryRepo.save(member.memberCategories);
-          await memberPropertyRepo.upsert(
-            member.memberProperties,
-            { conflictPaths: ['memberId', 'propertyId'] },
-          );
-          await memberPhoneRepo.save(member.memberPhones);
-          await memberTagRepo.save(member.memberTags);
-        } catch (error) {
-          throw new Error(JSON.stringify({
-            memberEmail: member.email,
-            memberUsername: member.username,
-            error,
-          }));
-        }
-      });
-    }));
+            await memberRepo.save(member);
+            await memberCategoryRepo.save(member.memberCategories);
+            await memberPropertyRepo.upsert(member.memberProperties, { conflictPaths: ['memberId', 'propertyId'] });
+            await memberPhoneRepo.save(member.memberPhones);
+            await memberTagRepo.save(member.memberTags);
+          } catch (error) {
+            throw new Error(
+              JSON.stringify({
+                memberEmail: member.email,
+                memberUsername: member.username,
+                error,
+              }),
+            );
+          }
+        });
+      }),
+    );
 
-    const fulfilleds = results.filter(
-      (result) => result.status === 'fulfilled');
-    const rejecteds: Array<any> = (results
-      .filter((result) => result.status === 'rejected') as Array<PromiseRejectedResult>)
-      .map(({ reason }) => reason);
+    const fulfilleds = results.filter((result) => result.status === 'fulfilled');
+    const rejecteds: Array<any> = (
+      results.filter((result) => result.status === 'rejected') as Array<PromiseRejectedResult>
+    ).map(({ reason }) => reason);
     deserializationFailed
       .map(([_, errors]) => errors)
       .forEach((errors) => {
@@ -181,26 +158,20 @@ export class MemberService {
   }
 
   async processExportFromDatabase(appId: string, memberIds: Array<string>): Promise<Array<Record<string, any>>> {
-    const appCategories: Array<Category> = await this.definitionInfra.getCategories(
-      appId, this.entityManager,
-    );
-    const appProperties: Array<Property> = await this.definitionInfra.getProperties(
-      appId, this.entityManager,
-    );
+    const appCategories: Array<Category> = await this.definitionInfra.getCategories(appId, this.entityManager);
+    const appProperties: Array<Property> = await this.definitionInfra.getProperties(appId, this.entityManager);
     const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 20, appCategories, appProperties);
 
     const results = [];
     for (let chunkedMemberIds of chunk(memberIds, 1000)) {
       const fetchedMembers = await this.memberInfra.getMembersByConditions(
-        appId, { id: In(chunkedMemberIds) },
+        appId,
+        { id: In(chunkedMemberIds) },
         this.entityManager,
       );
       results.push(await this.memberToRawCsv(headerInfos, fetchedMembers));
     }
-    return [
-      await headerInfos.serializeToRawRow(),
-      ...flatten(results),
-    ];
+    return [await headerInfos.serializeToRawRow(), ...flatten(results)];
   }
 
   async rawCsvToMember(
@@ -209,21 +180,14 @@ export class MemberService {
     rawRows: Array<Record<string, string>>,
     entityManager: EntityManager,
   ): Promise<Array<[Member | null, Array<ValidationError>]>> {
-    const appCategories: Array<Category> = await this.definitionInfra.getCategories(
-      appId, this.entityManager,
-    );
-    const appProperties: Array<Property> = await this.definitionInfra.getProperties(
-      appId, this.entityManager,
-    );
+    const appCategories: Array<Category> = await this.definitionInfra.getCategories(appId, this.entityManager);
+    const appProperties: Array<Property> = await this.definitionInfra.getProperties(appId, this.entityManager);
     const appTags: Array<Tag> = await this.definitionInfra.getTags(this.entityManager);
 
     const members: Array<[Member | null, Array<ValidationError>]> = [];
 
-    const deserialized = rawRows
-      .map((rawRow) => new CsvRawMember().deserializedFromCsvRawRow(
-        headerInfos, rawRow,
-      ));
-    
+    const deserialized = rawRows.map((rawRow) => new CsvRawMember().deserializedFromCsvRawRow(headerInfos, rawRow));
+
     for (const [eachRow, errors] of deserialized) {
       if (errors.length > 0) {
         members.push([null, errors]);
@@ -240,10 +204,8 @@ export class MemberService {
         member.email = eachRow.email;
         member.role = eachRow.role || 'general-member';
         member.star = parseInt(eachRow.star, 10);
-        member.createdAt = isDateString(eachRow.createdAt)
-          && new Date(eachRow.createdAt) || null;
-        member.loginedAt = isDateString(eachRow.loginedAt)
-          && new Date(eachRow.loginedAt) || null;
+        member.createdAt = (isDateString(eachRow.createdAt) && new Date(eachRow.createdAt)) || null;
+        member.loginedAt = (isDateString(eachRow.loginedAt) && new Date(eachRow.loginedAt)) || null;
       } else {
         const inDbMember = await entityManager.getRepository(Member).findOne({
           where: { id: eachRow.id },
@@ -253,20 +215,24 @@ export class MemberService {
         });
 
         member.id = eachRow.id;
-        member.name = eachRow.name === undefined || eachRow.name === ''
-          ? inDbMember.name : eachRow.name;
-        member.username = eachRow.username === undefined || eachRow.username === ''
-          ? inDbMember.username : eachRow.username;
-        member.email = isEmpty(eachRow.email) && inDbMember.email || eachRow.email;
-        member.role = eachRow.role === undefined || eachRow.role === ''
-          ? inDbMember.role : eachRow.role;
-        member.star = isEmpty(eachRow.star) && inDbMember.star || parseInt(eachRow.star, 10);
-        member.createdAt = isNullString(eachRow.createdAt) || eachRow.createdAt === null
-          ? null
-          : (eachRow.createdAt === '' || eachRow.createdAt === undefined) ? inDbMember.createdAt : new Date(eachRow.createdAt);
-        member.loginedAt = isNullString(eachRow.loginedAt) || eachRow.loginedAt === null
-          ? null
-          : (eachRow.loginedAt === '' || eachRow.loginedAt === undefined) ? inDbMember.loginedAt : new Date(eachRow.loginedAt);
+        member.name = eachRow.name === undefined || eachRow.name === '' ? inDbMember.name : eachRow.name;
+        member.username =
+          eachRow.username === undefined || eachRow.username === '' ? inDbMember.username : eachRow.username;
+        member.email = (isEmpty(eachRow.email) && inDbMember.email) || eachRow.email;
+        member.role = eachRow.role === undefined || eachRow.role === '' ? inDbMember.role : eachRow.role;
+        member.star = (isEmpty(eachRow.star) && inDbMember.star) || parseInt(eachRow.star, 10);
+        member.createdAt =
+          isNullString(eachRow.createdAt) || eachRow.createdAt === null
+            ? null
+            : eachRow.createdAt === '' || eachRow.createdAt === undefined
+            ? inDbMember.createdAt
+            : new Date(eachRow.createdAt);
+        member.loginedAt =
+          isNullString(eachRow.loginedAt) || eachRow.loginedAt === null
+            ? null
+            : eachRow.loginedAt === '' || eachRow.loginedAt === undefined
+            ? inDbMember.loginedAt
+            : new Date(eachRow.loginedAt);
       }
 
       member.memberCategories = eachRow.categories
@@ -281,8 +247,10 @@ export class MemberService {
         });
 
       member.memberProperties = Object.keys(eachRow.properties)
-        .filter((propertyKey) => eachRow.properties[propertyKey].length > 0
-          && appProperties.find(({ name }) => name === propertyKey))
+        .filter(
+          (propertyKey) =>
+            eachRow.properties[propertyKey].length > 0 && appProperties.find(({ name }) => name === propertyKey),
+        )
         .map((propertyKey) => {
           const memberProperty = new MemberProperty();
           memberProperty.memberId = member.id;
@@ -326,22 +294,16 @@ export class MemberService {
         csvRawMember.name = each.name;
         csvRawMember.username = each.username;
         csvRawMember.email = each.email;
-        csvRawMember.star = isNull(each.star)
-          ? 'N/A' : each.star.toString();
+        csvRawMember.star = isNull(each.star) ? 'N/A' : each.star.toString();
         csvRawMember.role = each.role;
-        csvRawMember.createdAt = isNull(each.createdAt)
-          ? 'N/A' : each.createdAt.toISOString();
-        csvRawMember.loginedAt = isNull(each.loginedAt)
-          ? 'N/A' : each.loginedAt.toISOString();
+        csvRawMember.createdAt = isNull(each.createdAt) ? 'N/A' : each.createdAt.toISOString();
+        csvRawMember.loginedAt = isNull(each.loginedAt) ? 'N/A' : each.loginedAt.toISOString();
 
         csvRawMember.categories = each.memberCategories.map(({ category }) => category.name);
-        csvRawMember.properties = each.memberProperties.reduce(
-          (acc, current) => {
-            acc[current.property.name] = current.value;
-            return acc;
-          },
-          {},
-        );
+        csvRawMember.properties = each.memberProperties.reduce((acc, current) => {
+          acc[current.property.name] = current.value;
+          return acc;
+        }, {});
         csvRawMember.phones = each.memberPhones.map(({ phone }) => phone);
         csvRawMember.tags = each.memberTags.map(({ tagName2 }) => tagName2.name);
 

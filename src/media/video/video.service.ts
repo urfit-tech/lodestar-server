@@ -1,7 +1,6 @@
 import { subtle } from 'crypto';
 import { EntityManager } from 'typeorm';
-import jwt from 'jsonwebtoken';
-import { Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
@@ -11,27 +10,26 @@ import { UtilityService } from '~/utility/utility.service';
 
 import { MediaInfrastructure } from '../media.infra';
 import { CfVideoStreamOptions } from './video.type';
+import { AuthService } from '~/auth/auth.service';
 
 @Injectable()
 export class VideoService {
   private readonly cfStreamingKeyId: string;
   private readonly cfStreamingJwk: string;
-  private readonly hasuraJwtSecret: string;
-  
+
   constructor(
     private readonly configService: ConfigService<{
       CF_STREAMING_KEY_ID: string;
       CF_STREAMING_JWK: string;
-      HASURA_JWT_SECRET: string;
     }>,
     private readonly mediaInfra: MediaInfrastructure,
+    private readonly authService: AuthService,
     private readonly programService: ProgramService,
     private readonly utilityService: UtilityService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     this.cfStreamingKeyId = configService.getOrThrow('CF_STREAMING_KEY_ID');
     this.cfStreamingJwk = configService.getOrThrow('CF_STREAMING_JWK');
-    this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
 
   async generateCfVideoToken(videoId: string, authToken?: string) {
@@ -69,9 +67,8 @@ export class VideoService {
       return true;
     }
 
-    let jwtToken: string;
     try {
-      jwtToken = jwt.verify(authToken, this.hasuraJwtSecret) as string;
+      this.authService.verify(authToken);
     } catch {
       return false;
     }
@@ -81,7 +78,7 @@ export class VideoService {
   private async getCfOptions(id: string): Promise<CfVideoStreamOptions | null> {
     try {
       const attachment = await this.mediaInfra.getById(id, this.entityManager);
-      return attachment.options.cloudflare as CfVideoStreamOptions
+      return attachment.options.cloudflare as CfVideoStreamOptions;
     } catch (error) {
       console.error(error);
       return null;
@@ -90,39 +87,41 @@ export class VideoService {
 
   private async generateCfStreamingToken(cfUid: string): Promise<string> {
     const encoder = new TextEncoder();
-    const expiresIn = Math.floor(Date.now() / 1000) + 3600
+    const expiresIn = Math.floor(Date.now() / 1000) + 3600;
     const headers = {
-      'alg': 'RS256',
-      'kid': this.cfStreamingKeyId,
+      alg: 'RS256',
+      kid: this.cfStreamingKeyId,
     };
     const data = {
-      'sub': cfUid,
-      'kid': this.cfStreamingKeyId,
-      'exp': expiresIn,
-      'accessRules': [{
-        'type': 'any',
-        'action': 'allow'
-      }],
+      sub: cfUid,
+      kid: this.cfStreamingKeyId,
+      exp: expiresIn,
+      accessRules: [
+        {
+          type: 'any',
+          action: 'allow',
+        },
+      ],
     };
 
     const token = `${this.utilityService.objectToBase64url(headers)}.${this.utilityService.objectToBase64url(data)}`;
 
     const jwk = JSON.parse(atob(this.cfStreamingJwk));
     const key = await subtle.importKey(
-      'jwk', jwk,
+      'jwk',
+      jwk,
       {
         name: 'RSASSA-PKCS1-v1_5',
         hash: 'SHA-256',
       },
-      false, [ 'sign' ],
+      false,
+      ['sign'],
     );
-  
-    const signature = await subtle.sign(
-      { name: 'RSASSA-PKCS1-v1_5' }, key, encoder.encode(token),
-    );
-  
+
+    const signature = await subtle.sign({ name: 'RSASSA-PKCS1-v1_5' }, key, encoder.encode(token));
+
     const signedToken = `${token}.${this.utilityService.arrayBufferToBase64Url(signature)}`;
-  
+
     return signedToken;
   }
 }

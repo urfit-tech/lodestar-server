@@ -1,8 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { OrderLog } from '~/order/entity/order_log.entity';
 
-import { CouponCode } from './CouponCode'
+import { CouponCode } from './CouponCode';
 import { Member } from '~/member/entity/member.entity';
 
 @Index('coupon_member_id_coupon_code_id_key', ['couponCodeId', 'memberId'], {
@@ -12,34 +12,34 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('coupon', { schema: 'public' })
 export class Coupon {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('uuid', { name: 'coupon_code_id', unique: true })
-  couponCodeId: string
+  couponCodeId: string;
 
-  @ManyToOne(() => CouponCode, couponCode => couponCode.coupons, {
+  @ManyToOne(() => CouponCode, (couponCode) => couponCode.coupons, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'coupon_code_id', referencedColumnName: 'id' }])
-  couponCode: CouponCode
+  couponCode: CouponCode;
 
-  @ManyToOne(() => Member, member => member.coupons, {
+  @ManyToOne(() => Member, (member) => member.coupons, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @OneToMany(() => OrderLog, orderLog => orderLog.discountCoupon)
-  orderLogs: OrderLog[]
+  @OneToMany(() => OrderLog, (orderLog) => orderLog.discountCoupon)
+  orderLogs: OrderLog[];
 }

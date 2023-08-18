@@ -1,9 +1,4 @@
-import {
-  EntityManager,
-  FindOptionsWhere,
-  OrderByCondition,
-  In,
-} from 'typeorm';
+import { EntityManager, FindOptionsWhere, OrderByCondition, In } from 'typeorm';
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 
@@ -21,14 +16,11 @@ export class MemberInfrastructure {
     nextToken: string | undefined,
     limit: number = 10,
     entityManager: EntityManager,
-  ): Promise<{ data: Array<Member>; cursor: Cursor; }> {
-    let queryBuilder = entityManager
-      .getRepository(Member)
-      .createQueryBuilder('member');
-    
+  ): Promise<{ data: Array<Member>; cursor: Cursor }> {
+    let queryBuilder = entityManager.getRepository(Member).createQueryBuilder('member');
+
     if (conditions.manager || conditions.managerId) {
-      queryBuilder = queryBuilder
-        .leftJoinAndSelect('member.manager', 'manager');
+      queryBuilder = queryBuilder.leftJoinAndSelect('member.manager', 'manager');
     }
 
     queryBuilder = queryBuilder
@@ -36,13 +28,7 @@ export class MemberInfrastructure {
         appId,
         ...conditions,
       })
-      .orderBy(Object
-        .keys(order)
-        .reduce(
-          (prev, current) => (prev[`member.${current}`] = order[current], prev),
-          {},
-        )
-      );
+      .orderBy(Object.keys(order).reduce((prev, current) => ((prev[`member.${current}`] = order[current]), prev), {}));
 
     const paginator = buildPaginator({
       entity: Member,
@@ -96,16 +82,19 @@ export class MemberInfrastructure {
     invokers: Array<Member>,
     target: string,
     action: 'upload' | 'download',
-    manager: EntityManager) {
-      const memberAuditLogRepo = manager.getRepository(MemberAuditLog);
+    manager: EntityManager,
+  ) {
+    const memberAuditLogRepo = manager.getRepository(MemberAuditLog);
 
-      return Promise.allSettled(invokers.map((invoker) => {
+    return Promise.allSettled(
+      invokers.map((invoker) => {
         const toInsert = new MemberAuditLog();
         toInsert.memberId = invoker.id;
         toInsert.target = target;
         toInsert.action = action;
 
         return memberAuditLogRepo.save(toInsert);
-      }));
+      }),
+    );
   }
 }

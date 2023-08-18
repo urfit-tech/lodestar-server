@@ -27,7 +27,7 @@ export interface ExportJob {
 export type MemberExportJob = ExportJob & {
   category: 'member';
   memberIds: Array<string>;
-}
+};
 
 @Processor(ExporterTasker.name)
 export class ExporterTasker extends Tasker {
@@ -39,11 +39,7 @@ export class ExporterTasker extends Tasker {
         // BullModule.registerQueue({ name: MailerTasker.name }),
         BullModule.registerQueue({ name: 'mailer' }),
       ],
-      providers: [
-        StorageService,
-        MemberService,
-        MemberInfrastructure,
-      ],
+      providers: [StorageService, MemberService, MemberInfrastructure],
     };
   }
 
@@ -69,11 +65,11 @@ export class ExporterTasker extends Tasker {
       const { appId, invokerMemberId, category, exportMime }: ExportJob = job.data;
       const { raw, ext } = await this.exportFromDatabase(appId, job.data);
       const invokers = await this.memberInfra.getMembersByConditions(
-        appId, { id: invokerMemberId }, this.entityManager,
+        appId,
+        { id: invokerMemberId },
+        this.entityManager,
       );
-      const admins = await this.memberInfra.getMembersByConditions(
-        appId, { role: 'app-owner' }, this.entityManager,
-      );
+      const admins = await this.memberInfra.getMembersByConditions(appId, { role: 'app-owner' }, this.entityManager);
 
       const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}.${ext}`;
       const { ETag } = await this.storageService.saveFilesInBucketStorage({
@@ -83,15 +79,9 @@ export class ExporterTasker extends Tasker {
       });
       this.logger.log(`[File]: ${fileKey} saved with ETag: ${ETag} into S3.`);
 
-      const signedDownloadUrl = await this.storageService
-        .getSignedUrlForDownloadStorage(fileKey, 7 * 24 * 60 * 60);
+      const signedDownloadUrl = await this.storageService.getSignedUrlForDownloadStorage(fileKey, 7 * 24 * 60 * 60);
 
-      await this.memberInfra.insertMemberAuditLog(
-        invokers,
-        signedDownloadUrl,
-        'download',
-        this.entityManager,
-      );
+      await this.memberInfra.insertMemberAuditLog(invokers, signedDownloadUrl, 'download', this.entityManager);
 
       await this.putEmailQueue(
         appId,
@@ -108,7 +98,7 @@ export class ExporterTasker extends Tasker {
     }
   }
 
-  private async exportFromDatabase(appId: string, data: ExportJob): Promise<{ raw: any; ext: string; }> {
+  private async exportFromDatabase(appId: string, data: ExportJob): Promise<{ raw: any; ext: string }> {
     let rawRows: Array<Record<string, any>> = [];
     switch (data.category) {
       case 'member':
@@ -120,7 +110,7 @@ export class ExporterTasker extends Tasker {
     return this.writeToFile(rawRows, data.exportMime);
   }
 
-  private writeToFile(rawRows: Array<Record<string, any>>, mimeType?: string): { raw: any; ext: string; } {
+  private writeToFile(rawRows: Array<Record<string, any>>, mimeType?: string): { raw: any; ext: string } {
     const newBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(newBook, XLSX.utils.json_to_sheet(rawRows));
 
@@ -152,9 +142,9 @@ export class ExporterTasker extends Tasker {
       bcc: [],
       content: `<html>
         <body>
-          ${ content }
+          ${content}
         </body>
-      </html>`
+      </html>`,
     } as MailJob);
   }
 }

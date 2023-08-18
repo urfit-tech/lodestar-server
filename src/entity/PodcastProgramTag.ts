@@ -1,5 +1,5 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { PodcastProgram } from './PodcastProgram'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { PodcastProgram } from './PodcastProgram';
 import { Tag } from '~/definition/entity/tag.entity';
 
 @Index('podcast_program_tag_pkey', ['id'], { unique: true })
@@ -7,28 +7,28 @@ import { Tag } from '~/definition/entity/tag.entity';
 @Entity('podcast_program_tag', { schema: 'public' })
 export class PodcastProgramTag {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'podcast_program_id', unique: true })
-  podcastProgramId: string
+  podcastProgramId: string;
 
   @Column('text', { name: 'tag_name', unique: true })
-  tagName: string
+  tagName: string;
 
   @Column('integer', { name: 'position', default: () => 0 })
-  position: number
+  position: number;
 
-  @ManyToOne(() => PodcastProgram, podcastProgram => podcastProgram.podcastProgramTags, {
+  @ManyToOne(() => PodcastProgram, (podcastProgram) => podcastProgram.podcastProgramTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'podcast_program_id', referencedColumnName: 'id' }])
-  podcastProgram: PodcastProgram
+  podcastProgram: PodcastProgram;
 
-  @ManyToOne(() => Tag, tag => tag.podcastProgramTags, {
+  @ManyToOne(() => Tag, (tag) => tag.podcastProgramTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'tag_name', referencedColumnName: 'name' }])
-  tagName2: Tag
+  tagName2: Tag;
 }

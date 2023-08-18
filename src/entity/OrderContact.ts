@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { OrderLog } from '~/order/entity/order_log.entity';
 
@@ -8,37 +8,37 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('order_contact', { schema: 'public' })
 export class OrderContact {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'message' })
-  message: string
+  message: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('timestamp with time zone', { name: 'read_at', nullable: true })
-  readAt: Date | null
+  readAt: Date | null;
 
-  @ManyToOne(() => Member, member => member.orderContacts, {
+  @ManyToOne(() => Member, (member) => member.orderContacts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => OrderLog, orderLog => orderLog.orderContacts, {
+  @ManyToOne(() => OrderLog, (orderLog) => orderLog.orderContacts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'order_id', referencedColumnName: 'id' }])
-  order: OrderLog
+  order: OrderLog;
 }

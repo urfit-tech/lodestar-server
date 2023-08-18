@@ -1,49 +1,49 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { Merchandise } from './Merchandise'
-import { MerchandiseSpecFile } from './MerchandiseSpecFile'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Merchandise } from './Merchandise';
+import { MerchandiseSpecFile } from './MerchandiseSpecFile';
 
 @Index('merchandise_spec_pkey', ['id'], { unique: true })
 @Entity('merchandise_spec', { schema: 'public' })
 export class MerchandiseSpec {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'title', default: () => "'Untitled'" })
-  title: string
+  title: string;
 
   @Column('numeric', { name: 'list_price', default: () => 0 })
-  listPrice: number
+  listPrice: number;
 
   @Column('numeric', { name: 'sale_price', nullable: true })
-  salePrice: number | null
+  salePrice: number | null;
 
   @Column('integer', { name: 'quota', default: () => -1 })
-  quota: number
+  quota: number;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
     default: () => 'now()',
   })
-  createdAt: Date | null
+  createdAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     nullable: true,
     default: () => 'now()',
   })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
   @Column('boolean', { name: 'is_deleted', default: () => false })
-  isDeleted: boolean
+  isDeleted: boolean;
 
-  @ManyToOne(() => Merchandise, merchandise => merchandise.merchandiseSpecs, {
+  @ManyToOne(() => Merchandise, (merchandise) => merchandise.merchandiseSpecs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'merchandise_id', referencedColumnName: 'id' }])
-  merchandise: Merchandise
+  merchandise: Merchandise;
 
-  @OneToMany(() => MerchandiseSpecFile, merchandiseSpecFile => merchandiseSpecFile.merchandiseSpec)
-  merchandiseSpecFiles: MerchandiseSpecFile[]
+  @OneToMany(() => MerchandiseSpecFile, (merchandiseSpecFile) => merchandiseSpecFile.merchandiseSpec)
+  merchandiseSpecFiles: MerchandiseSpecFile[];
 }

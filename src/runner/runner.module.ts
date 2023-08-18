@@ -18,14 +18,10 @@ dayjs.extend(utc);
 
 @Module({})
 export class RunnerModule {
-  static forRoot(options: {
-    workerName: string; nodeEnv: string; clazz: Type<Runner>; noGo?: boolean;
-  }): DynamicModule {
+  static forRoot(options: { workerName: string; nodeEnv: string; clazz: Type<Runner>; noGo?: boolean }): DynamicModule {
     const { workerName, nodeEnv, clazz, noGo } = options;
 
-    const invokedRunnerModule = (clazz as any).forRoot
-      ? (clazz as any).forRoot()
-      : { imports: [], providers: [] };
+    const invokedRunnerModule = (clazz as any).forRoot ? (clazz as any).forRoot() : { imports: [], providers: [] };
 
     return {
       module: RunnerModule,
@@ -40,16 +36,18 @@ export class RunnerModule {
           providers: [ConfigService],
           useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
             const nodeEnv = configService.getOrThrow('NODE_ENV');
-            return ['production', 'staging'].includes(nodeEnv) ? {} : {
-              pinoHttp: {
-                transport: {
-                  target: 'pino-pretty',
-                  options: {
-                    ignore: 'pid,context,hostname',
+            return ['production', 'staging'].includes(nodeEnv)
+              ? {}
+              : {
+                  pinoHttp: {
+                    transport: {
+                      target: 'pino-pretty',
+                      options: {
+                        ignore: 'pid,context,hostname',
+                      },
+                    },
                   },
-                },
-              },
-            };
+                };
           },
           inject: [ConfigService],
         }),

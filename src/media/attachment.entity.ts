@@ -8,76 +8,76 @@ import { ProgramContentVideo } from '~/entity/ProgramContentVideo';
 @Entity('attachment', { schema: 'public' })
 export class Attachment {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('jsonb', { name: 'data', nullable: true })
-  data: object | null
+  data: object | null;
 
   @Column('text', { name: 'type', nullable: true })
-  type: string | null
+  type: string | null;
 
   @Column('text', { name: 'target', nullable: true })
-  target: string | null
+  target: string | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('jsonb', { name: 'options', nullable: true })
-  options: any | null
+  options: any | null;
 
   @Column('text', { name: 'app_id' })
-  appId: string
+  appId: string;
 
   @Column('boolean', { name: 'is_deleted', default: () => false })
-  isDeleted: boolean
+  isDeleted: boolean;
 
   @Column('text', { name: 'content_type', nullable: true })
-  contentType: string | null
+  contentType: string | null;
 
   @Column('text', { name: 'name', nullable: true })
-  name: string | null
+  name: string | null;
 
   @Column('numeric', { name: 'size', default: () => -1 })
-  size: number
+  size: number;
 
   @Column('text', { name: 'thumbnail_url', nullable: true })
-  thumbnailUrl: string | null
+  thumbnailUrl: string | null;
 
   @Column('text', { name: 'filename', nullable: true })
-  filename: string | null
+  filename: string | null;
 
   @Column('numeric', { name: 'duration', nullable: true })
-  duration: number | null
+  duration: number | null;
 
   @Column('text', { name: 'status', default: () => "'READY'" })
-  status: string
+  status: string;
 
   @Column('text', { name: 'family', nullable: true })
-  family: string | null
+  family: string | null;
 
-  @ManyToOne(() => Member, member => member.attachments, {
+  @ManyToOne(() => Member, (member) => member.attachments, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'author_id', referencedColumnName: 'id' }])
-  author: Member
+  author: Member;
 
-  @ManyToOne(() => File, file => file.attachments, {
+  @ManyToOne(() => File, (file) => file.attachments, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'file_id', referencedColumnName: 'id' }])
-  file: File
+  file: File;
 
-  @OneToMany(() => ProgramContentVideo, programContentVideo => programContentVideo.attachment)
-  programContentVideos: ProgramContentVideo[]
+  @OneToMany(() => ProgramContentVideo, (programContentVideo) => programContentVideo.attachment)
+  programContentVideos: ProgramContentVideo[];
 }

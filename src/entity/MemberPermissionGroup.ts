@@ -1,36 +1,36 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
-import { PermissionGroup } from './PermissionGroup'
+import { PermissionGroup } from './PermissionGroup';
 
 @Index('member_permission_group_pkey', ['id'], { unique: true })
 @Entity('member_permission_group', { schema: 'public' })
 export class MemberPermissionGroup {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
-  @ManyToOne(() => Member, member => member.memberPermissionGroups, {
+  @ManyToOne(() => Member, (member) => member.memberPermissionGroups, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => PermissionGroup, permissionGroup => permissionGroup.memberPermissionGroups, {
+  @ManyToOne(() => PermissionGroup, (permissionGroup) => permissionGroup.memberPermissionGroups, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'permission_group_id', referencedColumnName: 'id' }])
-  permissionGroup: PermissionGroup
+  permissionGroup: PermissionGroup;
 }

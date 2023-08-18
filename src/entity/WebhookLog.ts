@@ -1,26 +1,26 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Index('webhook_log_pkey', ['id'], { unique: true })
 @Entity('webhook_log', { schema: 'public' })
 export class WebhookLog {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'event' })
-  event: string
+  event: string;
 
   @Column('text', { name: 'payload' })
-  payload: string
+  payload: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('text', { name: 'app_id', nullable: true, default: () => "'NULL'" })
-  appId: string | null
+  appId: string | null;
 
   @Column('jsonb', { name: 'detail', nullable: true })
-  detail: object | null
+  detail: object | null;
 }

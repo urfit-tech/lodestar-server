@@ -11,42 +11,42 @@ import { Member } from './member.entity';
 @Entity('member_tag', { schema: 'public' })
 export class MemberTag {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('text', { name: 'tag_name', unique: true })
-  tagName: string
+  tagName: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
     default: () => 'now()',
   })
-  createdAt: Date | null
+  createdAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     nullable: true,
     default: () => 'now()',
   })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
   @Column('integer', { name: 'position', default: () => 0 })
-  position: number
+  position: number;
 
-  @ManyToOne(() => Member, member => member.memberTags, {
+  @ManyToOne(() => Member, (member) => member.memberTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => Tag, tag => tag.memberTags, {
+  @ManyToOne(() => Tag, (tag) => tag.memberTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'tag_name', referencedColumnName: 'name' }])
-  tagName2: Tag
+  tagName2: Tag;
 }

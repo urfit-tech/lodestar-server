@@ -30,7 +30,7 @@ import { Card } from './Card';
 import { CardDiscount } from './CardDiscount';
 import { CartItem } from './CartItem';
 import { CartProduct } from './CartProduct';
-import { Category } from '~/definition/entity/category.entity';;
+import { Category } from '~/definition/entity/category.entity';
 import { Certificate } from './Certificate';
 import { CertificateTemplate } from './CertificateTemplate';
 import { CoinLog } from './CoinLog';
@@ -171,7 +171,7 @@ import { ProjectReaction } from './ProjectReaction';
 import { ProjectRole } from './ProjectRole';
 import { ProjectSection } from './ProjectSection';
 import { ProjectTag } from './ProjectTag';
-import { Property } from '~/definition/entity/property.entity';;
+import { Property } from '~/definition/entity/property.entity';
 import { Question } from './Question';
 import { QuestionGroup } from './QuestionGroup';
 import { QuestionLibrary } from './QuestionLibrary';
@@ -189,7 +189,7 @@ import { SignupProperty } from './SignupProperty';
 import { SmsVerificationCode } from './SmsVerificationCode';
 import { SocialCard } from './SocialCard';
 import { SocialCardSubscriber } from './SocialCardSubscriber';
-import { Tag } from '~/definition/entity/tag.entity';;
+import { Tag } from '~/definition/entity/tag.entity';
 import { Token } from './Token';
 import { User } from './User';
 import { UserOauth } from './UserOauth';
@@ -218,6 +218,7 @@ import { PaymentLog } from '~/payment/payment_log.entity';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { TableLog } from '~/table_log/table_log.entity';
 import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
+import { Report } from '~/report/entity/report.entity';
 
 export const PostgresEntities = [
   Activity,
@@ -415,6 +416,7 @@ export const PostgresEntities = [
   Review,
   ReviewReaction,
   ReviewReply,
+  Report,
   Role,
   RolePermission,
   SearchTag,
