@@ -8,7 +8,7 @@ export class TriggerLog {
   id: string;
 
   @OneToOne(() => TableLog)
-  @JoinColumn({ name: 'table_log_id', referencedColumnName: 'id', })
+  @JoinColumn({ name: 'table_log_id', referencedColumnName: 'id' })
   tableLog: TableLog;
 
   @Column({ type: 'jsonb' })

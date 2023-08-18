@@ -16,46 +16,46 @@ export class Tag {
     primary: true,
     unique: true,
     type: 'text',
-    default: () => 'gen_random_uuid()'
+    default: () => 'gen_random_uuid()',
   })
-  name: string
+  name: string;
 
   @Column('text', { name: 'type' })
-  type: string
+  type: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('boolean', { name: 'filterable', default: () => true })
-  filterable: boolean
+  filterable: boolean;
 
-  @OneToMany(() => ActivityTag, activityTag => activityTag.tagName)
-  activityTags: ActivityTag[]
+  @OneToMany(() => ActivityTag, (activityTag) => activityTag.tagName)
+  activityTags: ActivityTag[];
 
-  @OneToMany(() => MemberSpeciality, memberSpeciality => memberSpeciality.tagName)
-  memberSpecialities: MemberSpeciality[]
+  @OneToMany(() => MemberSpeciality, (memberSpeciality) => memberSpeciality.tagName)
+  memberSpecialities: MemberSpeciality[];
 
-  @OneToMany(() => MemberTag, memberTag => memberTag.tagName2)
-  memberTags: MemberTag[]
+  @OneToMany(() => MemberTag, (memberTag) => memberTag.tagName2)
+  memberTags: MemberTag[];
 
-  @OneToMany(() => MerchandiseTag, merchandiseTag => merchandiseTag.tagName)
-  merchandiseTags: MerchandiseTag[]
+  @OneToMany(() => MerchandiseTag, (merchandiseTag) => merchandiseTag.tagName)
+  merchandiseTags: MerchandiseTag[];
 
-  @OneToMany(() => PodcastProgramTag, podcastProgramTag => podcastProgramTag.tagName2)
-  podcastProgramTags: PodcastProgramTag[]
+  @OneToMany(() => PodcastProgramTag, (podcastProgramTag) => podcastProgramTag.tagName2)
+  podcastProgramTags: PodcastProgramTag[];
 
-  @OneToMany(() => PostTag, postTag => postTag.tagName)
-  postTags: PostTag[]
+  @OneToMany(() => PostTag, (postTag) => postTag.tagName)
+  postTags: PostTag[];
 
-  @OneToMany(() => ProgramTag, programTag => programTag.tagName2)
-  programTags: ProgramTag[]
+  @OneToMany(() => ProgramTag, (programTag) => programTag.tagName2)
+  programTags: ProgramTag[];
 }

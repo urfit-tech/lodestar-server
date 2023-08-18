@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
 
 @Index('notification_pkey', ['id'], { unique: true })
@@ -7,49 +7,49 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('notification', { schema: 'public' })
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('timestamp with time zone', { name: 'read_at', nullable: true })
-  readAt: Date | null
+  readAt: Date | null;
 
   @Column('text', { name: 'reference_url', nullable: true })
-  referenceUrl: string | null
+  referenceUrl: string | null;
 
   @Column('text', { name: 'type', nullable: true })
-  type: string | null
+  type: string | null;
 
   @Column('text', { name: 'extra', nullable: true })
-  extra: string | null
+  extra: string | null;
 
   @Column('text', { name: 'description' })
-  description: string
+  description: string;
 
   @Column('text', { name: 'avatar', nullable: true })
-  avatar: string | null
+  avatar: string | null;
 
-  @ManyToOne(() => Member, member => member.notifications, {
+  @ManyToOne(() => Member, (member) => member.notifications, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'source_member_id', referencedColumnName: 'id' }])
-  sourceMember: Member
+  sourceMember: Member;
 
-  @ManyToOne(() => Member, member => member.notifications2, {
+  @ManyToOne(() => Member, (member) => member.notifications2, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'target_member_id', referencedColumnName: 'id' }])
-  targetMember: Member
+  targetMember: Member;
 }

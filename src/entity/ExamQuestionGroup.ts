@@ -1,26 +1,26 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Index('exam_question_group_pkey', ['id'], { unique: true })
 @Entity('exam_question_group', { schema: 'public' })
 export class ExamQuestionGroup {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'exam_id' })
-  examId: string
+  examId: string;
 
   @Column('uuid', { name: 'question_group_id' })
-  questionGroupId: string
+  questionGroupId: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 }

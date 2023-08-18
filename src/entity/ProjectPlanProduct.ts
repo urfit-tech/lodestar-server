@@ -1,34 +1,34 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Product } from './Product'
-import { ProjectPlan } from './ProjectPlan'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Product } from './Product';
+import { ProjectPlan } from './ProjectPlan';
 
 @Index('project_plan_product_pkey', ['id'], { unique: true })
 @Index('project_plan_product_project_plan_id_product_id_key', ['productId', 'projectPlanId'], { unique: true })
 @Entity('project_plan_product', { schema: 'public' })
 export class ProjectPlanProduct {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'project_plan_id', unique: true })
-  projectPlanId: string
+  projectPlanId: string;
 
   @Column('text', { name: 'product_id', unique: true })
-  productId: string
+  productId: string;
 
   @Column('jsonb', { name: 'options' })
-  options: object
+  options: object;
 
-  @ManyToOne(() => Product, product => product.projectPlanProducts, {
+  @ManyToOne(() => Product, (product) => product.projectPlanProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'product_id', referencedColumnName: 'id' }])
-  product: Product
+  product: Product;
 
-  @ManyToOne(() => ProjectPlan, projectPlan => projectPlan.projectPlanProducts, {
+  @ManyToOne(() => ProjectPlan, (projectPlan) => projectPlan.projectPlanProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'project_plan_id', referencedColumnName: 'id' }])
-  projectPlan: ProjectPlan
+  projectPlan: ProjectPlan;
 }

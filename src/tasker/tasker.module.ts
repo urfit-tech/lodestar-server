@@ -15,12 +15,10 @@ dayjs.extend(utc);
 
 @Module({})
 export class TaskerModule {
-  static forRoot(options: { workerName: string, nodeEnv: string, clazz: Type<Tasker>; }): DynamicModule {
+  static forRoot(options: { workerName: string; nodeEnv: string; clazz: Type<Tasker> }): DynamicModule {
     const { workerName, nodeEnv, clazz } = options;
 
-    const invokedTaskerModule = (clazz as any).forRoot
-      ? (clazz as any).forRoot()
-      : { imports: [], providers: [] };
+    const invokedTaskerModule = (clazz as any).forRoot ? (clazz as any).forRoot() : { imports: [], providers: [] };
 
     return {
       module: TaskerModule,
@@ -33,16 +31,18 @@ export class TaskerModule {
           providers: [ConfigService],
           useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
             const nodeEnv = configService.getOrThrow('NODE_ENV');
-            return ['production', 'staging'].includes(nodeEnv) ? {} : {
-              pinoHttp: {
-                transport: {
-                  target: 'pino-pretty',
-                  options: {
-                    ignore: 'pid,context,hostname',
+            return ['production', 'staging'].includes(nodeEnv)
+              ? {}
+              : {
+                  pinoHttp: {
+                    transport: {
+                      target: 'pino-pretty',
+                      options: {
+                        ignore: 'pid,context,hostname',
+                      },
+                    },
                   },
-                },
-              },
-            };
+                };
           },
           inject: [ConfigService],
         }),
@@ -50,9 +50,11 @@ export class TaskerModule {
         UtilityModule,
         BullModule.forRootAsync({
           imports: [ConfigModule],
-          useFactory: (configService: ConfigService<{
-            QUEUE_REDIS_URI: string;
-          }>) => {
+          useFactory: (
+            configService: ConfigService<{
+              QUEUE_REDIS_URI: string;
+            }>,
+          ) => {
             const queueRedisUri = configService.getOrThrow('QUEUE_REDIS_URI');
             const url = new URL(queueRedisUri);
             return {
@@ -69,11 +71,7 @@ export class TaskerModule {
         BullModule.registerQueue({ name: workerName }),
         ...(invokedTaskerModule.imports || []),
       ],
-      providers: [
-        Logger,
-        { provide: Tasker, useClass: clazz },
-        ...(invokedTaskerModule.providers || []),
-      ],
+      providers: [Logger, { provide: Tasker, useClass: clazz }, ...(invokedTaskerModule.providers || [])],
     };
   }
 }

@@ -1,35 +1,35 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { MemberPermissionGroup } from './MemberPermissionGroup'
-import { PermissionGroupPermission } from './PermissionGroupPermission'
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { MemberPermissionGroup } from './MemberPermissionGroup';
+import { PermissionGroupPermission } from './PermissionGroupPermission';
 
 @Index('permission_group_name_app_id_key', ['appId', 'name'], { unique: true })
 @Index('permission_group_pkey', ['id'], { unique: true })
 @Entity('permission_group', { schema: 'public' })
 export class PermissionGroup {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'name', unique: true })
-  name: string
+  name: string;
 
   @Column('text', { name: 'app_id', unique: true })
-  appId: string
+  appId: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
-  @OneToMany(() => MemberPermissionGroup, memberPermissionGroup => memberPermissionGroup.permissionGroup)
-  memberPermissionGroups: MemberPermissionGroup[]
+  @OneToMany(() => MemberPermissionGroup, (memberPermissionGroup) => memberPermissionGroup.permissionGroup)
+  memberPermissionGroups: MemberPermissionGroup[];
 
-  @OneToMany(() => PermissionGroupPermission, permissionGroupPermission => permissionGroupPermission.permissionGroup)
-  permissionGroupPermissions: PermissionGroupPermission[]
+  @OneToMany(() => PermissionGroupPermission, (permissionGroupPermission) => permissionGroupPermission.permissionGroup)
+  permissionGroupPermissions: PermissionGroupPermission[];
 }

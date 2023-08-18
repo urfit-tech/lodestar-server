@@ -28,11 +28,11 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit(): void {
-    if (this.noGo) { return; }
+    if (this.noGo) {
+      return;
+    }
 
-    const interval = setInterval(
-      async () => this.runner.run(), this.runner.getInterval(),
-    );
+    const interval = setInterval(async () => this.runner.run(), this.runner.getInterval());
     this.schedulerRegistry.addInterval(this.runner.getName(), interval);
   }
 

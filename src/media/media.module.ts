@@ -11,14 +11,6 @@ import { MediaInfrastructure } from './media.infra';
 
 @Module({
   controllers: [VideoController],
-  providers: [
-    Logger,
-    AudioService,
-    ImageService,
-    MediaInfrastructure,
-    ProgramService,
-    UtilityService,
-    VideoService,
-  ],
+  providers: [Logger, AudioService, ImageService, MediaInfrastructure, ProgramService, UtilityService, VideoService],
 })
 export class MediaModule {}

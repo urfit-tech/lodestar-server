@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
 
 @Index('member_note_author_id', ['authorId'], {})
@@ -12,61 +12,61 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('member_note', { schema: 'public' })
 export class MemberNote {
   @PrimaryGeneratedColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'author_id' })
-  authorId: string
+  authorId: string;
 
   @Column('text', { name: 'type', nullable: true })
-  type: string | null
+  type: string | null;
 
   @Column('text', { name: 'status', nullable: true })
-  status: string | null
+  status: string | null;
 
   @Column('integer', { name: 'duration', default: () => 0 })
-  duration: number
+  duration: number;
 
   @Column('text', { name: 'description', nullable: true })
-  description: string | null
+  description: string | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('jsonb', { name: 'metadata', nullable: true })
-  metadata: object | null
+  metadata: object | null;
 
   @Column('text', { name: 'note', nullable: true })
-  note: string | null
+  note: string | null;
 
   @Column('timestamp with time zone', { name: 'rejected_at', nullable: true })
-  rejectedAt: Date | null
+  rejectedAt: Date | null;
 
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
-  deletedAt: Date | null
+  deletedAt: Date | null;
 
   @Column('text', { name: 'deleted_from', nullable: true })
-  deletedFrom: string | null
+  deletedFrom: string | null;
 
-  @ManyToOne(() => Member, member => member.memberNotes, {
+  @ManyToOne(() => Member, (member) => member.memberNotes, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'author_id', referencedColumnName: 'id' }])
-  author: Member
+  author: Member;
 
-  @ManyToOne(() => Member, member => member.memberNotes2, {
+  @ManyToOne(() => Member, (member) => member.memberNotes2, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 }

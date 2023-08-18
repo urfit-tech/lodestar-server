@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common'
+import { Module } from '@nestjs/common';
 
-import { AtomeService } from './atome/atome.service'
-import { CwgService } from './cwg/cwg.service'
-import { GatewayService } from './gateway/gateway.service'
-import { NewebpayService } from './newebpay/newebpay.service'
-import { PaypalService } from './paypal/paypal.service'
-import { TappayService } from './tappay/tappay.service'
-import { PaymentInfrastructure } from './payment.infra'
+import { AtomeService } from './atome/atome.service';
+import { CwgService } from './cwg/cwg.service';
+import { GatewayService } from './gateway/gateway.service';
+import { NewebpayService } from './newebpay/newebpay.service';
+import { PaypalService } from './paypal/paypal.service';
+import { TappayService } from './tappay/tappay.service';
+import { PaymentInfrastructure } from './payment.infra';
 
 @Module({
   providers: [
@@ -16,7 +16,7 @@ import { PaymentInfrastructure } from './payment.infra'
     PaypalService,
     NewebpayService,
     TappayService,
-    PaymentInfrastructure
+    PaymentInfrastructure,
   ],
   exports: [PaymentInfrastructure],
 })

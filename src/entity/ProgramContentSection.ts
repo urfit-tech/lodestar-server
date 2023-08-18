@@ -9,27 +9,27 @@ import { Program } from './Program';
 @Entity('program_content_section', { schema: 'public' })
 export class ProgramContentSection {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'program_id' })
-  programId: string
+  programId: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('text', { name: 'description', nullable: true })
-  description: string | null
+  description: string | null;
 
   @Column('integer', { name: 'position' })
-  position: number
+  position: number;
 
-  @OneToMany(() => ProgramContent, programContent => programContent.contentSection)
-  programContents: ProgramContent[]
+  @OneToMany(() => ProgramContent, (programContent) => programContent.contentSection)
+  programContents: ProgramContent[];
 
-  @ManyToOne(() => Program, program => program.programContentSections, {
+  @ManyToOne(() => Program, (program) => program.programContentSections, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
-  program: Program
+  program: Program;
 }

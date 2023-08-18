@@ -1,4 +1,4 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Index('exam_member_time_limit_exam_id_member_id_key', ['examId', 'memberId'], {
   unique: true,
@@ -7,29 +7,29 @@ import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm'
 @Entity('exam_member_time_limit', { schema: 'public' })
 export class ExamMemberTimeLimit {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'exam_id', unique: true })
-  examId: string
+  examId: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('timestamp with time zone', { name: 'expired_at' })
-  expiredAt: Date
+  expiredAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('uuid', { name: 'editor_id', nullable: true })
-  editorId: string | null
+  editorId: string | null;
 }

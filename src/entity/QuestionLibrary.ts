@@ -8,39 +8,39 @@ import { QuestionGroup } from './QuestionGroup';
 @Entity('question_library', { schema: 'public' })
 export class QuestionLibrary {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'app_id' })
-  appId: string
+  appId: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('text', { name: 'abstract', nullable: true })
-  abstract: string | null
+  abstract: string | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
-  deletedAt: Date | null
+  deletedAt: Date | null;
 
-  @OneToMany(() => QuestionGroup, questionGroup => questionGroup.questionLibrary)
-  questionGroups: QuestionGroup[]
+  @OneToMany(() => QuestionGroup, (questionGroup) => questionGroup.questionLibrary)
+  questionGroups: QuestionGroup[];
 
-  @ManyToOne(() => Member, member => member.questionLibraries, {
+  @ManyToOne(() => Member, (member) => member.questionLibraries, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'modifier_id', referencedColumnName: 'id' }])
-  modifier: Member
+  modifier: Member;
 }

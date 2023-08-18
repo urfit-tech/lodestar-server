@@ -13,19 +13,15 @@ export class ExampleRunner extends Runner {
     protected readonly distributedLockService: DistributedLockService,
     protected readonly shutdownService: ShutdownService,
   ) {
-    super(
-      ExampleRunner.name,
-      1000,
-      logger,
-      distributedLockService,
-      shutdownService,
-    );
+    super(ExampleRunner.name, 1000, logger, distributedLockService, shutdownService);
   }
 
   async execute(): Promise<void> {
-    await new Promise((resolve) => setTimeout(() => {
-      this.logger.log(`Execute time: ${dayjs().toISOString()}`);
-      resolve(undefined);
-    }, 500));
+    await new Promise((resolve) =>
+      setTimeout(() => {
+        this.logger.log(`Execute time: ${dayjs().toISOString()}`);
+        resolve(undefined);
+      }, 500),
+    );
   }
 }

@@ -22,7 +22,7 @@ import { MemberCsvHeaderMapping } from './csvHeaderMapping';
 /**
  * Formats represents raw rows inside csv file for member import.
  */
-export class CsvRawMember {  
+export class CsvRawMember {
   @IsUUID(4, { groups: ['import-exists'] })
   @IsEmpty({ groups: ['import-new'] })
   id: string | null | undefined;
@@ -58,24 +58,22 @@ export class CsvRawMember {
   @IsArray()
   @IsString({ each: true })
   categories: Array<string> | undefined;
-  
+
   @IsOptional()
   @IsObject()
   properties: Record<string, string> | undefined;
-  
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   phones: Array<string> | undefined;
-  
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   tags: Array<string> | undefined;
 
-  public serializeToCsvRawRow(
-    header: MemberCsvHeaderMapping,
-  ): Record<string, string | number | Date> {
+  public serializeToCsvRawRow(header: MemberCsvHeaderMapping): Record<string, string | number | Date> {
     const phones = header.phones.reduce((acc, _, index) => {
       acc[`手機${index + 1}`] = this.phones.length > index ? this.phones[index] : '';
       return acc;
@@ -116,36 +114,28 @@ export class CsvRawMember {
     this.name = parseFieldFromRaw<string>(row[header.name]);
     this.username = parseFieldFromRaw<string>(row[header.username]);
     this.email = parseFieldFromRaw<string>(row[header.email]);
-    
+
     this.star = parseNullableFieldFromRaw<string>(row[header.star]);
     this.role = parseNullableFieldFromRaw<string>(row[header.role]);
     this.createdAt = parseNullableFieldFromRaw<string>(row[header.createdAt]);
     this.loginedAt = parseNullableFieldFromRaw<string>(row[header.loginedAt]);
 
     this.phones = [
-      ...new Set((header.phones === undefined ? [] : header.phones)
-        .map((each) => row[each].toString())
-        .filter(isNotEmpty)),
+      ...new Set(
+        (header.phones === undefined ? [] : header.phones).map((each) => row[each].toString()).filter(isNotEmpty),
+      ),
     ];
     this.categories = (header.categories === undefined ? [] : header.categories)
       .map((each) => row[each])
       .filter(isNotEmpty);
-    this.properties = (header.properties === undefined ? [] : header.properties)
-      .reduce(
-        (acc, current) => {
-          const value = row[current];
-          if (isNotEmpty(value)) {
-            acc[current] = row[current];
-          }
-          return acc;
-        },
-        {},
-      );
-    this.tags = (header.tags === undefined ? [] : header.tags)
-      .map((each) => row[each])
-      .filter(isNotEmpty);
-    return [this, validateSync(this, { groups: [
-      isEmpty(row[header.id]) ? 'import-new' : 'import-exists',
-    ]})];
+    this.properties = (header.properties === undefined ? [] : header.properties).reduce((acc, current) => {
+      const value = row[current];
+      if (isNotEmpty(value)) {
+        acc[current] = row[current];
+      }
+      return acc;
+    }, {});
+    this.tags = (header.tags === undefined ? [] : header.tags).map((each) => row[each]).filter(isNotEmpty);
+    return [this, validateSync(this, { groups: [isEmpty(row[header.id]) ? 'import-new' : 'import-exists'] })];
   }
 }

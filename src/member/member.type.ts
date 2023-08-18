@@ -3,7 +3,7 @@ export enum MemberRole {
   CONTENT_CREATOR = 'content-creator',
   APP_OWNER = 'app-owner',
   ORG_MANAGER = 'org-manager',
-};
+}
 
 export interface PublicMember {
   id: string;
@@ -14,4 +14,4 @@ export interface PublicMember {
   name: string;
   pictureUrl: string;
   isBusiness: boolean;
-};
+}

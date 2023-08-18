@@ -1,27 +1,27 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Merchandise } from './Merchandise'
-import { Post } from './Post'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Merchandise } from './Merchandise';
+import { Post } from './Post';
 
 @Index('post_merchandise_pkey', ['id'], { unique: true })
 @Entity('post_merchandise', { schema: 'public' })
 export class PostMerchandise {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('integer', { name: 'position', default: () => 0 })
-  position: number
+  position: number;
 
-  @ManyToOne(() => Merchandise, merchandise => merchandise.postMerchandises, {
+  @ManyToOne(() => Merchandise, (merchandise) => merchandise.postMerchandises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'merchandise_id', referencedColumnName: 'id' }])
-  merchandise: Merchandise
+  merchandise: Merchandise;
 
-  @ManyToOne(() => Post, post => post.postMerchandises, {
+  @ManyToOne(() => Post, (post) => post.postMerchandises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'post_id', referencedColumnName: 'id' }])
-  post: Post
+  post: Post;
 }

@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { OrderLog } from '~/order/entity/order_log.entity';
 
@@ -8,22 +8,22 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('order_executor', { schema: 'public' })
 export class OrderExecutor {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('numeric', { name: 'ratio', default: () => 1 })
-  ratio: number
+  ratio: number;
 
-  @ManyToOne(() => Member, member => member.orderExecutors, {
+  @ManyToOne(() => Member, (member) => member.orderExecutors, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => OrderLog, orderLog => orderLog.orderExecutors, {
+  @ManyToOne(() => OrderLog, (orderLog) => orderLog.orderExecutors, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'order_id', referencedColumnName: 'id' }])
-  order: OrderLog
+  order: OrderLog;
 }

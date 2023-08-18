@@ -27,7 +27,7 @@ describe('MemberService', () => {
     getTags: jest.fn(),
   };
   let mockMemberInfra = {
-    getMembersByConditions: jest.fn()
+    getMembersByConditions: jest.fn(),
   };
   let mockMemberRepo = {
     findOne: jest.fn(),
@@ -63,40 +63,40 @@ describe('MemberService', () => {
       const createdAt = new Date();
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '分類2': 'categories.1',
-          '屬性1': 'properties.0',
-          '屬性2': 'properties.1',
-          '標籤1': 'tags.0',
-          '標籤2': 'tags.1',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          分類2: 'categories.1',
+          屬性1: 'properties.0',
+          屬性2: 'properties.1',
+          標籤1: 'tags.0',
+          標籤2: 'tags.1',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': '',
-          '姓名': 'test',
-          '帳號': 'test_account',
-          '信箱': 'test_email@test.com',
-          '身份': 'general-member',
-          '手機1': '0912345678',
-          '手機2': '0923456789',
-          '分類1': 'test_category1',
-          '分類2': 'test_category2',
-          '屬性1': 'test_property1',
-          '屬性2': 'test_property2',
-          '標籤1': 'test_tag1',
-          '標籤2': 'test_tag2',
-          '星等': '999',
-          '建立日期': createdAt.toISOString(),
-          '上次登入日期': '',
+          流水號: '',
+          姓名: 'test',
+          帳號: 'test_account',
+          信箱: 'test_email@test.com',
+          身份: 'general-member',
+          手機1: '0912345678',
+          手機2: '0923456789',
+          分類1: 'test_category1',
+          分類2: 'test_category2',
+          屬性1: 'test_property1',
+          屬性2: 'test_property2',
+          標籤1: 'test_tag1',
+          標籤2: 'test_tag2',
+          星等: '999',
+          建立日期: createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -107,12 +107,9 @@ describe('MemberService', () => {
       mockDefinitionInfra.getProperties.mockReturnValueOnce([
         { id: 'test_property1_id', name: '屬性1' },
         { id: 'test_property2_id', name: '屬性2' },
-      ])
-      mockDefinitionInfra.getTags.mockReturnValueOnce([
-        { name: 'test_tag1' },
-        { name: 'test_tag2' },
       ]);
-      
+      mockDefinitionInfra.getTags.mockReturnValueOnce([{ name: 'test_tag1' }, { name: 'test_tag2' }]);
+
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       const [member] = deserializeResult;
@@ -144,40 +141,40 @@ describe('MemberService', () => {
       const createdAt = new Date();
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '分類2': 'categories.1',
-          '屬性1': 'properties.0',
-          '屬性2': 'properties.1',
-          '標籤1': 'tags.0',
-          '標籤2': 'tags.1',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          分類2: 'categories.1',
+          屬性1: 'properties.0',
+          屬性2: 'properties.1',
+          標籤1: 'tags.0',
+          標籤2: 'tags.1',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': '',
-          '姓名': 'test_partial_missing',
-          '帳號': 'test_partial_missing_account',
-          '信箱': 'test_partial_missing_email@test.com',
-          '身份': 'general-member',
-          '手機1': '0912345678',
-          '手機2': '',
-          '分類1': 'test_category1',
-          '分類2': '',
-          '屬性1': 'test_property1',
-          '屬性2': '',
-          '標籤1': 'test_tag1',
-          '標籤2': '',
-          '星等': '999',
-          '建立日期': createdAt.toISOString(),
-          '上次登入日期': '',
+          流水號: '',
+          姓名: 'test_partial_missing',
+          帳號: 'test_partial_missing_account',
+          信箱: 'test_partial_missing_email@test.com',
+          身份: 'general-member',
+          手機1: '0912345678',
+          手機2: '',
+          分類1: 'test_category1',
+          分類2: '',
+          屬性1: 'test_property1',
+          屬性2: '',
+          標籤1: 'test_tag1',
+          標籤2: '',
+          星等: '999',
+          建立日期: createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -188,11 +185,8 @@ describe('MemberService', () => {
       mockDefinitionInfra.getProperties.mockReturnValueOnce([
         { id: 'test_property1_id', name: '屬性1' },
         { id: 'test_property2_id', name: '屬性2' },
-      ])
-      mockDefinitionInfra.getTags.mockReturnValueOnce([
-        { name: 'test_tag1' },
-        { name: 'test_tag2' },
       ]);
+      mockDefinitionInfra.getTags.mockReturnValueOnce([{ name: 'test_tag1' }, { name: 'test_tag2' }]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
@@ -218,52 +212,46 @@ describe('MemberService', () => {
       const createdAt = new Date();
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '不存在分類2': 'categories.1',
-          '屬性1': 'properties.0',
-          '不存在屬性2': 'properties.1',
-          '標籤1': 'tags.0',
-          '不存在標籤2': 'tags.1',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          不存在分類2: 'categories.1',
+          屬性1: 'properties.0',
+          不存在屬性2: 'properties.1',
+          標籤1: 'tags.0',
+          不存在標籤2: 'tags.1',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': '',
-          '姓名': 'test_not_exists',
-          '帳號': 'test_not_exists_account',
-          '信箱': 'test_not_exists_email@test.com',
-          '身份': 'general-member',
-          '手機1': '0912345678',
-          '手機2': '',
-          '分類1': 'test_category1',
-          '不存在分類2': 'not_exists_category',
-          '屬性1': 'test_property1',
-          '不存在屬性2': 'not_exists_property',
-          '標籤1': 'test_tag1',
-          '不存在標籤2': 'not_exists_tag',
-          '星等': '999',
-          '建立日期': createdAt.toISOString(),
-          '上次登入日期': '',
+          流水號: '',
+          姓名: 'test_not_exists',
+          帳號: 'test_not_exists_account',
+          信箱: 'test_not_exists_email@test.com',
+          身份: 'general-member',
+          手機1: '0912345678',
+          手機2: '',
+          分類1: 'test_category1',
+          不存在分類2: 'not_exists_category',
+          屬性1: 'test_property1',
+          不存在屬性2: 'not_exists_property',
+          標籤1: 'test_tag1',
+          不存在標籤2: 'not_exists_tag',
+          星等: '999',
+          建立日期: createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
-      mockDefinitionInfra.getCategories.mockReturnValueOnce([
-        { id: 'test_category1_id', name: 'test_category1' },
-      ]);
-      mockDefinitionInfra.getProperties.mockReturnValueOnce([
-        { id: 'test_property1_id', name: '屬性1' },
-      ])
-      mockDefinitionInfra.getTags.mockReturnValueOnce([
-        { name: 'test_tag1' },
-      ]);
+      mockDefinitionInfra.getCategories.mockReturnValueOnce([{ id: 'test_category1_id', name: 'test_category1' }]);
+      mockDefinitionInfra.getProperties.mockReturnValueOnce([{ id: 'test_property1_id', name: '屬性1' }]);
+      mockDefinitionInfra.getTags.mockReturnValueOnce([{ name: 'test_tag1' }]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
@@ -289,49 +277,43 @@ describe('MemberService', () => {
       const createdAt = new Date();
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '屬性1': 'properties.0',
-          '標籤1': 'tags.0',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          屬性1: 'properties.0',
+          標籤1: 'tags.0',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': '',
-          '姓名': 'test_extra_unknown',
-          '帳號': 'test_extra_unknown_account',
-          '信箱': 'test_extra_unknown_email@test.com',
-          '身份': 'general-member',
-          '手機1': '0912345678',
-          '手機2': '0912345678',
-          '分類1': 'test_category1',
-          '多餘分類1': 'extra_unknown_category',
-          '屬性1': 'test_property1',
-          '多餘屬性2': 'extra_unknown_property',
-          '標籤1': 'test_tag1',
-          '多餘標籤2': 'extra_unknown_tag',
-          '星等': '999',
-          '建立日期': createdAt.toISOString(),
-          '上次登入日期': '',
+          流水號: '',
+          姓名: 'test_extra_unknown',
+          帳號: 'test_extra_unknown_account',
+          信箱: 'test_extra_unknown_email@test.com',
+          身份: 'general-member',
+          手機1: '0912345678',
+          手機2: '0912345678',
+          分類1: 'test_category1',
+          多餘分類1: 'extra_unknown_category',
+          屬性1: 'test_property1',
+          多餘屬性2: 'extra_unknown_property',
+          標籤1: 'test_tag1',
+          多餘標籤2: 'extra_unknown_tag',
+          星等: '999',
+          建立日期: createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
-      mockDefinitionInfra.getCategories.mockReturnValueOnce([
-        { id: 'test_category1_id', name: 'test_category1' },
-      ]);
-      mockDefinitionInfra.getProperties.mockReturnValueOnce([
-        { id: 'test_property1_id', name: '屬性1' },
-      ])
-      mockDefinitionInfra.getTags.mockReturnValueOnce([
-        { name: 'test_tag1' },
-      ]);
+      mockDefinitionInfra.getCategories.mockReturnValueOnce([{ id: 'test_category1_id', name: 'test_category1' }]);
+      mockDefinitionInfra.getProperties.mockReturnValueOnce([{ id: 'test_property1_id', name: '屬性1' }]);
+      mockDefinitionInfra.getTags.mockReturnValueOnce([{ name: 'test_tag1' }]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const [deserializeResult] = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
@@ -357,58 +339,52 @@ describe('MemberService', () => {
       const createdAt = new Date();
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '分類1': 'categories.0',
-          '屬性1': 'properties.0',
-          '標籤1': 'tags.0',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          分類1: 'categories.0',
+          屬性1: 'properties.0',
+          標籤1: 'tags.0',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': '',
-          '姓名': 'test_normal',
-          '帳號': 'test_normal_account',
-          '信箱': 'test_normal_email@test.com',
-          '身份': 'general-member',
-          '手機1': '0912345678',
-          '分類1': 'test_category1',
-          '屬性1': 'test_property1',
-          '標籤1': 'test_tag1',
-          '星等': '999',
-          '建立日期': createdAt.toISOString(),
-          '上次登入日期': '',
+          流水號: '',
+          姓名: 'test_normal',
+          帳號: 'test_normal_account',
+          信箱: 'test_normal_email@test.com',
+          身份: 'general-member',
+          手機1: '0912345678',
+          分類1: 'test_category1',
+          屬性1: 'test_property1',
+          標籤1: 'test_tag1',
+          星等: '999',
+          建立日期: createdAt.toISOString(),
+          上次登入日期: '',
         },
         {
-          '流水號': '',
-          '姓名': 'test_invalid_email',
-          '帳號': 'test_invalid_email_account',
-          '信箱': 'test_invalid_email',
-          '身份': 'general-member',
-          '手機1': '0912345678',
-          '分類1': 'test_category1',
-          '屬性1': 'test_property1',
-          '標籤1': 'test_tag1',
-          '星等': '999',
-          '建立日期': createdAt.toISOString(),
-          '上次登入日期': '',
+          流水號: '',
+          姓名: 'test_invalid_email',
+          帳號: 'test_invalid_email_account',
+          信箱: 'test_invalid_email',
+          身份: 'general-member',
+          手機1: '0912345678',
+          分類1: 'test_category1',
+          屬性1: 'test_property1',
+          標籤1: 'test_tag1',
+          星等: '999',
+          建立日期: createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
-      mockDefinitionInfra.getCategories.mockReturnValueOnce([
-        { id: 'test_category1_id', name: 'test_category1' },
-      ]);
-      mockDefinitionInfra.getProperties.mockReturnValueOnce([
-        { id: 'test_property1_id', name: '屬性1' },
-      ])
-      mockDefinitionInfra.getTags.mockReturnValueOnce([
-        { name: 'test_tag1' },
-      ]);
+      mockDefinitionInfra.getCategories.mockReturnValueOnce([{ id: 'test_category1_id', name: 'test_category1' }]);
+      mockDefinitionInfra.getProperties.mockReturnValueOnce([{ id: 'test_property1_id', name: '屬性1' }]);
+      mockDefinitionInfra.getTags.mockReturnValueOnce([{ name: 'test_tag1' }]);
 
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const deserializeResults = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
@@ -455,8 +431,7 @@ describe('MemberService', () => {
       const tag1 = new Tag();
       tag1.name = '測試標籤1';
 
-      const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(5, 5, [category1], [property1]);
+      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 5, [category1], [property1]);
       const member = new Member();
       member.id = v4();
       member.name = 'test';
@@ -483,10 +458,7 @@ describe('MemberService', () => {
       memberTag1.tagName2 = tag1;
       member.memberTags = [memberTag1];
 
-      const raws = await service.memberToRawCsv(
-        headerInfos,
-        [member],
-      );
+      const raws = await service.memberToRawCsv(headerInfos, [member]);
       const [raw] = raws;
       expect(raws.length).toBe(1);
       expect(raw['流水號']).toEqual(member.id);
@@ -515,8 +487,7 @@ describe('MemberService', () => {
       const tag1 = new Tag();
       tag1.name = '測試標籤1';
 
-      const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(5, 5, [category1], [property1]);
+      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 5, [category1], [property1]);
       const member = new Member();
       member.id = v4();
       member.name = 'test';
@@ -543,10 +514,7 @@ describe('MemberService', () => {
       memberTag1.tagName2 = tag1;
       member.memberTags = [memberTag1];
 
-      const raws = await service.memberToRawCsv(
-        headerInfos,
-        [member],
-      );
+      const raws = await service.memberToRawCsv(headerInfos, [member]);
       const [raw] = raws;
       expect(raws.length).toBe(1);
       expect(raw['流水號']).toEqual(member.id);
@@ -583,13 +551,12 @@ describe('MemberService', () => {
       const tag2 = new Tag();
       tag2.name = '測試標籤2';
 
-      const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(
-          5,
-          5,
-          [category1, category2],
-          [property1, property2],
-        );
+      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(
+        5,
+        5,
+        [category1, category2],
+        [property1, property2],
+      );
       const member = new Member();
       member.id = v4();
       member.name = 'test';
@@ -625,10 +592,7 @@ describe('MemberService', () => {
       memberTag2.tagName2 = tag2;
       member.memberTags = [memberTag1, memberTag2];
 
-      const raws = await service.memberToRawCsv(
-        headerInfos,
-        [member],
-      );
+      const raws = await service.memberToRawCsv(headerInfos, [member]);
       const [raw] = raws;
       expect(raws.length).toBe(1);
       expect(raw['流水號']).toEqual(member.id);
@@ -669,13 +633,12 @@ describe('MemberService', () => {
       const tag2 = new Tag();
       tag2.name = '測試標籤2';
 
-      const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(
-          5,
-          5,
-          [category1, category2],
-          [property1, property2],
-        );
+      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(
+        5,
+        5,
+        [category1, category2],
+        [property1, property2],
+      );
       const member = new Member();
       member.id = v4();
       member.name = 'test';
@@ -704,10 +667,7 @@ describe('MemberService', () => {
       memberTag1.tagName2 = tag1;
       member.memberTags = [memberTag1];
 
-      const raws = await service.memberToRawCsv(
-        headerInfos,
-        [member],
-      );
+      const raws = await service.memberToRawCsv(headerInfos, [member]);
       const [raw] = raws;
       expect(raws.length).toBe(1);
       expect(raw['流水號']).toEqual(member.id);
@@ -718,20 +678,16 @@ describe('MemberService', () => {
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       expect(raw['上次登入日期']).toEqual('N/A');
       Array(member.memberCategories.length).forEach((index) => {
-        expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index]
-          ? member.memberCategories[index].category.name : '',
+        expect(raw[`分類${index + 1}`]).toEqual(
+          member.memberCategories[index] ? member.memberCategories[index].category.name : '',
         );
-        expect(raw[`測試屬性${index + 1}`]).toEqual(member.memberProperties[index]
-          ? member.memberProperties[index].value : '',
+        expect(raw[`測試屬性${index + 1}`]).toEqual(
+          member.memberProperties[index] ? member.memberProperties[index].value : '',
         );
-        expect(raw[`標籤${index + 1}`]).toEqual(member.memberTags[index]
-          ? member.memberTags[index].tagName2.name : '',
-        );
+        expect(raw[`標籤${index + 1}`]).toEqual(member.memberTags[index] ? member.memberTags[index].tagName2.name : '');
       });
       Array(member.memberPhones.length).forEach((index) => {
-        expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index]
-          ? member.memberPhones[index].phone : '',
-        );
+        expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index] ? member.memberPhones[index].phone : '');
       });
     });
 
@@ -755,8 +711,7 @@ describe('MemberService', () => {
       const notBelongTag = new Tag();
       notBelongTag.name = '不存在標籤';
 
-      const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(5, 5, [category1], [property1]);
+      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 5, [category1], [property1]);
       const member = new Member();
       member.id = v4();
       member.name = 'test';
@@ -790,10 +745,7 @@ describe('MemberService', () => {
       notBelongMemberTag.tagName2 = notBelongTag;
       member.memberTags = [memberTag1, notBelongMemberTag];
 
-      const raws = await service.memberToRawCsv(
-        headerInfos,
-        [member],
-      );
+      const raws = await service.memberToRawCsv(headerInfos, [member]);
       const [raw] = raws;
       expect(raws.length).toBe(1);
       expect(raw['流水號']).toEqual(member.id);
@@ -804,20 +756,12 @@ describe('MemberService', () => {
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       expect(raw['上次登入日期']).toEqual('N/A');
       Array(member.memberCategories.length).forEach((index) => {
-        expect(raw[`分類${index + 1}`]).toEqual(index === 0
-          ? member.memberCategories[index].category.name : '',
-        );
-        expect(raw[`測試屬性${index + 1}`]).toEqual(index === 0
-          ? member.memberProperties[index].value : '',
-        );
-        expect(raw[`標籤${index + 1}`]).toEqual(index === 0
-          ? member.memberTags[index].tagName2.name : '',
-        );
+        expect(raw[`分類${index + 1}`]).toEqual(index === 0 ? member.memberCategories[index].category.name : '');
+        expect(raw[`測試屬性${index + 1}`]).toEqual(index === 0 ? member.memberProperties[index].value : '');
+        expect(raw[`標籤${index + 1}`]).toEqual(index === 0 ? member.memberTags[index].tagName2.name : '');
       });
       Array(member.memberPhones.length).forEach((index) => {
-        expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index]
-          ? member.memberPhones[index].phone : '',
-        );
+        expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index] ? member.memberPhones[index].phone : '');
       });
     });
   });
@@ -840,8 +784,7 @@ describe('MemberService', () => {
       mockDefinitionInfra.getProperties.mockReturnValueOnce([property1]);
       mockDefinitionInfra.getTags.mockReturnValueOnce([tag1]);
 
-      const headerInfos = await new MemberCsvHeaderMapping()
-        .deserializeFromDataBase(5, 5, [category1], [property1]);
+      const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 5, [category1], [property1]);
       const memberId = v4();
       const memberCreatedAt = new Date();
       const member = new Member();
@@ -873,10 +816,7 @@ describe('MemberService', () => {
 
       mockMemberRepo.findOne.mockReturnValueOnce(member);
 
-      const rawRows = await service.memberToRawCsv(
-        headerInfos,
-        [member],
-      );
+      const rawRows = await service.memberToRawCsv(headerInfos, [member]);
       const importedMembers = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       expect(importedMembers.length).toBe(1);
       const [deserializeResult] = importedMembers;
@@ -912,40 +852,40 @@ describe('MemberService', () => {
       const createdAt = new Date();
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '分類2': 'categories.1',
-          '測試屬性1': 'properties.0',
-          '測試屬性2': 'properties.1',
-          '標籤1': 'tags.0',
-          '標籤2': 'tags.1',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          分類2: 'categories.1',
+          測試屬性1: 'properties.0',
+          測試屬性2: 'properties.1',
+          標籤1: 'tags.0',
+          標籤2: 'tags.1',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': '',
-          '姓名': 'test',
-          '帳號': 'test_account',
-          '信箱': 'test_email@test.com',
-          '身份': '',
-          '手機1': '0912345678',
-          '手機2': '0923456789',
-          '分類1': '測試分類1',
-          '分類2': '測試分類2',
-          '測試屬性1': '測試屬性1之值',
-          '測試屬性2': '',
-          '標籤1': '測試標籤1',
-          '標籤2': '',
-          '星等': '999',
-          '建立日期': createdAt.toISOString(),
-          '上次登入日期': '',
+          流水號: '',
+          姓名: 'test',
+          帳號: 'test_account',
+          信箱: 'test_email@test.com',
+          身份: '',
+          手機1: '0912345678',
+          手機2: '0923456789',
+          分類1: '測試分類1',
+          分類2: '測試分類2',
+          測試屬性1: '測試屬性1之值',
+          測試屬性2: '',
+          標籤1: '測試標籤1',
+          標籤2: '',
+          星等: '999',
+          建立日期: createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
       mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
@@ -956,12 +896,9 @@ describe('MemberService', () => {
       mockDefinitionInfra.getProperties.mockReturnValueOnce([
         { id: 'test_property1_id', name: '測試屬性1' },
         { id: 'test_property2_id', name: '測試屬性2' },
-      ])
-      mockDefinitionInfra.getTags.mockReturnValueOnce([
-        { name: '測試標籤1' },
-        { name: '測試標籤2' },
       ]);
-      
+      mockDefinitionInfra.getTags.mockReturnValueOnce([{ name: '測試標籤1' }, { name: '測試標籤2' }]);
+
       const [headerInfos, _] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
       const deserializeResult = await service.rawCsvToMember('test-app-id', headerInfos, rawRows, manager);
       const members = deserializeResult.map(([member, _]) => member);

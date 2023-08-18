@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Category } from '~/definition/entity/category.entity';
 import { Member } from '~/member/entity/member.entity';
 
@@ -6,62 +6,62 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('member_task', { schema: 'public' })
 export class MemberTask {
   @PrimaryGeneratedColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('text', { name: 'priority', default: () => "'high'" })
-  priority: string
+  priority: string;
 
   @Column('text', { name: 'status', default: () => "'pending'" })
-  status: string
+  status: string;
 
   @Column('timestamp with time zone', { name: 'due_at', nullable: true })
-  dueAt: Date | null
+  dueAt: Date | null;
 
   @Column('text', { name: 'description', nullable: true })
-  description: string | null
+  description: string | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
     default: () => 'now()',
   })
-  createdAt: Date | null
+  createdAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     nullable: true,
     default: () => 'now()',
   })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
-  @ManyToOne(() => Member, member => member.memberTasks, {
+  @ManyToOne(() => Member, (member) => member.memberTasks, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'author_id', referencedColumnName: 'id' }])
-  author: Member
+  author: Member;
 
-  @ManyToOne(() => Member, member => member.memberTasks2, {
+  @ManyToOne(() => Member, (member) => member.memberTasks2, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'executor_id', referencedColumnName: 'id' }])
-  executor: Member
+  executor: Member;
 
-  @ManyToOne(() => Member, member => member.memberTasks3, {
+  @ManyToOne(() => Member, (member) => member.memberTasks3, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => Category, category => category.memberTasks, {
+  @ManyToOne(() => Category, (category) => category.memberTasks, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'category_id', referencedColumnName: 'id' }])
-  category: Category
+  category: Category;
 }

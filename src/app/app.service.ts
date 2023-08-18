@@ -10,9 +10,7 @@ import { AppModule } from './entity/app_module.entity';
 
 @Injectable()
 export class AppService {
-  constructor(
-    @InjectEntityManager() private readonly entityManager: EntityManager,
-  ) {}
+  constructor(@InjectEntityManager() private readonly entityManager: EntityManager) {}
 
   async getAppByClientId(clientId: string, entityManager?: EntityManager): Promise<App | null> {
     const cb = async (manager: EntityManager) => {
@@ -40,7 +38,7 @@ export class AppService {
       const founds = await appSettingRepo.findBy({ appId });
       const result = {};
 
-      founds.forEach(({ key, value }) => result[key] = value);
+      founds.forEach(({ key, value }) => (result[key] = value));
       return result;
     };
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
@@ -52,7 +50,7 @@ export class AppService {
       const founds = await appSecretRepo.findBy({ appId });
       const result = {};
 
-      founds.forEach(({ key, value }) => result[key] = value);
+      founds.forEach(({ key, value }) => (result[key] = value));
       return result;
     };
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);

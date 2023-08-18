@@ -8,19 +8,19 @@ import { ProgramPlan } from './ProgramPlan';
 @Entity('program_content_plan', { schema: 'public' })
 export class ProgramContentPlan {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
-  @ManyToOne(() => ProgramContent, programContent => programContent.programContentPlans, {
+  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_content_id', referencedColumnName: 'id' }])
-  programContent: ProgramContent
+  programContent: ProgramContent;
 
-  @ManyToOne(() => ProgramPlan, programPlan => programPlan.programContentPlans, {
+  @ManyToOne(() => ProgramPlan, (programPlan) => programPlan.programContentPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_plan_id', referencedColumnName: 'id' }])
-  programPlan: ProgramPlan
+  programPlan: ProgramPlan;
 }

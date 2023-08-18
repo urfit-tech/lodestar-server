@@ -8,10 +8,7 @@ import { VideoTokenDTO } from './video.dto';
   version: ['1', '2'],
 })
 export class VideoController {
-  constructor(
-    private readonly logger: Logger,
-    private readonly videoService: VideoService,
-  ) {}
+  constructor(private readonly logger: Logger, private readonly videoService: VideoService) {}
 
   @Post(':videoId/token')
   async getCfToken(
@@ -21,9 +18,7 @@ export class VideoController {
     try {
       const [_, token] = authorization ? authorization.split(' ') : [undefined, undefined];
 
-      const { videoToken, cfOptions } = await this.videoService.generateCfVideoToken(
-        videoId, token,
-      );
+      const { videoToken, cfOptions } = await this.videoService.generateCfVideoToken(videoId, token);
       return {
         code: 'SUCCESS',
         message: 'successfully sign the url',

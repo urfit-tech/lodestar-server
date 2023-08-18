@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import { OrderLog } from '~/order/entity/order_log.entity';
 
@@ -11,61 +11,61 @@ export class PaymentLog {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('text', { primary: true, name: 'no' })
-  no: string
+  no: string;
 
   @Column('text', { name: 'status', nullable: true })
-  status: string | null
+  status: string | null;
 
   @Column('numeric', { name: 'price', nullable: true })
-  price: number | null
+  price: number | null;
 
   @Column('text', { name: 'gateway', nullable: true })
-  gateway: string | null
+  gateway: string | null;
 
   @Column('jsonb', {
     name: 'options',
     nullable: true,
     default: () => 'jsonb_build_object()',
   })
-  options: any | null
+  options: any | null;
 
   @Column('timestamp with time zone', {
     name: 'payment_due_at',
     nullable: true,
   })
-  paymentDueAt: Date | null
+  paymentDueAt: Date | null;
 
   @Column('timestamp with time zone', { name: 'updated_at', nullable: true })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
   @Column('timestamp with time zone', { name: 'paid_at', nullable: true })
-  paidAt: Date | null
+  paidAt: Date | null;
 
   @Column('text', { name: 'method', nullable: true })
-  method: string | null
+  method: string | null;
 
   @Column('text', { name: 'custom_no', nullable: true, unique: true })
-  customNo: string | null
+  customNo: string | null;
 
   @Column('timestamp with time zone', {
     name: 'invoice_issued_at',
     nullable: true,
   })
-  invoiceIssuedAt: Date | null
+  invoiceIssuedAt: Date | null;
 
   @Column('jsonb', {
     name: 'invoice_options',
     default: () => 'jsonb_build_object()',
   })
-  invoiceOptions: object
+  invoiceOptions: object;
 
-  @ManyToOne(() => OrderLog, orderLog => orderLog.paymentLogs, {
+  @ManyToOne(() => OrderLog, (orderLog) => orderLog.paymentLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'order_id', referencedColumnName: 'id' }])
-  order: OrderLog
+  order: OrderLog;
 }

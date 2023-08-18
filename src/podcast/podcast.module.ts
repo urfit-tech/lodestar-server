@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common'
-import { PodcastPlanService } from './podcast-plan/podcast-plan.service'
+import { Module } from '@nestjs/common';
+import { PodcastPlanService } from './podcast-plan/podcast-plan.service';
 
 @Module({
   providers: [PodcastPlanService],

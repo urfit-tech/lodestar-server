@@ -8,45 +8,45 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('program_content_progress', { schema: 'public' })
 export class ProgramContentProgress {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('uuid', { name: 'program_content_id', unique: true })
-  programContentId: string
+  programContentId: string;
 
   @Column('numeric', { name: 'progress', default: () => 0 })
-  progress: number
+  progress: number;
 
   @Column('numeric', { name: 'last_progress', default: () => 0 })
-  lastProgress: number
+  lastProgress: number;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
     default: () => 'now()',
   })
-  createdAt: Date | null
+  createdAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     nullable: true,
     default: () => 'now()',
   })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
-  @ManyToOne(() => Member, member => member.programContentProgresses, {
+  @ManyToOne(() => Member, (member) => member.programContentProgresses, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => ProgramContent, programContent => programContent.programContentProgresses, {
+  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentProgresses, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_content_id', referencedColumnName: 'id' }])
-  programContent: ProgramContent
+  programContent: ProgramContent;
 }

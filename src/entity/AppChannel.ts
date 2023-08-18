@@ -20,13 +20,13 @@ export class AppChannel {
   })
   name: string;
 
-  @ManyToOne(() => App, app => app.appChannels, {
+  @ManyToOne(() => App, (app) => app.appChannels, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
-  app: App
+  app: App;
 
-  @OneToMany(() => ProductChannel, productChannel => productChannel.appChannel)
+  @OneToMany(() => ProductChannel, (productChannel) => productChannel.appChannel)
   productChannels: ProductChannel[];
 }

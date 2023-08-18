@@ -1,17 +1,17 @@
-import { EntityManager } from 'typeorm'
+import { EntityManager } from 'typeorm';
 import { sign } from 'jsonwebtoken';
-import { Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectEntityManager } from '@nestjs/typeorm'
+import { InjectEntityManager } from '@nestjs/typeorm';
 
-import { SignupProperty } from '~/entity/SignupProperty'
+import { SignupProperty } from '~/entity/SignupProperty';
 import { MemberInfrastructure } from '~/member/member.infra';
-import { MemberRole, PublicMember } from '~/member/member.type'
-import { AppService } from '~/app/app.service'
-import { PermissionService } from '~/permission/permission.service'
+import { MemberRole, PublicMember } from '~/member/member.type';
+import { AppService } from '~/app/app.service';
+import { PermissionService } from '~/permission/permission.service';
 import { APIException } from '~/api.excetion';
 
-import { CrossServerTokenDTO } from './auth.type'
+import { CrossServerTokenDTO } from './auth.type';
 
 @Injectable()
 export class AuthService {
@@ -42,50 +42,54 @@ export class AuthService {
         throw new APIException({ code: 'E_AUTH_TOKEN', message: 'key is not authenticated' });
       }
 
-      return this.signJWT({
-        sub: clientId,
-        appId,
-        role: MemberRole.APP_OWNER,
-        permissions,
-      }, '12 hours', manager);
+      return this.signJWT(
+        {
+          sub: clientId,
+          appId,
+          role: MemberRole.APP_OWNER,
+          permissions,
+        },
+        '12 hours',
+        manager,
+      );
     });
   }
 
   private async signJWT(
     payload: {
-      sub: string
-      orgId?: string | null
-      appId: string
-      memberId?: string
-      name?: string
-      username?: string
-      email?: string
-      phoneNumber?: string
-      role: string
-      permissions: (string | null)[]
-      isBusiness?: boolean | null
-      loggedInMembers?: PublicMember[]
-      options?: { [key: string]: any }
+      sub: string;
+      orgId?: string | null;
+      appId: string;
+      memberId?: string;
+      name?: string;
+      username?: string;
+      email?: string;
+      phoneNumber?: string;
+      role: string;
+      permissions: (string | null)[];
+      isBusiness?: boolean | null;
+      loggedInMembers?: PublicMember[];
+      options?: { [key: string]: any };
     },
     expiresIn = '1 day',
     manager: EntityManager,
   ) {
     const settings = await this.appService.getAppSettings(payload.appId, manager);
-    const defaultPermissionIds = JSON.parse(settings['feature.membership_default_permission'] || '[]') as Array<string>
+    const defaultPermissionIds = JSON.parse(settings['feature.membership_default_permission'] || '[]') as Array<string>;
     const permissions = await this.permissionService.getByIds(defaultPermissionIds, manager);
-    const validatePermissions = permissions.map(({ id }) => id)
-    const invalidatePermissions = defaultPermissionIds.filter((each) => !validatePermissions.includes(each))
-    console.error(`Invalidate Permission: ${invalidatePermissions}`)
+    const validatePermissions = permissions.map(({ id }) => id);
+    const invalidatePermissions = defaultPermissionIds.filter((each) => !validatePermissions.includes(each));
+    console.error(`Invalidate Permission: ${invalidatePermissions}`);
 
     const isFinishedSignUpProperty = payload?.memberId
       ? await this.checkUndoneSignUpProperty(payload.appId, payload.memberId, manager)
-      : true
+      : true;
 
     validatePermissions.forEach((each) => {
       if (!payload.permissions.includes(each)) {
-        payload.permissions.push(each)
+        payload.permissions.push(each);
       }
-    })
+    });
     const claim = {
       ...payload,
       isFinishedSignUpProperty,
@@ -96,8 +100,8 @@ export class AuthService {
         'x-hasura-app-id': payload.appId,
         'x-hasura-org-id': payload?.orgId || '',
       },
-    }
-    return sign(claim, this.hasuraJwtSecret, { expiresIn })
+    };
+    return sign(claim, this.hasuraJwtSecret, { expiresIn });
   }
 
   private async getSignUpPropertyIds(appId: string, manager: EntityManager) {
@@ -112,13 +116,17 @@ export class AuthService {
 
   private async checkUndoneSignUpProperty(appId: string, memberId: string, manager: EntityManager) {
     const requiredPropertyIds = await this.getSignUpPropertyIds(appId, manager);
-    const requiredMemberProperties = await this.memberInfra.getMemberPropertiesByIds(memberId, requiredPropertyIds, manager);
-  
+    const requiredMemberProperties = await this.memberInfra.getMemberPropertiesByIds(
+      memberId,
+      requiredPropertyIds,
+      manager,
+    );
+
     if (requiredMemberProperties.some(({ value }) => value === '')) {
-      return false
+      return false;
     } else if (requiredPropertyIds.length !== requiredMemberProperties.length) {
-      return false
+      return false;
     }
-    return true
+    return true;
   }
 }

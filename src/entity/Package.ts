@@ -1,26 +1,26 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
-import { PackageSection } from './PackageSection'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { App } from './App';
+import { PackageSection } from './PackageSection';
 
 @Index('package_pkey', ['id'], { unique: true })
 @Entity('package', { schema: 'public' })
 export class Package {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('jsonb', { name: 'elements' })
-  elements: object
+  elements: object;
 
-  @ManyToOne(() => App, app => app.packages, {
+  @ManyToOne(() => App, (app) => app.packages, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
-  app: App
+  app: App;
 
-  @OneToMany(() => PackageSection, packageSection => packageSection.package)
-  packageSections: PackageSection[]
+  @OneToMany(() => PackageSection, (packageSection) => packageSection.package)
+  packageSections: PackageSection[];
 }

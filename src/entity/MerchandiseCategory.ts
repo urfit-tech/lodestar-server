@@ -1,27 +1,27 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Category } from '~/definition/entity/category.entity';
-import { Merchandise } from './Merchandise'
+import { Merchandise } from './Merchandise';
 
 @Index('merchandise_category_pkey', ['id'], { unique: true })
 @Entity('merchandise_category', { schema: 'public' })
 export class MerchandiseCategory {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('integer', { name: 'position', default: () => 0 })
-  position: number
+  position: number;
 
-  @ManyToOne(() => Merchandise, merchandise => merchandise.merchandiseCategories, {
+  @ManyToOne(() => Merchandise, (merchandise) => merchandise.merchandiseCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'merchandise_id', referencedColumnName: 'id' }])
-  merchandise: Merchandise
+  merchandise: Merchandise;
 
-  @ManyToOne(() => Category, category => category.merchandiseCategories, {
+  @ManyToOne(() => Category, (category) => category.merchandiseCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'category_id', referencedColumnName: 'id' }])
-  category: Category
+  category: Category;
 }

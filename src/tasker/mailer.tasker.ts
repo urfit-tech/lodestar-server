@@ -11,7 +11,7 @@ export class MailJob {
   cc: string[];
   bcc: string[];
   content: string;
-};
+}
 
 @Processor(MailerTasker.name)
 export class MailerTasker extends Tasker {

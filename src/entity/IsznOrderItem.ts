@@ -1,14 +1,14 @@
-import { Column, Entity, Index, PrimaryColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
 @Index('iszn_order_item_pkey', ['id'], { unique: true })
 @Entity('iszn_order_item', { schema: 'public' })
 export class IsznOrderItem {
   @PrimaryColumn()
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'orderid' })
-  orderid: string
+  orderid: string;
 
   @Column('uuid', { name: 'courseid' })
-  courseid: string
+  courseid: string;
 }

@@ -10,34 +10,34 @@ import { Program } from './Program';
 @Entity('program_role', { schema: 'public' })
 export class ProgramRole {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'program_id', unique: true })
-  programId: string
+  programId: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('text', { name: 'name', unique: true })
-  name: string
+  name: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
-  @ManyToOne(() => Member, member => member.programRoles, {
+  @ManyToOne(() => Member, (member) => member.programRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => Program, program => program.programRoles, {
+  @ManyToOne(() => Program, (program) => program.programRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
-  program: Program
+  program: Program;
 }

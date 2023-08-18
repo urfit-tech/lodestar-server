@@ -38,21 +38,21 @@ export class ProductChannel {
   })
   channelSku: string;
 
-  @ManyToOne(() => App, app => app.productChannels, {
+  @ManyToOne(() => App, (app) => app.productChannels, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => AppChannel, appChannel => appChannel.productChannels, {
+  @ManyToOne(() => AppChannel, (appChannel) => appChannel.productChannels, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'channel_id', referencedColumnName: 'id' }])
   appChannel: AppChannel;
 
-  @ManyToOne(() => Product, product => product.productChannels, {
+  @ManyToOne(() => Product, (product) => product.productChannels, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

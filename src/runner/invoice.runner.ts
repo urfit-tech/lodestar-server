@@ -32,24 +32,16 @@ export class InvoiceRunner extends Runner {
     private readonly utilityService: UtilityService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(
-      InvoiceRunner.name,
-      5 * 60 * 1000,
-      logger,
-      distributedLockService,
-      shutdownService,
-    );
+    super(InvoiceRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
     this.batchSize = 200;
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
-    const errors: Array<{ error: any; }> = [];
+    const errors: Array<{ error: any }> = [];
     const cb = async (manager: EntityManager) => {
-      const paymentLogs = await this.paymentInfra.getShouldIssueInvoicePaymentLogs(
-        this.batchSize, manager,
-      );
+      const paymentLogs = await this.paymentInfra.getShouldIssueInvoicePaymentLogs(this.batchSize, manager);
 
-      for(const paymentLog of paymentLogs) {
+      for (const paymentLog of paymentLogs) {
         const { no: paymentNo } = paymentLog;
         try {
           await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
@@ -59,7 +51,7 @@ export class InvoiceRunner extends Runner {
             error: JSON.stringify(error),
             title: '開立發票失敗',
             message: `paymentNo: ${paymentNo}`,
-          })
+          });
         }
         await this.utilityService.sleep(100);
       }

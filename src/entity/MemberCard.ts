@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
 
 @Index('member_card_member_id_card_identifier_key', ['cardIdentifier', 'memberId'], { unique: true })
@@ -7,30 +7,30 @@ import { Member } from '~/member/entity/member.entity';
 @Entity('member_card', { schema: 'public' })
 export class MemberCard {
   @PrimaryGeneratedColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('jsonb', { name: 'card_info' })
-  cardInfo: object
+  cardInfo: object;
 
   @Column('jsonb', { name: 'card_secret' })
-  cardSecret: object
+  cardSecret: object;
 
   @Column('text', { name: 'card_identifier', unique: true })
-  cardIdentifier: string
+  cardIdentifier: string;
 
   @Column('jsonb', { name: 'card_holder', nullable: true })
-  cardHolder: object | null
+  cardHolder: object | null;
 
   @Column('integer', { name: 'priority', default: () => 0 })
-  priority: number
+  priority: number;
 
-  @ManyToOne(() => Member, member => member.memberCards, {
+  @ManyToOne(() => Member, (member) => member.memberCards, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 }

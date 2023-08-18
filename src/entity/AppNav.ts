@@ -1,53 +1,53 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { App } from './App'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { App } from './App';
 
 @Index('app_nav_pkey', ['id'], { unique: true })
 @Entity('app_nav', { schema: 'public' })
 export class AppNav {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'block' })
-  block: string
+  block: string;
 
   @Column('integer', { name: 'position' })
-  position: number
+  position: number;
 
   @Column('text', { name: 'label' })
-  label: string
+  label: string;
 
   @Column('text', { name: 'icon', nullable: true })
-  icon: string | null
+  icon: string | null;
 
   @Column('text', { name: 'href' })
-  href: string
+  href: string;
 
   @Column('boolean', { name: 'external', default: () => false })
-  external: boolean
+  external: boolean;
 
   @Column('text', { name: 'locale', default: () => "'zh-tw'" })
-  locale: string
+  locale: string;
 
   @Column('text', { name: 'tag', nullable: true })
-  tag: string | null
+  tag: string | null;
 
   @Column('jsonb', { name: 'options', nullable: true })
-  options: object | null
+  options: object | null;
 
-  @ManyToOne(() => App, app => app.appNavs, {
+  @ManyToOne(() => App, (app) => app.appNavs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
-  app: App
+  app: App;
 
-  @ManyToOne(() => AppNav, appNav => appNav.appNavs, {
+  @ManyToOne(() => AppNav, (appNav) => appNav.appNavs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'parent_id', referencedColumnName: 'id' }])
-  parent: AppNav
+  parent: AppNav;
 
-  @OneToMany(() => AppNav, appNav => appNav.parent)
-  appNavs: AppNav[]
+  @OneToMany(() => AppNav, (appNav) => appNav.parent)
+  appNavs: AppNav[];
 }

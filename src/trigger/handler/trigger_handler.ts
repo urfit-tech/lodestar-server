@@ -40,7 +40,7 @@ export abstract class TriggerHandler<T> {
   }
 
   protected abstract handleInsert(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>>;
-  
+
   protected abstract handleUpdate(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>>;
 
   protected abstract handleDelete(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>>;
