@@ -1,7 +1,10 @@
-import { Body, Controller, Get, Headers, Param, Put } from '@nestjs/common';
 import { verify } from 'jsonwebtoken';
+import { Body, Controller, Get, Headers, Param, Put } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
+import { AuthService } from '~/auth/auth.service';
 import { APIException } from '~/api.excetion';
+
 import { OrderService } from './order.service';
 import { TransferReceivedOrderBodyDTO, TransferReceivedOrderDTO, TransferReceivedOrderToken } from './order.type';
 
@@ -11,6 +14,7 @@ import { TransferReceivedOrderBodyDTO, TransferReceivedOrderDTO, TransferReceive
 })
 export class OrderController {
   constructor(
+    private authService: AuthService,
     private orderService: OrderService,
     private readonly configService: ConfigService<{ HASURA_JWT_SECRET: string }>,
   ) {}
@@ -22,16 +26,13 @@ export class OrderController {
 
     try {
       const { authorization } = headers;
-      await verify(authorization.split(' ')[1], this.configService.get('HASURA_JWT_SECRET'));
+      this.authService.verify(authorization);
     } catch {
       throw new APIException({ code: 'E_TOKEN_INVALID', message: 'authToken is invalid' });
     }
 
     try {
-      transferOrderToken = (await verify(
-        token,
-        this.configService.get('HASURA_JWT_SECRET'),
-      )) as TransferReceivedOrderToken;
+      transferOrderToken = verify(token, this.configService.get('HASURA_JWT_SECRET')) as TransferReceivedOrderToken;
     } catch {
       throw new APIException({ code: 'E_TOKEN_INVALID', message: 'transferOrderToken is invalid' });
     }
@@ -47,7 +48,7 @@ export class OrderController {
   async getOrderById(@Param('orderId') orderId: string, @Headers() headers) {
     try {
       const { authorization } = headers;
-      await verify(authorization.split(' ')[1], this.configService.get('HASURA_JWT_SECRET'));
+      this.authService.verify(authorization);
     } catch {
       throw new APIException({ code: 'E_TOKEN_INVALID', message: 'authToken is invalid' });
     }
