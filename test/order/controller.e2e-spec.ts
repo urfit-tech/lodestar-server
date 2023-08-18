@@ -1,16 +1,14 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { OrderController } from './order.controller';
-import { OrderService } from './order.service';
 import { ApplicationModule } from '~/application.module';
-import { TransferReceivedOrderBodyDTO } from './order.type';
+import { TransferReceivedOrderBodyDTO } from '../../src/order/order.type';
 import { Role } from '~/entity/Role';
 import { Member } from '~/member/entity/member.entity';
 import { App } from '~/entity/App';
 import { AppPlan } from '~/entity/AppPlan';
 import { AppSetting } from '~/app/entity/app_setting.entity';
-import { OrderLog } from './entity/order_log.entity';
+import { OrderLog } from '../../src/order/entity/order_log.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { v4 } from 'uuid';
