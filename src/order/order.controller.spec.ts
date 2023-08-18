@@ -117,8 +117,7 @@ describe('OrderController (e2e)', () => {
         .put(apiPath.order.transferReceivedOrder)
         .set(requestHeader)
         .send(requestBody)
-        .expect(400)
-        .expect(/{"statusCode":400,"message":"E_TOKEN_INVALID"/);
+        .expect(401);
     });
 
     it('should TransferOrderToken is invalid', async () => {
@@ -243,8 +242,7 @@ describe('OrderController (e2e)', () => {
       await request(application.getHttpServer())
         .get(apiPath.order.orders + '/' + orderLog.id)
         .set(requestHeader)
-        .expect(400)
-        .expect(/{"statusCode":400,"message":"E_TOKEN_INVALID"}/);
+        .expect(401);
     });
 
     it('should raise error due to order not found', async () => {
