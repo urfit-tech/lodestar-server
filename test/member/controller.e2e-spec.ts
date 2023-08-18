@@ -197,7 +197,7 @@ describe('MemberController (e2e)', () => {
       }
     });
 
-    it('Should get members with name conditions', async () => {
+    it('Should get members with managerName conditions', async () => {
       let managerMember = new Member();
       managerMember.appId = app.id;
       managerMember.id = v4();
@@ -248,6 +248,47 @@ describe('MemberController (e2e)', () => {
       for (let i = 0; i < fetched.length; i++) {
         const member = fetched[i];
         expect(member.manager_id).toBe(managerMember.id);
+      }
+    });
+
+    it('Should get members with partial email conditions', async () => {
+      for (let i = 0; i < 5; i++) {
+        let insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = v4();
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign({
+        'appId': app.id,
+        'memberId': 'invoker_member_id',
+        'permissions': ['MEMBER_ADMIN'],
+      }, jwtSecret);
+
+      const res = await request(application.getHttpServer())
+        .get(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: { email: '%example.com%' },
+        })
+        .expect(200);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).not.toBe(0);
+      for (let i = 0; i < fetched.length; i++) {
+        expect(fetched[i].name.includes(`name${fetched.length - i}`)).toBeTruthy();
+        expect(fetched[i].email.includes(`example.com`)).toBeTruthy();
       }
     });
 
