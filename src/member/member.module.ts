@@ -2,6 +2,7 @@ import { Logger, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 
 import { DefinitionModule } from '~/definition/definition.module';
+import { AuthModule } from '~/auth/auth.module';
 import { ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker } from '~/tasker/exporter.tasker';
 
@@ -13,6 +14,7 @@ import { MemberInfrastructure } from './member.infra';
   controllers: [MemberController],
   imports: [
     DefinitionModule,
+    AuthModule,
     BullModule.registerQueue({ name: ImporterTasker.name }),
     BullModule.registerQueue({ name: ExporterTasker.name }),
   ],

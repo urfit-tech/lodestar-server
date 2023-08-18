@@ -1,6 +1,6 @@
 import { EntityManager } from 'typeorm';
-import { sign } from 'jsonwebtoken';
-import { Injectable } from '@nestjs/common';
+import { sign, verify as jwtVerify } from 'jsonwebtoken';
+import { Logger, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
@@ -18,6 +18,7 @@ export class AuthService {
   private readonly hasuraJwtSecret: string;
 
   constructor(
+    private readonly logger: Logger,
     private readonly configService: ConfigService<{ HASURA_JWT_SECRET: string }>,
     private readonly appService: AppService,
     private readonly permissionService: PermissionService,
@@ -53,6 +54,16 @@ export class AuthService {
         manager,
       );
     });
+  }
+
+  verify(authorization: string): Record<string, any> {
+    try {
+      const [_, token] = authorization.split(' ');
+      return jwtVerify(token, this.hasuraJwtSecret) as Record<string, any>;
+    } catch (error) {
+      this.logger.error(error);
+      throw new UnauthorizedException();
+    }
   }
 
   private async signJWT(

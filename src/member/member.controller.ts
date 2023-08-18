@@ -13,6 +13,7 @@ import {
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
 
+import { AuthService } from '~/auth/auth.service';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
 
@@ -33,19 +34,10 @@ export class MemberController {
     private readonly configService: ConfigService<{
       HASURA_JWT_SECRET: string;
     }>,
+    private readonly authService: AuthService,
     private readonly memberService: MemberService,
   ) {
     this.jwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
-  }
-
-  private verify(authorization: string): Record<string, any> {
-    try {
-      const [_, token] = authorization.split(' ');
-      return jwt.verify(token, this.jwtSecret) as Record<string, any>;
-    } catch (error) {
-      this.logger.error(error);
-      throw new UnauthorizedException();
-    }
   }
 
   // TODO: Should be deprecated with proper design with query parameter
@@ -59,7 +51,7 @@ export class MemberController {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
     }
 
-    const { appId, permissions } = this.verify(authorization);
+    const { appId, permissions } = this.authService.verify(authorization);
 
     if (
       ![
@@ -102,7 +94,7 @@ export class MemberController {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
     }
 
-    const { appId, permissions } = this.verify(authorization);
+    const { appId, permissions } = this.authService.verify(authorization);
 
     if (
       ![
@@ -140,7 +132,7 @@ export class MemberController {
     @Headers('Authorization') authorization: string,
     @Body() metadata: MemberImportDTO,
   ): Promise<void> {
-    const { memberId: invokerMemberId } = this.verify(authorization);
+    const { memberId: invokerMemberId } = this.authService.verify(authorization);
 
     const { appId, fileInfos } = metadata;
     const importJob: ImportJob = {
@@ -160,7 +152,7 @@ export class MemberController {
     @Headers('Authorization') authorization: string,
     @Body() metadata: MemberExportDTO,
   ): Promise<void> {
-    const { memberId: invokerMemberId } = this.verify(authorization);
+    const { memberId: invokerMemberId } = this.authService.verify(authorization);
 
     const { appId, memberIds, exportMime } = metadata;
     const exportJob: MemberExportJob = {
