@@ -56,14 +56,8 @@ export class AuthService {
     });
   }
 
-  verify(authorization: string): Record<string, any> {
-    try {
-      const [_, token] = authorization.split(' ');
-      return jwtVerify(token, this.hasuraJwtSecret) as Record<string, any>;
-    } catch (error) {
-      this.logger.error(error);
-      throw new UnauthorizedException();
-    }
+  verify(token: string): Record<string, any> {
+    return jwtVerify(token, this.hasuraJwtSecret) as Record<string, any>;
   }
 
   private async signJWT(

@@ -1,25 +1,27 @@
 import { Queue } from 'bull';
-import jwt from 'jsonwebtoken';
+import { Request as ExRequest } from 'express';
 import {
   Logger,
   Controller,
-  Headers,
   Body,
   Get,
   Post,
   UnauthorizedException,
   BadRequestException,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
 
-import { AuthService } from '~/auth/auth.service';
+import { AuthGuard } from '~/auth/auth.guard';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
 
 import { MemberExportDTO, MemberGetDTO, MemberGetResultDTO, MemberImportDTO } from './member.dto';
 import { MemberService } from './member.service';
 
+@UseGuards(AuthGuard)
 @Controller({
   path: 'members',
   version: '2',
@@ -34,7 +36,6 @@ export class MemberController {
     private readonly configService: ConfigService<{
       HASURA_JWT_SECRET: string;
     }>,
-    private readonly authService: AuthService,
     private readonly memberService: MemberService,
   ) {
     this.jwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
@@ -43,7 +44,7 @@ export class MemberController {
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
   public async getMembersByPost(
-    @Headers('Authorization') authorization: string,
+    @Request() request: ExRequest,
     @Body() dto: MemberGetDTO,
   ): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
@@ -51,7 +52,7 @@ export class MemberController {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
     }
 
-    const { appId, permissions } = this.authService.verify(authorization);
+    const { appId, permissions } = (request as any).member;
 
     if (
       ![
@@ -86,7 +87,7 @@ export class MemberController {
 
   @Get()
   public async getMembers(
-    @Headers('Authorization') authorization: string,
+    @Request() request: ExRequest,
     @Body() dto: MemberGetDTO,
   ): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
@@ -94,7 +95,7 @@ export class MemberController {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
     }
 
-    const { appId, permissions } = this.authService.verify(authorization);
+    const { appId, permissions } = (request as any).member;
 
     if (
       ![
@@ -129,10 +130,10 @@ export class MemberController {
 
   @Post('import')
   public async importMembers(
-    @Headers('Authorization') authorization: string,
+    @Request() request: ExRequest,
     @Body() metadata: MemberImportDTO,
   ): Promise<void> {
-    const { memberId: invokerMemberId } = this.authService.verify(authorization);
+    const { memberId: invokerMemberId } = (request as any).member;
 
     const { appId, fileInfos } = metadata;
     const importJob: ImportJob = {
@@ -149,10 +150,10 @@ export class MemberController {
 
   @Post('export')
   public async exportMembers(
-    @Headers('Authorization') authorization: string,
+    @Request() request: ExRequest,
     @Body() metadata: MemberExportDTO,
   ): Promise<void> {
-    const { memberId: invokerMemberId } = this.authService.verify(authorization);
+    const { memberId: invokerMemberId } = (request as any).member;
 
     const { appId, memberIds, exportMime } = metadata;
     const exportJob: MemberExportJob = {
