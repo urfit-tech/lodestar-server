@@ -94,8 +94,8 @@ describe('ReportController (e2e)', () => {
       await request(application.getHttpServer())
         .get(`${getReportRoute}/${v4()}`)
         .set(requestHeader)
-        .expect(400)
-        .expect(/{"statusCode":400,"message":"E_TOKEN_INVALID"}/);
+        .expect(401)
+        .expect('{"statusCode":401,"message":"Unauthorized"}');
     });
 
     it('Should get metabase signed url successfully', async () => {

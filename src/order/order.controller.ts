@@ -13,10 +13,7 @@ import { AuthService } from '~/auth/auth.service';
   version: ['2'],
 })
 export class OrderController {
-  constructor(
-    private authService: AuthService,
-    private orderService: OrderService,
-  ) {}
+  constructor(private authService: AuthService, private orderService: OrderService) {}
 
   @Put('transfer-received-order')
   async transferOrder(@Body() dto: TransferReceivedOrderBodyDTO) {
@@ -35,7 +32,6 @@ export class OrderController {
 
     return { code: 'SUCCESS', message: 'transfer order successfully', result: updateResult };
   }
-
 
   @Get(':orderId')
   async getOrderById(@Param('orderId') orderId: string) {

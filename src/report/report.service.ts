@@ -5,7 +5,7 @@ import { APIException } from '~/api.excetion';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
 import { Report } from './entity/report.entity';
-import { MetabasePayload } from './report.type';
+import { GetReportDTO, MetabasePayload } from './report.type';
 
 @Injectable()
 export class ReportService {
@@ -16,17 +16,17 @@ export class ReportService {
 
   async getReportById(orderId: string) {
     const reportRepo = this.entityManager.getRepository(Report);
-    let report;
-    try {
-      report = await reportRepo.findOneBy({ id: orderId });
-    } catch {
-      throw new APIException({ code: 'E_DB_GET_REPORT_ERROR', message: 'get report error.' });
-    }
-
+    const report = await reportRepo.findOneBy({ id: orderId });
     if (!report) {
       throw new APIException({ code: 'E_DB_GET_REPORT_NOT_FOUND', message: 'report not found.' });
     }
-    return report;
+    return {
+      id: report.id,
+      appId: report.appId,
+      options: report.options,
+      type: report.type ? 'metabase' : 'unknown', // TODO: fix type
+      title: report.title,
+    } as GetReportDTO;
   }
 
   generateMetabaseSignedUrl(payload: MetabasePayload) {

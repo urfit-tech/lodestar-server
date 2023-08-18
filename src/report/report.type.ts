@@ -4,10 +4,10 @@ export interface MetabasePayload {
   exp: number;
 }
 
-export interface Report {
+export interface GetReportDTO {
   id: string;
   title: string;
-  type: 'metabase';
+  type: 'metabase' | 'unknown';
   appId: string;
   options: ReportOptions;
 }

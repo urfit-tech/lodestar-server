@@ -20,6 +20,9 @@ export class Report {
   @Column('text', { name: 'type', nullable: true })
   type: string | null;
 
+  @Column('text', { name: 'app_id' })
+  appId: string;
+
   @ManyToOne(() => App, (app) => app.reports, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
