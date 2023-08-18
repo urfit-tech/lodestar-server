@@ -1,6 +1,5 @@
 import { subtle } from 'crypto';
 import { EntityManager } from 'typeorm';
-import jwt from 'jsonwebtoken';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -11,27 +10,26 @@ import { UtilityService } from '~/utility/utility.service';
 
 import { MediaInfrastructure } from '../media.infra';
 import { CfVideoStreamOptions } from './video.type';
+import { AuthService } from '~/auth/auth.service';
 
 @Injectable()
 export class VideoService {
   private readonly cfStreamingKeyId: string;
   private readonly cfStreamingJwk: string;
-  private readonly hasuraJwtSecret: string;
 
   constructor(
     private readonly configService: ConfigService<{
       CF_STREAMING_KEY_ID: string;
       CF_STREAMING_JWK: string;
-      HASURA_JWT_SECRET: string;
     }>,
     private readonly mediaInfra: MediaInfrastructure,
+    private readonly authService: AuthService,
     private readonly programService: ProgramService,
     private readonly utilityService: UtilityService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     this.cfStreamingKeyId = configService.getOrThrow('CF_STREAMING_KEY_ID');
     this.cfStreamingJwk = configService.getOrThrow('CF_STREAMING_JWK');
-    this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
 
   async generateCfVideoToken(videoId: string, authToken?: string) {
@@ -69,9 +67,8 @@ export class VideoService {
       return true;
     }
 
-    let jwtToken: string;
     try {
-      jwtToken = jwt.verify(authToken, this.hasuraJwtSecret) as string;
+      this.authService.verify(authToken);
     } catch {
       return false;
     }

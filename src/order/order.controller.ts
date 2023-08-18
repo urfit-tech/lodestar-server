@@ -1,13 +1,13 @@
-import { verify } from 'jsonwebtoken';
-import { Body, Controller, Get, Headers, Param, Put } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
 
-import { AuthService } from '~/auth/auth.service';
+import { AuthGuard } from '~/auth/auth.guard';
 import { APIException } from '~/api.excetion';
 
 import { OrderService } from './order.service';
 import { TransferReceivedOrderBodyDTO, TransferReceivedOrderDTO, TransferReceivedOrderToken } from './order.type';
+import { AuthService } from '~/auth/auth.service';
 
+@UseGuards(AuthGuard)
 @Controller({
   path: 'orders',
   version: ['2'],
@@ -16,23 +16,15 @@ export class OrderController {
   constructor(
     private authService: AuthService,
     private orderService: OrderService,
-    private readonly configService: ConfigService<{ HASURA_JWT_SECRET: string }>,
   ) {}
 
   @Put('transfer-received-order')
-  async transferOrder(@Body() dto: TransferReceivedOrderBodyDTO, @Headers() headers) {
+  async transferOrder(@Body() dto: TransferReceivedOrderBodyDTO) {
     const { token, memberId } = dto;
     let transferOrderToken;
 
     try {
-      const { authorization } = headers;
-      this.authService.verify(authorization);
-    } catch {
-      throw new APIException({ code: 'E_TOKEN_INVALID', message: 'authToken is invalid' });
-    }
-
-    try {
-      transferOrderToken = verify(token, this.configService.get('HASURA_JWT_SECRET')) as TransferReceivedOrderToken;
+      transferOrderToken = this.authService.verify(token) as TransferReceivedOrderToken;
     } catch {
       throw new APIException({ code: 'E_TOKEN_INVALID', message: 'transferOrderToken is invalid' });
     }
@@ -44,15 +36,9 @@ export class OrderController {
     return { code: 'SUCCESS', message: 'transfer order successfully', result: updateResult };
   }
 
-  @Get(':orderId')
-  async getOrderById(@Param('orderId') orderId: string, @Headers() headers) {
-    try {
-      const { authorization } = headers;
-      this.authService.verify(authorization);
-    } catch {
-      throw new APIException({ code: 'E_TOKEN_INVALID', message: 'authToken is invalid' });
-    }
 
+  @Get(':orderId')
+  async getOrderById(@Param('orderId') orderId: string) {
     if (!orderId) {
       throw new APIException({ code: 'E_NULL_ORDER', message: 'orderId is null or undefined' });
     }
