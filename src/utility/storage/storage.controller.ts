@@ -8,14 +8,10 @@ import { UploadDTO } from './storage.dto';
   version: ['2'],
 })
 export class StorageController {
-  constructor(
-    private readonly storageService: StorageService,
-  ) {}
+  constructor(private readonly storageService: StorageService) {}
 
   @Post('storage/upload')
-  uploadFileToStorageBucket(
-    @Body() body: UploadDTO,
-  ) {
+  uploadFileToStorageBucket(@Body() body: UploadDTO) {
     const { appId, fileName } = body;
     return this.storageService.getSignedUrlForUploadStorage(appId, fileName, 60);
   }

@@ -13,27 +13,20 @@ import { AppHostHandler } from './handler/app_host.handler';
 
 @Module({
   imports: [TableLogModule],
-  providers: [
-    Logger,
-    TriggerService,
-    CacheService,
-    AppSettingHandler,
-    AppSecretHandler,
-    AppHostHandler,
-  ],
+  providers: [Logger, TriggerService, CacheService, AppSettingHandler, AppSecretHandler, AppHostHandler],
   exports: [TriggerService],
 })
 export class TriggerModule {
   static async initializeTriggerInDB(
-    logger: Logger, tableLogService: TableLogService, manager: EntityManager,
+    logger: Logger,
+    tableLogService: TableLogService,
+    manager: EntityManager,
   ): Promise<void> {
     const tables = ['app_setting', 'app_secret', 'app_host'];
     for (const tableName of tables) {
       for (const operation of ['INSERT', 'UPDATE', 'DELETE']) {
-        const existence = await tableLogService.isTableTriggerExists(
-          tableName, operation as TableOperation, manager,
-        );
-        if(!existence) {
+        const existence = await tableLogService.isTableTriggerExists(tableName, operation as TableOperation, manager);
+        if (!existence) {
           await tableLogService.createTableTrigger(tableName, operation as TableOperation, manager);
         }
       }

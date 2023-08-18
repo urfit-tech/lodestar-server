@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common'
-import { RssService } from './rss/rss.service'
+import { Module } from '@nestjs/common';
+import { RssService } from './rss/rss.service';
 
 @Module({
   providers: [RssService],

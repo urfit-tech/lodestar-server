@@ -1,6 +1,6 @@
 import { Queue } from 'bull';
 import jwt from 'jsonwebtoken';
-import { 
+import {
   Logger,
   Controller,
   Headers,
@@ -16,12 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
 
-import {
-  MemberExportDTO,
-  MemberGetDTO, 
-  MemberGetResultDTO,
-  MemberImportDTO,
-} from './member.dto';
+import { MemberExportDTO, MemberGetDTO, MemberGetResultDTO, MemberImportDTO } from './member.dto';
 import { MemberService } from './member.service';
 
 @Controller({
@@ -42,7 +37,7 @@ export class MemberController {
   ) {
     this.jwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
-  
+
   private verify(authorization: string): Record<string, any> {
     try {
       const [_, token] = authorization.split(' ');
@@ -66,26 +61,28 @@ export class MemberController {
 
     const { appId, permissions } = this.verify(authorization);
 
-    if (![
-      'MEMBER_ADMIN',
-      'POST_ADMIN',
-      'SALES_RECORDS_NORMAL',
-      'SALES_RECORDS_ADMIN',
-      'PROGRAM_ADMIN',
-      'PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN',
-      'APPOINTMENT_PLAN_ADMIN',
-      'COIN_ADMIN',
-      'SALES_LEAD_SELECTOR_ADMIN',
-      'SHIPPING_ADMIN',
-      'SHIPPING_NORMAL',
-      'MEMBER_PHONE_ADMIN',
-      'PROJECT_PORTFOLIO_NORMAL',
-      'PROJECT_PORTFOLIO_ADMIN',
-      'SALES_PERFORMANCE_ADMIN',
-      'SALES_LEAD_ADMIN',
-      'SALES_LEAD_NORMAL',
-      'MATERIAL_AUDIT_LOG_ADMIN',
-    ].some((e) => permissions.includes(e))) {
+    if (
+      ![
+        'MEMBER_ADMIN',
+        'POST_ADMIN',
+        'SALES_RECORDS_NORMAL',
+        'SALES_RECORDS_ADMIN',
+        'PROGRAM_ADMIN',
+        'PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN',
+        'APPOINTMENT_PLAN_ADMIN',
+        'COIN_ADMIN',
+        'SALES_LEAD_SELECTOR_ADMIN',
+        'SHIPPING_ADMIN',
+        'SHIPPING_NORMAL',
+        'MEMBER_PHONE_ADMIN',
+        'PROJECT_PORTFOLIO_NORMAL',
+        'PROJECT_PORTFOLIO_ADMIN',
+        'SALES_PERFORMANCE_ADMIN',
+        'SALES_LEAD_ADMIN',
+        'SALES_LEAD_NORMAL',
+        'MATERIAL_AUDIT_LOG_ADMIN',
+      ].some((e) => permissions.includes(e))
+    ) {
       throw new UnauthorizedException(
         { message: 'missing required permission' },
         'User permission is not met required permissions.',
@@ -107,26 +104,28 @@ export class MemberController {
 
     const { appId, permissions } = this.verify(authorization);
 
-    if (![
-      'MEMBER_ADMIN',
-      'POST_ADMIN',
-      'SALES_RECORDS_NORMAL',
-      'SALES_RECORDS_ADMIN',
-      'PROGRAM_ADMIN',
-      'PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN',
-      'APPOINTMENT_PLAN_ADMIN',
-      'COIN_ADMIN',
-      'SALES_LEAD_SELECTOR_ADMIN',
-      'SHIPPING_ADMIN',
-      'SHIPPING_NORMAL',
-      'MEMBER_PHONE_ADMIN',
-      'PROJECT_PORTFOLIO_NORMAL',
-      'PROJECT_PORTFOLIO_ADMIN',
-      'SALES_PERFORMANCE_ADMIN',
-      'SALES_LEAD_ADMIN',
-      'SALES_LEAD_NORMAL',
-      'MATERIAL_AUDIT_LOG_ADMIN',
-    ].some((e) => permissions.includes(e))) {
+    if (
+      ![
+        'MEMBER_ADMIN',
+        'POST_ADMIN',
+        'SALES_RECORDS_NORMAL',
+        'SALES_RECORDS_ADMIN',
+        'PROGRAM_ADMIN',
+        'PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN',
+        'APPOINTMENT_PLAN_ADMIN',
+        'COIN_ADMIN',
+        'SALES_LEAD_SELECTOR_ADMIN',
+        'SHIPPING_ADMIN',
+        'SHIPPING_NORMAL',
+        'MEMBER_PHONE_ADMIN',
+        'PROJECT_PORTFOLIO_NORMAL',
+        'PROJECT_PORTFOLIO_ADMIN',
+        'SALES_PERFORMANCE_ADMIN',
+        'SALES_LEAD_ADMIN',
+        'SALES_LEAD_NORMAL',
+        'MATERIAL_AUDIT_LOG_ADMIN',
+      ].some((e) => permissions.includes(e))
+    ) {
       throw new UnauthorizedException(
         { message: 'missing required permission' },
         'User permission is not met required permissions.',

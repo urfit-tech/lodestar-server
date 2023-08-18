@@ -1,105 +1,105 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { ProjectCategory } from './ProjectCategory'
-import { ProjectPlan } from './ProjectPlan'
-import { ProjectRole } from './ProjectRole'
-import { ProjectSection } from './ProjectSection'
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { ProjectCategory } from './ProjectCategory';
+import { ProjectPlan } from './ProjectPlan';
+import { ProjectRole } from './ProjectRole';
+import { ProjectSection } from './ProjectSection';
 
 @Index('project_pkey', ['id'], { unique: true })
 @Entity('project', { schema: 'public' })
 export class Project {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'type' })
-  type: string
+  type: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('text', { name: 'abstract', nullable: true })
-  abstract: string | null
+  abstract: string | null;
 
   @Column('text', { name: 'description', nullable: true })
-  description: string | null
+  description: string | null;
 
   @Column('numeric', { name: 'target_amount', nullable: true })
-  targetAmount: number | null
+  targetAmount: number | null;
 
   @Column('text', { name: 'introduction', nullable: true })
-  introduction: string | null
+  introduction: string | null;
 
   @Column('jsonb', { name: 'updates', nullable: true })
-  updates: object | null
+  updates: object | null;
 
   @Column('jsonb', { name: 'comments', nullable: true })
-  comments: object | null
+  comments: object | null;
 
   @Column('jsonb', { name: 'contents', nullable: true })
-  contents: object | null
+  contents: object | null;
 
   @Column('text', { name: 'cover_type', default: () => "'image'" })
-  coverType: string
+  coverType: string;
 
   @Column('text', { name: 'cover_url', nullable: true })
-  coverUrl: string | null
+  coverUrl: string | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', { name: 'published_at', nullable: true })
-  publishedAt: Date | null
+  publishedAt: Date | null;
 
   @Column('timestamp with time zone', { name: 'expired_at', nullable: true })
-  expiredAt: Date | null
+  expiredAt: Date | null;
 
   @Column('text', { name: 'template', nullable: true })
-  template: string | null
+  template: string | null;
 
   @Column('text', { name: 'app_id' })
-  appId: string
+  appId: string;
 
   @Column('boolean', {
     name: 'is_participants_visible',
     default: () => false,
   })
-  isParticipantsVisible: boolean
+  isParticipantsVisible: boolean;
 
   @Column('boolean', {
     name: 'is_countdown_timer_visible',
     default: () => false,
   })
-  isCountdownTimerVisible: boolean
+  isCountdownTimerVisible: boolean;
 
   @Column('text', { name: 'preview_url', nullable: true })
-  previewUrl: string | null
+  previewUrl: string | null;
 
   @Column('integer', { name: 'position', default: () => -1 })
-  position: number
+  position: number;
 
   @Column('text', { name: 'creator_id', nullable: true })
-  creatorId: string | null
+  creatorId: string | null;
 
   @Column('text', { name: 'target_unit', default: () => "'funds'" })
-  targetUnit: string
+  targetUnit: string;
 
   @Column('text', { name: 'introduction_desktop', nullable: true })
-  introductionDesktop: string | null
+  introductionDesktop: string | null;
 
   @Column('numeric', { name: 'views', default: () => 0 })
-  views: number
+  views: number;
 
-  @OneToMany(() => ProjectCategory, projectCategory => projectCategory.project)
-  projectCategories: ProjectCategory[]
+  @OneToMany(() => ProjectCategory, (projectCategory) => projectCategory.project)
+  projectCategories: ProjectCategory[];
 
-  @OneToMany(() => ProjectPlan, projectPlan => projectPlan.project)
-  projectPlans: ProjectPlan[]
+  @OneToMany(() => ProjectPlan, (projectPlan) => projectPlan.project)
+  projectPlans: ProjectPlan[];
 
-  @OneToMany(() => ProjectRole, projectRole => projectRole.project)
-  projectRoles: ProjectRole[]
+  @OneToMany(() => ProjectRole, (projectRole) => projectRole.project)
+  projectRoles: ProjectRole[];
 
-  @OneToMany(() => ProjectSection, projectSection => projectSection.project)
-  projectSections: ProjectSection[]
+  @OneToMany(() => ProjectSection, (projectSection) => projectSection.project)
+  projectSections: ProjectSection[];
 }

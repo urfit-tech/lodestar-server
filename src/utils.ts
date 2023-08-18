@@ -1,8 +1,8 @@
 export function getMemoryUsageString(): string {
   const used = process.memoryUsage();
-  const output = Object
-    .keys(used)
-    .map((key) => `${key}: ${Math.round(used[key] / 1024 / 1024 * 100) / 100} MB`).join(',');
+  const output = Object.keys(used)
+    .map((key) => `${key}: ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`)
+    .join(',');
   return `[MemoryUsage] ${output}`;
 }
 
@@ -18,16 +18,12 @@ export function parseFieldFromRaw<T>(
   value: string | undefined,
   parser: (value: string) => T = (value: string) => value as T,
 ): T {
-  return isEmptyString(value) || value === undefined
-    ? undefined
-    : parser(value);
+  return isEmptyString(value) || value === undefined ? undefined : parser(value);
 }
 
 export function parseNullableFieldFromRaw<T>(
   value: string | undefined,
   parser: (value: string) => T = (value: string) => value as T,
 ): T {
-  return isEmptyString(value) || value === undefined
-    ? undefined
-    : isNullString(value) ? null : parser(value);
+  return isEmptyString(value) || value === undefined ? undefined : isNullString(value) ? null : parser(value);
 }

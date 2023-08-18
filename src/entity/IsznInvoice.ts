@@ -1,32 +1,32 @@
-import { Column, Entity, Index, PrimaryColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
 @Index('iszn_invoice_pkey', ['id'], { unique: true })
 @Entity('iszn_invoice', { schema: 'public' })
 export class IsznInvoice {
   @Column('text', { name: 'buyername' })
-  buyername: string
+  buyername: string;
 
   @Column('text', { name: 'buyerubn' })
-  buyerubn: string
+  buyerubn: string;
 
   @Column('text', { name: 'buyeraddress' })
-  buyeraddress: string
+  buyeraddress: string;
 
   @Column('text', { name: 'buyeremail' })
-  buyeremail: string
+  buyeremail: string;
 
   @Column('text', { name: 'category' })
-  category: string
+  category: string;
 
   @Column('text', { name: 'carriertype' })
-  carriertype: string
+  carriertype: string;
 
   @Column('text', { name: 'carriernum' })
-  carriernum: string
+  carriernum: string;
 
   @Column('text', { name: 'lovecode' })
-  lovecode: string
+  lovecode: string;
 
   @PrimaryColumn()
-  id: string
+  id: string;
 }

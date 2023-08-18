@@ -1,28 +1,21 @@
-import {
-  IsArray,
-  IsNotEmpty,
-  IsString,
-  validateSync,
-  ValidationError,
-  ValidateIf,
-} from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, validateSync, ValidationError, ValidateIf } from 'class-validator';
 
 import { Category } from '~/definition/entity/category.entity';
 import { Property } from '~/definition/entity/property.entity';
 
 export class MemberCsvHeaderMapping {
   @IsString() @IsNotEmpty() id: string;
-  
+
   @IsString()
   @IsNotEmpty()
   @ValidateIf((_, value) => value !== undefined)
   name: string;
-  
+
   @IsString()
   @IsNotEmpty()
   @ValidateIf((_, value) => value !== undefined)
   username: string;
-  
+
   @IsString()
   @IsNotEmpty()
   @ValidateIf((_, value) => value !== undefined)
@@ -72,9 +65,7 @@ export class MemberCsvHeaderMapping {
   @ValidateIf((_, value) => value !== undefined)
   loginedAt: string;
 
-  public deserializeFromRaw(
-    headerRow: Record<string, string>,
-  ): [MemberCsvHeaderMapping, Array<ValidationError>] {
+  public deserializeFromRaw(headerRow: Record<string, string>): [MemberCsvHeaderMapping, Array<ValidationError>] {
     for (const humanReadable in headerRow) {
       const codeReadable = headerRow[humanReadable];
       const [key] = codeReadable.split('.');
@@ -87,24 +78,17 @@ export class MemberCsvHeaderMapping {
         case 'star':
         case 'createdAt':
         case 'loginedAt':
-          this[key] = humanReadable; continue;
+          this[key] = humanReadable;
+          continue;
         default:
           if (codeReadable.startsWith('categories.')) {
-            this.categories = this.categories 
-              ? [...this.categories, humanReadable]
-              : [humanReadable];
+            this.categories = this.categories ? [...this.categories, humanReadable] : [humanReadable];
           } else if (codeReadable.startsWith('properties.')) {
-            this.properties = this.properties
-              ? [...this.properties, humanReadable]
-              : [humanReadable];
+            this.properties = this.properties ? [...this.properties, humanReadable] : [humanReadable];
           } else if (codeReadable.startsWith('phones.')) {
-            this.phones = this.phones
-              ? [...this.phones, humanReadable]
-              : [humanReadable];
+            this.phones = this.phones ? [...this.phones, humanReadable] : [humanReadable];
           } else if (codeReadable.startsWith('tags.')) {
-            this.tags = this.tags
-              ? [...this.tags, humanReadable]
-              : [humanReadable];
+            this.tags = this.tags ? [...this.tags, humanReadable] : [humanReadable];
           }
           continue;
       }

@@ -1,65 +1,65 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
-import { Podcast } from './Podcast'
+import { Podcast } from './Podcast';
 
 @Index('podcast_plan_pkey', ['id'], { unique: true })
 @Entity('podcast_plan', { schema: 'public' })
 export class PodcastPlan {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('boolean', { name: 'is_subscription' })
-  isSubscription: boolean
+  isSubscription: boolean;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('numeric', { name: 'list_price' })
-  listPrice: number
+  listPrice: number;
 
   @Column('numeric', { name: 'sale_price', nullable: true })
-  salePrice: number | null
+  salePrice: number | null;
 
   @Column('timestamp with time zone', { name: 'sold_at', nullable: true })
-  soldAt: Date | null
+  soldAt: Date | null;
 
   @Column('timestamp with time zone', { name: 'published_at', nullable: true })
-  publishedAt: Date | null
+  publishedAt: Date | null;
 
   @Column('numeric', { name: 'period_amount' })
-  periodAmount: number
+  periodAmount: number;
 
   @Column('text', { name: 'period_type' })
-  periodType: string
+  periodType: string;
 
   @Column('integer', { name: 'position', nullable: true })
-  position: number | null
+  position: number | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
     default: () => 'now()',
   })
-  createdAt: Date | null
+  createdAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     nullable: true,
     default: () => 'now()',
   })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
-  @ManyToOne(() => Member, member => member.podcastPlans, {
+  @ManyToOne(() => Member, (member) => member.podcastPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'creator_id', referencedColumnName: 'id' }])
-  creator: Member
+  creator: Member;
 
-  @ManyToOne(() => Podcast, podcast => podcast.podcastPlans, {
+  @ManyToOne(() => Podcast, (podcast) => podcast.podcastPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'podcast_id', referencedColumnName: 'id' }])
-  podcast: Podcast
+  podcast: Podcast;
 }

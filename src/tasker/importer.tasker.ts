@@ -39,11 +39,7 @@ export class ImporterTasker extends Tasker {
         // BullModule.registerQueue({ name: MailerTasker.name }),
         BullModule.registerQueue({ name: 'mailer' }),
       ],
-      providers: [
-        StorageService,
-        MemberService,
-        MemberInfrastructure,
-      ],
+      providers: [StorageService, MemberService, MemberInfrastructure],
     };
   }
 
@@ -67,20 +63,18 @@ export class ImporterTasker extends Tasker {
 
       const { appId, invokerMemberId, category, fileInfos }: ImportJob = job.data;
       const invokers = await this.memberInfra.getMembersByConditions(
-        appId, { id: invokerMemberId }, this.entityManager,
+        appId,
+        { id: invokerMemberId },
+        this.entityManager,
       );
-      const admins = await this.memberInfra.getMembersByConditions(
-        appId, { role: 'app-owner' }, this.entityManager,
-      );
+      const admins = await this.memberInfra.getMembersByConditions(appId, { role: 'app-owner' }, this.entityManager);
       const processResult: Record<string, MemberImportResultDTO | Error> = {};
 
       for (const fileInfo of fileInfos) {
         const { checksumETag, fileName } = fileInfo;
 
         try {
-          const insertResult = await this.processFiles(
-            appId, fileName, checksumETag, category,
-          );
+          const insertResult = await this.processFiles(appId, fileName, checksumETag, category);
           await this.storageService.deleteFileAtBucketStorage({
             Key: `${appId}/${fileName}`,
           });
@@ -127,9 +121,7 @@ export class ImporterTasker extends Tasker {
     }
     const uint8Array = await Body.transformToByteArray();
 
-    return this.importToDatabase(
-      appId, category, ContentType, Buffer.from(uint8Array),
-    );
+    return this.importToDatabase(appId, category, ContentType, Buffer.from(uint8Array));
   }
 
   private importToDatabase(
@@ -141,7 +133,7 @@ export class ImporterTasker extends Tasker {
     let rawRows: Array<Record<string, any>> = [];
     let data: XLSX.WorkBook;
 
-    switch (mimeType){
+    switch (mimeType) {
       case 'application/vnd.ms-excel':
       case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
         data = XLSX.read(rawBin);
@@ -149,7 +141,7 @@ export class ImporterTasker extends Tasker {
       case 'text/csv':
       default:
         const decodedRaw = new TextDecoder().decode(rawBin);
-        data = XLSX.read(decodedRaw, { type: 'string'});
+        data = XLSX.read(decodedRaw, { type: 'string' });
         break;
     }
     const { Sheets, SheetNames } = data;
@@ -175,9 +167,9 @@ export class ImporterTasker extends Tasker {
       bcc: [],
       content: `<html>
         <body>
-          ${ content }
+          ${content}
         </body>
-      </html>`
+      </html>`,
     } as MailJob);
   }
 }

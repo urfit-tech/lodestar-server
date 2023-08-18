@@ -13,20 +13,20 @@ import { EzpayClient } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
 
 type InvoiceOptions = {
-  appId: string
-  name: string
-  email: string
-  comment: string
-  products: { name: string; price: number; quantity: number }[]
-  discounts: { name: string; price: number }[]
-  shipping?: { method: string; fee: number }
-  isDutyFree?: boolean
-  donationCode?: string
-  phoneBarCode?: string
-  uniformNumber?: string
-  uniformTitle?: string
-  citizenCode?: string
-}
+  appId: string;
+  name: string;
+  email: string;
+  comment: string;
+  products: { name: string; price: number; quantity: number }[];
+  discounts: { name: string; price: number }[];
+  shipping?: { method: string; fee: number };
+  isDutyFree?: boolean;
+  donationCode?: string;
+  phoneBarCode?: string;
+  uniformNumber?: string;
+  uniformTitle?: string;
+  citizenCode?: string;
+};
 
 @Injectable()
 export class InvoiceService {
@@ -56,10 +56,10 @@ export class InvoiceService {
       if (!this.isAllowUseInvoiceModule(appSecrets, appModules)) {
         throw new Error(`App: ${appId} invoice module is not enable or missing setting/secrets.`);
       }
-      
-      this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`)
+
+      this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`);
       const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
-      
+
       const { Amt, invServiceResponse } = await this.issueInvoice(appSecrets, paymentNo, price, {
         appId,
         name: invoiceOptions['name'] || member.name,
@@ -87,14 +87,17 @@ export class InvoiceService {
         uniformTitle: invoiceOptions['uniformTitle'],
         citizenCode: invoiceOptions['citizenCode'],
       });
-      const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber']
+      const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber'];
 
-      const toUpdateInvoiceOptions = invServiceResponse.Status === 'SUCCESS' ? {
-        invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
-        invoiceNumber: invoiceNumber,
-      } : {
-        reason: invServiceResponse.Message,
-      };
+      const toUpdateInvoiceOptions =
+        invServiceResponse.Status === 'SUCCESS'
+          ? {
+              invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
+              invoiceNumber: invoiceNumber,
+            }
+          : {
+              reason: invServiceResponse.Message,
+            };
 
       const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptions(
         paymentNo,
@@ -114,10 +117,13 @@ export class InvoiceService {
       }
     } catch (error) {
       await this.updateOrderAndPaymentLogInvoiceOptions(
-        paymentNo, {
+        paymentNo,
+        {
           status: 'LODESTAR_FAIL',
           reason: error.message,
-        }, undefined, manager,
+        },
+        undefined,
+        manager,
       );
       throw error;
     }
@@ -129,48 +135,48 @@ export class InvoiceService {
     amount: number,
     options: InvoiceOptions,
   ) {
-    let invoiceAttrs: { [key: string]: any } = {}
+    let invoiceAttrs: { [key: string]: any } = {};
     if (options.donationCode) {
       invoiceAttrs = {
         Category: 'B2C',
         LoveCode: options.donationCode,
         PrintFlag: 'N',
-      }
+      };
     } else if (options.phoneBarCode) {
       invoiceAttrs = {
         Category: 'B2C',
         CarrierType: 0,
         CarrierNum: options.phoneBarCode,
         PrintFlag: 'N',
-      }
+      };
     } else if (options.uniformNumber) {
       invoiceAttrs = {
         Category: 'B2B',
         BuyerUBN: options.uniformNumber,
         BuyerName: options.uniformTitle,
         PrintFlag: 'Y',
-      }
+      };
     } else if (options.citizenCode) {
       invoiceAttrs = {
         Category: 'B2C',
         CarrierType: 1,
         CarrierNum: options.citizenCode,
         PrintFlag: 'N',
-      }
+      };
     } else if (options.email) {
       invoiceAttrs = {
         Category: 'B2C',
         PrintFlag: 'Y',
         BuyerEmail: options.email,
-      }
+      };
     }
 
     // confirm the tax amount
-    const TaxRate = options.isDutyFree ? 0 : 0.05
-    const unTaxedAmount = amount / (1 + TaxRate)
+    const TaxRate = options.isDutyFree ? 0 : 0.05;
+    const unTaxedAmount = amount / (1 + TaxRate);
 
-    const TaxAmt = Math.round(amount - unTaxedAmount)
-    const Amt = amount - TaxAmt
+    const TaxAmt = Math.round(amount - unTaxedAmount);
+    const Amt = amount - TaxAmt;
 
     const taxOptions = options.isDutyFree
       ? {
@@ -178,10 +184,12 @@ export class InvoiceService {
           TaxRate: 0,
           AmtFree: Amt,
         }
-      : {}
+      : {};
     const ItemAmt = [
       ...options.products.map((product) => {
-        return invoiceAttrs.Category === 'B2B' ? Math.round(Number(product.price) / (1 + TaxRate)) : Number(product.price)
+        return invoiceAttrs.Category === 'B2B'
+          ? Math.round(Number(product.price) / (1 + TaxRate))
+          : Number(product.price);
       }),
       ...options.discounts.map((discount) =>
         invoiceAttrs.Category === 'B2B' ? -Math.round(Number(discount.price) / (1 + TaxRate)) : -discount.price,
@@ -191,10 +199,12 @@ export class InvoiceService {
           ? [Math.round(options.shipping.fee / (1 + TaxRate))]
           : [options.shipping.fee]
         : []),
-    ].join('|')
+    ].join('|');
     const ItemPrice = [
       ...options.products.map((product) => {
-        return invoiceAttrs.Category === 'B2B' ? Math.round(Number(product.price) / (1 + TaxRate)) : Number(product.price)
+        return invoiceAttrs.Category === 'B2B'
+          ? Math.round(Number(product.price) / (1 + TaxRate))
+          : Number(product.price);
       }),
       ...options.discounts.map((discount) =>
         invoiceAttrs.Category === 'B2B' ? -Math.round(Number(discount.price) / (1 + TaxRate)) : -discount.price,
@@ -204,22 +214,22 @@ export class InvoiceService {
           ? [Math.round(options.shipping.fee / (1 + TaxRate))]
           : [options.shipping.fee]
         : []),
-    ].join('|')
+    ].join('|');
     const ItemCount = [
       ...options.products.map((_) => 1),
       ...options.discounts.map((_) => 1),
       ...(options.shipping?.method ? [1] : []),
-    ].join('|')
+    ].join('|');
 
     const ItemName = [
       ...options.products.map((product) => product.name.substring(0, 25) + ` x${product.quantity}`),
       ...options.discounts.map((discount) => discount.name.substring(0, 30)),
       ...(options.shipping?.method ? [`運費 - ${options.shipping.method}`.substring(0, 30)] : []),
-    ].join('|')
+    ].join('|');
     const ItemUnit = Array(options.products.length + options.discounts.length)
       .fill('個')
       .concat(options.shipping?.method ? ['筆'] : [])
-      .join('|')
+      .join('|');
 
     const ezpayCredentials = EzpayClient.formCredentials(appSecrets);
     const invServiceResponse = await this.ezpayClient.issue(ezpayCredentials, {
@@ -238,13 +248,13 @@ export class InvoiceService {
       MerchantOrderNo: paymentNo.replace(/-/g, '').substr(0, 20),
       ...invoiceAttrs,
       ...taxOptions,
-    })
+    });
     return {
       Amt,
       invServiceResponse,
     };
   }
-  
+
   private updateOrderAndPaymentLogInvoiceOptions(
     paymentNo: string,
     invoiceOptions: any,
@@ -259,18 +269,14 @@ export class InvoiceService {
         orderLog.invoiceOptions = {
           ...orderLog.invoiceOptions,
           ...invoiceOptions,
-          retry: orderLog.invoiceOptions['retry']
-            ? parseInt(orderLog.invoiceOptions['retry']) + 1
-            : 1,
+          retry: orderLog.invoiceOptions['retry'] ? parseInt(orderLog.invoiceOptions['retry']) + 1 : 1,
         };
         orderLog.invoiceIssuedAt = invoiceIssueAt;
       }
       paymentLog.invoiceOptions = {
         ...paymentLog.invoiceOptions,
         ...invoiceOptions,
-        retry: paymentLog.invoiceOptions['retry']
-          ? parseInt(paymentLog.invoiceOptions['retry']) + 1
-          : 1,
+        retry: paymentLog.invoiceOptions['retry'] ? parseInt(paymentLog.invoiceOptions['retry']) + 1 : 1,
       };
       paymentLog.invoiceIssuedAt = invoiceIssueAt;
 
@@ -280,7 +286,12 @@ export class InvoiceService {
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
   }
 
-  private async insertInvoice(orderId: string, invoiceNumber: string, price: number, manager: EntityManager): Promise<void> {
+  private async insertInvoice(
+    orderId: string,
+    invoiceNumber: string,
+    price: number,
+    manager: EntityManager,
+  ): Promise<void> {
     const invoice = new Invoice();
 
     invoice.orderId = orderId;
@@ -290,13 +301,12 @@ export class InvoiceService {
     await this.invoiceInfra.save(invoice, manager);
   }
 
-  private isAllowUseInvoiceModule(
-    appSecrets: Record<string, string>,
-    appModules: Array<string>,
-  ): boolean {
-    return Boolean(appSecrets['invoice.merchant_id'] &&
-      appSecrets['invoice.hash_key'] &&
-      appSecrets['invoice.hash_iv'] &&
-      appModules.includes('invoice'));
+  private isAllowUseInvoiceModule(appSecrets: Record<string, string>, appModules: Array<string>): boolean {
+    return Boolean(
+      appSecrets['invoice.merchant_id'] &&
+        appSecrets['invoice.hash_key'] &&
+        appSecrets['invoice.hash_iv'] &&
+        appModules.includes('invoice'),
+    );
   }
 }

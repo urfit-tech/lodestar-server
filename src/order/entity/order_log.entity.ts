@@ -19,129 +19,129 @@ import { OrderProduct } from './order_product.entity';
 @Entity('order_log', { schema: 'public' })
 export class OrderLog {
   @PrimaryGeneratedColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'member_id' })
-  memberId: string
+  memberId: string;
 
   @Column('integer', { name: 'discount_type', default: () => 0 })
-  discountType: number
+  discountType: number;
 
   @Column('numeric', { name: 'discount_point', default: () => 0 })
-  discountPoint: number
+  discountPoint: number;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('jsonb', { name: 'invoice_options' })
-  invoiceOptions: object
+  invoiceOptions: object;
 
   @Column('numeric', { name: 'discount_price', default: () => 0 })
-  discountPrice: number
+  discountPrice: number;
 
   @Column('timestamp with time zone', { name: 'updated_at', nullable: true })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
   @Column('text', { name: 'message', nullable: true })
-  message: string | null
+  message: string | null;
 
   @Column('jsonb', { name: 'payment_model', nullable: true })
-  paymentModel: object | null
+  paymentModel: object | null;
 
   @Column('timestamp with time zone', { name: 'delivered_at', nullable: true })
-  deliveredAt: Date | null
+  deliveredAt: Date | null;
 
   @Column('text', { name: 'deliver_message', nullable: true })
-  deliverMessage: string | null
+  deliverMessage: string | null;
 
   @Column('jsonb', { name: 'shipping', nullable: true })
-  shipping: any | null
+  shipping: any | null;
 
   @Column('timestamp with time zone', { name: 'retried_at', nullable: true })
-  retriedAt: Date | null
+  retriedAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'expired_at',
     nullable: true,
     default: () => "(now() + '3 days')",
   })
-  expiredAt: Date | null
+  expiredAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'auto_renewed_at',
     nullable: true,
   })
-  autoRenewedAt: Date | null
+  autoRenewedAt: Date | null;
 
   @Column('text', { name: 'status', default: () => "'UNKNOWN'" })
-  status: string
+  status: string;
 
   @Column('timestamp with time zone', { name: 'last_paid_at', nullable: true })
-  lastPaidAt: Date | null
+  lastPaidAt: Date | null;
 
   @Column('boolean', { name: 'is_deleted', default: () => false })
-  isDeleted: boolean
+  isDeleted: boolean;
 
   @Column('timestamp with time zone', {
     name: 'transferred_at',
     nullable: true,
   })
-  transferredAt: Date | null
+  transferredAt: Date | null;
 
   @Column('jsonb', { name: 'options', nullable: true })
-  options: object | null
+  options: object | null;
 
   @Column('text', { name: 'custom_id', nullable: true, unique: true })
-  customId: string | null
+  customId: string | null;
 
   @Column('timestamp with time zone', {
     name: 'invoice_issued_at',
     nullable: true,
   })
-  invoiceIssuedAt: Date | null
+  invoiceIssuedAt: Date | null;
 
-  @OneToOne(() => Invoice, invoice => invoice.order)
-  invoice: Invoice
+  @OneToOne(() => Invoice, (invoice) => invoice.order)
+  invoice: Invoice;
 
-  @OneToMany(() => OrderContact, orderContact => orderContact.order)
-  orderContacts: OrderContact[]
+  @OneToMany(() => OrderContact, (orderContact) => orderContact.order)
+  orderContacts: OrderContact[];
 
-  @OneToMany(() => OrderDiscount, orderDiscount => orderDiscount.order)
-  orderDiscounts: OrderDiscount[]
+  @OneToMany(() => OrderDiscount, (orderDiscount) => orderDiscount.order)
+  orderDiscounts: OrderDiscount[];
 
-  @OneToMany(() => OrderExecutor, orderExecutor => orderExecutor.order)
-  orderExecutors: OrderExecutor[]
+  @OneToMany(() => OrderExecutor, (orderExecutor) => orderExecutor.order)
+  orderExecutors: OrderExecutor[];
 
-  @ManyToOne(() => Coupon, coupon => coupon.orderLogs, {
+  @ManyToOne(() => Coupon, (coupon) => coupon.orderLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'discount_coupon_id', referencedColumnName: 'id' }])
-  discountCoupon: Coupon
+  discountCoupon: Coupon;
 
-  @ManyToOne(() => Member, member => member.orderLogs, {
+  @ManyToOne(() => Member, (member) => member.orderLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => OrderLog, orderLog => orderLog.orderLogs, {
+  @ManyToOne(() => OrderLog, (orderLog) => orderLog.orderLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'parent_order_id', referencedColumnName: 'id' }])
-  parentOrder: OrderLog
+  parentOrder: OrderLog;
 
-  @OneToMany(() => OrderLog, orderLog => orderLog.parentOrder)
-  orderLogs: OrderLog[]
+  @OneToMany(() => OrderLog, (orderLog) => orderLog.parentOrder)
+  orderLogs: OrderLog[];
 
-  @OneToMany(() => OrderProduct, orderProduct => orderProduct.order)
-  orderProducts: OrderProduct[]
+  @OneToMany(() => OrderProduct, (orderProduct) => orderProduct.order)
+  orderProducts: OrderProduct[];
 
-  @OneToMany(() => PaymentLog, paymentLog => paymentLog.order)
-  paymentLogs: PaymentLog[]
+  @OneToMany(() => PaymentLog, (paymentLog) => paymentLog.order)
+  paymentLogs: PaymentLog[];
 }

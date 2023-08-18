@@ -1,30 +1,30 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { Issue } from './Issue'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Issue } from './Issue';
 import { Member } from '~/member/entity/member.entity';
 
 @Index('issue_reaction_pkey', ['id'], { unique: true })
 @Entity('issue_reaction', { schema: 'public' })
 export class IssueReaction {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
-  @ManyToOne(() => Issue, issue => issue.issueReactions, {
+  @ManyToOne(() => Issue, (issue) => issue.issueReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'issue_id', referencedColumnName: 'id' }])
-  issue: Issue
+  issue: Issue;
 
-  @ManyToOne(() => Member, member => member.issueReactions, {
+  @ManyToOne(() => Member, (member) => member.issueReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 }

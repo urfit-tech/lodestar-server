@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { OrderLog } from '~/order/entity/order_log.entity';
 
@@ -7,36 +7,36 @@ import { OrderLog } from '~/order/entity/order_log.entity';
 @Entity('invoice', { schema: 'public' })
 export class Invoice {
   @Column('text', { name: 'order_id', unique: true })
-  orderId: string
+  orderId: string;
 
   @PrimaryColumn()
-  no: string
+  no: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('numeric', { name: 'price', nullable: true })
-  price: number | null
+  price: number | null;
 
   @Column('jsonb', { name: 'options', nullable: true })
-  options: object | null
+  options: object | null;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @Column('uuid', { name: 'executor_id', nullable: true })
-  executorId: string | null
+  executorId: string | null;
 
-  @OneToOne(() => OrderLog, orderLog => orderLog.invoice, {
+  @OneToOne(() => OrderLog, (orderLog) => orderLog.invoice, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'order_id', referencedColumnName: 'id' }])
-  order: OrderLog
+  order: OrderLog;
 }

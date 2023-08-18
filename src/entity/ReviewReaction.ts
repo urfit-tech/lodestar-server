@@ -11,31 +11,31 @@ import { Review } from './Review';
 @Entity('review_reaction', { schema: 'public' })
 export class ReviewReaction {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'review_id', unique: true })
-  reviewId: string
+  reviewId: string;
 
   @Column('text', { name: 'member_id', unique: true })
-  memberId: string
+  memberId: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
-  @ManyToOne(() => Member, member => member.reviewReactions, {
+  @ManyToOne(() => Member, (member) => member.reviewReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => Review, review => review.reviewReactions, {
+  @ManyToOne(() => Review, (review) => review.reviewReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'review_id', referencedColumnName: 'id' }])
-  review: Review
+  review: Review;
 }

@@ -1,27 +1,27 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Category } from '~/definition/entity/category.entity';
-import { PodcastAlbum } from './PodcastAlbum'
+import { PodcastAlbum } from './PodcastAlbum';
 
 @Index('podcast_album_category_pkey', ['id'], { unique: true })
 @Entity('podcast_album_category', { schema: 'public' })
 export class PodcastAlbumCategory {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('integer', { name: 'position', default: () => 0 })
-  position: number
+  position: number;
 
-  @ManyToOne(() => PodcastAlbum, podcastAlbum => podcastAlbum.podcastAlbumCategories, {
+  @ManyToOne(() => PodcastAlbum, (podcastAlbum) => podcastAlbum.podcastAlbumCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'podcast_album_id', referencedColumnName: 'id' }])
-  podcastAlbum: PodcastAlbum
+  podcastAlbum: PodcastAlbum;
 
-  @ManyToOne(() => Category, category => category.podcastAlbumCategories, {
+  @ManyToOne(() => Category, (category) => category.podcastAlbumCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'category_id', referencedColumnName: 'id' }])
-  category: Category
+  category: Category;
 }

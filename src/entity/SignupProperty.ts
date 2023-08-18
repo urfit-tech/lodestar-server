@@ -6,39 +6,39 @@ import { Property } from '~/definition/entity/property.entity';
 @Entity('signup_property', { schema: 'public' })
 export class SignupProperty {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'app_id' })
-  appId: string
+  appId: string;
 
   @Column('text', { name: 'type' })
-  type: string
+  type: string;
 
   @Column('boolean', { name: 'is_required' })
-  isRequired: boolean
+  isRequired: boolean;
 
   @Column('jsonb', { name: 'options', nullable: true })
-  options: object | null
+  options: object | null;
 
   @Column('integer', { name: 'position' })
-  position: number
+  position: number;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
-  @ManyToOne(() => Property, property => property.signupProperties, {
+  @ManyToOne(() => Property, (property) => property.signupProperties, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'property_id', referencedColumnName: 'id' }])
-  property: Property
+  property: Property;
 }

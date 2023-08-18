@@ -8,37 +8,37 @@ import { Program } from './Program';
 @Entity('program_timetable', { schema: 'public' })
 export class ProgramTimetable {
   @Column('timestamp with time zone', { name: 'time' })
-  time: Date
+  time: Date;
 
   @Column('integer', { name: 'position', default: () => 0 })
-  position: number
+  position: number;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
-  @ManyToOne(() => Member, member => member.programTimetables, {
+  @ManyToOne(() => Member, (member) => member.programTimetables, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
-  member: Member
+  member: Member;
 
-  @ManyToOne(() => Program, program => program.programTimetables, {
+  @ManyToOne(() => Program, (program) => program.programTimetables, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
-  program: Program
+  program: Program;
 }

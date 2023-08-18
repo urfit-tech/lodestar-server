@@ -17,7 +17,7 @@ export class DefinitionInfrastructure {
   async getProperties(appId: string, entityManager: EntityManager): Promise<Array<Property>> {
     const propertyRepo = entityManager.getRepository(Property);
     return propertyRepo.find({
-      where: { app: { id: appId }, },
+      where: { app: { id: appId } },
     });
   }
 

@@ -6,18 +6,18 @@ import querystring from 'querystring';
 import { UtilityService } from '~/utility/utility.service';
 
 type EzpayClientResponse = {
-  Status: string
-  Message: string
+  Status: string;
+  Message: string;
   Result: {
-    MerchantID: string
-    InvoiceTransNo: string
-    MerchantOrderNo: string
-    TotalAmt: number
-    InvoiceNumber: string
-    RandomNum: string
-    BarCode: string
-  } | null
-}
+    MerchantID: string;
+    InvoiceTransNo: string;
+    MerchantOrderNo: string;
+    TotalAmt: number;
+    InvoiceNumber: string;
+    RandomNum: string;
+    BarCode: string;
+  } | null;
+};
 
 export type EzpayCredentials = {
   merchantId: string;
@@ -25,7 +25,7 @@ export type EzpayCredentials = {
   hashIV: string;
   options?: {
     dryRun: boolean;
-  },
+  };
 };
 
 type EzpayIssueParams = Record<string, any>;
@@ -37,18 +37,13 @@ type EzpayRevokeParams = {
 
 @Injectable()
 export class EzpayClient {
-  constructor(
-    private readonly utilityService: UtilityService,
-  ) {}
+  constructor(private readonly utilityService: UtilityService) {}
 
   static formCredentials(appSecrets: Record<string, string>): EzpayCredentials {
-    if (!appSecrets['invoice.merchant_id']
-      || !appSecrets['invoice.hash_key']
-      || !appSecrets['invoice.hash_iv']
-    ) {
-      throw new Error('cannot create ezpay client: no ezpay secret env')
+    if (!appSecrets['invoice.merchant_id'] || !appSecrets['invoice.hash_key'] || !appSecrets['invoice.hash_iv']) {
+      throw new Error('cannot create ezpay client: no ezpay secret env');
     }
-  
+
     return {
       merchantId: appSecrets['invoice.merchant_id'],
       hashKey: appSecrets['invoice.hash_key'],
@@ -60,13 +55,11 @@ export class EzpayClient {
   }
 
   endpoint(dryRun: boolean): string {
-    return dryRun
-      ? 'https://cinv.ezpay.com.tw/Api'
-      : 'https://inv.ezpay.com.tw/Api';
+    return dryRun ? 'https://cinv.ezpay.com.tw/Api' : 'https://inv.ezpay.com.tw/Api';
   }
 
-  buildPostParams(hashKey: string, hashIV: string , payload: Record<string, any>) {
-    const postData = querystring.stringify(payload)
+  buildPostParams(hashKey: string, hashIV: string, payload: Record<string, any>) {
+    const postData = querystring.stringify(payload);
     return this.utilityService.encrypt(hashKey, hashIV, postData);
   }
 
@@ -94,16 +87,16 @@ export class EzpayClient {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       },
-    )
-    let result = null
+    );
+    let result = null;
     try {
-      result = JSON.parse(data.Result)
+      result = JSON.parse(data.Result);
     } catch {}
     return {
       Status: data.Status,
       Message: data.Message,
       Result: result,
-    }
+    };
   }
 
   async revoke(credentials: EzpayCredentials, params: EzpayRevokeParams) {
@@ -126,10 +119,10 @@ export class EzpayClient {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       },
-    )
+    );
     return {
       ...data,
       Result: JSON.parse(data.Result),
-    }
+    };
   }
 }

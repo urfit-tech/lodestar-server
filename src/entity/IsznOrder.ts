@@ -1,35 +1,35 @@
-import { Column, Entity, Index, PrimaryColumn } from 'typeorm'
+import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
 @Index('iszn_order_pkey', ['id'], { unique: true })
 @Entity('iszn_order', { schema: 'public' })
 export class IsznOrder {
   @PrimaryColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'status' })
-  status: string
+  status: string;
 
   @Column('text', { name: 'userid' })
-  userid: string
+  userid: string;
 
   @Column('timestamp with time zone', { name: 'createdat' })
-  createdat: Date
+  createdat: Date;
 
   @Column('timestamp with time zone', { name: 'updatedat' })
-  updatedat: Date
+  updatedat: Date;
 
   @Column('text', { name: 'paymenttype', nullable: true })
-  paymenttype: string | null
+  paymenttype: string | null;
 
   @Column('text', { name: 'merchantorderno', nullable: true })
-  merchantorderno: string | null
+  merchantorderno: string | null;
 
   @Column('uuid', { name: 'invoiceid', nullable: true })
-  invoiceid: string | null
+  invoiceid: string | null;
 
   @Column('text', { name: 'message', nullable: true })
-  message: string | null
+  message: string | null;
 
   @Column('bigint', { name: 'totalamount', nullable: true })
-  totalamount: string | null
+  totalamount: string | null;
 }

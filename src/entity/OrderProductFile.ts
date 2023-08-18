@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { OrderProduct } from '~/order/entity/order_product.entity';
 
@@ -6,27 +6,27 @@ import { OrderProduct } from '~/order/entity/order_product.entity';
 @Entity('order_product_file', { schema: 'public' })
 export class OrderProductFile {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('jsonb', { name: 'data', nullable: true })
-  data: object | null
+  data: object | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
-  @ManyToOne(() => OrderProduct, orderProduct => orderProduct.orderProductFiles, {
+  @ManyToOne(() => OrderProduct, (orderProduct) => orderProduct.orderProductFiles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'order_product_id', referencedColumnName: 'id' }])
-  orderProduct: OrderProduct
+  orderProduct: OrderProduct;
 }

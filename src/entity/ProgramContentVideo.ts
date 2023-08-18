@@ -7,31 +7,31 @@ import { ProgramContent } from '~/program/entity/program_content.entity';
 @Entity('program_content_video', { schema: 'public' })
 export class ProgramContentVideo {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
-  updatedAt: Date
+  updatedAt: Date;
 
-  @ManyToOne(() => Attachment, attachment => attachment.programContentVideos, {
+  @ManyToOne(() => Attachment, (attachment) => attachment.programContentVideos, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'attachment_id', referencedColumnName: 'id' }])
-  attachment: Attachment
+  attachment: Attachment;
 
-  @ManyToOne(() => ProgramContent, programContent => programContent.programContentVideos, {
+  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentVideos, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_content_id', referencedColumnName: 'id' }])
-  programContent: ProgramContent
+  programContent: ProgramContent;
 }

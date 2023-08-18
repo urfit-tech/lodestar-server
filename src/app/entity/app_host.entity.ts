@@ -6,15 +6,15 @@ import { App } from '~/entity/App';
 @Entity('app_host', { schema: 'public' })
 export class AppHost {
   @PrimaryColumn()
-  host: string
+  host: string;
 
   @Column('integer', { name: 'priority', default: () => 0 })
-  priority: number
+  priority: number;
 
-  @ManyToOne(() => App, app => app.appHosts, {
+  @ManyToOne(() => App, (app) => app.appHosts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
-  app: App
+  app: App;
 }

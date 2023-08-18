@@ -8,22 +8,22 @@ import { Post } from './Post';
 @Entity('post_tag', { schema: 'public' })
 export class PostTag {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('integer', { name: 'position', default: () => 0 })
-  position: number
+  position: number;
 
-  @ManyToOne(() => Post, post => post.postTags, {
+  @ManyToOne(() => Post, (post) => post.postTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'post_id', referencedColumnName: 'id' }])
-  post: Post
+  post: Post;
 
-  @ManyToOne(() => Tag, tag => tag.postTags, {
+  @ManyToOne(() => Tag, (tag) => tag.postTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'tag_name', referencedColumnName: 'name' }])
-  tagName: Tag
+  tagName: Tag;
 }

@@ -27,21 +27,13 @@ export class TriggerRunner extends Runner {
     private readonly triggerService: TriggerService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(
-      TriggerRunner.name,
-      60 * 1000,
-      logger,
-      distributedLockService,
-      shutdownService,
-    );
+    super(TriggerRunner.name, 60 * 1000, logger, distributedLockService, shutdownService);
     this.batchSize = 100;
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
     const cb = async (manager: EntityManager) => {
-      return this.triggerService.processTriggerThroughTableLog(
-        this.batchSize, manager,
-      );
+      return this.triggerService.processTriggerThroughTableLog(this.batchSize, manager);
     };
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
   }

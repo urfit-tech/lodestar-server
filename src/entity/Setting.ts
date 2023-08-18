@@ -1,41 +1,41 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
 
-import { AppSecret } from '~/app/entity/app_secret.entity'
-import { AppSetting } from '~/app/entity/app_setting.entity'
+import { AppSecret } from '~/app/entity/app_secret.entity';
+import { AppSetting } from '~/app/entity/app_setting.entity';
 
-import { Module } from './Module'
+import { Module } from './Module';
 
 @Index('setting_pkey', ['key'], { unique: true })
 @Entity('setting', { schema: 'public' })
 export class Setting {
   @PrimaryColumn()
-  key: string
+  key: string;
 
   @Column('text', { name: 'type', default: () => "'string'" })
-  type: string
+  type: string;
 
   @Column('jsonb', { name: 'options', nullable: true })
-  options: object | null
+  options: object | null;
 
   @Column('boolean', { name: 'is_protected', default: () => false })
-  isProtected: boolean
+  isProtected: boolean;
 
   @Column('boolean', { name: 'is_required', default: () => false })
-  isRequired: boolean
+  isRequired: boolean;
 
   @Column('boolean', { name: 'is_secret', default: () => false })
-  isSecret: boolean
+  isSecret: boolean;
 
-  @OneToMany(() => AppSecret, appSecret => appSecret.key2)
-  appSecrets: AppSecret[]
+  @OneToMany(() => AppSecret, (appSecret) => appSecret.key2)
+  appSecrets: AppSecret[];
 
-  @OneToMany(() => AppSetting, appSetting => appSetting.key2)
-  appSettings: AppSetting[]
+  @OneToMany(() => AppSetting, (appSetting) => appSetting.key2)
+  appSettings: AppSetting[];
 
-  @ManyToOne(() => Module, module => module.settings, {
+  @ManyToOne(() => Module, (module) => module.settings, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'module_id', referencedColumnName: 'id' }])
-  module: Module
+  module: Module;
 }

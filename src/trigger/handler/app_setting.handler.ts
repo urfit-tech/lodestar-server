@@ -9,10 +9,7 @@ import { TriggerHandler } from './trigger_handler';
 
 @Injectable()
 export class AppSettingHandler extends TriggerHandler<AppSetting> {
-  constructor(
-    protected readonly logger: Logger,
-    protected readonly cacheService: CacheService,
-  ) {
+  constructor(protected readonly logger: Logger, protected readonly cacheService: CacheService) {
     super(logger);
   }
 
@@ -24,14 +21,14 @@ export class AppSettingHandler extends TriggerHandler<AppSetting> {
     const newData = tableLog.new;
     const { app_id: appId } = newData;
     await this.clearCache(appId);
-    return { 'message': 'clear cache successfully' };
+    return { message: 'clear cache successfully' };
   }
 
   protected async handleDelete(tableLog: TableLog, manager: EntityManager): Promise<Record<string, any>> {
     const oldData = tableLog.old;
     const { app_id: appId } = oldData;
     await this.clearCache(appId);
-    return { 'message': 'clear cache successfully' };
+    return { message: 'clear cache successfully' };
   }
 
   private async clearCache(appId: string): Promise<void> {

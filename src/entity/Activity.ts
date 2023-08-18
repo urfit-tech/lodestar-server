@@ -1,88 +1,88 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
-import { ActivityCategory } from './ActivityCategory'
-import { ActivitySession } from './ActivitySession'
-import { ActivityTag } from './ActivityTag'
-import { ActivityTicket } from './ActivityTicket'
-import { App } from './App'
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { ActivityCategory } from './ActivityCategory';
+import { ActivitySession } from './ActivitySession';
+import { ActivityTag } from './ActivityTag';
+import { ActivityTicket } from './ActivityTicket';
+import { App } from './App';
 import { Member } from '~/member/entity/member.entity';
-import { PackageItem } from './PackageItem'
+import { PackageItem } from './PackageItem';
 
 @Index('activity_pkey', ['id'], { unique: true })
 @Entity('activity', { schema: 'public' })
 export class Activity {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('text', { name: 'title' })
-  title: string
+  title: string;
 
   @Column('text', { name: 'description', nullable: true })
-  description: string | null
+  description: string | null;
 
   @Column('boolean', {
     name: 'is_participants_visible',
     default: () => false,
   })
-  isParticipantsVisible: boolean
+  isParticipantsVisible: boolean;
 
   @Column('text', { name: 'cover_url', nullable: true })
-  coverUrl: string | null
+  coverUrl: string | null;
 
   @Column('timestamp with time zone', { name: 'published_at', nullable: true })
-  publishedAt: Date | null
+  publishedAt: Date | null;
 
   @Column('integer', { name: 'position', nullable: true })
-  position: number | null
+  position: number | null;
 
   @Column('jsonb', { name: 'support_locales', nullable: true })
-  supportLocales: object | null
+  supportLocales: object | null;
 
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
-  deletedAt: Date | null
+  deletedAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
     default: () => 'now()',
   })
-  createdAt: Date | null
+  createdAt: Date | null;
 
   @Column('timestamp with time zone', {
     name: 'updated_at',
     nullable: true,
     default: () => 'now()',
   })
-  updatedAt: Date | null
+  updatedAt: Date | null;
 
   @Column('boolean', { name: 'is_private', default: () => false })
-  isPrivate: boolean
+  isPrivate: boolean;
 
-  @ManyToOne(() => App, app => app.activities, {
+  @ManyToOne(() => App, (app) => app.activities, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
-  app: App
+  app: App;
 
-  @ManyToOne(() => Member, member => member.activities, {
+  @ManyToOne(() => Member, (member) => member.activities, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'organizer_id', referencedColumnName: 'id' }])
-  organizer: Member
+  organizer: Member;
 
-  @OneToMany(() => ActivityCategory, activityCategory => activityCategory.activity)
-  activityCategories: ActivityCategory[]
+  @OneToMany(() => ActivityCategory, (activityCategory) => activityCategory.activity)
+  activityCategories: ActivityCategory[];
 
-  @OneToMany(() => ActivitySession, activitySession => activitySession.activity)
-  activitySessions: ActivitySession[]
+  @OneToMany(() => ActivitySession, (activitySession) => activitySession.activity)
+  activitySessions: ActivitySession[];
 
-  @OneToMany(() => ActivityTag, activityTag => activityTag.activity)
-  activityTags: ActivityTag[]
+  @OneToMany(() => ActivityTag, (activityTag) => activityTag.activity)
+  activityTags: ActivityTag[];
 
-  @OneToMany(() => ActivityTicket, activityTicket => activityTicket.activity)
-  activityTickets: ActivityTicket[]
+  @OneToMany(() => ActivityTicket, (activityTicket) => activityTicket.activity)
+  activityTickets: ActivityTicket[];
 
-  @OneToMany(() => PackageItem, packageItem => packageItem.activity)
-  packageItems: PackageItem[]
+  @OneToMany(() => PackageItem, (packageItem) => packageItem.activity)
+  packageItems: PackageItem[];
 }

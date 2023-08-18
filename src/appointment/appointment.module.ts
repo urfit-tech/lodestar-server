@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common'
-import { AppointmentPlanService } from './appointment-plan/appointment-plan.service'
+import { Module } from '@nestjs/common';
+import { AppointmentPlanService } from './appointment-plan/appointment-plan.service';
 
 @Module({
   providers: [AppointmentPlanService],

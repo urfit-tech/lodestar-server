@@ -1,38 +1,38 @@
-import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm'
+import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
 
 import { OrderProduct } from '~/order/entity/order_product.entity';
 
-import { AppointmentPlan } from './AppointmentPlan'
-import { ProgramPlan } from './ProgramPlan'
+import { AppointmentPlan } from './AppointmentPlan';
+import { ProgramPlan } from './ProgramPlan';
 
 @Index('currency_pkey', ['id'], { unique: true })
 @Entity('currency', { schema: 'public' })
 export class Currency {
   @PrimaryColumn()
-  id: string
+  id: string;
 
   @Column('text', { name: 'label' })
-  label: string
+  label: string;
 
   @Column('text', { name: 'unit' })
-  unit: string
+  unit: string;
 
   @Column('text', { name: 'name' })
-  name: string
+  name: string;
 
   @Column('integer', {
     name: 'minor_units',
     nullable: true,
     default: () => 0,
   })
-  minorUnits: number | null
+  minorUnits: number | null;
 
-  @OneToMany(() => AppointmentPlan, appointmentPlan => appointmentPlan.currency)
-  appointmentPlans: AppointmentPlan[]
+  @OneToMany(() => AppointmentPlan, (appointmentPlan) => appointmentPlan.currency)
+  appointmentPlans: AppointmentPlan[];
 
-  @OneToMany(() => OrderProduct, orderProduct => orderProduct.currency)
-  orderProducts: OrderProduct[]
+  @OneToMany(() => OrderProduct, (orderProduct) => orderProduct.currency)
+  orderProducts: OrderProduct[];
 
-  @OneToMany(() => ProgramPlan, programPlan => programPlan.currency)
-  programPlans: ProgramPlan[]
+  @OneToMany(() => ProgramPlan, (programPlan) => programPlan.currency)
+  programPlans: ProgramPlan[];
 }

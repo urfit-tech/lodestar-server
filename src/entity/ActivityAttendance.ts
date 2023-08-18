@@ -1,8 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { OrderProduct } from '~/order/entity/order_product.entity';
 
-import { ActivitySession } from './ActivitySession'
+import { ActivitySession } from './ActivitySession';
 
 @Index('activity_attendance_order_product_id_activity_session_id_key', ['activitySessionId', 'orderProductId'], {
   unique: true,
@@ -11,31 +11,31 @@ import { ActivitySession } from './ActivitySession'
 @Entity('activity_attendance', { schema: 'public' })
 export class ActivityAttendance {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'order_product_id', unique: true })
-  orderProductId: string
+  orderProductId: string;
 
   @Column('uuid', { name: 'activity_session_id', unique: true })
-  activitySessionId: string
+  activitySessionId: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
   })
-  createdAt: Date
+  createdAt: Date;
 
-  @ManyToOne(() => ActivitySession, activitySession => activitySession.activityAttendances, {
+  @ManyToOne(() => ActivitySession, (activitySession) => activitySession.activityAttendances, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'activity_session_id', referencedColumnName: 'id' }])
-  activitySession: ActivitySession
+  activitySession: ActivitySession;
 
-  @ManyToOne(() => OrderProduct, orderProduct => orderProduct.activityAttendances, {
+  @ManyToOne(() => OrderProduct, (orderProduct) => orderProduct.activityAttendances, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'order_product_id', referencedColumnName: 'id' }])
-  orderProduct: OrderProduct
+  orderProduct: OrderProduct;
 }

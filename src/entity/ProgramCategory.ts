@@ -9,25 +9,25 @@ import { Program } from './Program';
 @Entity('program_category', { schema: 'public' })
 export class ProgramCategory {
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @Column('uuid', { name: 'program_id' })
-  programId: string
+  programId: string;
 
   @Column('integer', { name: 'position' })
-  position: number
+  position: number;
 
-  @ManyToOne(() => Program, program => program.programCategories, {
+  @ManyToOne(() => Program, (program) => program.programCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
-  program: Program
+  program: Program;
 
-  @ManyToOne(() => Category, category => category.programCategories, {
+  @ManyToOne(() => Category, (category) => category.programCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'category_id', referencedColumnName: 'id' }])
-  category: Category
+  category: Category;
 }

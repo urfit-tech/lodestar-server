@@ -11,9 +11,6 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const { code, message, result } = exception;
     const status = exception.getStatus();
 
-    response
-      .status(status)
-      .json({ code, message, result });
+    response.status(status).json({ code, message, result });
   }
 }
-

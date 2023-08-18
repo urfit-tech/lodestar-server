@@ -37,14 +37,9 @@ export abstract class Runner {
     this.preRun();
     let isCompleted = false;
     try {
-      await this.lockService.occupyLock(
-        this.uuid, dayjs().toDate().getTime(), this.interval * 2,
-      );
+      await this.lockService.occupyLock(this.uuid, dayjs().toDate().getTime(), this.interval * 2);
 
-      const suicideTimeout = setTimeout(
-        () => !isCompleted && this.suicide(),
-        this.interval * 1.1,
-      );
+      const suicideTimeout = setTimeout(() => !isCompleted && this.suicide(), this.interval * 1.1);
 
       try {
         await this.execute();

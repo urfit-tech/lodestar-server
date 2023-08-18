@@ -9,9 +9,7 @@ import CreateOrReplaceTrigger from './sql/create_or_replace_trigger';
 
 @Injectable()
 export class TableLogService {
-  constructor(
-    @InjectEntityManager() private readonly entityManager: EntityManager,
-  ) {}
+  constructor(@InjectEntityManager() private readonly entityManager: EntityManager) {}
 
   public async initTableLogPgFunction(entityManager?: EntityManager): Promise<void> {
     const manager = entityManager || this.entityManager;
@@ -19,20 +17,20 @@ export class TableLogService {
   }
 
   public async isTableTriggerExists(
-    tableName: string, operation: TableOperation, entityManager?: EntityManager,
+    tableName: string,
+    operation: TableOperation,
+    entityManager?: EntityManager,
   ): Promise<boolean> {
     const manager = entityManager || this.entityManager;
-    const result: Array<PgTrigger> = await manager.query(
-      CheckTableTrigger(tableName, operation),
-    );
-    const lodestarTriggers = result.filter(
-      ({ trigger_name }) => trigger_name.startsWith('lodestar_'),
-    );
+    const result: Array<PgTrigger> = await manager.query(CheckTableTrigger(tableName, operation));
+    const lodestarTriggers = result.filter(({ trigger_name }) => trigger_name.startsWith('lodestar_'));
     return lodestarTriggers.length != 0;
   }
 
   public async createTableTrigger(
-    tableName: string, operation: TableOperation, entityManager?: EntityManager,
+    tableName: string,
+    operation: TableOperation,
+    entityManager?: EntityManager,
   ): Promise<void> {
     const manager = entityManager || this.entityManager;
     await manager.query(CreateOrReplaceTrigger(tableName, operation));
