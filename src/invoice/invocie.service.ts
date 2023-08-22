@@ -108,11 +108,13 @@ export class InvoiceService {
         invServiceResponse.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
         manager,
       );
+      this.logger.log(`[PaymentNo: ${paymentNo}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
 
       if (invServiceResponse.Status === 'SUCCESS') {
         const orderId = orderLogs[0].id;
         if (orderId && invoiceNumber) {
           await this.insertInvoice(orderId, invoiceNumber, Amt, manager);
+          this.logger.log(`Invoice ${invoiceNumber} issued with order_log_id ${orderId}`);
         }
       }
     } catch (error) {
