@@ -1,6 +1,6 @@
 import { EntityManager } from 'typeorm';
 import { sign, verify as jwtVerify } from 'jsonwebtoken';
-import { Logger, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
@@ -12,6 +12,9 @@ import { PermissionService } from '~/permission/permission.service';
 import { APIException } from '~/api.excetion';
 
 import { CrossServerTokenDTO } from './auth.type';
+import { CacheService } from '~/utility/cache/cache.service';
+import { randomBytes } from 'crypto';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +27,7 @@ export class AuthService {
     private readonly permissionService: PermissionService,
     private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
+    private readonly cacheService: CacheService,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
@@ -133,5 +137,33 @@ export class AuthService {
       return false;
     }
     return true;
+  }
+
+  async generateTmpPassword(appId: string, email: string) {
+    const redisCli = this.cacheService.getClient();
+    const password = this.generateRandomHash();
+    const key = `tmpPass:${appId}:${email}`;
+    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+    const expiredAt = dayjs().add(THREE_DAYS, 'millisecond').toDate();
+
+    await redisCli.set(key, password, 'PX', THREE_DAYS);
+    return { password, expiredAt };
+  }
+
+  private generateRandomHash() {
+    const length = 16;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
+    let password = '';
+    const byteLength = Math.ceil((length * 256) / charset.length);
+    const randomArray = randomBytes(byteLength);
+    for (let i = 0; i < length; i++) {
+      password += charset[randomArray[i] % charset.length];
+    }
+    return password;
+  }
+
+  async insertAuditLog(appId: string, account: string, email: string, purpose: string) {
+    console.log('insert audit_log');
+    return;
   }
 }
