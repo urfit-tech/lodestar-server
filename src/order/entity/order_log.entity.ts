@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { Member } from '~/member/entity/member.entity';
 import { Coupon } from '~/entity/Coupon';
@@ -18,7 +18,12 @@ import { OrderProduct } from './order_product.entity';
 @Index('order_log_status', ['status'], {})
 @Entity('order_log', { schema: 'public' })
 export class OrderLog {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn({
+    type: 'text',
+    primary: true,
+    unique: true,
+    default: () => 'gen_random_uuid()',
+  })
   id: string;
 
   @Column('text', { name: 'member_id' })
