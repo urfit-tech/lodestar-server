@@ -1,4 +1,5 @@
 import { Body, Controller, Logger, Post } from '@nestjs/common';
+import { MemberService } from '~/member/member.service';
 
 import { AuthService } from './auth.service';
 import { CrossServerTokenDTO, GenerateTmpPasswordDto } from './auth.type';
@@ -8,7 +9,11 @@ import { CrossServerTokenDTO, GenerateTmpPasswordDto } from './auth.type';
   version: ['2'],
 })
 export class AuthController {
-  constructor(private readonly authService: AuthService, private readonly logger: Logger) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly logger: Logger,
+    private readonly memberService: MemberService,
+  ) {}
 
   @Post('token')
   async generateCrossServerToken(@Body() body: CrossServerTokenDTO) {
@@ -23,10 +28,17 @@ export class AuthController {
   @Post('password/temporary')
   async generateTmpPassword(@Body() body: GenerateTmpPasswordDto) {
     try {
-      const { appId, account, email, purpose } = body;
+      const { appId, applicant, email, purpose } = body;
+      const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { email });
+      if (memberData.length === 0) {
+        return {
+          code: 'E_NO_MEMBER',
+          message: 'member not found',
+          result: null,
+        };
+      }
       const result = await this.authService.generateTmpPassword(appId, email);
-
-      await this.authService.insertAuditLog(appId, account, email, purpose);
+      await this.authService.insertAuthAuditLog(applicant, memberData[0].id, purpose);
       return {
         code: 'SUCCESS',
         message: 'get temporary password successfully',

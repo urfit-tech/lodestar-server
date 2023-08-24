@@ -6,7 +6,7 @@ export interface CrossServerTokenDTO {
 
 export interface GenerateTmpPasswordDto {
   appId: string;
-  account: string;
+  applicant: string;
   email: string;
   purpose: string;
 }

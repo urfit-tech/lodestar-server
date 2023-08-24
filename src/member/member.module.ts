@@ -1,4 +1,4 @@
-import { Logger, Module } from '@nestjs/common';
+import { forwardRef, Logger, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 
 import { DefinitionModule } from '~/definition/definition.module';
@@ -14,7 +14,7 @@ import { MemberInfrastructure } from './member.infra';
   controllers: [MemberController],
   imports: [
     DefinitionModule,
-    AuthModule,
+    forwardRef(() => AuthModule),
     BullModule.registerQueue({ name: ImporterTasker.name }),
     BullModule.registerQueue({ name: ExporterTasker.name }),
   ],

@@ -15,6 +15,8 @@ import { CrossServerTokenDTO } from './auth.type';
 import { CacheService } from '~/utility/cache/cache.service';
 import { randomBytes } from 'crypto';
 import dayjs from 'dayjs';
+import { AuthAuditLog } from './entity/auth_audit_log.entity';
+import { AuthInfrastructure } from './auth.infra';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +30,7 @@ export class AuthService {
     private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly cacheService: CacheService,
+    private readonly authInfra: AuthInfrastructure,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
@@ -145,6 +148,7 @@ export class AuthService {
     const key = `tmpPass:${appId}:${email}`;
     const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
     const expiredAt = dayjs().add(THREE_DAYS, 'millisecond').toDate();
+    console.log(key, password);
 
     await redisCli.set(key, password, 'PX', THREE_DAYS);
     return { password, expiredAt };
@@ -162,8 +166,12 @@ export class AuthService {
     return password;
   }
 
-  async insertAuditLog(appId: string, account: string, email: string, purpose: string) {
-    console.log('insert audit_log');
-    return;
+  async insertAuthAuditLog(applicant: string, userMemberId: string, purpose: string): Promise<void> {
+    const authAuditLog = new AuthAuditLog();
+    authAuditLog.action = 'apply_temporary_password';
+    authAuditLog.memberId = applicant;
+    authAuditLog.target = userMemberId;
+    authAuditLog.metadata = { reason: purpose };
+    await this.authInfra.insertAuthAuditLog(authAuditLog, this.entityManager);
   }
 }
