@@ -18,7 +18,10 @@ jobs:
         uses: actions/checkout@main
 
       - name: Install Docker
-        uses: docker-practice/actions-setup-docker@master
+        # uses: docker-practice/actions-setup-docker@master
+        # docker-practice/actions-setup-docker@master waiting for PR
+        # REF: https://github.com/docker-practice/actions-setup-docker/pull/33
+        uses: DimosthenisK/actions-setup-docker@fc48ecc37a6c3fe57342c08b4bc548926a27aa4a
       
       - name: Setup Node
         uses: actions/setup-node@v3
