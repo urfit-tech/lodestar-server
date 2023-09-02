@@ -81,10 +81,13 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'memberId': 'invoker_member_id',
-        'permissions': [],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+          permissions: [],
+        },
+        jwtSecret,
+      );
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
@@ -98,11 +101,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': [],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: [],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .get(route)
@@ -119,7 +125,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with empty conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -136,11 +142,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .get(route)
@@ -158,7 +167,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with name conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -175,11 +184,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .get(route)
@@ -198,7 +210,7 @@ describe('MemberController (e2e)', () => {
     });
 
     it('Should get members with managerName conditions', async () => {
-      let managerMember = new Member();
+      const managerMember = new Member();
       managerMember.appId = app.id;
       managerMember.id = v4();
       managerMember.name = 'manager_name';
@@ -211,7 +223,7 @@ describe('MemberController (e2e)', () => {
       await manager.save(managerMember);
 
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -229,11 +241,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .get(route)
@@ -253,7 +268,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with partial email conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -270,11 +285,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .get(route)
@@ -294,7 +312,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get empty members with nested not matched conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -311,11 +329,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .get(route)
@@ -333,7 +354,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with matched nested conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -350,11 +371,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .get(route)
@@ -377,7 +401,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with matched nested conditions & pagination', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -394,13 +418,17 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
-      let res, data, cursor, names = [];
+      let res, data, cursor;
+      const names = [];
       do {
         const option = {
           limit: 2,
@@ -420,8 +448,8 @@ describe('MemberController (e2e)', () => {
         ({ data, cursor } = res.body);
         expect(data.length).not.toBe(0);
         data.forEach(({ name }) => names.push(name));
-      } while (cursor !== null && cursor.afterCursor !== null); 
-      expect(names).toMatchObject(['name4','name3','name2', 'name1', 'name0']);
+      } while (cursor !== null && cursor.afterCursor !== null);
+      expect(names).toMatchObject(['name4', 'name3', 'name2', 'name1', 'name0']);
     });
   });
 
@@ -444,10 +472,13 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'memberId': 'invoker_member_id',
-        'permissions': [],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+          permissions: [],
+        },
+        jwtSecret,
+      );
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
@@ -461,11 +492,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': [],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: [],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .post(route)
@@ -482,7 +516,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with empty conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -499,11 +533,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .post(route)
@@ -521,7 +558,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with name conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -538,11 +575,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .post(route)
@@ -561,7 +601,7 @@ describe('MemberController (e2e)', () => {
     });
 
     it('Should get members with name conditions', async () => {
-      let managerMember = new Member();
+      const managerMember = new Member();
       managerMember.appId = app.id;
       managerMember.id = v4();
       managerMember.name = 'manager_name';
@@ -574,7 +614,7 @@ describe('MemberController (e2e)', () => {
       await manager.save(managerMember);
 
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -592,11 +632,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .post(route)
@@ -633,11 +676,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .post(route)
@@ -655,7 +701,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with matched nested conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -672,11 +718,14 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
       const res = await request(application.getHttpServer())
         .post(route)
@@ -699,7 +748,7 @@ describe('MemberController (e2e)', () => {
 
     it('Should get members with matched nested conditions & pagination', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
@@ -716,13 +765,17 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'appId': app.id,
-        'memberId': 'invoker_member_id',
-        'permissions': ['MEMBER_ADMIN'],
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
 
-      let res, data, cursor, names = [];
+      let res, data, cursor;
+      const names = [];
       do {
         const option = {
           limit: 2,
@@ -742,8 +795,8 @@ describe('MemberController (e2e)', () => {
         ({ data, cursor } = res.body);
         expect(data.length).not.toBe(0);
         data.forEach(({ name }) => names.push(name));
-      } while (cursor !== null && cursor.afterCursor !== null); 
-      expect(names).toMatchObject(['name4','name3','name2', 'name1', 'name0']);
+      } while (cursor !== null && cursor.afterCursor !== null);
+      expect(names).toMatchObject(['name4', 'name3', 'name2', 'name1', 'name0']);
     });
   });
 
@@ -766,9 +819,12 @@ describe('MemberController (e2e)', () => {
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'memberId': 'invoker_member_id',
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
@@ -782,30 +838,37 @@ describe('MemberController (e2e)', () => {
         .getOrThrow('HASURA_JWT_SECRET');
       const importerQueue = application.get<Queue>(getQueueToken(ImporterTasker.name));
       await importerQueue.empty();
-      
-      const token = jwt.sign({
-        'memberId': 'invoker_member_id',
-      }, jwtSecret);
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
         .send({
           appId: app.id,
-          fileInfos: [{
-            key: 'some_key',
-            checksum: 'some_checksum',
-          }],
+          fileInfos: [
+            {
+              key: 'some_key',
+              checksum: 'some_checksum',
+            },
+          ],
         })
         .expect(201);
-      
+
       const { data } = (await importerQueue.getWaiting())[0];
       expect(data.appId).toBe(app.id);
       expect(data.invokerMemberId).toBe('invoker_member_id');
       expect(data.category).toBe('member');
-      expect(data.fileInfos).toStrictEqual([{
-        checksumETag: 'some_checksum',
-        fileName: 'some_key',
-      }]);
+      expect(data.fileInfos).toStrictEqual([
+        {
+          checksumETag: 'some_checksum',
+          fileName: 'some_key',
+        },
+      ]);
     });
   });
 
@@ -825,12 +888,15 @@ describe('MemberController (e2e)', () => {
 
     it('Should raise bad request exception', async () => {
       const jwtSecret = application
-      .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
-      .getOrThrow('HASURA_JWT_SECRET');
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign({
-        'memberId': 'invoker_member_id',
-      }, jwtSecret);
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
 
       await request(application.getHttpServer())
         .post(route)
@@ -845,10 +911,13 @@ describe('MemberController (e2e)', () => {
         .getOrThrow('HASURA_JWT_SECRET');
       const exporterQueue = application.get<Queue>(getQueueToken(ExporterTasker.name));
       await exporterQueue.empty();
-      
-      const token = jwt.sign({
-        'memberId': 'invoker_member_id',
-      }, jwtSecret);
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
@@ -857,7 +926,7 @@ describe('MemberController (e2e)', () => {
           memberIds: [],
         })
         .expect(201);
-      
+
       const { data } = (await exporterQueue.getWaiting())[0];
       expect(data.appId).toBe(app.id);
       expect(data.invokerMemberId).toBe('invoker_member_id');

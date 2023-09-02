@@ -21,15 +21,15 @@ describe('MemberService', () => {
   let service: MemberService;
   let manager: EntityManager;
 
-  let mockDefinitionInfra = {
+  const mockDefinitionInfra = {
     getCategories: jest.fn(),
     getProperties: jest.fn(),
     getTags: jest.fn(),
   };
-  let mockMemberInfra = {
+  const mockMemberInfra = {
     getMembersByConditions: jest.fn(),
   };
-  let mockMemberRepo = {
+  const mockMemberRepo = {
     findOne: jest.fn(),
   };
 
