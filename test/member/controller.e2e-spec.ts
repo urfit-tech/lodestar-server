@@ -18,7 +18,9 @@ import { AppPlan } from '~/entity/AppPlan';
 import { Member } from '~/member/entity/member.entity';
 import { MemberGetResultDTO } from '~/member/member.dto';
 
-import { app, appPlan } from '../data';
+import { app, appPlan, memberProperty } from '../data';
+import { Property } from '~/definition/entity/property.entity';
+import { MemberProperty } from '~/member/entity/member_property.entity';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -27,7 +29,9 @@ describe('MemberController (e2e)', () => {
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
   let memberRepo: Repository<Member>;
-  
+  let propertyRepo: Repository<Property>;
+  let memberPropertyRepo: Repository<MemberProperty>;
+
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ApplicationModule],
@@ -35,26 +39,30 @@ describe('MemberController (e2e)', () => {
 
     application = moduleFixture.createNestApplication();
 
-    application
-      .useGlobalPipes(new ValidationPipe())
-      .useGlobalFilters(new ApiExceptionFilter());
-    
+    application.useGlobalPipes(new ValidationPipe()).useGlobalFilters(new ApiExceptionFilter());
+
     manager = application.get<EntityManager>(getEntityManagerToken());
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
     memberRepo = manager.getRepository(Member);
-    
+    propertyRepo = manager.getRepository(Property);
+    memberPropertyRepo = manager.getRepository(MemberProperty);
+
+    await memberPropertyRepo.delete({});
+    await propertyRepo.delete({});
     await memberRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
-    
+
     await application.init();
   });
 
   afterEach(async () => {
+    await memberPropertyRepo.delete({});
+    await propertyRepo.delete({});
     await memberRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
@@ -657,9 +665,65 @@ describe('MemberController (e2e)', () => {
       }
     });
 
+    it('Should get members with partial member properties conditions', async () => {
+      const { id: propertyId } = await manager.save(memberProperty);
+
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedMemberProperty = new MemberProperty();
+        insertedMemberProperty.id = v4();
+        insertedMemberProperty.memberId = memberId;
+        insertedMemberProperty.propertyId = propertyId;
+        insertedMemberProperty.value = `test member property value ${i}`;
+        await manager.save(insertedMemberProperty);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            memberProperties: [
+              {
+                [propertyId]: '%test member property value 1%',
+              },
+            ],
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(1);
+    });
+
     it('Should get empty members with nested not matched conditions', async () => {
       for (let i = 0; i < 5; i++) {
-        let insertedMember = new Member();
+        const insertedMember = new Member();
         insertedMember.appId = app.id;
         insertedMember.id = v4();
         insertedMember.name = `name${i}`;
