@@ -57,6 +57,25 @@ $ yarn run test:e2e
 # test coverage
 $ yarn run test:cov
 ```
+## Test Db configuration
+
+同步遠端Hasura的PostgreSQL結構至本機指定位置 （./migrations/hasura 資料夾）
+```bash
+hasura migrate create Init --from-server --endpoint hasuraServerEndpoint --admin-secret secret --project migrations/hasura/
+```
+套用最新資料庫結構前，需關閉所有容器並清除掛載（volume）
+```bash
+docker volume ls 
+docker volume rm lodestar-server_postgresdb
+```
+重新up所有容器後，套用最新資料庫結構以及資料seeding
+```bash
+docker-compose -f docker-compose.yml --profile test up -d
+
+hasura migrate apply --endpoint http://localhost:8080/ --database-name default --project migrations/hasura --skip-update-check
+
+hasura sd apply --endpoint http://localhost:8080/ --database-name default --project migrations/hasura --skip-update-check
+```
 
 ## Support
 
