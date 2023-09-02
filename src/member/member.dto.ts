@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Cursor } from 'typeorm-cursor-pagination';
 
 class FileInfo {
@@ -48,6 +48,14 @@ export class MemberGetConditionDTO {
   @IsString()
   @IsOptional()
   managerId?: string;
+
+  @IsArray()
+  @IsOptional()
+  properties?: MemberPropertiesCondition[];
+}
+
+export class MemberPropertiesCondition {
+  [propertyId: string]: string;
 }
 
 export class MemberGetDTO {

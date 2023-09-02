@@ -1,10 +1,11 @@
 import { EntityManager, FindOptionsWhere, OrderByCondition, In } from 'typeorm';
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
-
 import { MemberProperty } from './entity/member_property.entity';
 import { Member } from './entity/member.entity';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
+import { first, keys, omit, pick, values } from 'lodash';
+import { MemberPropertiesCondition } from './member.dto';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -14,13 +15,27 @@ export class MemberInfrastructure {
     order: OrderByCondition,
     prevToken: string | undefined,
     nextToken: string | undefined,
-    limit: number = 10,
+    limit = 10,
     entityManager: EntityManager,
   ): Promise<{ data: Array<Member>; cursor: Cursor }> {
     let queryBuilder = entityManager.getRepository(Member).createQueryBuilder('member');
 
     if (conditions.manager || conditions.managerId) {
       queryBuilder = queryBuilder.leftJoinAndSelect('member.manager', 'manager');
+    }
+
+    if (conditions.memberProperties) {
+      const memberPropertyQueryBuilder = await this._getMemberPropertyQueryBuilderByCondition(
+        entityManager,
+        conditions,
+      );
+      queryBuilder = queryBuilder.innerJoinAndSelect(
+        `(${memberPropertyQueryBuilder.getSql()})`,
+        'memberProperty',
+        '"memberProperty"."mid"::text = "member"."id"',
+      );
+
+      conditions = omit(conditions, ['memberProperties']);
     }
 
     queryBuilder = queryBuilder
@@ -96,5 +111,30 @@ export class MemberInfrastructure {
         return memberAuditLogRepo.save(toInsert);
       }),
     );
+  }
+
+  private _getMemberPropertyQueryBuilderByCondition(
+    entityManager: EntityManager,
+    conditions: FindOptionsWhere<Member>,
+  ) {
+    const memberPropertyConditions = pick(conditions, ['memberProperties'])
+      .memberProperties as MemberPropertiesCondition[];
+    const sqlCondition = memberPropertyConditions
+      .map((property) => {
+        const key = first(keys(property));
+        const value = first(values(property));
+        return `("property_id" = '${key}' AND "value" ILIKE '${value}')`;
+      })
+      .join(' OR ');
+
+    const queryBuilder = entityManager
+      .getRepository(MemberProperty)
+      .createQueryBuilder('memberProperty')
+      .select('member_id as mid')
+      .where(`(${sqlCondition})`)
+      .groupBy('member_id')
+      .having(`COUNT(property_id) = ${memberPropertyConditions.length}`);
+
+    return queryBuilder;
   }
 }

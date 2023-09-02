@@ -43,10 +43,7 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
-  public async getMembersByPost(
-    @Request() request: ExRequest,
-    @Body() dto: MemberGetDTO,
-  ): Promise<MemberGetResultDTO> {
+  public async getMembersByPost(@Request() request: ExRequest, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
     if (option && option.nextToken && option.prevToken) {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
@@ -86,10 +83,7 @@ export class MemberController {
   }
 
   @Get()
-  public async getMembers(
-    @Request() request: ExRequest,
-    @Body() dto: MemberGetDTO,
-  ): Promise<MemberGetResultDTO> {
+  public async getMembers(@Request() request: ExRequest, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
     if (option && option.nextToken && option.prevToken) {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
@@ -129,10 +123,7 @@ export class MemberController {
   }
 
   @Post('import')
-  public async importMembers(
-    @Request() request: ExRequest,
-    @Body() metadata: MemberImportDTO,
-  ): Promise<void> {
+  public async importMembers(@Request() request: ExRequest, @Body() metadata: MemberImportDTO): Promise<void> {
     const { memberId: invokerMemberId } = (request as any).member;
 
     const { appId, fileInfos } = metadata;
@@ -149,10 +140,7 @@ export class MemberController {
   }
 
   @Post('export')
-  public async exportMembers(
-    @Request() request: ExRequest,
-    @Body() metadata: MemberExportDTO,
-  ): Promise<void> {
+  public async exportMembers(@Request() request: ExRequest, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = (request as any).member;
 
     const { appId, memberIds, exportMime } = metadata;
