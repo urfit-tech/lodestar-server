@@ -608,7 +608,7 @@ describe('MemberController (e2e)', () => {
       }
     });
 
-    it('Should get members with name conditions', async () => {
+    it('Should get members with manager conditions', async () => {
       const managerMember = new Member();
       managerMember.appId = app.id;
       managerMember.id = v4();
@@ -665,7 +665,7 @@ describe('MemberController (e2e)', () => {
       }
     });
 
-    it('Should get members with partial member properties conditions', async () => {
+    it('Should get single member with full member property condition', async () => {
       const { id: propertyId } = await manager.save(memberProperty);
 
       for (let i = 0; i < 5; i++) {
@@ -708,7 +708,7 @@ describe('MemberController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           condition: {
-            memberProperties: [
+            properties: [
               {
                 [propertyId]: '%test member property value 1%',
               },
@@ -719,6 +719,62 @@ describe('MemberController (e2e)', () => {
       const { data: fetched }: MemberGetResultDTO = res.body;
 
       expect(fetched.length).toBe(1);
+    });
+
+    it('Should get members with partial member property condition', async () => {
+      const { id: propertyId } = await manager.save(memberProperty);
+
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedMemberProperty = new MemberProperty();
+        insertedMemberProperty.id = v4();
+        insertedMemberProperty.memberId = memberId;
+        insertedMemberProperty.propertyId = propertyId;
+        insertedMemberProperty.value = `test member property value ${i}`;
+        await manager.save(insertedMemberProperty);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            properties: [
+              {
+                [propertyId]: '%test member property value%',
+              },
+            ],
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(5);
     });
 
     it('Should get empty members with nested not matched conditions', async () => {

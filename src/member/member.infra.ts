@@ -25,10 +25,7 @@ export class MemberInfrastructure {
     }
 
     if (conditions.memberProperties) {
-      const memberPropertyQueryBuilder = await this._getMemberPropertyQueryBuilderByCondition(
-        entityManager,
-        conditions,
-      );
+      const memberPropertyQueryBuilder = await this.getMemberPropertyQueryBuilderByCondition(entityManager, conditions);
       queryBuilder = queryBuilder.innerJoinAndSelect(
         `(${memberPropertyQueryBuilder.getSql()})`,
         'memberProperty',
@@ -113,10 +110,7 @@ export class MemberInfrastructure {
     );
   }
 
-  private _getMemberPropertyQueryBuilderByCondition(
-    entityManager: EntityManager,
-    conditions: FindOptionsWhere<Member>,
-  ) {
+  private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {
     const memberPropertyConditions = pick(conditions, ['memberProperties'])
       .memberProperties as MemberPropertiesCondition[];
     const sqlCondition = memberPropertyConditions
