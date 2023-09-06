@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
-import { chunk, flatten, isNull } from 'lodash';
-import { EntityManager, Equal, FindOptionsWhere, ILike, In } from 'typeorm';
+import { chunk, flatten, isNull, property } from 'lodash';
+import { EntityManager, Equal, FindOptionsWhere, ILike, In, And } from 'typeorm';
 import { ValidationError, isDateString, isEmpty } from 'class-validator';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -52,6 +52,9 @@ export class MemberService {
               },
             }),
             ...(condition.managerId && { managerId: Equal(condition.managerId) }),
+            ...(condition.properties && {
+              memberProperties: condition.properties,
+            }),
           }
         : {};
 
@@ -163,7 +166,7 @@ export class MemberService {
     const headerInfos = await new MemberCsvHeaderMapping().deserializeFromDataBase(5, 20, appCategories, appProperties);
 
     const results = [];
-    for (let chunkedMemberIds of chunk(memberIds, 1000)) {
+    for (const chunkedMemberIds of chunk(memberIds, 1000)) {
       const fetchedMembers = await this.memberInfra.getMembersByConditions(
         appId,
         { id: In(chunkedMemberIds) },

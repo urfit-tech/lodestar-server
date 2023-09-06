@@ -17,7 +17,6 @@ import { MemberPhone } from '~/member/entity/member_phone.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
-
 import { anotherCategory, anotherMemberTag, app, appPlan, category, memberProperty, memberTag } from '../data';
 
 describe('MemberService (e2e)', () => {
@@ -97,9 +96,10 @@ describe('MemberService (e2e)', () => {
   describe('Method processImportFromFile', () => {
     it('Should return header error', async () => {
       const rawRows = [{}];
-      const {
-        toInsertCount, insertedCount, failedCount, failedErrors,
-      } = await service.processImportFromFile(app.id, rawRows);
+      const { toInsertCount, insertedCount, failedCount, failedErrors } = await service.processImportFromFile(
+        app.id,
+        rawRows,
+      );
       expect(toInsertCount).toBe(0);
       expect(insertedCount).toBe(0);
       expect(failedCount).toBe(0);
@@ -114,47 +114,54 @@ describe('MemberService (e2e)', () => {
     it('Should return data error', async () => {
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '分類2': 'categories.1',
-          '屬性1': 'properties.0',
-          '屬性2': 'properties.1',
-          '標籤1': 'tags.0',
-          '標籤2': 'tags.1',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          分類2: 'categories.1',
+          屬性1: 'properties.0',
+          屬性2: 'properties.1',
+          標籤1: 'tags.0',
+          標籤2: 'tags.1',
         },
         {
-          '流水號': 'invalid-uuid-format',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email@example.com',
-          '手機1': '',
-          '手機2': '',
-          '分類1': '',
-          '分類2': '',
-          '屬性1': '',
-          '屬性2': '',
-          '標籤1': '',
-          '標籤2': '',
+          流水號: 'invalid-uuid-format',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email@example.com',
+          手機1: '',
+          手機2: '',
+          分類1: '',
+          分類2: '',
+          屬性1: '',
+          屬性2: '',
+          標籤1: '',
+          標籤2: '',
         },
       ];
-      const {
-        toInsertCount, insertedCount, failedCount, failedErrors,
-      } = await service.processImportFromFile(app.id, rawRows);
+      const { toInsertCount, insertedCount, failedCount, failedErrors } = await service.processImportFromFile(
+        app.id,
+        rawRows,
+      );
       expect(toInsertCount).toBe(1);
       expect(insertedCount).toBe(0);
       expect(failedCount).toBe(1);
       expect(failedErrors.length).toBeGreaterThan(0);
 
-      const errors = failedErrors
-        .find((each: Record<string, Array<{
-          property: string;
-          constraints: Record<string, string>;
-        }>>) => Object.keys(each).find((key) => key.includes('invalid-uuid-format/username/email@example.com')));
+      const errors = failedErrors.find(
+        (
+          each: Record<
+            string,
+            Array<{
+              property: string;
+              constraints: Record<string, string>;
+            }>
+          >,
+        ) => Object.keys(each).find((key) => key.includes('invalid-uuid-format/username/email@example.com')),
+      );
       const idError = errors['invalid-uuid-format/username/email@example.com'];
       expect(idError[0].property).toBe('id');
       expect(idError[0].constraints.isUuid).not.toBeUndefined();
@@ -164,40 +171,40 @@ describe('MemberService (e2e)', () => {
       const createdAt = new Date();
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '分類2': 'categories.1',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          分類2: 'categories.1',
           [memberProperty.name]: 'properties.0',
-          '屬性2': 'properties.1',
-          '標籤1': 'tags.0',
-          '標籤2': 'tags.1',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          屬性2: 'properties.1',
+          標籤1: 'tags.0',
+          標籤2: 'tags.1',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': '',
-          '姓名': 'test',
-          '帳號': 'test_account',
-          '信箱': 'test_email@test.com',
-          '身份': 'general-member',
-          '手機1': '0912345678',
-          '手機2': '0912345678',
-          '分類1': 'test_category1',
-          '分類2': 'test_category2',
+          流水號: '',
+          姓名: 'test',
+          帳號: 'test_account',
+          信箱: 'test_email@test.com',
+          身份: 'general-member',
+          手機1: '0912345678',
+          手機2: '0912345678',
+          分類1: 'test_category1',
+          分類2: 'test_category2',
           [memberProperty.name]: 'test_value1',
-          '屬性2': 'test_property2',
-          '標籤1': 'test_tag1',
-          '標籤2': 'test_tag2',
-          '星等': '999',
-          '建立日期': createdAt.toISOString(),
-          '上次登入日期': '',
+          屬性2: 'test_property2',
+          標籤1: 'test_tag1',
+          標籤2: 'test_tag2',
+          星等: '999',
+          建立日期: createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
       const insertResult = await service.processImportFromFile(app.id, rawRows);
@@ -214,7 +221,7 @@ describe('MemberService (e2e)', () => {
           memberPhones: true,
           memberTags: { tagName2: true },
         },
-      },);
+      });
       expect(member).not.toBeUndefined();
       expect(member.name).toBe('test');
       expect(member.username).toBe('test_account');
@@ -276,40 +283,40 @@ describe('MemberService (e2e)', () => {
 
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '分類2': 'categories.1',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          分類2: 'categories.1',
           [memberProperty.name]: 'properties.0',
-          '屬性2': 'properties.1',
-          '標籤1': 'tags.0',
-          '標籤2': 'tags.1',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          屬性2: 'properties.1',
+          標籤1: 'tags.0',
+          標籤2: 'tags.1',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': insertedMember.id,
-          '姓名': '',
-          '帳號': 'test_account',
-          '信箱': 'test_email@test.com',
-          '身份': 'general-member',
-          '手機1': '',
-          '手機2': '',
-          '分類1': '',
-          '分類2': '',
+          流水號: insertedMember.id,
+          姓名: '',
+          帳號: 'test_account',
+          信箱: 'test_email@test.com',
+          身份: 'general-member',
+          手機1: '',
+          手機2: '',
+          分類1: '',
+          分類2: '',
           [memberProperty.name]: 'test_value1',
-          '屬性2': '',
-          '標籤1': '',
-          '標籤2': '',
-          '星等': '',
-          '建立日期': insertedMember.createdAt.toISOString(),
-          '上次登入日期': '',
+          屬性2: '',
+          標籤1: '',
+          標籤2: '',
+          星等: '',
+          建立日期: insertedMember.createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
       const insertResult = await service.processImportFromFile(app.id, rawRows);
@@ -326,7 +333,7 @@ describe('MemberService (e2e)', () => {
           memberPhones: true,
           memberTags: { tagName2: true },
         },
-      },);
+      });
       expect(member).not.toBeUndefined();
       expect(member.name).toBe('inserted_name');
       expect(member.username).toBe('test_account');
@@ -383,40 +390,40 @@ describe('MemberService (e2e)', () => {
 
       const rawRows = [
         {
-          '流水號': 'id',
-          '姓名': 'name',
-          '帳號': 'username',
-          '信箱': 'email',
-          '身份': 'role',
-          '手機1': 'phones.0',
-          '手機2': 'phones.1',
-          '分類1': 'categories.0',
-          '分類2': 'categories.1',
+          流水號: 'id',
+          姓名: 'name',
+          帳號: 'username',
+          信箱: 'email',
+          身份: 'role',
+          手機1: 'phones.0',
+          手機2: 'phones.1',
+          分類1: 'categories.0',
+          分類2: 'categories.1',
           [memberProperty.name]: 'properties.0',
-          '屬性2': 'properties.1',
-          '標籤1': 'tags.0',
-          '標籤2': 'tags.1',
-          '星等': 'star',
-          '建立日期': 'createdAt',
-          '上次登入日期': 'loginedAt',
+          屬性2: 'properties.1',
+          標籤1: 'tags.0',
+          標籤2: 'tags.1',
+          星等: 'star',
+          建立日期: 'createdAt',
+          上次登入日期: 'loginedAt',
         },
         {
-          '流水號': insertedMember.id,
-          '姓名': insertedMember.name,
-          '帳號': insertedMember.username,
-          '信箱': insertedMember.email,
-          '身份': insertedMember.role,
-          '手機1': '0900000008',
-          '手機2': '',
-          '分類1': '',
-          '分類2': anotherCategory.name,
+          流水號: insertedMember.id,
+          姓名: insertedMember.name,
+          帳號: insertedMember.username,
+          信箱: insertedMember.email,
+          身份: insertedMember.role,
+          手機1: '0900000008',
+          手機2: '',
+          分類1: '',
+          分類2: anotherCategory.name,
           [memberProperty.name]: 'updated-value',
-          '屬性2': 'test_property2',
-          '標籤1': 'test_tag1',
-          '標籤2': anotherMemberTag.name,
-          '星等': '999',
-          '建立日期': insertedMember.createdAt.toISOString(),
-          '上次登入日期': '',
+          屬性2: 'test_property2',
+          標籤1: 'test_tag1',
+          標籤2: anotherMemberTag.name,
+          星等: '999',
+          建立日期: insertedMember.createdAt.toISOString(),
+          上次登入日期: '',
         },
       ];
 
@@ -464,40 +471,39 @@ describe('MemberService (e2e)', () => {
       ) {
         const rawRows = [
           {
-            '流水號': 'id',
-            '姓名': 'name',
-            '帳號': 'username',
-            '信箱': 'email',
-            '身份': 'role',
-            '星等': 'star',
-            '建立日期': 'createdAt',
-            '上次登入日期': 'loginedAt',
-            '手機1': 'phones.0',
-            '分類1': 'categories.0',
+            流水號: 'id',
+            姓名: 'name',
+            帳號: 'username',
+            信箱: 'email',
+            身份: 'role',
+            星等: 'star',
+            建立日期: 'createdAt',
+            上次登入日期: 'loginedAt',
+            手機1: 'phones.0',
+            分類1: 'categories.0',
             [memberProperty.name]: 'properties.0',
-            '標籤1': 'tags.0',
+            標籤1: 'tags.0',
           },
           {
-            '流水號': '',
-            '姓名': 'to-insert-name',
-            '帳號': 'to-insert-username',
-            '信箱': 'to-insert-email@example.com',
-            '身份': 'to-insert-role',
-            '星等': '999',
-            '建立日期': '',
-            '上次登入日期': '',
-            '手機1': '',
-            '分類1': '',
+            流水號: '',
+            姓名: 'to-insert-name',
+            帳號: 'to-insert-username',
+            信箱: 'to-insert-email@example.com',
+            身份: 'to-insert-role',
+            星等: '999',
+            建立日期: '',
+            上次登入日期: '',
+            手機1: '',
+            分類1: '',
             [memberProperty.name]: '',
-            '標籤1': '',
+            標籤1: '',
           },
         ];
 
-        const readableHeaderNames = Object
-          .entries(rawRows[0] as Record<string, string>)
-          .filter(([_, codeReadable]) => fullMatch
-            ? codeReadable === testFieldName
-            : codeReadable.includes(testFieldName))
+        const readableHeaderNames = Object.entries(rawRows[0] as Record<string, string>)
+          .filter(([_, codeReadable]) =>
+            fullMatch ? codeReadable === testFieldName : codeReadable.includes(testFieldName),
+          )
           .map(([humanReadable]) => humanReadable);
         for (let i = 0; i < rawRows.length; i++) {
           for (let j = 0; j < readableHeaderNames.length; j++) {
@@ -511,36 +517,32 @@ describe('MemberService (e2e)', () => {
         expect(result.failedCount).toBe(1);
         expect(result.failedErrors.length).toBe(1);
         toExpect(result);
-      };
-      const setUndefined = (key: string, value: Record<string, string>) =>
-        delete value[key];
-      const setBlank = (key: string, value: Record<string, string>) =>
-        value[key] = '';
+      }
+      const setUndefined = (key: string, value: Record<string, string>) => delete value[key];
+      const setBlank = (key: string, value: Record<string, string>) => (value[key] = '');
 
       it('Field username', async () => {
-        const toExpect = ({ failedErrors }: {
-          failedErrors: Array<Record<string, Array<ValidationError>>>;
-        }) => {
-          const error = Object.values(failedErrors.pop()).pop()
+        const toExpect = ({ failedErrors }: { failedErrors: Array<Record<string, Array<ValidationError>>> }) => {
+          const error = Object.values(failedErrors.pop())
+            .pop()
             .find(({ property }) => property === 'username');
           expect(error.constraints.isNotEmpty).not.toBeUndefined();
           expect(error.constraints.isString).not.toBeUndefined();
         };
         await testField('username', 'blank', setBlank, toExpect),
-        await testField('username', 'undefined', setUndefined, toExpect);
+          await testField('username', 'undefined', setUndefined, toExpect);
       });
 
       it('Field star', async () => {
-        const toExpect = ({ failedErrors }: {
-          failedErrors: Array<Record<string, Array<ValidationError>>>;
-        }) => {
-          const error = Object.values(failedErrors.pop()).pop()
+        const toExpect = ({ failedErrors }: { failedErrors: Array<Record<string, Array<ValidationError>>> }) => {
+          const error = Object.values(failedErrors.pop())
+            .pop()
             .find(({ property }) => property === 'star');
           expect(error.constraints.isNotEmpty).not.toBeUndefined();
           expect(error.constraints.isNumberString).not.toBeUndefined();
         };
         await testField('star', 'blank', setBlank, toExpect),
-        await testField('star', 'undefined', setUndefined, toExpect);
+          await testField('star', 'undefined', setUndefined, toExpect);
       });
     });
 
@@ -589,40 +591,39 @@ describe('MemberService (e2e)', () => {
 
         const rawRows = [
           {
-            '流水號': 'id',
-            '姓名': 'name',
-            '帳號': 'username',
-            '信箱': 'email',
-            '身份': 'role',
-            '星等': 'star',
-            '建立日期': 'createdAt',
-            '上次登入日期': 'loginedAt',
-            '手機1': 'phones.0',
-            '分類1': 'categories.0',
+            流水號: 'id',
+            姓名: 'name',
+            帳號: 'username',
+            信箱: 'email',
+            身份: 'role',
+            星等: 'star',
+            建立日期: 'createdAt',
+            上次登入日期: 'loginedAt',
+            手機1: 'phones.0',
+            分類1: 'categories.0',
             [insertedMemberProperty.property.name]: 'properties.0',
-            '標籤1': 'tags.0',
+            標籤1: 'tags.0',
           },
           {
-            '流水號': insertedMember.id,
-            '姓名': insertedMember.name,
-            '帳號': insertedMember.username,
-            '信箱': insertedMember.email,
-            '身份': insertedMember.role,
-            '星等': insertedMember.star,
-            '建立日期': insertedMember.createdAt.toISOString(),
-            '上次登入日期': insertedMember.loginedAt.toISOString(),
-            '手機1': insertedMemberPhone.phone,
-            '分類1': insertedMemberCategory.category.name,
+            流水號: insertedMember.id,
+            姓名: insertedMember.name,
+            帳號: insertedMember.username,
+            信箱: insertedMember.email,
+            身份: insertedMember.role,
+            星等: insertedMember.star,
+            建立日期: insertedMember.createdAt.toISOString(),
+            上次登入日期: insertedMember.loginedAt.toISOString(),
+            手機1: insertedMemberPhone.phone,
+            分類1: insertedMemberCategory.category.name,
             [insertedMemberProperty.property.name]: insertedMemberProperty.value,
-            '標籤1': insertedMemberTag.tagName2.name,
+            標籤1: insertedMemberTag.tagName2.name,
           },
         ];
 
-        const readableHeaderNames = Object
-          .entries(rawRows[0] as Record<string, string>)
-          .filter(([_, codeReadable]) => fullMatch
-            ? codeReadable === testFieldName
-            : codeReadable.includes(testFieldName))
+        const readableHeaderNames = Object.entries(rawRows[0] as Record<string, string>)
+          .filter(([_, codeReadable]) =>
+            fullMatch ? codeReadable === testFieldName : codeReadable.includes(testFieldName),
+          )
           .map(([humanReadable]) => humanReadable);
         for (let i = 0; i < rawRows.length; i++) {
           for (let j = 0; j < readableHeaderNames.length; j++) {
@@ -654,11 +655,9 @@ describe('MemberService (e2e)', () => {
           insertedMemberProperty,
           insertedMemberTag,
         });
-      };
-      const setUndefined = (key: string, value: Record<string, string>) =>
-        delete value[key];
-      const setBlank = (key: string, value: Record<string, string>) =>
-        value[key] = '';
+      }
+      const setUndefined = (key: string, value: Record<string, string>) => delete value[key];
+      const setBlank = (key: string, value: Record<string, string>) => (value[key] = '');
 
       it('Field name', async () => {
         const toExpect = ({ member, insertedMember }: { member: Member; insertedMember: Member }) => {
@@ -673,7 +672,7 @@ describe('MemberService (e2e)', () => {
           expect([insertedMember.id, insertedMember.username]).toContain(member.username);
         };
         await testField('username', 'blank', setBlank, toExpect),
-        await testField('username', 'undefined', setUndefined, toExpect);
+          await testField('username', 'undefined', setUndefined, toExpect);
       });
 
       it('Field role', async () => {
@@ -681,7 +680,7 @@ describe('MemberService (e2e)', () => {
           expect(member.role).toBe(insertedMember.role);
         };
         await testField('role', 'blank', setBlank, toExpect),
-        await testField('role', 'undefined', setUndefined, toExpect);
+          await testField('role', 'undefined', setUndefined, toExpect);
       });
 
       it('Field star', async () => {
@@ -689,7 +688,7 @@ describe('MemberService (e2e)', () => {
           expect(member.star).toBe(insertedMember.star);
         };
         await testField('star', 'blank', setBlank, toExpect),
-        await testField('star', 'undefined', setUndefined, toExpect);
+          await testField('star', 'undefined', setUndefined, toExpect);
       });
 
       it('Field createdAt', async () => {
@@ -697,7 +696,7 @@ describe('MemberService (e2e)', () => {
           expect(member.createdAt).toStrictEqual(insertedMember.createdAt);
         };
         await testField('createdAt', 'blank', setBlank, toExpect),
-        await testField('createdAt', 'undefined', setUndefined, toExpect);
+          await testField('createdAt', 'undefined', setUndefined, toExpect);
       });
 
       it('Field loginedAt', async () => {
@@ -705,7 +704,7 @@ describe('MemberService (e2e)', () => {
           expect(member.loginedAt).toStrictEqual(insertedMember.loginedAt);
         };
         await testField('loginedAt', 'blank', setBlank, toExpect),
-        await testField('loginedAt', 'undefined', setUndefined, toExpect);
+          await testField('loginedAt', 'undefined', setUndefined, toExpect);
       });
 
       it('Field phones', async () => {
@@ -727,7 +726,7 @@ describe('MemberService (e2e)', () => {
           expect(member.memberTags[0].tagName2.name).toBe(insertedMemberTag.tagName2.name);
         };
         await testField('phones', 'blank', setBlank, toExpect, false),
-        await testField('phones', 'undefined', setUndefined, toExpect, false);
+          await testField('phones', 'undefined', setUndefined, toExpect, false);
       });
 
       it('Field categories', async () => {
@@ -749,7 +748,7 @@ describe('MemberService (e2e)', () => {
           expect(member.memberTags[0].tagName2.name).toBe(insertedMemberTag.tagName2.name);
         };
         await testField('categories', 'blank', setBlank, toExpect, false),
-        await testField('categories', 'undefined', setUndefined, toExpect, false);
+          await testField('categories', 'undefined', setUndefined, toExpect, false);
       });
 
       it('Field properties', async () => {
@@ -773,7 +772,7 @@ describe('MemberService (e2e)', () => {
           expect(member.memberTags[0].tagName2.name).toBe(insertedMemberTag.tagName2.name);
         };
         await testField('properties', 'blank', setBlank, toExpect, false),
-        await testField('properties', 'undefined', setUndefined, toExpect, false);
+          await testField('properties', 'undefined', setUndefined, toExpect, false);
       });
 
       it('Field tags', async () => {
@@ -795,7 +794,7 @@ describe('MemberService (e2e)', () => {
           expect(member.memberTags.length).toBe(0);
         };
         await testField('tags', 'blank', setBlank, toExpect, false),
-        await testField('tags', 'undefined', setUndefined, toExpect, false);
+          await testField('tags', 'undefined', setUndefined, toExpect, false);
       });
     });
   });
