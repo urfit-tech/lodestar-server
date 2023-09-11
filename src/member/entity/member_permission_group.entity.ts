@@ -1,12 +1,18 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
-import { PermissionGroup } from './PermissionGroup';
+import { PermissionGroup } from '../../entity/PermissionGroup';
 
 @Index('member_permission_group_pkey', ['id'], { unique: true })
 @Entity('member_permission_group', { schema: 'public' })
 export class MemberPermissionGroup {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column('text', { name: 'member_id' })
+  memberId: string;
+
+  @Column('uuid', { name: 'permission_group_id' })
+  permissionGroupId: string;
 
   @Column('timestamp with time zone', {
     name: 'created_at',

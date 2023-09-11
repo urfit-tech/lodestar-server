@@ -21,6 +21,13 @@ import { MemberGetResultDTO } from '~/member/member.dto';
 import { app, appPlan, memberProperty } from '../data';
 import { Property } from '~/definition/entity/property.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
+import { MemberTag } from '~/member/entity/member_tag.entity';
+import { Tag } from '~/definition/entity/tag.entity';
+import { MemberPhone } from '~/member/entity/member_phone.entity';
+import { Category } from '~/definition/entity/category.entity';
+import { MemberCategory } from '~/member/entity/member_category.entity';
+import { PermissionGroup } from '~/entity/PermissionGroup';
+import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -30,7 +37,14 @@ describe('MemberController (e2e)', () => {
   let appRepo: Repository<App>;
   let memberRepo: Repository<Member>;
   let propertyRepo: Repository<Property>;
+  let tagRepo: Repository<Tag>;
+  let categoryRepo: Repository<Category>;
+  let permissionGroupRepo: Repository<PermissionGroup>;
+  let memberCategoryRepo: Repository<MemberCategory>;
   let memberPropertyRepo: Repository<MemberProperty>;
+  let memberTagRepo: Repository<MemberTag>;
+  let memberPhoneRepo: Repository<MemberPhone>;
+  let memberPermissionGroupRepo: Repository<MemberPermissionGroup>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -46,11 +60,25 @@ describe('MemberController (e2e)', () => {
     appRepo = manager.getRepository(App);
     memberRepo = manager.getRepository(Member);
     propertyRepo = manager.getRepository(Property);
+    tagRepo = manager.getRepository(Tag);
+    categoryRepo = manager.getRepository(Category);
+    permissionGroupRepo = manager.getRepository(PermissionGroup);
     memberPropertyRepo = manager.getRepository(MemberProperty);
+    memberTagRepo = manager.getRepository(MemberTag);
+    memberPhoneRepo = manager.getRepository(MemberPhone);
+    memberCategoryRepo = manager.getRepository(MemberCategory);
+    memberPermissionGroupRepo = manager.getRepository(MemberPermissionGroup);
 
+    await memberPermissionGroupRepo.delete({});
+    await memberPhoneRepo.delete({});
+    await memberTagRepo.delete({});
     await memberPropertyRepo.delete({});
-    await propertyRepo.delete({});
+    await memberCategoryRepo.delete({});
     await memberRepo.delete({});
+    await propertyRepo.delete({});
+    await tagRepo.delete({});
+    await categoryRepo.delete({});
+    await permissionGroupRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
@@ -61,9 +89,16 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await memberPermissionGroupRepo.delete({});
+    await memberPhoneRepo.delete({});
     await memberPropertyRepo.delete({});
-    await propertyRepo.delete({});
+    await memberTagRepo.delete({});
+    await memberCategoryRepo.delete({});
     await memberRepo.delete({});
+    await propertyRepo.delete({});
+    await tagRepo.delete({});
+    await categoryRepo.delete({});
+    await permissionGroupRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
@@ -769,6 +804,434 @@ describe('MemberController (e2e)', () => {
                 [propertyId]: '%test member property value%',
               },
             ],
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(5);
+    });
+
+    it('Should get single member with member phone condition', async () => {
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedMemberPhone = new MemberPhone();
+        insertedMemberPhone.id = v4();
+        insertedMemberPhone.memberId = memberId;
+        insertedMemberPhone.phone = `0900000000${i}`;
+        await manager.save(insertedMemberPhone);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            phone: '%09000000001%',
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(1);
+    });
+
+    it('Should get members with partial member phone condition', async () => {
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedMemberPhone = new MemberPhone();
+        insertedMemberPhone.id = v4();
+        insertedMemberPhone.memberId = memberId;
+        insertedMemberPhone.phone = `0900000000${i}`;
+        await manager.save(insertedMemberPhone);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            phone: '%0000%',
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(5);
+    });
+
+    it('Should get single member with member tag condition', async () => {
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedTag = new Tag();
+        insertedTag.name = `tag ${i}`;
+        insertedTag.type = 'member';
+        await manager.save(insertedTag);
+
+        const insertedMemberTag = new MemberTag();
+        insertedMemberTag.id = v4();
+        insertedMemberTag.memberId = memberId;
+        insertedMemberTag.tagName = insertedTag.name;
+        await manager.save(insertedMemberTag);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            tag: '%tag 1%',
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(1);
+    });
+
+    it('Should get members with member partial tag condition', async () => {
+      const insertedTag = new Tag();
+      insertedTag.name = `tag`;
+      insertedTag.type = 'member';
+      const { name: tagName } = await manager.save(insertedTag);
+
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedMemberTag = new MemberTag();
+        insertedMemberTag.id = v4();
+        insertedMemberTag.memberId = memberId;
+        insertedMemberTag.tagName = tagName;
+        await manager.save(insertedMemberTag);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            tag: '%tag%',
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(5);
+    });
+
+    it('Should get single member with member category condition', async () => {
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedCategory = new Category();
+        insertedCategory.name = `category ${i}`;
+        insertedCategory.class = 'member';
+        insertedCategory.position = 0;
+        insertedCategory.appId = app.id;
+        const { id: categoryId } = await manager.save(insertedCategory);
+
+        const insertedMemberCategory = new MemberCategory();
+        insertedMemberCategory.id = v4();
+        insertedMemberCategory.memberId = memberId;
+        insertedMemberCategory.categoryId = categoryId;
+        insertedMemberCategory.position = 0;
+        await manager.save(insertedMemberCategory);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            category: '%category 1%',
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(1);
+    });
+
+    it('Should get single member with member category condition', async () => {
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedCategory = new Category();
+        insertedCategory.name = `category ${i}`;
+        insertedCategory.class = 'member';
+        insertedCategory.position = 0;
+        insertedCategory.appId = app.id;
+        const { id: categoryId } = await manager.save(insertedCategory);
+
+        const insertedMemberCategory = new MemberCategory();
+        insertedMemberCategory.id = v4();
+        insertedMemberCategory.memberId = memberId;
+        insertedMemberCategory.categoryId = categoryId;
+        insertedMemberCategory.position = 0;
+        await manager.save(insertedMemberCategory);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            category: '%category%',
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(5);
+    });
+
+    it('Should get single member with member permission group condition', async () => {
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedPermissionGroup = new PermissionGroup();
+        insertedPermissionGroup.name = `test permission group ${i}`;
+        insertedPermissionGroup.appId = app.id;
+        const { id: permissionGroupId } = await manager.save(insertedPermissionGroup);
+
+        const insertedMemberPermissionGroup = new MemberPermissionGroup();
+        insertedMemberPermissionGroup.id = v4();
+        insertedMemberPermissionGroup.memberId = memberId;
+        insertedMemberPermissionGroup.permissionGroupId = permissionGroupId;
+        await manager.save(insertedMemberPermissionGroup);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            permissionGroup: '%test permission group 1%',
+          },
+        })
+        .expect(201);
+      const { data: fetched }: MemberGetResultDTO = res.body;
+
+      expect(fetched.length).toBe(1);
+    });
+
+    it('Should get members with partial member permission group condition', async () => {
+      for (let i = 0; i < 5; i++) {
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name${i}`;
+        insertedMember.username = `username${i}`;
+        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const insertedPermissionGroup = new PermissionGroup();
+        insertedPermissionGroup.name = `test permission group ${i}`;
+        insertedPermissionGroup.appId = app.id;
+        const { id: permissionGroupId } = await manager.save(insertedPermissionGroup);
+
+        const insertedMemberPermissionGroup = new MemberPermissionGroup();
+        insertedMemberPermissionGroup.id = v4();
+        insertedMemberPermissionGroup.memberId = memberId;
+        insertedMemberPermissionGroup.permissionGroupId = permissionGroupId;
+        await manager.save(insertedMemberPermissionGroup);
+      }
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          condition: {
+            permissionGroup: '%test permission group%',
           },
         })
         .expect(201);

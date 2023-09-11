@@ -28,7 +28,7 @@ import { MemberDevice } from '~/entity/MemberDevice';
 import { MemberNote } from '~/entity/MemberNote';
 import { MemberOauth } from '~/entity/MemberOauth';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
-import { MemberPermissionGroup } from '~/entity/MemberPermissionGroup';
+import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberShop } from '~/entity/MemberShop';
 import { MemberSocial } from '~/entity/MemberSocial';

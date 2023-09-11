@@ -1,5 +1,5 @@
 import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { MemberPermissionGroup } from './MemberPermissionGroup';
+import { MemberPermissionGroup } from '../member/entity/member_permission_group.entity';
 import { PermissionGroupPermission } from './PermissionGroupPermission';
 
 @Index('permission_group_name_app_id_key', ['appId', 'name'], { unique: true })
