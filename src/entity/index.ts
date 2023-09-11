@@ -84,7 +84,7 @@ import { MemberDevice } from './MemberDevice';
 import { MemberNote } from './MemberNote';
 import { MemberOauth } from './MemberOauth';
 import { MemberPermissionExtra } from './MemberPermissionExtra';
-import { MemberPermissionGroup } from './MemberPermissionGroup';
+import { MemberPermissionGroup } from '../member/entity/member_permission_group.entity';
 import { MemberShop } from './MemberShop';
 import { MemberSocial } from './MemberSocial';
 import { MemberSpeciality } from './MemberSpeciality';
