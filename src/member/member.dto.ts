@@ -49,6 +49,22 @@ export class MemberGetConditionDTO {
   @IsOptional()
   managerId?: string;
 
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @IsString()
+  @IsOptional()
+  tag?: string;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @IsString()
+  @IsOptional()
+  permissionGroup?: string;
+
   @IsArray()
   @IsOptional()
   properties?: MemberPropertiesCondition[];

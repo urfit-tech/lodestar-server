@@ -52,6 +52,27 @@ export class MemberService {
               },
             }),
             ...(condition.managerId && { managerId: Equal(condition.managerId) }),
+            // one to many relations will handle in infra layer
+            ...(condition.phone && {
+              memberPhones: {
+                phone: condition.phone,
+              },
+            }),
+            ...(condition.tag && {
+              memberTags: {
+                tagName: condition.tag,
+              },
+            }),
+            ...(condition.category && {
+              memberCategories: {
+                category: { name: condition.category },
+              },
+            }),
+            ...(condition.permissionGroup && {
+              memberPermissionGroups: {
+                permissionGroup: { name: condition.permissionGroup },
+              },
+            }),
             ...(condition.properties && {
               memberProperties: condition.properties,
             }),
