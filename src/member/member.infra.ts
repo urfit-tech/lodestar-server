@@ -221,7 +221,7 @@ export class MemberInfrastructure {
     conditions: FindOptionsWhere<Member>,
   ) {
     const memberPermissionGroupsConditions = pick(conditions, ['memberPermissionGroups']).memberPermissionGroups as any;
-    const sqlCondition = `("name" ILIKE '${memberPermissionGroupsConditions.permissionGroup.name}')`;
+    const sqlCondition = `("name" = '${memberPermissionGroupsConditions.permissionGroup.name}')`;
     const queryBuilder = entityManager
       .getRepository(MemberPermissionGroup)
       .createQueryBuilder('memberPermissionGroup')
