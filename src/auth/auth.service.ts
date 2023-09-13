@@ -1,6 +1,6 @@
 import { EntityManager } from 'typeorm';
 import { sign, verify as jwtVerify } from 'jsonwebtoken';
-import { Logger, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
@@ -8,7 +8,7 @@ import { SignupProperty } from '~/entity/SignupProperty';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { MemberRole, PublicMember } from '~/member/member.type';
 import { AppService } from '~/app/app.service';
-import { PermissionService } from '~/permission/permission.service';
+import { PermissionInfrastructure } from '~/permission/permission.infra';
 import { APIException } from '~/api.excetion';
 
 import { CrossServerTokenDTO } from './auth.type';
@@ -21,7 +21,7 @@ export class AuthService {
     private readonly logger: Logger,
     private readonly configService: ConfigService<{ HASURA_JWT_SECRET: string }>,
     private readonly appService: AppService,
-    private readonly permissionService: PermissionService,
+    private readonly permissionInfra: PermissionInfrastructure,
     private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
@@ -81,7 +81,7 @@ export class AuthService {
   ) {
     const settings = await this.appService.getAppSettings(payload.appId, manager);
     const defaultPermissionIds = JSON.parse(settings['feature.membership_default_permission'] || '[]') as Array<string>;
-    const permissions = await this.permissionService.getByIds(defaultPermissionIds, manager);
+    const permissions = await this.permissionInfra.getByIds(defaultPermissionIds, manager);
     const validatePermissions = permissions.map(({ id }) => id);
     const invalidatePermissions = defaultPermissionIds.filter((each) => !validatePermissions.includes(each));
     console.error(`Invalidate Permission: ${invalidatePermissions}`);
