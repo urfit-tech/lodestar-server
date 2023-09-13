@@ -6,11 +6,12 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 
 import { SignupProperty } from '~/entity/SignupProperty';
 import { MemberInfrastructure } from '~/member/member.infra';
-import { MemberRole, PublicMember } from '~/member/member.type';
+import { MemberRole } from '~/member/member.type';
 import { AppService } from '~/app/app.service';
-import { PermissionInfrastructure } from '~/permission/permission.infra';
 import { APIException } from '~/api.excetion';
+import { AppCache } from '~/app/app.type';
 
+import { JwtDTO } from './auth.dto';
 import { CrossServerTokenDTO } from './auth.type';
 
 @Injectable()
@@ -21,14 +22,13 @@ export class AuthService {
     private readonly logger: Logger,
     private readonly configService: ConfigService<{ HASURA_JWT_SECRET: string }>,
     private readonly appService: AppService,
-    private readonly permissionInfra: PermissionInfrastructure,
     private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
 
-  async generateCrossServerToken(dto: CrossServerTokenDTO) {
+  async generateCrossServerToken(appCache: AppCache, dto: CrossServerTokenDTO) {
     return this.entityManager.transaction(async (manager) => {
       const { clientId, key, permissions } = dto;
 
@@ -44,6 +44,7 @@ export class AuthService {
       }
 
       return this.signJWT(
+        appCache,
         {
           sub: clientId,
           appId,
@@ -61,40 +62,22 @@ export class AuthService {
   }
 
   private async signJWT(
-    payload: {
-      sub: string;
-      orgId?: string | null;
-      appId: string;
-      memberId?: string;
-      name?: string;
-      username?: string;
-      email?: string;
-      phoneNumber?: string;
-      role: string;
-      permissions: (string | null)[];
-      isBusiness?: boolean | null;
-      loggedInMembers?: PublicMember[];
-      options?: { [key: string]: any };
-    },
+    appCache: AppCache,
+    payload: JwtDTO,
     expiresIn = '1 day',
     manager: EntityManager,
   ) {
-    const settings = await this.appService.getAppSettings(payload.appId, manager);
-    const defaultPermissionIds = JSON.parse(settings['feature.membership_default_permission'] || '[]') as Array<string>;
-    const permissions = await this.permissionInfra.getByIds(defaultPermissionIds, manager);
-    const validatePermissions = permissions.map(({ id }) => id);
-    const invalidatePermissions = defaultPermissionIds.filter((each) => !validatePermissions.includes(each));
-    console.error(`Invalidate Permission: ${invalidatePermissions}`);
-
+    const { defaultPermissions } = appCache;
     const isFinishedSignUpProperty = payload?.memberId
       ? await this.checkUndoneSignUpProperty(payload.appId, payload.memberId, manager)
       : true;
 
-    validatePermissions.forEach((each) => {
+    defaultPermissions.forEach((each) => {
       if (!payload.permissions.includes(each)) {
         payload.permissions.push(each);
       }
     });
+
     const claim = {
       ...payload,
       isFinishedSignUpProperty,
