@@ -6,6 +6,7 @@ import { App } from '~/entity/App';
 import { Category } from '~/definition/entity/category.entity';
 import { Property } from '~/definition/entity/property.entity';
 import { Tag } from '~/definition/entity/tag.entity';
+import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 
@@ -21,6 +22,10 @@ export const app = new App();
 app.id = 'test';
 app.symbol = 'TST';
 app.appPlan = appPlan;
+
+export const appHost = new AppHost();
+appHost.appId = app.id;
+appHost.host = 'test.something.com';
 
 export const appSetting = new AppSetting();
 appSetting.appId = app.id;

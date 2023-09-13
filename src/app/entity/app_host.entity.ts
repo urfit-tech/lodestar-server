@@ -8,6 +8,9 @@ export class AppHost {
   @PrimaryColumn()
   host: string;
 
+  @Column('text', { name: 'app_id' })
+  appId: string;
+
   @Column('integer', { name: 'priority', default: () => 0 })
   priority: number;
 

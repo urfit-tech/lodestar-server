@@ -1,37 +1,65 @@
-import { INestApplication } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
+import { EntityManager, Repository } from 'typeorm';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getEntityManagerToken } from '@nestjs/typeorm';
 
-import { PostgresModule } from '~/database/postgres.module';
+import { ApplicationModule } from '~/application.module';
+import { App } from '~/entity/App';
+import { AppPlan } from '~/entity/AppPlan';
+import { AppHost } from '~/app/entity/app_host.entity';
 import { ApiExceptionFilter } from '~/api.filter';
-import { AuthModule } from '~/auth/auth.module';
+
+import { app, appHost, appPlan } from '../data';
 
 describe('AuthController (e2e)', () => {
-  let app: INestApplication;
+  let application: INestApplication;
+  let manager: EntityManager;
+  let appPlanRepo: Repository<AppPlan>;
+  let appRepo: Repository<App>;
+  let appHostRepo: Repository<AppHost>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
-        PostgresModule.forRootAsync(),
-        AuthModule,
-      ],
+      imports: [ApplicationModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    application = moduleFixture
+      .createNestApplication()
+      .useGlobalPipes(new ValidationPipe())
+      .useGlobalFilters(new ApiExceptionFilter());
 
-    app.useGlobalFilters(new ApiExceptionFilter());
+    manager = application.get<EntityManager>(getEntityManagerToken());
+    appPlanRepo = manager.getRepository(AppPlan);
+    appRepo = manager.getRepository(App);
+    appHostRepo = manager.getRepository(AppHost);
 
-    await app.init();
+    await appHostRepo.delete({});
+    await appRepo.delete({});
+    await appPlanRepo.delete({});
+    
+    await appPlanRepo.save(appPlan);
+    await appRepo.save(app);
+    await appHostRepo.save(appHost);
+    
+    await application.init();
   });
+
+  afterEach(async () => {
+    await appHostRepo.delete({});
+    await appRepo.delete({});
+    await appPlanRepo.delete({});
+    
+    await application.close()
+  })
 
   describe('/auth/token (POST)', () => {
     const route = '/auth/token';
 
     it('Should return E_NOT_FOUND error', async () => {
-      const { body } = await request(app.getHttpServer())
+      const { body } = await request(application.getHttpServer())
         .post(route)
+        .set('host', appHost.host)
         .send({
           clientId: 'not_exists',
           key: 'not_exists',
