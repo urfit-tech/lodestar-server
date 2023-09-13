@@ -5,9 +5,9 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
 import { AppPlan } from '~/entity/AppPlan';
-import { App } from '~/entity/App';
 import { ApplicationModule } from '~/application.module';
 import { ApiExceptionFilter } from '~/api.filter';
+import { App } from '~/app/entity/app.entity';
 import { AppHost } from '~/app/entity/app_host.entity';
 
 import { app, appHost, appPlan } from '../data';

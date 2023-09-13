@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
 
 @Index('app_language_app_id_language_key', ['appId', 'language'], {
   unique: true,

@@ -1,5 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
+
 import { Module } from './Module';
 
 @Index('app_extended_module_pkey', ['id'], { unique: true })

@@ -1,5 +1,6 @@
 import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { AppEmailTemplate } from './AppEmailTemplate';
+
+import { AppEmailTemplate } from '~/entity/AppEmailTemplate';
 
 @Index('email_template_pkey', ['id'], { unique: true })
 @Entity('email_template', { schema: 'public' })

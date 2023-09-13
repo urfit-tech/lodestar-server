@@ -2,10 +2,10 @@ import { v4 } from 'uuid';
 
 import { Role } from '~/entity/Role';
 import { AppPlan } from '~/entity/AppPlan';
-import { App } from '~/entity/App';
 import { Category } from '~/definition/entity/category.entity';
 import { Property } from '~/definition/entity/property.entity';
 import { Tag } from '~/definition/entity/tag.entity';
+import { App } from '~/app/entity/app.entity';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';

@@ -5,8 +5,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
 import { ApplicationModule } from '~/application.module';
-import { App } from '~/entity/App';
 import { AppPlan } from '~/entity/AppPlan';
+import { App } from '~/app/entity/app.entity';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { ApiExceptionFilter } from '~/api.filter';
 

@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 
 import { Permission } from '~/permission/entity/permission.entity';
 
-import { App } from './App';
+import { App } from '~/app/entity/app.entity';
 
 @Index('app_default_permission_pkey', ['id'], { unique: true })
 @Entity('app_default_permission', { schema: 'public' })

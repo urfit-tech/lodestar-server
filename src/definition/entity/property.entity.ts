@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { App } from '~/entity/App';
+
+import { App } from '~/app/entity/app.entity';
 import { SignupProperty } from '~/entity/SignupProperty';
 
 import { MemberProperty } from '~/member/entity/member_property.entity';

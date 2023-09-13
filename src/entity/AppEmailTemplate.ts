@@ -1,5 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
+
 import { EmailTemplate } from './EmailTemplate';
 
 @Index('app_email_template_app_id_catalog_key', ['appId', 'catalog'], {

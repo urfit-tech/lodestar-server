@@ -5,7 +5,6 @@ import { ActivitySession } from './ActivitySession';
 import { ActivitySessionTicket } from './ActivitySessionTicket';
 import { ActivityTag } from './ActivityTag';
 import { ActivityTicket } from './ActivityTicket';
-import { App } from './App';
 import { AppAdmin } from './AppAdmin';
 import { AppChannel } from './AppChannel';
 import { AppDefaultPermission } from './AppDefaultPermission';
@@ -201,6 +200,7 @@ import { VoucherPlan } from './VoucherPlan';
 import { VoucherPlanProduct } from './VoucherPlanProduct';
 import { WebhookLog } from './WebhookLog';
 
+import { App } from '~/app/entity/app.entity';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { AppModule } from '~/app/entity/app_module.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
