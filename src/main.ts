@@ -12,6 +12,7 @@ import { TaskerType } from './tasker/tasker.type';
 import { ApiExceptionFilter } from './api.filter';
 import { ApplicationModule } from './application.module';
 import { ShutdownService } from './utility/shutdown/shutdown.service';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 dayjs.extend(utc);
 
@@ -48,7 +49,6 @@ async function bootstrap() {
     });
   } else {
     app = await NestFactory.create(ApplicationModule, { bufferLogs: true });
-
     app = app
       .useGlobalPipes(new ValidationPipe())
       .useGlobalFilters(new ApiExceptionFilter())
@@ -58,7 +58,11 @@ async function bootstrap() {
       .enableVersioning({ type: VersioningType.URI })
       .use(json({ limit: '10mb' }))
       .use(urlencoded({ extended: true, limit: '10mb' }));
+    const swaggerConfig = new DocumentBuilder().build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('lodestar/docs', app, document);
   }
+
   app = app.enableShutdownHooks();
   app.useLogger(app.get(Logger));
   app = await app.listen(port || 8081);
