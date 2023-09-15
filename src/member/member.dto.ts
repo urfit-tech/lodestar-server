@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsEmail, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { DeleteResult } from 'typeorm';
 import { Cursor } from 'typeorm-cursor-pagination';
 
 import { MemberRole } from './member.type';
@@ -130,6 +131,11 @@ export class MemberImportResultDTO {
   insertedCount: number;
   failedCount: number;
   failedErrors: any;
+}
+
+export class MemberDeleteResultDTO {
+  code: 'SUCCESS' | 'ERROR';
+  message: DeleteResult;
 }
 
 export class MemberGeneralLoginDTO {

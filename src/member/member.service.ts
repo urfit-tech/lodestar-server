@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { chunk, flatten, isNull } from 'lodash';
-import { EntityManager, Equal, FindOptionsWhere, ILike, In } from 'typeorm';
+import { EntityManager, Equal, FindOptionsWhere, ILike, In, DeleteResult } from 'typeorm';
 import { ValidationError, isDateString, isEmpty } from 'class-validator';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -15,6 +15,7 @@ import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 import { CsvRawMember } from './class/csvRawMember';
 import { MemberInfrastructure } from './member.infra';
 import {
+  MemberDeleteResultDTO,
   MemberGetConditionDTO,
   MemberGetQueryOptionsDTO,
   MemberGetResultDTO,
@@ -25,6 +26,7 @@ import { MemberCategory } from './entity/member_category.entity';
 import { MemberProperty } from './entity/member_property.entity';
 import { MemberPhone } from './entity/member_phone.entity';
 import { MemberTag } from './entity/member_tag.entity';
+import { APIException } from '~/api.excetion';
 
 @Injectable()
 export class MemberService {
@@ -334,5 +336,9 @@ export class MemberService {
         return csvRawMember;
       })
       .map((each) => each.serializeToCsvRawRow(headerInfos));
+  }
+
+  async deleteMemberByEmail(appId: string, email: string): Promise<DeleteResult> {
+    return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager);
   }
 }

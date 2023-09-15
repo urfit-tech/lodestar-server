@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Param, Post, Put, UseGuards, Request } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
-import { Request as ExRequest } from 'express';
 import { AuthGuard } from '~/auth/auth.guard';
 import { AuthService } from '~/auth/auth.service';
 import { APIException } from '~/api.excetion';
