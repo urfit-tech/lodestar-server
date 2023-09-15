@@ -8,6 +8,8 @@ import {
   UnauthorizedException,
   BadRequestException,
   UseGuards,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
@@ -18,8 +20,15 @@ import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
 import { Local } from '~/decorator';
 
-import { MemberExportDTO, MemberGetDTO, MemberGetResultDTO, MemberImportDTO } from './member.dto';
+import {
+  MemberDeleteResultDTO,
+  MemberExportDTO,
+  MemberGetDTO,
+  MemberGetResultDTO,
+  MemberImportDTO,
+} from './member.dto';
 import { MemberService } from './member.service';
+import { APIException } from '~/api.excetion';
 
 @UseGuards(AuthGuard)
 @Controller({
@@ -164,5 +173,25 @@ export class MemberController {
       exportMime,
     };
     await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
+  }
+
+  @Delete('email/:email')
+  public async deleteMember(
+    @Local('member') member: JwtMember,
+    @Param('email') email: string,
+  ): Promise<MemberDeleteResultDTO> {
+    const { appId, role } = member;
+    if (role !== 'app-owner') {
+      throw new UnauthorizedException(
+        { message: 'no permission to delete member' },
+        'User permission is not met required permissions.',
+      );
+    }
+    try {
+      const deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
+      return { code: 'SUCCESS', message: deleteResult };
+    } catch (error) {
+      throw new APIException({ code: 'ERROR', message: error.message });
+    }
   }
 }
