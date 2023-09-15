@@ -1,4 +1,4 @@
-import { EntityManager, FindOptionsWhere, OrderByCondition, In, Equal } from 'typeorm';
+import { EntityManager, FindOptionsWhere, OrderByCondition, In, DeleteResult, Equal } from 'typeorm';
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 import { first, keys, omit, pick, values } from 'lodash';
@@ -15,6 +15,14 @@ import { MemberProperty } from './entity/member_property.entity';
 import { MemberTag } from './entity/member_tag.entity';
 import { MemberPropertiesCondition } from './member.dto';
 import { LoginMemberMetadata } from './member.type';
+import { OrderProduct } from '~/order/entity/order_product.entity';
+import { OrderDiscount } from '~/order/entity/order_discount.entity';
+import { OrderLog } from '~/order/entity/order_log.entity';
+import { Notification } from '~/entity/Notification';
+import { PaymentLog } from '~/payment/payment_log.entity';
+import { MemberTrackingLog } from '~/entity/MemberTrackingLog';
+import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
+import { Invoice } from '~/invoice/invoice.entity';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -329,5 +337,89 @@ export class MemberInfrastructure {
       .where(`(${sqlCondition})`);
 
     return queryBuilder;
+  }
+
+  public async deleteMemberByEmail(appId: string, email: string, entityManager: EntityManager): Promise<DeleteResult> {
+    return entityManager.transaction(async (manager) => {
+      const memberRepo = manager.getRepository(Member);
+      const memberCategoryRepo = manager.getRepository(MemberCategory);
+      const memberTagRepo = manager.getRepository(MemberTag);
+      const memberDeviceRepo = manager.getRepository(MemberDevice);
+      const memberPhoneRepo = manager.getRepository(MemberPhone);
+      const memberPropertyRepo = manager.getRepository(MemberProperty);
+      const memberPermissionExtraRepo = manager.getRepository(MemberPermissionExtra);
+      const memberTrackingLogRepo = manager.getRepository(MemberTrackingLog);
+      const notificationRepo = manager.getRepository(Notification);
+      const paymentLogRepo = manager.getRepository(PaymentLog);
+      const invoiceRepo = manager.getRepository(Invoice);
+      const orderProductRepo = manager.getRepository(OrderProduct);
+      const orderDiscountRepo = manager.getRepository(OrderDiscount);
+      const orderLogRepo = manager.getRepository(OrderLog);
+
+      const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
+
+      const notifications = await notificationRepo.findBy([
+        { sourceMember: { id: member.id } },
+        { targetMember: { id: member.id } },
+      ]);
+      await notificationRepo.remove(notifications);
+
+      const orderProducts = await orderProductRepo.find({
+        where: { order: { memberId: member.id } },
+      });
+      await orderProductRepo.remove(orderProducts);
+
+      const orderDiscounts = await orderDiscountRepo.find({
+        where: { order: { memberId: member.id } },
+      });
+      await orderDiscountRepo.remove(orderDiscounts);
+
+      const paymentLogs = await paymentLogRepo.find({
+        where: { order: { memberId: member.id } },
+      });
+      await paymentLogRepo.remove(paymentLogs);
+
+      const invoice = await invoiceRepo.find({
+        where: { order: { memberId: member.id } },
+      });
+      await invoiceRepo.remove(invoice);
+
+      const orderLogs = await orderLogRepo.findBy({ memberId: member.id });
+      const orderIds = orderLogs.map(({ id }) => id);
+      const orderChildLogs = await orderLogRepo.find({
+        where: {
+          parentOrder: {
+            id: In(orderIds),
+          },
+        },
+      });
+      await orderLogRepo.update(
+        {
+          id: In(orderChildLogs.map(({ id }) => id)),
+        },
+        { parentOrder: null },
+      );
+      await orderLogRepo.remove(orderLogs);
+
+      await memberTagRepo.delete({ memberId: member.id });
+      await memberCategoryRepo.delete({ memberId: member.id });
+      await memberDeviceRepo.delete({ memberId: member.id });
+      await memberTrackingLogRepo.delete({ memberId: member.id });
+      await memberPhoneRepo.delete({ memberId: member.id });
+      await memberPropertyRepo.delete({ memberId: member.id });
+      await memberPermissionExtraRepo.delete({ memberId: member.id });
+
+      const deleteResult = await memberRepo.delete({ id: member.id });
+      deleteResult.raw.push({ member });
+      deleteResult.raw.push({ notifications });
+      deleteResult.raw.push({ orderDiscounts });
+      deleteResult.raw.push({ orderProducts });
+      deleteResult.raw.push({ paymentLogs });
+      deleteResult.raw.push({ orderLogs });
+      deleteResult.raw.push({ orderChildLogs });
+      deleteResult.raw.push({ invoice });
+
+      return deleteResult;
+    });
   }
 }
