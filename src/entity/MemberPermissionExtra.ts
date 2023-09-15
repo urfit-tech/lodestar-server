@@ -9,6 +9,9 @@ export class MemberPermissionExtra {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('text', { name: 'member_id', unique: true })
+  memberId: string;
+
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',

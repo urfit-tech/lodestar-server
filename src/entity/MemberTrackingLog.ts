@@ -7,6 +7,9 @@ export class MemberTrackingLog {
   @PrimaryGeneratedColumn()
   id: string;
 
+  @Column('text', { name: 'member_id', unique: true })
+  memberId: string;
+
   @Column('text', { name: 'source', nullable: true })
   source: string | null;
 
