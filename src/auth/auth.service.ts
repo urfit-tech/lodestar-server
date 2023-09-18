@@ -148,7 +148,6 @@ export class AuthService {
     const key = `tmpPass:${appId}:${email}`;
     const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
     const expiredAt = dayjs().add(THREE_DAYS, 'millisecond').toDate();
-    console.log(key, password);
 
     await redisCli.set(key, password, 'PX', THREE_DAYS);
     return { password, expiredAt };
