@@ -8,6 +8,7 @@ import { Property } from '~/definition/entity/property.entity';
 import { Tag } from '~/definition/entity/tag.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
+import { Member } from '~/member/entity/member.entity';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -56,3 +57,11 @@ memberTag.name = 'test-member-tag';
 export const anotherMemberTag = new Tag();
 anotherMemberTag.type = 'member';
 anotherCategory.name = 'test-another-member-tag';
+
+export const member = new Member();
+member.id = v4();
+member.appId = app.id;
+member.email = 'test@example.com';
+member.username = 'test';
+member.role = role.name;
+member.name = 'testMember';

@@ -1,6 +1,6 @@
 import { EntityManager } from 'typeorm';
 import { sign, verify as jwtVerify } from 'jsonwebtoken';
-import { Logger, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
@@ -12,6 +12,12 @@ import { PermissionService } from '~/permission/permission.service';
 import { APIException } from '~/api.excetion';
 
 import { CrossServerTokenDTO } from './auth.type';
+import { CacheService } from '~/utility/cache/cache.service';
+import { randomBytes } from 'crypto';
+import dayjs from 'dayjs';
+import { AuthAuditLog } from './entity/auth_audit_log.entity';
+import { AuthInfrastructure } from './auth.infra';
+import { MemberService } from '~/member/member.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +30,9 @@ export class AuthService {
     private readonly permissionService: PermissionService,
     private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
+    private readonly cacheService: CacheService,
+    private readonly authInfra: AuthInfrastructure,
+    private readonly memberService: MemberService,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
@@ -133,5 +142,47 @@ export class AuthService {
       return false;
     }
     return true;
+  }
+
+  async generateTmpPassword(appId: string, email: string, applicant: string, purpose: string) {
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { email });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
+    const redisCli = this.cacheService.getClient();
+    const password = this.generateRandomHash();
+    const key = `tmpPass:${appId}:${email}`;
+    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+    const expiredAt = dayjs().add(THREE_DAYS, 'millisecond').toDate();
+    await redisCli.set(key, password, 'PX', THREE_DAYS);
+
+    await this.insertAuthAuditLog(applicant, memberData[0].id, purpose);
+    return { password, expiredAt };
+  }
+
+  private generateRandomHash() {
+    const length = 16;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
+    let password = '';
+    const byteLength = Math.ceil((length * 256) / charset.length);
+    const randomArray = randomBytes(byteLength);
+    for (let i = 0; i < length; i++) {
+      password += charset[randomArray[i] % charset.length];
+    }
+    return password;
+  }
+
+  private async insertAuthAuditLog(applicant: string, userMemberId: string, purpose: string): Promise<void> {
+    const authAuditLog = new AuthAuditLog();
+    authAuditLog.action = 'apply_temporary_password';
+    authAuditLog.memberId = applicant;
+    authAuditLog.target = userMemberId;
+    authAuditLog.metadata = { reason: purpose };
+    await this.authInfra.insertAuthAuditLog(authAuditLog, this.entityManager);
   }
 }
