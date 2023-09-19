@@ -1880,6 +1880,7 @@ CREATE TABLE public.coupon_code (
     remaining integer NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone,
     CONSTRAINT remaining CHECK ((remaining >= 0))
 );
 CREATE TABLE public.coupon_plan (
@@ -1903,7 +1904,7 @@ CREATE TABLE public.member_oauth (
     provider text NOT NULL,
     provider_user_id text NOT NULL,
     options jsonb,
-    CONSTRAINT provider_constraint CHECK ((provider = ANY (ARRAY['facebook'::text, 'google'::text, 'line'::text, 'line-notify'::text, 'parenting'::text, 'commonhealth'::text, 'cw'::text])))
+    CONSTRAINT provider_constraint CHECK ((provider = ANY (ARRAY['facebook'::text, 'google'::text, 'line'::text, 'line-notify'::text, 'parenting'::text, 'commonhealth'::text, 'cw'::text, 'nschool'::text])))
 );
 COMMENT ON TABLE public.member_oauth IS 'relationship between member and oauth user';
 CREATE TABLE public.order_discount (
@@ -2081,6 +2082,7 @@ CREATE TABLE public.voucher_code (
     code text NOT NULL,
     count integer NOT NULL,
     remaining integer NOT NULL,
+    deleted_at timestamp with time zone,
     CONSTRAINT remaining CHECK ((remaining >= 0))
 );
 CREATE TABLE public.voucher_plan (
@@ -2240,8 +2242,10 @@ CREATE TABLE public.app_admin (
 CREATE TABLE public.app_channel (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     app_id text NOT NULL,
-    name text NOT NULL
+    name text NOT NULL,
+    code text
 );
+COMMENT ON COLUMN public.app_channel.code IS '通路代號';
 CREATE TABLE public.app_default_permission (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     app_id text NOT NULL,
@@ -2361,7 +2365,8 @@ CREATE TABLE public.app_plan (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     video_duration numeric DEFAULT '-1'::numeric NOT NULL,
-    watched_seconds numeric DEFAULT '-1'::numeric NOT NULL
+    watched_seconds numeric DEFAULT '-1'::numeric NOT NULL,
+    options jsonb
 );
 COMMENT ON TABLE public.app_plan IS 'application plan';
 CREATE MATERIALIZED VIEW public.app_program_content_usage AS
@@ -2554,10 +2559,17 @@ CREATE TABLE public.appointment_plan (
     reservation_amount numeric DEFAULT 0 NOT NULL,
     reservation_type text,
     capacity integer DEFAULT 1 NOT NULL,
-    meet_generation_method text DEFAULT 'auto'::text NOT NULL
+    meet_generation_method text DEFAULT 'auto'::text NOT NULL,
+    default_meet_system text DEFAULT 'jitsi'::text NOT NULL,
+    reschedule_amount integer DEFAULT '-1'::integer NOT NULL,
+    reschedule_type text
 );
 COMMENT ON COLUMN public.appointment_plan.duration IS 'minutes';
 COMMENT ON COLUMN public.appointment_plan.reservation_type IS 'hour / day';
+COMMENT ON COLUMN public.appointment_plan.capacity IS '-1 represents no limit';
+COMMENT ON COLUMN public.appointment_plan.default_meet_system IS 'jitsi, zoom';
+COMMENT ON COLUMN public.appointment_plan.reschedule_amount IS '-1 represents no limit';
+COMMENT ON COLUMN public.appointment_plan.reschedule_type IS 'hour / day';
 CREATE VIEW public.appointment_enrollment AS
  SELECT (split_part(order_product.product_id, '_'::text, 2))::uuid AS appointment_plan_id,
     order_log.member_id,
@@ -2653,6 +2665,14 @@ CREATE TABLE public.audit_log (
     options jsonb
 );
 COMMENT ON COLUMN public.audit_log.type IS 'MemberManager';
+CREATE TABLE public.auth_audit_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    action text NOT NULL,
+    target text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    metadata jsonb DEFAULT jsonb_build_object() NOT NULL
+);
 CREATE TABLE public.bundle (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     title text NOT NULL,
@@ -3530,7 +3550,6 @@ CREATE TABLE public.media (
 );
 CREATE TABLE public.meet (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
-    name text NOT NULL,
     started_at timestamp with time zone NOT NULL,
     ended_at timestamp with time zone NOT NULL,
     nbf_at timestamp with time zone,
@@ -3539,8 +3558,23 @@ CREATE TABLE public.meet (
     options jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    target uuid NOT NULL,
+    type text NOT NULL,
+    app_id text NOT NULL,
+    host_member_id text NOT NULL,
+    deleted_at timestamp with time zone,
     CONSTRAINT started_at_ended_at_constraint CHECK ((ended_at > started_at))
 );
+COMMENT ON COLUMN public.meet.target IS 'appointment_plan_id, member_task_id';
+CREATE TABLE public.meet_member (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    meet_id uuid NOT NULL,
+    member_id text NOT NULL,
+    canceled_at time with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+COMMENT ON TABLE public.meet_member IS 'meet participants';
 CREATE TABLE public.member_achievement (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -3922,7 +3956,7 @@ CREATE TABLE public.merchandise_spec_file (
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 CREATE VIEW public.merchandise_spec_inventory_status AS
- SELECT (t.target)::uuid AS merchandise_spec_id,
+ SELECT t.merchandise_spec_id,
     t.total_quantity,
         CASE
             WHEN ((t.is_physical IS FALSE) AND (t.is_customized IS FALSE)) THEN (0)::bigint
@@ -3932,52 +3966,48 @@ CREATE VIEW public.merchandise_spec_inventory_status AS
             WHEN ((t.is_physical IS FALSE) AND (t.is_customized IS FALSE)) THEN (t.undelivered_quantity + t.delivered_quantity)
             ELSE t.delivered_quantity
         END AS delivered_quantity,
-    (((t.total_quantity - t.undelivered_quantity) - t.delivered_quantity) - t.unpaid_quantity) AS buyable_quantity,
+    t.buyable_quantity,
     t.unpaid_quantity
    FROM ( SELECT sum_inventory.product_id,
-            sum_inventory.target,
+            sum_inventory.target AS merchandise_spec_id,
             sum_inventory.total_quantity,
             sum_inventory.is_physical,
             sum_inventory.is_customized,
             COALESCE(unpaid_inventory.unpaid_quantity, (0)::bigint) AS unpaid_quantity,
             COALESCE(undelivered_inventory.undelivered_quantity, (0)::bigint) AS undelivered_quantity,
-            COALESCE(delivered_inventory.delivered_quantity, (0)::bigint) AS delivered_quantity
-           FROM (((( SELECT product_inventory.product_id,
-                    product.target,
-                    merchandise.is_physical,
-                    merchandise.is_customized,
-                    sum(product_inventory.quantity) AS total_quantity
-                   FROM (((public.product_inventory
-                     JOIN public.product ON (((product.id = product_inventory.product_id) AND (product.type ~~ 'MerchandiseSpec%'::text))))
-                     JOIN public.merchandise_spec ON ((merchandise_spec.id = (product.target)::uuid)))
-                     JOIN public.merchandise ON ((merchandise.id = merchandise_spec.merchandise_id)))
-                  GROUP BY product_inventory.product_id, product.target, merchandise.is_physical, merchandise.is_customized) sum_inventory
-             LEFT JOIN ( SELECT unpaid_inventory_1.product_id,
-                    sum((unpaid_inventory_1.product_quantity)::integer) AS unpaid_quantity
-                   FROM ( SELECT product.id AS product_id,
-                            (order_product.options -> 'quantity'::text) AS product_quantity
-                           FROM ((public.order_log
-                             JOIN public.order_product ON ((((order_log.status = 'UNPAID'::text) OR (order_log.status = 'PAYING'::text)) AND (order_product.order_id = order_log.id))))
-                             JOIN public.product ON ((product.id = order_product.product_id)))) unpaid_inventory_1
-                  GROUP BY unpaid_inventory_1.product_id) unpaid_inventory ON ((unpaid_inventory.product_id = sum_inventory.product_id)))
-             LEFT JOIN ( SELECT undelivered_inventory_1.product_id,
-                    sum((undelivered_inventory_1.product_quantity)::integer) AS undelivered_quantity
-                   FROM ( SELECT product.id AS product_id,
-                            (order_product.options -> 'quantity'::text) AS product_quantity
-                           FROM ((public.order_product
-                             JOIN public.product ON (((product.id = order_product.product_id) AND ((order_product.delivered_at IS NULL) OR (order_product.delivered_at > now())))))
-                             JOIN public.order_log ON ((order_log.id = order_product.order_id)))
-                          WHERE (order_log.status = 'SUCCESS'::text)) undelivered_inventory_1
-                  GROUP BY undelivered_inventory_1.product_id) undelivered_inventory ON ((undelivered_inventory.product_id = sum_inventory.product_id)))
-             LEFT JOIN ( SELECT delivered_inventory_1.product_id,
-                    sum((delivered_inventory_1.product_quantity)::integer) AS delivered_quantity
-                   FROM ( SELECT product.id AS product_id,
-                            (order_product.options -> 'quantity'::text) AS product_quantity
-                           FROM ((public.order_product
-                             JOIN public.product ON (((product.id = order_product.product_id) AND (order_product.delivered_at < now()))))
-                             JOIN public.order_log ON ((order_log.id = order_product.order_id)))
-                          WHERE (order_log.status = 'SUCCESS'::text)) delivered_inventory_1
-                  GROUP BY delivered_inventory_1.product_id) delivered_inventory ON ((delivered_inventory.product_id = sum_inventory.product_id)))) t;
+            COALESCE(delivered_inventory.delivered_quantity, (0)::bigint) AS delivered_quantity,
+            (((sum_inventory.total_quantity - COALESCE(undelivered_inventory.undelivered_quantity, (0)::bigint)) - COALESCE(delivered_inventory.delivered_quantity, (0)::bigint)) - COALESCE(unpaid_inventory.unpaid_quantity, (0)::bigint)) AS buyable_quantity
+           FROM (((( SELECT pi.product_id,
+                    ms.id AS target,
+                    m.is_physical,
+                    m.is_customized,
+                    sum(pi.quantity) AS total_quantity
+                   FROM (((public.product_inventory pi
+                     JOIN public.product p ON (((p.id = pi.product_id) AND (p.type ~~ 'MerchandiseSpec%'::text))))
+                     JOIN public.merchandise_spec ms ON ((ms.id = (p.target)::uuid)))
+                     JOIN public.merchandise m ON ((m.id = ms.merchandise_id)))
+                  GROUP BY pi.product_id, ms.id, m.is_physical, m.is_customized) sum_inventory
+             LEFT JOIN ( SELECT op.product_id,
+                    sum(((op.options ->> 'quantity'::text))::integer) AS unpaid_quantity
+                   FROM ((public.order_log ol
+                     JOIN public.order_product op ON ((ol.id = op.order_id)))
+                     JOIN public.product p ON ((p.id = op.product_id)))
+                  WHERE (ol.status = ANY (ARRAY['UNPAID'::text, 'PAYING'::text]))
+                  GROUP BY op.product_id) unpaid_inventory ON ((unpaid_inventory.product_id = sum_inventory.product_id)))
+             LEFT JOIN ( SELECT op.product_id,
+                    sum(((op.options ->> 'quantity'::text))::integer) AS undelivered_quantity
+                   FROM ((public.order_log ol
+                     JOIN public.order_product op ON ((ol.id = op.order_id)))
+                     JOIN public.product p ON ((p.id = op.product_id)))
+                  WHERE ((ol.status = 'SUCCESS'::text) AND ((op.delivered_at IS NULL) OR (op.delivered_at > now())))
+                  GROUP BY op.product_id) undelivered_inventory ON ((undelivered_inventory.product_id = sum_inventory.product_id)))
+             LEFT JOIN ( SELECT op.product_id,
+                    sum(((op.options ->> 'quantity'::text))::integer) AS delivered_quantity
+                   FROM ((public.order_log ol
+                     JOIN public.order_product op ON ((ol.id = op.order_id)))
+                     JOIN public.product p ON ((p.id = op.product_id)))
+                  WHERE ((ol.status = 'SUCCESS'::text) AND (op.delivered_at < now()))
+                  GROUP BY op.product_id) delivered_inventory ON ((delivered_inventory.product_id = sum_inventory.product_id)))) t;
 CREATE TABLE public.migrations (
     id integer NOT NULL,
     "timestamp" bigint NOT NULL,
@@ -4703,7 +4733,7 @@ UNION
      JOIN public.program_plan ON ((program_plan.id = program_plan_enrollment.program_plan_id)))
      JOIN public.program_content_plan ON ((program_plan_enrollment.program_plan_id = program_content_plan.program_plan_id)))
      JOIN public.program_content ON ((program_content.id = program_content_plan.program_content_id)))
-  WHERE (((program_plan_enrollment.ended_at IS NULL) OR (program_plan_enrollment.ended_at > program_content.published_at)) AND ((program_plan_enrollment.started_at IS NULL) OR (program_plan_enrollment.started_at <= program_content.published_at)))
+  WHERE (((program_plan.type = 1) AND ((program_plan_enrollment.ended_at IS NULL) OR (program_plan_enrollment.ended_at > now())) AND ((program_plan_enrollment.started_at IS NULL) OR (program_plan_enrollment.started_at <= now()))) OR ((program_plan.type = 2) AND (program_content.published_at > program_plan_enrollment.product_delivered_at) AND (((program_plan_enrollment.ended_at IS NULL) OR (program_plan_enrollment.ended_at > now())) AND ((program_plan_enrollment.started_at IS NULL) OR (program_plan_enrollment.started_at <= now())))))
 UNION
  SELECT program_plan.program_id,
     program_content.id AS program_content_id,
@@ -4859,7 +4889,7 @@ UNION
      JOIN public.program_plan ON ((program_plan.id = program_plan_enrollment.program_plan_id)))
      JOIN public.program_content_plan ON ((program_plan_enrollment.program_plan_id = program_content_plan.program_plan_id)))
      JOIN public.program_content ON ((program_content.id = program_content_plan.program_content_id)))
-  WHERE (((program_plan_enrollment.ended_at IS NULL) OR (program_plan_enrollment.ended_at > program_content.published_at)) AND ((program_plan_enrollment.started_at IS NULL) OR (program_plan_enrollment.started_at <= program_content.published_at)))
+  WHERE (((program_plan.type = 1) AND (program_content.published_at > program_plan_enrollment.product_delivered_at) AND (((program_plan_enrollment.ended_at IS NULL) OR (program_plan_enrollment.ended_at > now())) AND ((program_plan_enrollment.started_at IS NULL) OR (program_plan_enrollment.started_at <= now())))) OR ((program_plan.type = 2) AND ((program_plan_enrollment.ended_at IS NULL) OR (program_plan_enrollment.ended_at > program_content.published_at)) AND ((program_plan_enrollment.started_at IS NULL) OR (program_plan_enrollment.started_at <= program_content.published_at))))
 UNION
  SELECT program_plan.program_id,
     program_content.id AS program_content_id,
@@ -6554,6 +6584,8 @@ ALTER TABLE ONLY public.attend
     ADD CONSTRAINT attend_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.audit_log
     ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.auth_audit_log
+    ADD CONSTRAINT auth_audit_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.bundle_item
     ADD CONSTRAINT bundle_item_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.bundle
@@ -6678,6 +6710,10 @@ ALTER TABLE ONLY public.material_audit_log
     ADD CONSTRAINT material_audit_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.media
     ADD CONSTRAINT media_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.meet_member
+    ADD CONSTRAINT meet_member_meet_id_member_id_key UNIQUE (meet_id, member_id);
+ALTER TABLE ONLY public.meet_member
+    ADD CONSTRAINT meet_member_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.meet
     ADD CONSTRAINT meet_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.member_achievement
@@ -6869,11 +6905,9 @@ ALTER TABLE ONLY public.practice
 ALTER TABLE ONLY public.practice_reaction
     ADD CONSTRAINT practice_reaction_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.product_channel
-    ADD CONSTRAINT product_channel_app_id_channel_sku_key UNIQUE (app_id, channel_sku);
-ALTER TABLE ONLY public.product_channel
     ADD CONSTRAINT product_channel_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.product_channel
-    ADD CONSTRAINT product_channel_product_id_channel_id_key UNIQUE (product_id, channel_id);
+    ADD CONSTRAINT product_channel_product_id_channel_id_channel_sku_app_id_key UNIQUE (product_id, channel_id, channel_sku, app_id);
 ALTER TABLE ONLY public.product_gift_plan
     ADD CONSTRAINT product_gift_plan_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.product
@@ -7061,14 +7095,18 @@ CREATE INDEX member_note_rejected_at ON public.member_note USING btree (rejected
 CREATE INDEX member_note_status ON public.member_note USING btree (status);
 CREATE INDEX member_note_type ON public.member_note USING btree (type);
 CREATE INDEX member_note_type_outbound ON public.member_note USING btree (type) WHERE (type = 'outbound'::text);
+CREATE INDEX member_property_property_id_value_key ON public.member_property USING btree (property_id, value);
 CREATE INDEX notification_updated_at_desc ON public.notification USING btree (updated_at DESC);
 CREATE INDEX notification_updated_at_desc_nulls_first_index ON public.notification USING btree (updated_at DESC);
+CREATE INDEX order_discount_order_id_key ON public.order_discount USING btree (order_id);
+CREATE INDEX order_executor_order_id_key ON public.order_executor USING btree (order_id);
 CREATE INDEX order_log_member_id ON public.order_log USING btree (member_id);
 CREATE INDEX order_log_started_at_desc ON public.order_log USING btree (created_at DESC);
 CREATE INDEX order_log_status ON public.order_log USING btree (status);
 CREATE INDEX order_product_ended_at_desc ON public.order_product USING btree (ended_at DESC);
 CREATE INDEX order_product_order_id ON public.order_product USING btree (order_id);
 CREATE INDEX order_product_started_at_desc_nulls_first_index ON public.order_product USING btree (started_at DESC);
+CREATE INDEX payment_log_order_id_key ON public.payment_log USING btree (order_id);
 CREATE INDEX post_id_category_id_key ON public.post_category USING btree (post_id, category_id);
 CREATE INDEX post_id_member_id_key ON public.post_role USING btree (post_id, member_id);
 CREATE INDEX product_type ON public.product USING btree (type);
@@ -7443,6 +7481,8 @@ CREATE TRIGGER set_public_gift_plan_updated_at BEFORE UPDATE ON public.gift_plan
 COMMENT ON TRIGGER set_public_gift_plan_updated_at ON public.gift_plan IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_invoice_updated_at BEFORE UPDATE ON public.invoice FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_invoice_updated_at ON public.invoice IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_meet_member_updated_at BEFORE UPDATE ON public.meet_member FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_meet_member_updated_at ON public.meet_member IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_meet_updated_at BEFORE UPDATE ON public.meet FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_meet_updated_at ON public.meet IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_member_achievement_updated_at BEFORE UPDATE ON public.member_achievement FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();

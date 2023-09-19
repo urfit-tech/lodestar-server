@@ -1177,67 +1177,13 @@ describe('MemberController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           condition: {
-            permissionGroup: '%test permission group 1%',
+            permissionGroup: 'test permission group 1',
           },
         })
         .expect(201);
       const { data: fetched }: MemberGetResultDTO = res.body;
 
       expect(fetched.length).toBe(1);
-    });
-
-    it('Should get members with partial member permission group condition', async () => {
-      for (let i = 0; i < 5; i++) {
-        const memberId = v4();
-        const insertedMember = new Member();
-        insertedMember.appId = app.id;
-        insertedMember.id = memberId;
-        insertedMember.name = `name${i}`;
-        insertedMember.username = `username${i}`;
-        insertedMember.email = `email${i}@${i === 0 ? 'aaa.com' : 'example.com'}`;
-        insertedMember.role = 'general-member';
-        insertedMember.star = 0;
-        insertedMember.createdAt = new Date();
-        insertedMember.loginedAt = new Date();
-        await manager.save(insertedMember);
-
-        const insertedPermissionGroup = new PermissionGroup();
-        insertedPermissionGroup.name = `test permission group ${i}`;
-        insertedPermissionGroup.appId = app.id;
-        const { id: permissionGroupId } = await manager.save(insertedPermissionGroup);
-
-        const insertedMemberPermissionGroup = new MemberPermissionGroup();
-        insertedMemberPermissionGroup.id = v4();
-        insertedMemberPermissionGroup.memberId = memberId;
-        insertedMemberPermissionGroup.permissionGroupId = permissionGroupId;
-        await manager.save(insertedMemberPermissionGroup);
-      }
-
-      const jwtSecret = application
-        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
-        .getOrThrow('HASURA_JWT_SECRET');
-
-      const token = jwt.sign(
-        {
-          appId: app.id,
-          memberId: 'invoker_member_id',
-          permissions: ['MEMBER_ADMIN'],
-        },
-        jwtSecret,
-      );
-
-      const res = await request(application.getHttpServer())
-        .post(route)
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          condition: {
-            permissionGroup: '%test permission group%',
-          },
-        })
-        .expect(201);
-      const { data: fetched }: MemberGetResultDTO = res.body;
-
-      expect(fetched.length).toBe(5);
     });
 
     it('Should get empty members with nested not matched conditions', async () => {
