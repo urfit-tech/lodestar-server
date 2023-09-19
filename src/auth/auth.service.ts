@@ -17,6 +17,7 @@ import { randomBytes } from 'crypto';
 import dayjs from 'dayjs';
 import { AuthAuditLog } from './entity/auth_audit_log.entity';
 import { AuthInfrastructure } from './auth.infra';
+import { MemberService } from '~/member/member.service';
 
 @Injectable()
 export class AuthService {
@@ -31,6 +32,7 @@ export class AuthService {
     @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly cacheService: CacheService,
     private readonly authInfra: AuthInfrastructure,
+    private readonly memberService: MemberService,
   ) {
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
@@ -142,14 +144,24 @@ export class AuthService {
     return true;
   }
 
-  async generateTmpPassword(appId: string, email: string) {
+  async generateTmpPassword(appId: string, email: string, applicant: string, purpose: string) {
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { email });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
     const redisCli = this.cacheService.getClient();
     const password = this.generateRandomHash();
     const key = `tmpPass:${appId}:${email}`;
     const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
     const expiredAt = dayjs().add(THREE_DAYS, 'millisecond').toDate();
-
     await redisCli.set(key, password, 'PX', THREE_DAYS);
+
+    await this.insertAuthAuditLog(applicant, memberData[0].id, purpose);
     return { password, expiredAt };
   }
 
@@ -165,7 +177,7 @@ export class AuthService {
     return password;
   }
 
-  async insertAuthAuditLog(applicant: string, userMemberId: string, purpose: string): Promise<void> {
+  private async insertAuthAuditLog(applicant: string, userMemberId: string, purpose: string): Promise<void> {
     const authAuditLog = new AuthAuditLog();
     authAuditLog.action = 'apply_temporary_password';
     authAuditLog.memberId = applicant;
