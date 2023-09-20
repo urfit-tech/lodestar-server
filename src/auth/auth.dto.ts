@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEmail, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { IsUndefinable } from '~/decorator';
@@ -45,8 +45,9 @@ export class JwtDTO {
   @IsOptional()
   isBusiness?: boolean | null;
 
-  @ValidateNested()
-  @Type(() => Array<PublicMember>)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PublicMember)
   @IsUndefinable()
   loggedInMembers?: Array<PublicMember>;
 

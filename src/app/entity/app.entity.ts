@@ -4,7 +4,6 @@ import { Activity } from '~/entity/Activity';
 import { AppAdmin } from '~/entity/AppAdmin';
 import { AppChannel } from '~/entity/AppChannel';
 import { AppDefaultPermission } from '~/entity/AppDefaultPermission';
-import { AppEmailTemplate } from '~/entity/AppEmailTemplate';
 import { AppExtendedModule } from '~/entity/AppExtendedModule';
 import { AppLanguage } from '~/entity/AppLanguage';
 import { AppNav } from '~/entity/AppNav';
@@ -29,6 +28,7 @@ import { Member } from '~/member/entity/member.entity';
 import { Property } from '~/definition/entity/property.entity';
 import { Report } from '~/report/entity/report.entity';
 
+import { AppEmailTemplate } from './app_email_template.entity';
 import { AppHost } from './app_host.entity';
 import { AppSecret } from './app_secret.entity';
 import { AppSetting } from './app_setting.entity';

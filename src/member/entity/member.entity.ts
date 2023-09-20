@@ -26,7 +26,6 @@ import { MemberCard } from '~/entity/MemberCard';
 import { MemberContract } from '~/entity/MemberContract';
 import { MemberDevice } from '~/entity/MemberDevice';
 import { MemberNote } from '~/entity/MemberNote';
-import { MemberOauth } from '~/entity/MemberOauth';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
 import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
@@ -62,6 +61,7 @@ import { ReviewReaction } from '~/entity/ReviewReaction';
 import { Voucher } from '~/entity/Voucher';
 
 import { MemberCategory } from './member_category.entity';
+import { MemberOauth } from './member_oauth.entity';
 import { MemberPhone } from './member_phone.entity';
 import { MemberTag } from './member_tag.entity';
 

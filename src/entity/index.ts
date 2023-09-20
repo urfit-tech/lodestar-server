@@ -8,7 +8,6 @@ import { ActivityTicket } from './ActivityTicket';
 import { AppAdmin } from './AppAdmin';
 import { AppChannel } from './AppChannel';
 import { AppDefaultPermission } from './AppDefaultPermission';
-import { AppEmailTemplate } from './AppEmailTemplate';
 import { AppExtendedModule } from './AppExtendedModule';
 import { AppLanguage } from './AppLanguage';
 import { AppNav } from './AppNav';
@@ -81,7 +80,6 @@ import { MemberCertificate } from './MemberCertificate';
 import { MemberContract } from './MemberContract';
 import { MemberDevice } from './MemberDevice';
 import { MemberNote } from './MemberNote';
-import { MemberOauth } from './MemberOauth';
 import { MemberPermissionExtra } from './MemberPermissionExtra';
 import { MemberPermissionGroup } from '../member/entity/member_permission_group.entity';
 import { MemberShop } from './MemberShop';
@@ -201,6 +199,7 @@ import { VoucherPlanProduct } from './VoucherPlanProduct';
 import { WebhookLog } from './WebhookLog';
 
 import { App } from '~/app/entity/app.entity';
+import { AppEmailTemplate } from '~/app/entity/app_email_template.entity';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { AppModule } from '~/app/entity/app_module.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
@@ -208,6 +207,8 @@ import { AppSetting } from '~/app/entity/app_setting.entity';
 import { Invoice } from '~/invoice/invoice.entity';
 import { Attachment } from '~/media/attachment.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
+import { MemberOauth } from '~/member/entity/member_oauth.entity';
+import { MemberPermission } from '~/member/entity/member_permission.entity';
 import { MemberPhone } from '~/member/entity/member_phone.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
@@ -313,6 +314,7 @@ export const PostgresEntities = [
   MemberDevice,
   MemberNote,
   MemberOauth,
+  MemberPermission,
   MemberPermissionExtra,
   MemberPermissionGroup,
   MemberPhone,

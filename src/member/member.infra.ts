@@ -1,15 +1,19 @@
-import { EntityManager, FindOptionsWhere, OrderByCondition, In } from 'typeorm';
+import { EntityManager, FindOptionsWhere, OrderByCondition, In, Equal } from 'typeorm';
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
-import { MemberProperty } from './entity/member_property.entity';
-import { Member } from './entity/member.entity';
-import { MemberAuditLog } from './entity/member_audit_log.entity';
 import { first, keys, omit, pick, values } from 'lodash';
-import { MemberPropertiesCondition } from './member.dto';
-import { MemberPhone } from './entity/member_phone.entity';
+
 import { MemberTag } from './entity/member_tag.entity';
 import { MemberCategory } from './entity/member_category.entity';
-import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
+import { MemberPermissionGroup } from './entity/member_permission_group.entity';
+import { Member } from './entity/member.entity';
+import { MemberAuditLog } from './entity/member_audit_log.entity';
+import { MemberOauth } from './entity/member_oauth.entity';
+import { MemberProperty } from './entity/member_property.entity';
+import { MemberPhone } from './entity/member_phone.entity';
+import { MemberPermission } from './entity/member_permission.entity';
+import { MemberPropertiesCondition } from './member.dto';
+import { LoginMemberMetadata } from './member.type';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -128,12 +132,36 @@ export class MemberInfrastructure {
     });
   }
 
+  async getLoginMemberMetadata(memberId: string, manager: EntityManager): Promise<Array<LoginMemberMetadata>> {
+    const builder = manager
+      .createQueryBuilder()
+      .select('to_json(array_agg(distinct member_phone.*))', 'phones')
+      .addSelect('to_json(array_agg(distinct member_oauth.*))', 'oauths')
+      .addSelect('to_json(array_agg(distinct member_permission.*))', 'permissions')
+      .from(MemberPhone, 'member_phone')
+      .leftJoin(MemberOauth, 'member_oauth', 'member_phone.member_id = member_oauth.member_id')
+      .leftJoin(MemberPermission, 'member_permission', 'member_phone.member_id = member_permission.member_id')
+      .where(`member_phone.member_id = '${memberId}'`);
+    return builder.execute();
+  }
+
+
   async getMemberPropertiesByIds(memberId: string, propertyIds: Array<string>, manager: EntityManager) {
     const memberPropertyRepo = manager.getRepository(MemberProperty);
     const founds = await memberPropertyRepo.find({
       where: { id: In(propertyIds), memberId },
     });
     return founds;
+  }
+  
+  async getGeneralLoginMemberByUsernameOrEmail(appId: string, usernameOrEmail: string, manager: EntityManager): Promise<Member | null> {
+    const memberRepo = manager.getRepository(Member);
+    return memberRepo.findOne({
+      where: [
+        { appId: Equal(appId), username: Equal(usernameOrEmail) },
+        { appId: Equal(appId), email: Equal(usernameOrEmail) },
+      ],
+    });
   }
 
   async insertMemberAuditLog(

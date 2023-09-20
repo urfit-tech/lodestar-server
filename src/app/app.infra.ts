@@ -6,6 +6,7 @@ import { AppSetting } from './entity/app_setting.entity';
 import { AppSecret } from './entity/app_secret.entity';
 import { AppHost } from './entity/app_host.entity';
 import { AppModule } from './entity/app_module.entity';
+import { AppEmailTemplate } from './entity/app_email_template.entity';
 
 @Injectable()
 export class AppInfrastructure {
@@ -49,6 +50,15 @@ export class AppInfrastructure {
   async getAppModules(appId: string, manager: EntityManager): Promise<Array<AppModule>> {
     const appModuleRepo = manager.getRepository(AppModule);
     const founds = await appModuleRepo.findBy({ appId });
+    return founds;
+  }
+
+  async getAppEmailTemplateByCatalog(appId: string, catalog: string, manager: EntityManager): Promise<Array<AppEmailTemplate>> {
+    const appEmailTemplateRepo = manager.getRepository(AppEmailTemplate);
+    const founds = await appEmailTemplateRepo.find({
+      where: { appId, catalog },
+      relations: { emailTemplate: true },
+    });
     return founds;
   }
 }

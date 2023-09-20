@@ -22,6 +22,12 @@ export class AppExtendedModule {
   })
   updatedAt: Date;
 
+  @Column({ type: 'text', name: 'app_id' })
+  appId: string;
+
+  @Column({ type: 'text', name: 'module_id' })
+  moduleId: string;
+
   @ManyToOne(() => App, (app) => app.appExtendedModules, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

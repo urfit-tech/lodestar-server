@@ -1,8 +1,12 @@
-import { createCipheriv } from 'crypto';
+import { createCipheriv, createHash } from 'crypto';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UtilityService {
+  generateMD5Hash(target: string) {
+    return createHash('md5').update(target).digest('hex');
+  }
+
   encrypt(hashKey: string, iv: string, data: string): string {
     const cipher = createCipheriv('aes-256-cbc', hashKey, iv);
     let encrypted = cipher.update(data, 'utf8', 'hex');

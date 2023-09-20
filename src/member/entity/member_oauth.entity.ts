@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Member } from '~/member/entity/member.entity';
+
+import { Member } from './member.entity';
 
 @Index('member_oauth_pkey', ['id'], { unique: true })
 @Index('member_oauth_member_id_provider_key', ['memberId', 'provider'], {
