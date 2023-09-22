@@ -12,7 +12,7 @@ import DeviceService from './device/device.service';
 
 @Controller({
   path: 'auth',
-  version: ['2'],
+  version: ['1', '2'],
 })
 export class AuthController {
   constructor(
