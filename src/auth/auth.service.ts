@@ -1,6 +1,8 @@
 import { EntityManager } from 'typeorm';
 import bcrypt from 'bcrypt';
 import { sign, verify as jwtVerify } from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
+import dayjs from 'dayjs';
 import { plainToInstance } from 'class-transformer';
 import { Logger, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +11,7 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { SignupProperty } from '~/entity/SignupProperty';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { MemberRole, PublicMember } from '~/member/member.type';
+import { MemberService } from '~/member/member.service';
 import { Member } from '~/member/entity/member.entity';
 import { AppService } from '~/app/app.service';
 import { EmailService } from '~/mailer/email/email.service';
@@ -19,6 +22,8 @@ import { AppCache } from '~/app/app.type';
 
 import { JwtDTO } from './auth.dto';
 import { CrossServerTokenDTO, LoginStatus } from './auth.type';
+import { AuthAuditLog } from './entity/auth_audit_log.entity';
+import { AuthInfrastructure } from './auth.infra';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +39,9 @@ export class AuthService {
     private readonly appService: AppService,
     private readonly mailService: EmailService,
     private readonly cacheService: CacheService,
+    private readonly authInfra: AuthInfrastructure,
     private readonly utilityService: UtilityService,
+    private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
@@ -245,5 +252,47 @@ export class AuthService {
         'EX',
         7 * 86400,
       );
+  }
+
+  async generateTmpPassword(appId: string, email: string, applicant: string, purpose: string) {
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { email });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
+    const redisCli = this.cacheService.getClient();
+    const password = this.generateRandomHash();
+    const key = `tmpPass:${appId}:${email}`;
+    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+    const expiredAt = dayjs().add(THREE_DAYS, 'millisecond').toDate();
+    await redisCli.set(key, password, 'PX', THREE_DAYS);
+
+    await this.insertAuthAuditLog(applicant, memberData[0].id, purpose);
+    return { password, expiredAt };
+  }
+
+  private generateRandomHash() {
+    const length = 16;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
+    let password = '';
+    const byteLength = Math.ceil((length * 256) / charset.length);
+    const randomArray = randomBytes(byteLength);
+    for (let i = 0; i < length; i++) {
+      password += charset[randomArray[i] % charset.length];
+    }
+    return password;
+  }
+
+  private async insertAuthAuditLog(applicant: string, userMemberId: string, purpose: string): Promise<void> {
+    const authAuditLog = new AuthAuditLog();
+    authAuditLog.action = 'apply_temporary_password';
+    authAuditLog.memberId = applicant;
+    authAuditLog.target = userMemberId;
+    authAuditLog.metadata = { reason: purpose };
+    await this.authInfra.insertAuthAuditLog(authAuditLog, this.entityManager);
   }
 }

@@ -1,12 +1,12 @@
 import { Request } from 'express';
-import { Body, Controller, Headers, Post, Req, Session } from '@nestjs/common';
+import { Body, Controller, Headers, Logger, Post, Req, Session } from '@nestjs/common';
 
 import { PublicMember } from '~/member/member.type';
 import { AppCache } from '~/app/app.type';
 import { Local } from '~/decorator';
 
 import { AuthService } from './auth.service';
-import { CrossServerTokenDTO, GeneralLoginDTO, LoginStatus } from './auth.type';
+import { CrossServerTokenDTO, GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus } from './auth.type';
 import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
 
@@ -18,6 +18,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly deviceService: DeviceService,
+    private readonly logger: Logger,
   ) {}
 
   @Post('general-login')
@@ -127,5 +128,26 @@ export class AuthController {
       message: 'get auth token successfully',
       result: { authToken },
     };
+  }
+
+  @Post('password/temporary')
+  async generateTmpPassword(@Body() body: GenerateTmpPasswordDTO) {
+    try {
+      const { appId, applicant, email, purpose } = body;
+
+      const result = await this.authService.generateTmpPassword(appId, email, applicant, purpose);
+      return {
+        code: 'SUCCESS',
+        message: 'get temporary password successfully',
+        result,
+      };
+    } catch (err) {
+      this.logger.error(err);
+      return {
+        code: 'E_TMP_PASSWORD',
+        message: 'failed to generate temporary password',
+        result: null,
+      };
+    }
   }
 }

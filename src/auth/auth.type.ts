@@ -23,3 +23,10 @@ export interface CrossServerTokenDTO {
   key: string;
   permissions: Array<string>;
 }
+
+export interface GenerateTmpPasswordDTO {
+  appId: string;
+  applicant: string;
+  email: string;
+  purpose: string;
+}

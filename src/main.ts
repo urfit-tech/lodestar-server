@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import { INestApplication, RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { RunnerModule } from './runner/runner.module';
 import { RunnerType } from './runner/runner.type';
@@ -86,7 +87,12 @@ async function bootstrap() {
         }),
       )
       .use(cookieParser());
+
+    const swaggerConfig = new DocumentBuilder().build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('lodestar/docs', app, document);
   }
+
   app = app.enableShutdownHooks();
   app.useLogger(app.get(Logger));
   app = await app.listen(port || 8081);

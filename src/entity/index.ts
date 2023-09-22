@@ -80,7 +80,7 @@ import { MemberCertificate } from './MemberCertificate';
 import { MemberContract } from './MemberContract';
 import { MemberNote } from './MemberNote';
 import { MemberPermissionExtra } from './MemberPermissionExtra';
-import { MemberPermissionGroup } from '../member/entity/member_permission_group.entity';
+import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 import { MemberShop } from './MemberShop';
 import { MemberSocial } from './MemberSocial';
 import { MemberSpeciality } from './MemberSpeciality';
@@ -220,6 +220,7 @@ import { ProgramContent } from '~/program/entity/program_content.entity';
 import { TableLog } from '~/table_log/table_log.entity';
 import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
 import { Report } from '~/report/entity/report.entity';
+import { AuthAuditLog } from '~/auth/entity/auth_audit_log.entity';
 
 export const PostgresEntities = [
   Activity,
@@ -253,6 +254,7 @@ export const PostgresEntities = [
   Attachment,
   Attend,
   AuditLog,
+  AuthAuditLog,
   Bundle,
   BundleItem,
   Card,

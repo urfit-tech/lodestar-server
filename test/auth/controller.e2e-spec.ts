@@ -18,6 +18,7 @@ import { AppPlan } from '~/entity/AppPlan';
 import { AppExtendedModule } from '~/entity/AppExtendedModule';
 import { JwtDTO } from '~/auth/auth.dto';
 import { LoginDeviceStatus } from '~/auth/device/device.type';
+import { AuthAuditLog } from '~/auth/entity/auth_audit_log.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { App } from '~/app/entity/app.entity';
 import { AppHost } from '~/app/entity/app_host.entity';
@@ -26,7 +27,7 @@ import { ApiExceptionFilter } from '~/api.filter';
 import { CacheService } from '~/utility/cache/cache.service';
 import { Member } from '~/member/entity/member.entity';
 
-import { app, appHost, appPlan } from '../data';
+import { app, appHost, appPlan, member } from '../data';
 
 describe('AuthController (e2e)', () => {
   let application: INestApplication;
@@ -40,6 +41,7 @@ describe('AuthController (e2e)', () => {
   let appHostRepo: Repository<AppHost>;
   let memberRepo: Repository<Member>;
   let memberDeviceRepo: Repository<MemberDevice>;
+  let authAuditLogRepo: Repository<AuthAuditLog>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -78,7 +80,9 @@ describe('AuthController (e2e)', () => {
     appHostRepo = manager.getRepository(AppHost);
     memberRepo = manager.getRepository(Member);
     memberDeviceRepo = manager.getRepository(MemberDevice);
+    authAuditLogRepo = manager.getRepository(AuthAuditLog);
 
+    await authAuditLogRepo.delete({});
     await memberDeviceRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
@@ -90,11 +94,13 @@ describe('AuthController (e2e)', () => {
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
     await appHostRepo.save(appHost);
+    await memberRepo.save(member);
     
     await application.init();
   });
 
   afterEach(async () => {
+    await authAuditLogRepo.delete({});
     await memberDeviceRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
@@ -658,5 +664,57 @@ describe('AuthController (e2e)', () => {
     //     result: { authToken },
     //   });
     // });
+  });
+
+  describe('/auth/password/temporary (POST)', () => {
+    const route = '/auth/password/temporary';
+
+    it('should successfully retrieve a temporary password', async () => {
+      const appId = member.appId;
+      const email = member.email;
+      const applicant = member.id;
+
+      const { body } = await request(application.getHttpServer())
+        .post(route)
+        .set('host', appHost.host)
+        .send({
+          appId,
+          applicant,
+          email,
+          purpose: 'test',
+        });
+
+      expect(body.code).toBe('SUCCESS');
+      expect(body.result.password).toBeDefined();
+
+      const authAuditLog = await manager.getRepository(AuthAuditLog).findOne({ where: { memberId: applicant } });
+
+      expect(authAuditLog.action).toBe('apply_temporary_password');
+
+      const redisPassword = await cacheService.getClient().get(`tmpPass:${appId}:${email}`);
+
+      expect(redisPassword).toBe(body.result.password);
+    });
+
+    it(`should fail due to member doesn't exist`, async () => {
+      const { body } = await request(application.getHttpServer())
+        .post(route)
+        .set('host', appHost.host)
+        .send({
+          appId: 'test',
+          applicant: member.id,
+          email: 'test_nonexist@example.com',
+          purpose: 'test',
+        });
+      expect(body).toStrictEqual({
+        code: 'E_TMP_PASSWORD',
+        message: 'failed to generate temporary password',
+        result: null,
+      });
+    });
+
+    it.skip('should successfully login with a temporary password', () => {
+      // genearl-login
+    });
   });
 });
