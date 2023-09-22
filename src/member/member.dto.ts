@@ -1,6 +1,8 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEmail, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Cursor } from 'typeorm-cursor-pagination';
+
+import { MemberRole } from './member.type';
 
 class FileInfo {
   @IsString()
@@ -128,4 +130,48 @@ export class MemberImportResultDTO {
   insertedCount: number;
   failedCount: number;
   failedErrors: any;
+}
+
+export class MemberGeneralLoginDTO {
+  @IsString()
+  id: string;
+
+  @IsString()
+  orgId: string;
+
+  @IsString()
+  appId: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  username: string;
+
+  @IsString()
+  name: string;
+
+  @IsString()
+  phoneNumber: string;
+
+  @IsString()
+  passhash: string;
+
+  @IsString()
+  pictureUrl: string;
+
+  @IsString()
+  description: string;
+
+  @IsString()
+  refreshToken: string;
+
+  @IsEnum(MemberRole)
+  role: MemberRole;
+
+  @IsString({ each: true })
+  permissions: Array<string>;
+
+  @IsBoolean()
+  isBusiness: boolean;
 }

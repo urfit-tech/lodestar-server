@@ -1,5 +1,9 @@
 import { EntityManager } from 'typeorm';
+import bcrypt from 'bcrypt';
 import { sign, verify as jwtVerify } from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
+import dayjs from 'dayjs';
+import { plainToInstance } from 'class-transformer';
 import { Logger, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -7,37 +11,98 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { SignupProperty } from '~/entity/SignupProperty';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { MemberRole, PublicMember } from '~/member/member.type';
+import { MemberService } from '~/member/member.service';
+import { Member } from '~/member/entity/member.entity';
 import { AppService } from '~/app/app.service';
-import { PermissionService } from '~/permission/permission.service';
-import { APIException } from '~/api.excetion';
-
-import { CrossServerTokenDTO } from './auth.type';
+import { EmailService } from '~/mailer/email/email.service';
+import { UtilityService } from '~/utility/utility.service';
 import { CacheService } from '~/utility/cache/cache.service';
-import { randomBytes } from 'crypto';
-import dayjs from 'dayjs';
+import { APIException } from '~/api.excetion';
+import { AppCache } from '~/app/app.type';
+
+import { JwtDTO } from './auth.dto';
+import { CrossServerTokenDTO, LoginStatus } from './auth.type';
 import { AuthAuditLog } from './entity/auth_audit_log.entity';
 import { AuthInfrastructure } from './auth.infra';
-import { MemberService } from '~/member/member.service';
 
 @Injectable()
 export class AuthService {
+  private readonly nodeEnv: string;
   private readonly hasuraJwtSecret: string;
 
   constructor(
     private readonly logger: Logger,
-    private readonly configService: ConfigService<{ HASURA_JWT_SECRET: string }>,
+    private readonly configService: ConfigService<{
+      NODE_ENV: string;
+      HASURA_JWT_SECRET: string;
+    }>,
     private readonly appService: AppService,
-    private readonly permissionService: PermissionService,
-    private readonly memberInfra: MemberInfrastructure,
-    @InjectEntityManager() private readonly entityManager: EntityManager,
+    private readonly mailService: EmailService,
     private readonly cacheService: CacheService,
     private readonly authInfra: AuthInfrastructure,
+    private readonly utilityService: UtilityService,
     private readonly memberService: MemberService,
+    private readonly memberInfra: MemberInfrastructure,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
+    this.nodeEnv = configService.getOrThrow('NODE_ENV');
     this.hasuraJwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
   }
 
-  async generateCrossServerToken(dto: CrossServerTokenDTO) {
+  async generalLogin(
+    appCache: AppCache,
+    options: {
+      appId: string;
+      account: string;
+      password: string;
+      loggedInMembers?: PublicMember[] | null;
+    },
+    manager?: EntityManager,
+  ): Promise<{ status: LoginStatus; authToken?: string; member?: any; }> {
+    const cb = async (manager: EntityManager) => {
+      const { orgId } = appCache;
+      // get possible members
+      const { appId, account: usernameOrEmail, password, loggedInMembers } = options;
+      const member = await this.memberInfra.getGeneralLoginMemberByUsernameOrEmail(appId, usernameOrEmail, manager);
+      if (!member) {
+        return { status: LoginStatus.E_NO_MEMBER };
+      }
+
+      const temporaryPassword = await this.cacheService.getClient().get(`tmpPass:${appId}:${usernameOrEmail}`);
+
+      if (temporaryPassword !== password) {
+        // migrated/3rd account with no password
+        if (!member.passhash) {
+          await this.sendResetPasswordEmail(appCache, member, manager);
+          return { status: LoginStatus.I_RESET_PASSWORD };
+        }
+        // check password
+        if (!bcrypt.compareSync(password, member.passhash)) {
+          return { status: LoginStatus.E_PASSWORD };
+        }
+        await this.insertLastLoginJobIntoQueue(member.id);
+      }
+
+      const publicMember: PublicMember = {
+        orgId: orgId || '',
+        id: member.id,
+        appId: member.appId,
+        email: member.email,
+        username: member.username,
+        name: member.name,
+        pictureUrl: member.pictureUrl,
+        isBusiness: member.isBusiness,
+      };
+
+      const jwtPayload = await this.buildGeneralLoginJwtPayload(orgId, member, publicMember, loggedInMembers, manager);
+      const authToken = await this.signJWT(appCache, jwtPayload, '1 day', manager);
+
+      return { status: LoginStatus.SUCCESS, member, authToken };
+    };
+    return cb(manager ? manager : this.entityManager);
+  }
+
+  async generateCrossServerToken(appCache: AppCache, dto: CrossServerTokenDTO) {
     return this.entityManager.transaction(async (manager) => {
       const { clientId, key, permissions } = dto;
 
@@ -53,6 +118,7 @@ export class AuthService {
       }
 
       return this.signJWT(
+        appCache,
         {
           sub: clientId,
           appId,
@@ -69,41 +135,53 @@ export class AuthService {
     return jwtVerify(token, this.hasuraJwtSecret) as Record<string, any>;
   }
 
+  private async buildGeneralLoginJwtPayload(
+    orgId: string | undefined,
+    member: Member,
+    publicMember: PublicMember,
+    logginedInMembersInSession: Array<PublicMember>,
+    manager: EntityManager,
+  ): Promise<JwtDTO> {
+    const { id: memberId } = member;
+    const metadata = await this.memberInfra.getLoginMemberMetadata(memberId, manager);
+    const { phones, oauths, permissions } = metadata.pop();
+    const loggedInMembers = logginedInMembersInSession.filter(({ id }) => id !== memberId);
+
+    const plain: JwtDTO = {
+      sub: memberId,
+      appId: member.appId,
+      role: member.role,
+      permissions: (permissions || []).map(({ permissionId }) => permissionId),
+      orgId: orgId || '',
+      memberId,
+      name: member.name,
+      username: member.username,
+      email: member.email,
+      phoneNumber: phones && phones.length > 0 ? phones.pop().phone : '',
+      isBusiness: member.isBusiness,
+      loggedInMembers: [...loggedInMembers, publicMember],
+      options: oauths,
+    };
+    return plainToInstance(JwtDTO, plain);
+  }
+
   private async signJWT(
-    payload: {
-      sub: string;
-      orgId?: string | null;
-      appId: string;
-      memberId?: string;
-      name?: string;
-      username?: string;
-      email?: string;
-      phoneNumber?: string;
-      role: string;
-      permissions: (string | null)[];
-      isBusiness?: boolean | null;
-      loggedInMembers?: PublicMember[];
-      options?: { [key: string]: any };
-    },
+    appCache: AppCache,
+    payload: JwtDTO,
     expiresIn = '1 day',
     manager: EntityManager,
   ) {
-    const settings = await this.appService.getAppSettings(payload.appId, manager);
-    const defaultPermissionIds = JSON.parse(settings['feature.membership_default_permission'] || '[]') as Array<string>;
-    const permissions = await this.permissionService.getByIds(defaultPermissionIds, manager);
-    const validatePermissions = permissions.map(({ id }) => id);
-    const invalidatePermissions = defaultPermissionIds.filter((each) => !validatePermissions.includes(each));
-    console.error(`Invalidate Permission: ${invalidatePermissions}`);
-
+    const { defaultPermissions } = appCache;
     const isFinishedSignUpProperty = payload?.memberId
       ? await this.checkUndoneSignUpProperty(payload.appId, payload.memberId, manager)
       : true;
 
-    validatePermissions.forEach((each) => {
+    defaultPermissions.forEach((each) => {
       if (!payload.permissions.includes(each)) {
         payload.permissions.push(each);
       }
     });
+
     const claim = {
       ...payload,
       isFinishedSignUpProperty,
@@ -142,6 +220,42 @@ export class AuthService {
       return false;
     }
     return true;
+  }
+
+  private async sendResetPasswordEmail(
+    appCache: AppCache, member: Member, manager: EntityManager,
+  ) {
+    const { id: appId, name: appName, host: appHost } = appCache;
+
+    // create reset password token
+    const currentTimePer30min = Math.floor(Date.now() / 3000 / 600)
+    const resetPasswordToken = this.utilityService.generateMD5Hash(`${currentTimePer30min}${member.id}`);
+
+    const subject = `[${appName}] 重設您的密碼 ${this.nodeEnv !== 'production' ? '(測試)' : ''}`;
+    const partials = {
+      appTitle: appName,
+      url: `https://${appHost}/reset-password?token=${resetPasswordToken}&member=${member.id}`,
+    }
+
+    await this.mailService.insertEmailJobIntoQueue({
+      appId,
+      catalog: 'reset-password',
+      targetMemberIds: [member.email],
+      partials,
+      subject,
+      manager,
+    });
+  }
+
+  private async insertLastLoginJobIntoQueue(memberId: string) {
+    return this.cacheService
+      .getClient()
+      .set(
+        `last-logged-in:${memberId}`,
+        new Date().toISOString(),
+        'EX',
+        7 * 86400,
+      );
   }
 
   async generateTmpPassword(appId: string, email: string, applicant: string, purpose: string) {

@@ -1,6 +1,6 @@
 import { cwd, env } from 'process';
 import { LoggerModule } from 'nestjs-pino';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -13,6 +13,8 @@ import { MediaModule } from './media/media.module';
 import { UtilityModule } from './utility/utility.module';
 import { OrderModule } from './order/order.module';
 import { ReportModule } from './report/report.module';
+import { AppMiddleware } from './app/app.middleware';
+import { AppModule } from './app/app.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -64,6 +66,7 @@ import { ReportModule } from './report/report.module';
     }),
     // TypeOrmModule.forRoot(MongoDataSourceConfig),
     AuthModule,
+    AppModule,
     MemberModule,
     MediaModule,
     UtilityModule,
@@ -72,4 +75,11 @@ import { ReportModule } from './report/report.module';
     ReportModule,
   ],
 })
-export class ApplicationModule {}
+export class ApplicationModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AppMiddleware)
+      .exclude({ path: 'healthz', method: RequestMethod.GET })
+      .forRoutes('*');
+  }
+}

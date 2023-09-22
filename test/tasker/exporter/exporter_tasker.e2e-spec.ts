@@ -7,7 +7,7 @@ import { getEntityManagerToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AppPlan } from '~/entity/AppPlan';
-import { App } from '~/entity/App';
+import { App } from '~/app/entity/app.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { Property } from '~/definition/entity/property.entity';
 import { Tag } from '~/definition/entity/tag.entity';

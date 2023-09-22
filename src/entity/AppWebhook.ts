@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
 
 @Index('app_webhook_pkey', ['id'], { unique: true })
 @Entity('app_webhook', { schema: 'public' })

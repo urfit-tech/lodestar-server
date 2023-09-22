@@ -2,8 +2,8 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm
 
 import { Attachment } from '~/media/attachment.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
+import { App } from '~/app/entity/app.entity';
 import { Activity } from '~/entity/Activity';
-import { App } from '~/entity/App';
 import { AppointmentPlan } from '~/entity/AppointmentPlan';
 import { AppPage } from '~/entity/AppPage';
 import { AppPageTemplate } from '~/entity/AppPageTemplate';
@@ -24,9 +24,7 @@ import { IssueReplyReaction } from '~/entity/IssueReplyReaction';
 import { Media } from '~/entity/Media';
 import { MemberCard } from '~/entity/MemberCard';
 import { MemberContract } from '~/entity/MemberContract';
-import { MemberDevice } from '~/entity/MemberDevice';
 import { MemberNote } from '~/entity/MemberNote';
-import { MemberOauth } from '~/entity/MemberOauth';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
 import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
@@ -62,6 +60,8 @@ import { ReviewReaction } from '~/entity/ReviewReaction';
 import { Voucher } from '~/entity/Voucher';
 
 import { MemberCategory } from './member_category.entity';
+import { MemberDevice } from './member_device.entity';
+import { MemberOauth } from './member_oauth.entity';
 import { MemberPhone } from './member_phone.entity';
 import { MemberTag } from './member_tag.entity';
 

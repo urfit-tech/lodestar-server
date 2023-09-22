@@ -1,10 +1,12 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+import { App } from '~/app/entity/app.entity';
+import { Member } from '~/member/entity/member.entity';
+
 import { ActivityCategory } from './ActivityCategory';
 import { ActivitySession } from './ActivitySession';
 import { ActivityTag } from './ActivityTag';
 import { ActivityTicket } from './ActivityTicket';
-import { App } from './App';
-import { Member } from '~/member/entity/member.entity';
 import { PackageItem } from './PackageItem';
 
 @Index('activity_pkey', ['id'], { unique: true })

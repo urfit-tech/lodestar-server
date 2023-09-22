@@ -1,5 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
+
 import { Module } from './Module';
 
 @Index('app_extended_module_pkey', ['id'], { unique: true })
@@ -19,6 +21,12 @@ export class AppExtendedModule {
     default: () => 'now()',
   })
   updatedAt: Date;
+
+  @Column({ type: 'text', name: 'app_id' })
+  appId: string;
+
+  @Column({ type: 'text', name: 'module_id' })
+  moduleId: string;
 
   @ManyToOne(() => App, (app) => app.appExtendedModules, {
     onDelete: 'RESTRICT',
