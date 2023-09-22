@@ -41,10 +41,9 @@ export class AppService {
     return this.getAppInfo(appId);
   }
 
-  async getAppInfo(appId: string) {
-    let appCache: AppCache;
+  async getAppInfo(appId: string) { 
     try {
-      appCache = await this.getAppCache(appId);
+      return this.getAppCache(appId);
     } catch (error) {
       const app = await this.appInfra.getById(appId, this.entityManager);
       const orgId = app.orgId || '';
@@ -55,7 +54,7 @@ export class AppService {
       const settingDefaultPermissions: Array<string> = JSON.parse(settings['feature.membership_default_permission'] || '[]');
       const defaultPermissions = await this.permissionInfra.getByIds(settingDefaultPermissions, this.entityManager); 
 
-      appCache = {
+      let appCache: AppCache = {
         id: appId,
         host,
         name: settings['name'] ?? '',
@@ -70,8 +69,8 @@ export class AppService {
       } catch (error) {
         console.error(`cannot set ${host} cache ${JSON.stringify(appCache)}: ${error}`);
       }
+      return appCache;
     }
-    return appCache;
   }
 
   async setAppCache(host: string, appCache: AppCache) {
@@ -119,7 +118,7 @@ export class AppService {
     const instance = plainToInstance(AppCache, {
       id: appId,
       orgId,
-      defaultPermissions,
+      defaultPermissions: defaultPermissions.map(({ id }) => id),
       host,
       name,
       settings,

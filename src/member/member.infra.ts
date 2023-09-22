@@ -149,7 +149,15 @@ export class MemberInfrastructure {
       .leftJoin(MemberOauth, 'member_oauth', 'member_phone.member_id = member_oauth.member_id')
       .leftJoin(MemberPermission, 'member_permission', 'member_phone.member_id = member_permission.member_id')
       .where(`member_phone.member_id = '${memberId}'`);
-    return builder.execute();
+
+    const datas = await builder.execute();
+
+    return datas.map((each) => ({
+      permissions: each.permissions.map((permission) => ({
+        memberId: permission.member_id,
+        permissionId: permission.permission_id, 
+      })),
+    }));
   }
 
 
