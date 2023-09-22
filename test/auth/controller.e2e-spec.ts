@@ -392,6 +392,66 @@ describe('AuthController (e2e)', () => {
           expect(memberDevice.fingerprintId).toBe(fingerPrint);
           expect(memberDevice.isLogin).toBeTruthy();
         });
+
+        it('Should let logined in general-member login again', async () => {
+          await manager.save(deviceModuleApp);
+          await manager.save(deviceModuleAppHost);
+          await manager.save(appDeviceModule);
+          await manager.save(appBindDeviceNumSetting);
+
+          const loginedGeneralMember = new Member();
+          loginedGeneralMember.appId = deviceModuleApp.id;
+          loginedGeneralMember.id = v4();
+          loginedGeneralMember.role = 'general-member';
+          loginedGeneralMember.email = 'tdm-general-member@example.com';
+          loginedGeneralMember.username = 'tdm-general-member';
+          loginedGeneralMember.passhash = bcrypt.hashSync('test_password', 1);
+          await manager.save(loginedGeneralMember);
+  
+          const loginedGeneralMemberDevice = new MemberDevice();
+          loginedGeneralMemberDevice.memberId = loginedGeneralMember.id;
+          loginedGeneralMemberDevice.fingerprintId = 'fingerprint-tdm-logined';
+          loginedGeneralMemberDevice.isLogin = true;
+          await manager.save(loginedGeneralMemberDevice);
+
+          const { body } = await request(application.getHttpServer())
+            .post(route)
+            .set('host', deviceModuleAppHost.host)
+            .set('Cookie', [`fingerPrintId=${loginedGeneralMemberDevice.fingerprintId}`])
+            .send({
+              appId: deviceModuleApp.id,
+              account: loginedGeneralMember.username,
+              password: 'test_password',
+            })
+            .expect(201);
+          const { code, message, result } = body;
+          const {authToken, deviceStatus } = result;
+          expect(code).toBe('SUCCESS');
+          expect(message).toBe('login successfully');
+          expect(authToken).not.toBeUndefined();
+          expect(deviceStatus).toBe(LoginDeviceStatus.EXISTED);
+
+          const jwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
+          const deserializedToken: JwtDTO = jwt.verify(authToken, jwtSecret) as JwtDTO;
+          expect(deserializedToken.sub).toBe(loginedGeneralMember.id);
+          expect(deserializedToken.appId).toBe(deviceModuleApp.id);
+          expect(deserializedToken.memberId).toBe(loginedGeneralMember.id);
+          expect(deserializedToken.username).toBe(loginedGeneralMember.username);
+          expect(deserializedToken.email).toBe(loginedGeneralMember.email);
+          expect(deserializedToken.loggedInMembers.length).toBeGreaterThan(0);
+
+          const [firstMember] = deserializedToken.loggedInMembers;
+          expect(firstMember.appId).toBe(deviceModuleApp.id);
+          expect(firstMember.id).toBe(loginedGeneralMember.id);
+          expect(firstMember.email).toBe(loginedGeneralMember.email);
+          expect(firstMember.username).toBe(loginedGeneralMember.username);
+
+          const memberDevices = await memberDeviceRepo.findBy({ memberId: loginedGeneralMember.id });
+          expect(memberDevices.length).toBe(1);
+          const [memberDevice] = memberDevices;
+          expect(memberDevice.fingerprintId).toBe(loginedGeneralMemberDevice.fingerprintId);
+          expect(memberDevice.isLogin).toBeTruthy();
+        });
       });
 
       describe('With login restriction', () => {
@@ -557,6 +617,66 @@ describe('AuthController (e2e)', () => {
           expect(memberDevices.length).toBe(1);
           const [memberDevice] = memberDevices;
           expect(memberDevice.fingerprintId).toBe(fingerPrint);
+          expect(memberDevice.isLogin).toBeTruthy();
+        });
+
+        it('Should let logined in general-member login again', async () => {
+          await manager.save(loginModuleApp);
+          await manager.save(loginModuleAppHost);
+          await manager.save(appLoginModule);
+          await manager.save(appLoginDeviceNumSetting);
+
+          const loginedGeneralMember = new Member();
+          loginedGeneralMember.appId = loginModuleApp.id;
+          loginedGeneralMember.id = v4();
+          loginedGeneralMember.role = 'general-member';
+          loginedGeneralMember.email = 'tlm-general-member@example.com';
+          loginedGeneralMember.username = 'tlm-general-member';
+          loginedGeneralMember.passhash = bcrypt.hashSync('test_password', 1);
+          await manager.save(loginedGeneralMember);
+  
+          const loginedGeneralMemberDevice = new MemberDevice();
+          loginedGeneralMemberDevice.memberId = loginedGeneralMember.id;
+          loginedGeneralMemberDevice.fingerprintId = 'fingerprint-tlm-logined';
+          loginedGeneralMemberDevice.isLogin = true;
+          await manager.save(loginedGeneralMemberDevice);
+
+          const { body } = await request(application.getHttpServer())
+            .post(route)
+            .set('host', loginModuleAppHost.host)
+            .set('Cookie', [`fingerPrintId=${loginedGeneralMemberDevice.fingerprintId}`])
+            .send({
+              appId: loginModuleApp.id,
+              account: loginedGeneralMember.username,
+              password: 'test_password',
+            })
+            .expect(201);
+          const { code, message, result } = body;
+          const {authToken, deviceStatus } = result;
+          expect(code).toBe('SUCCESS');
+          expect(message).toBe('login successfully');
+          expect(authToken).not.toBeUndefined();
+          expect(deviceStatus).toBe(LoginDeviceStatus.EXISTED);
+
+          const jwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
+          const deserializedToken: JwtDTO = jwt.verify(authToken, jwtSecret) as JwtDTO;
+          expect(deserializedToken.sub).toBe(loginedGeneralMember.id);
+          expect(deserializedToken.appId).toBe(loginModuleApp.id);
+          expect(deserializedToken.memberId).toBe(loginedGeneralMember.id);
+          expect(deserializedToken.username).toBe(loginedGeneralMember.username);
+          expect(deserializedToken.email).toBe(loginedGeneralMember.email);
+          expect(deserializedToken.loggedInMembers.length).toBeGreaterThan(0);
+
+          const [firstMember] = deserializedToken.loggedInMembers;
+          expect(firstMember.appId).toBe(loginModuleApp.id);
+          expect(firstMember.id).toBe(loginedGeneralMember.id);
+          expect(firstMember.email).toBe(loginedGeneralMember.email);
+          expect(firstMember.username).toBe(loginedGeneralMember.username);
+
+          const memberDevices = await memberDeviceRepo.findBy({ memberId: loginedGeneralMember.id });
+          expect(memberDevices.length).toBe(1);
+          const [memberDevice] = memberDevices;
+          expect(memberDevice.fingerprintId).toBe(loginedGeneralMemberDevice.fingerprintId);
           expect(memberDevice.isLogin).toBeTruthy();
         });
       });
