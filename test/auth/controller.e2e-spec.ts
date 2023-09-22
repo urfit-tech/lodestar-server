@@ -724,6 +724,50 @@ describe('AuthController (e2e)', () => {
         expect(firstMember.email).toBe(testLoginMember.email);
         expect(firstMember.username).toBe(testLoginMember.username);
       });
+
+      it('should successfully login with a temporary password', async () => {
+        const testTempLoginMember = new Member();
+        testTempLoginMember.appId = app.id;
+        testTempLoginMember.id = v4();
+        testTempLoginMember.role = 'general-member';
+        testTempLoginMember.email = 'test-temp-login-member@example.com';
+        testTempLoginMember.username = 'test-temp-login-member';
+        await manager.save(testTempLoginMember);
+
+        const tempPassword = 'login-temp-password';
+        await cacheService.getClient().set(`tmpPass:${testTempLoginMember.appId}:${testTempLoginMember.email}`, tempPassword);
+
+        const { body } = await request(application.getHttpServer())
+          .post(route)
+          .set('host', appHost.host)
+          .send({
+            appId: testTempLoginMember.appId,
+            account: testTempLoginMember.email,
+            password: tempPassword,
+          })
+          .expect(201);
+        const { code, message, result } = body;
+        const {authToken, deviceStatus } = result;
+        expect(code).toBe('SUCCESS');
+        expect(message).toBe('login successfully');
+        expect(authToken).not.toBeUndefined();
+        expect(deviceStatus).toBe(LoginDeviceStatus.UNSUPPORTED);
+
+        const jwtSecret = configService.getOrThrow('HASURA_JWT_SECRET');
+        const deserializedToken: JwtDTO = jwt.verify(authToken, jwtSecret) as JwtDTO;
+        expect(deserializedToken.sub).toBe(testTempLoginMember.id);
+        expect(deserializedToken.appId).toBe(app.id);
+        expect(deserializedToken.memberId).toBe(testTempLoginMember.id);
+        expect(deserializedToken.username).toBe(testTempLoginMember.username);
+        expect(deserializedToken.email).toBe(testTempLoginMember.email);
+        expect(deserializedToken.loggedInMembers.length).toBeGreaterThan(0);
+
+        const [firstMember] = deserializedToken.loggedInMembers;
+        expect(firstMember.appId).toBe(app.id);
+        expect(firstMember.id).toBe(testTempLoginMember.id);
+        expect(firstMember.email).toBe(testTempLoginMember.email);
+        expect(firstMember.username).toBe(testTempLoginMember.username);
+      });
     });
   });
 
@@ -833,8 +877,43 @@ describe('AuthController (e2e)', () => {
       });
     });
 
-    it.skip('should successfully login with a temporary password', () => {
-      // genearl-login
+    it('should successfully login with a temporary password', async () => {
+      const appId = member.appId;
+      const email = member.email;
+      const applicant = member.id;
+
+      const { body } = await request(application.getHttpServer())
+        .post(route)
+        .set('host', appHost.host)
+        .send({
+          appId,
+          applicant,
+          email,
+          purpose: 'test',
+        });
+      const { code, result } = body;
+      const { password } = result;
+
+      expect(code).toBe('SUCCESS');
+      expect(password).toBeDefined();
+
+      const authAuditLog = await manager.getRepository(AuthAuditLog).findOne({ where: { memberId: applicant } });
+      expect(authAuditLog.action).toBe('apply_temporary_password');
+
+      const redisPassword = await cacheService.getClient().get(`tmpPass:${appId}:${email}`);
+      expect(redisPassword).toBe(password);
+
+      const { body: loginBody } = await request(application.getHttpServer())
+        .post('/auth/general-login')
+        .set('host', appHost.host)
+        .send({
+          appId,
+          account: email,
+          password: password,
+        })
+        .expect(201);
+      expect(loginBody.code).toBe('SUCCESS');
+      expect(loginBody.message).toBe('login successfully');
     });
   });
 });
