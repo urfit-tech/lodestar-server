@@ -68,16 +68,20 @@ export class AuthService {
         return { status: LoginStatus.E_NO_MEMBER };
       }
 
-      // migrated/3rd account with no password
-      if (!member.passhash) {
-        await this.sendResetPasswordEmail(appCache, member, manager);
-        return { status: LoginStatus.I_RESET_PASSWORD };
+      const temporaryPassword = await this.cacheService.getClient().get(`tmpPass:${appId}:${usernameOrEmail}`);
+
+      if (temporaryPassword !== password) {
+        // migrated/3rd account with no password
+        if (!member.passhash) {
+          await this.sendResetPasswordEmail(appCache, member, manager);
+          return { status: LoginStatus.I_RESET_PASSWORD };
+        }
+        // check password
+        if (!bcrypt.compareSync(password, member.passhash)) {
+          return { status: LoginStatus.E_PASSWORD };
+        }
+        await this.insertLastLoginJobIntoQueue(member.id);
       }
-      // check password
-      if (!bcrypt.compareSync(password, member.passhash)) {
-        return { status: LoginStatus.E_PASSWORD };
-      }
-      await this.insertLastLoginJobIntoQueue(member.id);
 
       const publicMember: PublicMember = {
         orgId: orgId || '',
