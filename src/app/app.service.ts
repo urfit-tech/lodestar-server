@@ -1,5 +1,5 @@
 import { EntityManager } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 
@@ -18,6 +18,7 @@ export class AppService {
     private readonly cacheService: CacheService,
     private readonly permissionInfra: PermissionInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
+    private readonly logger: Logger,
   ) {}
 
   async getAppInfoByHost(host: string): Promise<AppCache> {
@@ -41,9 +42,9 @@ export class AppService {
     return this.getAppInfo(appId);
   }
 
-  async getAppInfo(appId: string) { 
+  async getAppInfo(appId: string): Promise<AppCache> { 
     try {
-      return this.getAppCache(appId);
+      return await this.getAppCache(appId);
     } catch (error) {
       const app = await this.appInfra.getById(appId, this.entityManager);
       const orgId = app.orgId || '';
@@ -67,7 +68,7 @@ export class AppService {
       try {
         await this.setAppCache(host, appCache);
       } catch (error) {
-        console.error(`cannot set ${host} cache ${JSON.stringify(appCache)}: ${error}`);
+        this.logger.error(`cannot set ${host} cache ${JSON.stringify(appCache)}: ${error}`);
       }
       return appCache;
     }

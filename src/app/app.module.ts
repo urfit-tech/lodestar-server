@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { forwardRef, Module, Logger } from '@nestjs/common';
 import { PermissionModule } from '~/permission/permission.module';
 
 import { UtilityModule } from '~/utility/utility.module';
@@ -13,7 +13,7 @@ import { AppService } from './app.service';
     forwardRef(() => UtilityModule),
     PermissionModule,
   ],
-  providers: [AppService, AppInfrastructure],
+  providers: [Logger, AppService, AppInfrastructure],
   exports: [AppService, AppInfrastructure],
 })
 export class AppModule {}

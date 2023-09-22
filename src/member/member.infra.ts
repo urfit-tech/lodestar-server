@@ -152,8 +152,8 @@ export class MemberInfrastructure {
 
     const datas = await builder.execute();
 
-    return datas.map((each) => ({
-      permissions: each.permissions.map((permission) => ({
+    return (datas || []).map((each) => ({
+      permissions: (each.permissions || []).map((permission) => ({
         memberId: permission.member_id,
         permissionId: permission.permission_id, 
       })),

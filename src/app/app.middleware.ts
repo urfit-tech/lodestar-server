@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
 
 import { AppService } from './app.service';
 import { AppCache } from './app.type';
@@ -8,6 +8,7 @@ import { AppCache } from './app.type';
 export class AppMiddleware implements NestMiddleware {
   constructor(
     private readonly appService: AppService,
+    private readonly logger: Logger,
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -25,6 +26,7 @@ export class AppMiddleware implements NestMiddleware {
         this.appService.setAppCache(host, appCache);
       })
       .catch((error) => {
+        this.logger.error(error);
         return res.status(500).json({
           message: `cannot get the app: ${error.message}`,
         });

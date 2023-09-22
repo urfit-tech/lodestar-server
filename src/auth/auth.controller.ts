@@ -108,7 +108,7 @@ export class AuthController {
         result: { authToken, deviceStatus },
       };
     } catch (error) {
-      console.error(error);
+      this.logger.error(error);
       return {
         code: error.name,
         message: error.message,
