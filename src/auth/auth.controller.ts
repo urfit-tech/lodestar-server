@@ -8,6 +8,7 @@ import { Local } from '~/decorator';
 import { AuthService } from './auth.service';
 import { CrossServerTokenDTO, GeneralLoginDTO, LoginStatus } from './auth.type';
 import { LoginDeviceStatus } from './device/device.type';
+import DeviceService from './device/device.service';
 
 @Controller({
   path: 'auth',
@@ -16,6 +17,7 @@ import { LoginDeviceStatus } from './device/device.type';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly deviceService: DeviceService,
   ) {}
 
   @Post('general-login')
@@ -55,7 +57,32 @@ export class AuthController {
       }
 
       const { fingerPrintId, geoLocation } = cookies;
-      const deviceStatus: LoginDeviceStatus = LoginDeviceStatus.UNSUPPORTED;
+      const deviceStatus: LoginDeviceStatus = fingerPrintId ? await this.deviceService.checkAndBindDevices(
+        appCache,
+        {
+          appId,
+          memberId: member.id,
+          memberRole: member.role,
+          userAgent: userAgent || '',
+          geoLocation,
+          fingerPrintId,
+        },
+      ) : LoginDeviceStatus.UNSUPPORTED;
+
+      switch (deviceStatus) {
+        case LoginDeviceStatus.BIND_LIMIT_EXCEED:
+          return {
+            code: 'E_BIND_DEVICE',
+            message: 'The number of device bind for this member reach limit.',
+          };
+        case LoginDeviceStatus.LOGIN_LIMIT_EXCEED:
+          return {
+            code: 'E_LOGIN_DEVICE',
+            message: 'The number of device login for this member reach limit.',
+          };
+        default:
+          break;
+      }
 
       session[appId] = {
         currentMemberId: member.id,

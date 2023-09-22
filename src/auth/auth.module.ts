@@ -8,6 +8,7 @@ import { UtilityModule } from '~/utility/utility.module';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import DeviceService from './device/device.service';
 
 @Module({
   controllers: [AuthController],
@@ -18,7 +19,7 @@ import { AuthService } from './auth.service';
     MailerModule,
     UtilityModule,
   ],
-  providers: [Logger, AuthService],
+  providers: [Logger, AuthService, DeviceService],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -12,6 +12,7 @@ import { MemberOauth } from './entity/member_oauth.entity';
 import { MemberProperty } from './entity/member_property.entity';
 import { MemberPhone } from './entity/member_phone.entity';
 import { MemberPermission } from './entity/member_permission.entity';
+import { MemberDevice } from './entity/member_device.entity';
 import { MemberPropertiesCondition } from './member.dto';
 import { LoginMemberMetadata } from './member.type';
 
@@ -132,6 +133,12 @@ export class MemberInfrastructure {
     });
   }
 
+  async getMemberDevices(memberId: string, manager: EntityManager): Promise<Array<MemberDevice>> {
+    const memberDeviceRepo = manager.getRepository(MemberDevice);
+    const founds = await memberDeviceRepo.findBy({ memberId });
+    return founds;
+  }
+
   async getLoginMemberMetadata(memberId: string, manager: EntityManager): Promise<Array<LoginMemberMetadata>> {
     const builder = manager
       .createQueryBuilder()
@@ -162,6 +169,40 @@ export class MemberInfrastructure {
         { appId: Equal(appId), email: Equal(usernameOrEmail) },
       ],
     });
+  }
+
+  async upsertMemberDevice(
+    memberId: string,
+    fingerPrintId: string,
+    options: {
+      browser: string;
+      osName: string;
+      ipAddress: string | null;
+      type: string;
+      options: Record<string, any>;
+    },
+    manager: EntityManager,
+  ): Promise<MemberDevice> {
+    const memberDeviceRepo = manager.getRepository(MemberDevice);
+    const found: MemberDevice = (
+      await memberDeviceRepo.findOneBy({
+        memberId, fingerprintId: fingerPrintId,
+      })
+      || memberDeviceRepo.create({ memberId, fingerprintId: fingerPrintId })
+    );
+
+    const { browser, osName, ipAddress, type } = options;
+    const currentDatetime = new Date();
+    found.loginedAt = currentDatetime;
+    found.lastLoginAt = currentDatetime;
+    found.browser = browser;
+    found.osName = osName;
+    found.ipAddress = ipAddress;
+    found.isLogin = true;
+    found.type = type;
+    found.options = options;
+
+    return memberDeviceRepo.save(found);
   }
 
   async insertMemberAuditLog(
