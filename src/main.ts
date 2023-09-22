@@ -18,6 +18,7 @@ import { ApiExceptionFilter } from './api.filter';
 import { ApplicationModule } from './application.module';
 import { ShutdownService } from './utility/shutdown/shutdown.service';
 import { CacheService } from './utility/cache/cache.service';
+import corsOptionDelegate from './cors';
 
 dayjs.extend(utc);
 
@@ -53,7 +54,10 @@ async function bootstrap() {
       process.exit(1);
     });
   } else {
-    app = await NestFactory.create(ApplicationModule, { bufferLogs: true });
+    app = await NestFactory.create(ApplicationModule, {
+      bufferLogs: true,
+      cors: corsOptionDelegate,
+    });
 
     const configService = app.get(ConfigService<{
       NODE_ENV: string;
