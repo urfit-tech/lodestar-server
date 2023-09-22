@@ -1,6 +1,6 @@
 import { cwd, env } from 'process';
 import { LoggerModule } from 'nestjs-pino';
-import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -18,7 +18,7 @@ import { AppModule } from './app/app.module';
 
 @Module({
   controllers: [ApplicationController],
-  providers: [ApplicationService],
+  providers: [Logger, ApplicationService],
   imports: [
     ConfigModule.forRoot({
       envFilePath: `${cwd()}/.env${env.NODE_ENV ? `.${env.NODE_ENV}` : ''}`,
