@@ -58,3 +58,5 @@ export class JwtDTO {
   @IsUndefinable()
   options?: Record<string, any>;
 };
+
+export type JwtMember = JwtDTO;
