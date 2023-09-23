@@ -5,7 +5,8 @@ import { json, urlencoded } from 'express';
 import session from 'express-session';
 import RedisStore from 'connect-redis';
 import cookieParser from 'cookie-parser';
-import { INestApplication, RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -25,11 +26,11 @@ dayjs.extend(utc);
 async function bootstrap() {
   const { env } = process;
   const { WORKER_NAME: workerName, NODE_ENV: nodeEnv, PORT: port } = env;
-  let app: INestApplication;
+  let app: NestExpressApplication;
 
   if (workerName !== undefined) {
     if (RunnerType[workerName] !== undefined) {
-      app = await NestFactory.create(
+      app = await NestFactory.create<NestExpressApplication>(
         RunnerModule.forRoot({
           workerName,
           nodeEnv,
@@ -38,7 +39,7 @@ async function bootstrap() {
         { bufferLogs: true },
       );
     } else if (TaskerType[workerName] !== undefined) {
-      app = await NestFactory.create(
+      app = await NestFactory.create<NestExpressApplication>(
         TaskerModule.forRoot({
           workerName,
           nodeEnv,
@@ -54,10 +55,11 @@ async function bootstrap() {
       process.exit(1);
     });
   } else {
-    app = await NestFactory.create(ApplicationModule, {
+    app = await NestFactory.create<NestExpressApplication>(ApplicationModule, {
       bufferLogs: true,
       cors: corsOptionDelegate,
     });
+    app.set('trust proxy', 1);
 
     const configService = app.get(ConfigService<{
       NODE_ENV: string;
@@ -99,6 +101,6 @@ async function bootstrap() {
 
   app = app.enableShutdownHooks();
   app.useLogger(app.get(Logger));
-  app = await app.listen(port || 8081);
+  await app.listen(port || 8081);
 }
 bootstrap();
