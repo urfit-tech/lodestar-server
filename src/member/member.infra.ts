@@ -23,6 +23,7 @@ import { PaymentLog } from '~/payment/payment_log.entity';
 import { MemberTrackingLog } from '~/entity/MemberTrackingLog';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
 import { Invoice } from '~/invoice/invoice.entity';
+import { MemberOauth } from '~/entity/MemberOauth';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -344,6 +345,7 @@ export class MemberInfrastructure {
       const memberRepo = manager.getRepository(Member);
       const memberCategoryRepo = manager.getRepository(MemberCategory);
       const memberTagRepo = manager.getRepository(MemberTag);
+      const memberOauthRepo = manager.getRepository(MemberOauth);
       const memberDeviceRepo = manager.getRepository(MemberDevice);
       const memberPhoneRepo = manager.getRepository(MemberPhone);
       const memberPropertyRepo = manager.getRepository(MemberProperty);
@@ -402,6 +404,7 @@ export class MemberInfrastructure {
       await orderLogRepo.remove(orderLogs);
 
       await memberTagRepo.delete({ memberId: member.id });
+      await memberOauthRepo.delete({ memberId: member.id });
       await memberCategoryRepo.delete({ memberId: member.id });
       await memberDeviceRepo.delete({ memberId: member.id });
       await memberTrackingLogRepo.delete({ memberId: member.id });
