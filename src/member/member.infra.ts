@@ -24,6 +24,8 @@ import { MemberTrackingLog } from '~/entity/MemberTrackingLog';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
 import { Invoice } from '~/invoice/invoice.entity';
 import { MemberOauth } from '~/entity/MemberOauth';
+import { MemberNote } from '~/entity/MemberNote';
+import { MemberTask } from '~/entity/MemberTask';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -351,6 +353,8 @@ export class MemberInfrastructure {
       const memberPropertyRepo = manager.getRepository(MemberProperty);
       const memberPermissionExtraRepo = manager.getRepository(MemberPermissionExtra);
       const memberTrackingLogRepo = manager.getRepository(MemberTrackingLog);
+      const memberNoteRepo = manager.getRepository(MemberNote);
+      const memberTaskRepo = manager.getRepository(MemberTask);
       const notificationRepo = manager.getRepository(Notification);
       const paymentLogRepo = manager.getRepository(PaymentLog);
       const invoiceRepo = manager.getRepository(Invoice);
@@ -408,6 +412,8 @@ export class MemberInfrastructure {
       await memberCategoryRepo.delete({ memberId: member.id });
       await memberDeviceRepo.delete({ memberId: member.id });
       await memberTrackingLogRepo.delete({ memberId: member.id });
+      await memberNoteRepo.delete({ memberId: member.id });
+      await memberTaskRepo.delete({ memberId: member.id });
       await memberPhoneRepo.delete({ memberId: member.id });
       await memberPropertyRepo.delete({ memberId: member.id });
       await memberPermissionExtraRepo.delete({ memberId: member.id });
