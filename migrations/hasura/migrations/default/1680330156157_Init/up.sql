@@ -1321,6 +1321,22 @@ $$;
 CREATE FUNCTION public.exec(text) RETURNS text
     LANGUAGE plpgsql
     AS $_$ BEGIN EXECUTE $1; RETURN $1; END $_$;
+CREATE FUNCTION public.func_insert_order_log() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	app_id text = (
+		SELECT
+			app_id
+		FROM
+			member
+		WHERE
+			member.id =  NEW.member_id);
+BEGIN
+	NEW.app_id = app_id;
+	RETURN NEW;
+END
+$$;
 CREATE FUNCTION public.func_table_log() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1690,7 +1706,8 @@ CREATE TABLE public.order_log (
     transferred_at timestamp with time zone,
     options jsonb,
     custom_id text,
-    invoice_issued_at timestamp with time zone
+    invoice_issued_at timestamp with time zone,
+    app_id text
 );
 COMMENT ON COLUMN public.order_log.discount_type IS 'abandoned';
 COMMENT ON COLUMN public.order_log.discount_point IS 'abandoned';
@@ -2560,14 +2577,14 @@ CREATE TABLE public.appointment_plan (
     reservation_type text,
     capacity integer DEFAULT 1 NOT NULL,
     meet_generation_method text DEFAULT 'auto'::text NOT NULL,
-    default_meet_system text DEFAULT 'jitsi'::text NOT NULL,
+    default_meet_gateway text DEFAULT 'jitsi'::text NOT NULL,
     reschedule_amount integer DEFAULT '-1'::integer NOT NULL,
     reschedule_type text
 );
 COMMENT ON COLUMN public.appointment_plan.duration IS 'minutes';
 COMMENT ON COLUMN public.appointment_plan.reservation_type IS 'hour / day';
 COMMENT ON COLUMN public.appointment_plan.capacity IS '-1 represents no limit';
-COMMENT ON COLUMN public.appointment_plan.default_meet_system IS 'jitsi, zoom';
+COMMENT ON COLUMN public.appointment_plan.default_meet_gateway IS 'jitsi, zoom';
 COMMENT ON COLUMN public.appointment_plan.reschedule_amount IS '-1 represents no limit';
 COMMENT ON COLUMN public.appointment_plan.reschedule_type IS 'hour / day';
 CREATE VIEW public.appointment_enrollment AS
@@ -3256,7 +3273,8 @@ CREATE TABLE public.member_task (
     author_id text,
     has_meeting boolean DEFAULT false NOT NULL,
     meet_id uuid,
-    meeting_hours numeric DEFAULT '0'::numeric NOT NULL
+    meeting_hours numeric DEFAULT '0'::numeric NOT NULL,
+    meeting_gateway text
 );
 COMMENT ON COLUMN public.member_task.priority IS 'high / medium / low';
 COMMENT ON COLUMN public.member_task.status IS 'pending / in-progress / done';
@@ -3563,16 +3581,19 @@ CREATE TABLE public.meet (
     app_id text NOT NULL,
     host_member_id text NOT NULL,
     deleted_at timestamp with time zone,
+    gateway text NOT NULL,
+    service_id uuid,
     CONSTRAINT started_at_ended_at_constraint CHECK ((ended_at > started_at))
 );
 COMMENT ON COLUMN public.meet.target IS 'appointment_plan_id, member_task_id';
+COMMENT ON COLUMN public.meet.gateway IS 'jitsi, zoom';
 CREATE TABLE public.meet_member (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     meet_id uuid NOT NULL,
     member_id text NOT NULL,
-    canceled_at time with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 COMMENT ON TABLE public.meet_member IS 'meet participants';
 CREATE TABLE public.member_achievement (
@@ -4420,6 +4441,15 @@ CREATE TABLE public.permission (
     description text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+CREATE TABLE public.permission_audit_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    app_id text NOT NULL,
+    member_id text NOT NULL,
+    target text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    old jsonb DEFAULT '{}'::jsonb NOT NULL,
+    new jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 CREATE TABLE public.playlist (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -6842,6 +6872,8 @@ ALTER TABLE ONLY public.payment_log
     ADD CONSTRAINT payment_log_no_key UNIQUE (no);
 ALTER TABLE ONLY public.payment_log
     ADD CONSTRAINT payment_log_pkey PRIMARY KEY (no);
+ALTER TABLE ONLY public.permission_audit_log
+    ADD CONSTRAINT permission_audit_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.permission_group
     ADD CONSTRAINT permission_group_name_app_id_key UNIQUE (name, app_id);
 ALTER TABLE ONLY public.permission_group_permission
@@ -7100,6 +7132,7 @@ CREATE INDEX notification_updated_at_desc ON public.notification USING btree (up
 CREATE INDEX notification_updated_at_desc_nulls_first_index ON public.notification USING btree (updated_at DESC);
 CREATE INDEX order_discount_order_id_key ON public.order_discount USING btree (order_id);
 CREATE INDEX order_executor_order_id_key ON public.order_executor USING btree (order_id);
+CREATE INDEX order_log_app_id_status ON public.order_log USING btree (app_id, status);
 CREATE INDEX order_log_member_id ON public.order_log USING btree (member_id);
 CREATE INDEX order_log_started_at_desc ON public.order_log USING btree (created_at DESC);
 CREATE INDEX order_log_status ON public.order_log USING btree (status);
@@ -7411,6 +7444,7 @@ CREATE TRIGGER lodestar_order_product_audit_update AFTER UPDATE ON public.order_
 CREATE TRIGGER lodestar_payment_log_audit_delete AFTER DELETE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
 CREATE TRIGGER lodestar_payment_log_audit_insert AFTER INSERT ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
 CREATE TRIGGER lodestar_payment_log_audit_update AFTER UPDATE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('payment_log');
+CREATE TRIGGER modify_app_id_at_order_log_insert_and_update BEFORE INSERT OR UPDATE ON public.order_log FOR EACH ROW EXECUTE PROCEDURE public.func_insert_order_log();
 CREATE TRIGGER set_activity_ticket_product AFTER INSERT ON public.activity_ticket FOR EACH ROW EXECUTE PROCEDURE public.insert_product('ActivityTicket');
 CREATE TRIGGER set_appointment_plan_product AFTER INSERT ON public.appointment_plan FOR EACH ROW EXECUTE PROCEDURE public.insert_product('AppointmentPlan');
 CREATE TRIGGER set_card_product AFTER INSERT ON public.card FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Card');

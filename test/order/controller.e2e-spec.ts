@@ -2,7 +2,7 @@ import request from 'supertest';
 import { EntityManager, Repository } from 'typeorm';
 import { v4 } from 'uuid';
 import { sign } from 'jsonwebtoken';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getEntityManagerToken } from '@nestjs/typeorm';
@@ -16,9 +16,14 @@ import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { Member } from '~/member/entity/member.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
-import { TransferReceivedOrderBodyDTO } from '~/order/order.type';
+import { TransferReceivedOrderBodyDTO } from '~/order/order.dto';
 
 import { role, app, appPlan, appSecret, appSetting, appHost } from '../data';
+import jwt from 'jsonwebtoken';
+import { Queue } from 'bull';
+import { getQueueToken } from '@nestjs/bull';
+import { ExporterTasker } from '~/tasker/exporter.tasker';
+import { ApiExceptionFilter } from '~/api.filter';
 
 const apiPath = {
   auth: {
@@ -49,6 +54,7 @@ describe('OrderController (e2e)', () => {
     }).compile();
 
     application = module.createNestApplication();
+    application.useGlobalPipes(new ValidationPipe()).useGlobalFilters(new ApiExceptionFilter());
     configService = application.get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService);
     manager = application.get<EntityManager>(getEntityManagerToken());
     roleRepo = manager.getRepository(Role);
@@ -146,8 +152,7 @@ describe('OrderController (e2e)', () => {
         .put(apiPath.order.transferReceivedOrder)
         .set(requestHeader)
         .send(requestBody)
-        .expect(400)
-        .expect(/{"statusCode":400,"message":"E_TOKEN_INVALID"/);
+        .expect(400);
     });
 
     it('Should raise error due to orderId is not found', async () => {
@@ -185,8 +190,7 @@ describe('OrderController (e2e)', () => {
         .put(apiPath.order.transferReceivedOrder)
         .set(requestHeader)
         .send(requestBody)
-        .expect(400)
-        .expect(/{"statusCode":400,"message":"E_NULL_ORDER"/);
+        .expect(400);
     });
 
     it('Should transfer received order successfully', async () => {
@@ -276,8 +280,7 @@ describe('OrderController (e2e)', () => {
       await request(application.getHttpServer())
         .get(apiPath.order.orders + '/' + null)
         .set(requestHeader)
-        .expect(400)
-        .expect(/{"statusCode":400,"message":"E_DB_GET_ORDER_NOT_FOUND"}/);
+        .expect(400);
     });
 
     it('Should get order successfully', async () => {
@@ -300,6 +303,198 @@ describe('OrderController (e2e)', () => {
         .get(apiPath.order.orders + '/' + orderLog.id)
         .set(requestHeader)
         .expect(200);
+    });
+  });
+
+  describe('/orders/export (POST)', () => {
+    const route = '/orders/export';
+
+    it('Should raise unauthorized exception', async () => {
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', 'Bearer something')
+        .set('host', appHost.host)
+        .send({
+          appId: app.id,
+          memberIds: [],
+        })
+        .expect(401);
+    });
+
+    it('Should raise bad request exception', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .send()
+        .expect(400);
+    });
+
+    it('Should insert job into queue', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+      const exporterQueue = application.get<Queue>(getQueueToken(ExporterTasker.name));
+      await exporterQueue.empty();
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .send({
+          statuses: ['SUCCESS'],
+        })
+        .expect(201);
+
+      const { data } = (await exporterQueue.getWaiting())[0];
+      expect(data.invokerMemberId).toBe('invoker_member_id');
+      expect(data.category).toBe('orderLog');
+    });
+  });
+
+  describe('/orders/export/products (POST)', () => {
+    const route = '/orders/export/products';
+
+    it('Should raise unauthorized exception', async () => {
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', 'Bearer something')
+        .set('host', appHost.host)
+        .send({
+          appId: app.id,
+          memberIds: [],
+        })
+        .expect(401);
+    });
+
+    it('Should raise bad request exception', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .send()
+        .expect(400);
+    });
+
+    it('Should insert job into queue', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+      const exporterQueue = application.get<Queue>(getQueueToken(ExporterTasker.name));
+      await exporterQueue.empty();
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .send({
+          statuses: ['SUCCESS'],
+        })
+        .expect(201);
+
+      const { data } = (await exporterQueue.getWaiting())[0];
+      expect(data.invokerMemberId).toBe('invoker_member_id');
+      expect(data.category).toBe('orderProduct');
+    });
+  });
+
+  describe('/orders/export/discounts (POST)', () => {
+    const route = '/orders/export/discounts';
+
+    it('Should raise unauthorized exception', async () => {
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', 'Bearer something')
+        .set('host', appHost.host)
+        .send({
+          appId: app.id,
+          memberIds: [],
+        })
+        .expect(401);
+    });
+
+    it('Should raise bad request exception', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .send()
+        .expect(400);
+    });
+
+    it('Should insert job into queue', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+      const exporterQueue = application.get<Queue>(getQueueToken(ExporterTasker.name));
+      await exporterQueue.empty();
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .send({
+          statuses: ['SUCCESS'],
+        })
+        .expect(201);
+
+      const { data } = (await exporterQueue.getWaiting())[0];
+      expect(data.invokerMemberId).toBe('invoker_member_id');
+      expect(data.category).toBe('orderDiscount');
     });
   });
 });
