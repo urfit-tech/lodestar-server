@@ -54,9 +54,10 @@ describe('ExporterTasker', () => {
         }),
       ],
     })
-      .overrideProvider(StorageService).useValue(mockStorageService)
+      .overrideProvider(StorageService)
+      .useValue(mockStorageService)
       .compile();
-    
+
     application = moduleFixture.createNestApplication();
 
     manager = application.get<EntityManager>(getEntityManagerToken());
@@ -113,19 +114,17 @@ describe('ExporterTasker', () => {
     const exporterTasker = application.get<ExporterTasker>(Tasker);
     let savedKey: string;
     let savedFile: string;
-    
-    mockStorageService.saveFilesInBucketStorage.mockImplementationOnce((awsPayload: {
-      Key: string;
-      Body: string;
-      ContentType: string;
-    }) => {
-      savedKey = awsPayload.Key;
-      savedFile = awsPayload.Body;
-      return {
-        ETag: '"someETag"',
-        ServerSideEncryption: 'AES256',
-      };
-    });
+
+    mockStorageService.saveFilesInBucketStorage.mockImplementationOnce(
+      (awsPayload: { Key: string; Body: string; ContentType: string }) => {
+        savedKey = awsPayload.Key;
+        savedFile = awsPayload.Body;
+        return {
+          ETag: '"someETag"',
+          ServerSideEncryption: 'AES256',
+        };
+      },
+    );
     mockStorageService.getSignedUrlForDownloadStorage.mockImplementationOnce(() => {
       return 'someUrl';
     });
@@ -155,9 +154,7 @@ describe('ExporterTasker', () => {
         appId: app.id,
         category: 'member',
         invokerMemberId: invoker.id,
-        memberIds: [
-          testMember.id,
-        ],
+        memberIds: [testMember.id],
         exportMime: 'text/csv',
       },
     } as Job<MemberExportJob>);

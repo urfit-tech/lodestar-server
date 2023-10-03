@@ -90,7 +90,7 @@ describe('MemberController (e2e)', () => {
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
     await appHostRepo.save(appHost);
-    
+
     await application.init();
   });
 
