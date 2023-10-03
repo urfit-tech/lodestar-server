@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 
 import { Member } from '~/member/entity/member.entity';
 
-import { VoucherCode } from './VoucherCode';
+import { VoucherCode } from '../../entity/VoucherCode';
 
 @Index('voucher_pkey', ['id'], { unique: true })
 @Index('voucher_voucher_code_id_member_id_key', ['memberId', 'voucherCodeId'], {
