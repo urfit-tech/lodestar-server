@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGenerat
 
 import { OrderLog } from '~/order/entity/order_log.entity';
 
-import { CouponCode } from './CouponCode';
+import { CouponCode } from '../../entity/CouponCode';
 import { Member } from '~/member/entity/member.entity';
 
 @Index('coupon_member_id_coupon_code_id_key', ['couponCodeId', 'memberId'], {

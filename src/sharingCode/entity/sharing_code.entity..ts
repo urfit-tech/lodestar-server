@@ -11,6 +11,9 @@ export class SharingCode {
   @Column('text', { name: 'path' })
   path: string;
 
+  @Column('text', { name: 'app_id' })
+  appId: string;
+
   @Column('text', { name: 'code' })
   code: string;
 

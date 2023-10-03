@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CouponInfrastructure } from './coupon.infra';
 
-@Module({})
+@Module({ exports: [CouponInfrastructure], providers: [CouponInfrastructure] })
 export class CouponModule {}

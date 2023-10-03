@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Voucher } from './Voucher';
+import { Voucher } from '../voucher/entity/voucher.entity';
 import { VoucherPlan } from './VoucherPlan';
 
 @Index('voucher_code_code_key', ['code'], { unique: true })
