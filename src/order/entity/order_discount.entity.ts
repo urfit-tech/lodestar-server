@@ -11,6 +11,9 @@ export class OrderDiscount {
   @Column('text', { name: 'name' })
   name: string;
 
+  @Column('text', { name: 'order_id' })
+  orderId: string;
+
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
 

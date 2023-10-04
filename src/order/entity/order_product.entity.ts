@@ -16,7 +16,7 @@ export class OrderProduct {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('text', { name: 'order_id', unique: true })
+  @Column('text', { name: 'order_id' })
   orderId: string;
 
   @Column('text', { name: 'product_id', unique: true })

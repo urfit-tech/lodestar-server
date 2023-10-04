@@ -13,6 +13,12 @@ export class OrderExecutor {
   @Column('numeric', { name: 'ratio', default: () => 1 })
   ratio: number;
 
+  @Column('text', { name: 'order_id' })
+  orderId: string;
+
+  @Column('text', { name: 'member_id' })
+  memberId: string;
+
   @ManyToOne(() => Member, (member) => member.orderExecutors, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

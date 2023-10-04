@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Coupon } from './Coupon';
+import { Coupon } from '../coupon/entity/coupon.entity';
 import { CouponPlan } from './CouponPlan';
 
 @Index('coupon_plan_code_app_id_code_key', ['appId', 'code'], { unique: true })

@@ -21,7 +21,7 @@ import { Post } from '~/entity/Post';
 import { ProductChannel } from '~/entity/ProductChannel';
 import { Program } from '~/entity/Program';
 import { ProgramPackage } from '~/entity/ProgramPackage';
-import { SharingCode } from '~/entity/SharingCode';
+import { SharingCode } from '~/sharingCode/entity/sharing_code.entity.';
 import { SmsVerificationCode } from '~/entity/SmsVerificationCode';
 import { VoucherPlan } from '~/entity/VoucherPlan';
 import { Member } from '~/member/entity/member.entity';

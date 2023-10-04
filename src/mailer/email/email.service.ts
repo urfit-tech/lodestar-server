@@ -18,15 +18,19 @@ export class EmailService {
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
-  public async getAppEmailTemplate(appId: string, catalog: string, manager?: EntityManager): Promise<{
+  public async getAppEmailTemplate(
+    appId: string,
+    catalog: string,
+    manager?: EntityManager,
+  ): Promise<{
     subject: string | null;
-    content: string | null
+    content: string | null;
   }> {
     const cb = async (manager: EntityManager) => {
       const appTemplates = await this.appInfra.getAppEmailTemplateByCatalog(appId, catalog, manager);
 
       if (appTemplates.length === 0) {
-        return { subject: null, content: this.getDefaultTemplate(catalog) };  
+        return { subject: null, content: this.getDefaultTemplate(catalog) };
       }
       const [appTemplate] = appTemplates;
       return { subject: appTemplate.subject, content: appTemplate.emailTemplate.content };
@@ -45,7 +49,6 @@ export class EmailService {
     try {
       const { appId, catalog, targetMemberIds, partials, subject, manager } = options;
       const { content } = await this.getAppEmailTemplate(appId, catalog, manager);
-
       const job: MailJob = {
         appId,
         subject,
@@ -55,19 +58,17 @@ export class EmailService {
         content: content ? Mustache.render(content, partials) : this.renderPartials(partials),
       };
       this.mailerQueue.add(job);
-    } catch {
-
-    }
+    } catch {}
   }
 
   private getDefaultTemplate(catalog: string): string | null {
     try {
-      return readFileSync(`./templates/${catalog}.hbs`).toString();
+      return readFileSync(`${__dirname}/template/${catalog}.hbs`).toString();
     } catch {
       return null;
     }
   }
-  
+
   private renderPartials(partials: { [key: string]: any }) {
     const content: string[] = [];
     for (const key in partials) {

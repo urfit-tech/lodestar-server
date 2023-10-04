@@ -1,10 +1,10 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { Member } from '~/member/entity/member.entity';
-import { Coupon } from '~/entity/Coupon';
+import { Coupon } from '~/coupon/entity/coupon.entity';
 import { OrderContact } from '~/entity/OrderContact';
-import { OrderDiscount } from '~/entity/OrderDiscount';
-import { OrderExecutor } from '~/entity/OrderExecutor';
+import { OrderDiscount } from '~/order/entity/order_discount.entity';
+import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { Invoice } from '~/invoice/invoice.entity';
 
@@ -28,6 +28,9 @@ export class OrderLog {
 
   @Column('text', { name: 'member_id' })
   memberId: string;
+
+  @Column('text', { name: 'app_id' })
+  appId: string;
 
   @Column('integer', { name: 'discount_type', default: () => 0 })
   discountType: number;

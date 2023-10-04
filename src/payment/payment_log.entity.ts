@@ -16,6 +16,9 @@ export class PaymentLog {
   @Column('text', { primary: true, name: 'no' })
   no: string;
 
+  @Column('text', { name: 'order_id' })
+  orderId: string;
+
   @Column('text', { name: 'status', nullable: true })
   status: string | null;
 

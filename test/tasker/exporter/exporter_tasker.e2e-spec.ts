@@ -19,14 +19,17 @@ import { Member } from '~/member/entity/member.entity';
 import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { StorageService } from '~/utility/storage/storage.service';
 import { TaskerModule } from '~/tasker/tasker.module';
-import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
+import { ExporterTasker, MemberExportJob, OrderLogExportJob, OrderProductExportJob } from '~/tasker/exporter.tasker';
 import { Tasker } from '~/tasker/tasker';
 
 import { app, appPlan, category, memberProperty, memberTag } from '../../data';
+import { OrderLog } from '~/order/entity/order_log.entity';
+import { OrderProduct } from '~/order/entity/order_product.entity';
+import { Product } from '~/entity/Product';
 
 describe('ExporterTasker', () => {
   let application: INestApplication;
-  let mockStorageService = {
+  const mockStorageService = {
     saveFilesInBucketStorage: jest.fn(),
     getSignedUrlForDownloadStorage: jest.fn(),
   };
@@ -43,8 +46,11 @@ describe('ExporterTasker', () => {
   let categoryRepo: Repository<Category>;
   let propertyRepo: Repository<Property>;
   let tagRepo: Repository<Tag>;
+  let orderRepo: Repository<OrderLog>;
+  let orderProductRepo: Repository<OrderProduct>;
+  let productRepo: Repository<Product>;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         TaskerModule.forRoot({
@@ -54,9 +60,10 @@ describe('ExporterTasker', () => {
         }),
       ],
     })
-      .overrideProvider(StorageService).useValue(mockStorageService)
+      .overrideProvider(StorageService)
+      .useValue(mockStorageService)
       .compile();
-    
+
     application = moduleFixture.createNestApplication();
 
     manager = application.get<EntityManager>(getEntityManagerToken());
@@ -71,7 +78,13 @@ describe('ExporterTasker', () => {
     categoryRepo = manager.getRepository(Category);
     propertyRepo = manager.getRepository(Property);
     tagRepo = manager.getRepository(Tag);
+    orderRepo = manager.getRepository(OrderLog);
+    orderProductRepo = manager.getRepository(OrderProduct);
+    productRepo = manager.getRepository(Product);
 
+    await productRepo.delete({});
+    await orderProductRepo.delete({});
+    await orderRepo.delete({});
     await memberPhoneRepo.delete({});
     await memberCategoryRepo.delete({});
     await memberPropertyRepo.delete({});
@@ -93,7 +106,9 @@ describe('ExporterTasker', () => {
     await application.init();
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
+    await orderProductRepo.delete({});
+    await orderRepo.delete({});
     await memberPhoneRepo.delete({});
     await memberCategoryRepo.delete({});
     await memberPropertyRepo.delete({});
@@ -109,23 +124,21 @@ describe('ExporterTasker', () => {
     await application.close();
   });
 
-  it('Should upload file with proper format', async () => {
+  it('Should upload member csv file with proper format', async () => {
     const exporterTasker = application.get<ExporterTasker>(Tasker);
     let savedKey: string;
     let savedFile: string;
-    
-    mockStorageService.saveFilesInBucketStorage.mockImplementationOnce((awsPayload: {
-      Key: string;
-      Body: string;
-      ContentType: string;
-    }) => {
-      savedKey = awsPayload.Key;
-      savedFile = awsPayload.Body;
-      return {
-        ETag: '"someETag"',
-        ServerSideEncryption: 'AES256',
-      };
-    });
+
+    mockStorageService.saveFilesInBucketStorage.mockImplementationOnce(
+      (awsPayload: { Key: string; Body: string; ContentType: string }) => {
+        savedKey = awsPayload.Key;
+        savedFile = awsPayload.Body;
+        return {
+          ETag: '"someETag"',
+          ServerSideEncryption: 'AES256',
+        };
+      },
+    );
     mockStorageService.getSignedUrlForDownloadStorage.mockImplementationOnce(() => {
       return 'someUrl';
     });
@@ -155,9 +168,7 @@ describe('ExporterTasker', () => {
         appId: app.id,
         category: 'member',
         invokerMemberId: invoker.id,
-        memberIds: [
-          testMember.id,
-        ],
+        memberIds: [testMember.id],
         exportMime: 'text/csv',
       },
     } as Job<MemberExportJob>);
@@ -169,6 +180,78 @@ describe('ExporterTasker', () => {
     expect(data['姓名']).toBe(testMember.name);
     expect(data['帳號']).toBe(testMember.username);
     expect(data['信箱']).toBe(testMember.email);
+
+    const auditLogs = await memberAuditLogRepo.find({});
+    expect(auditLogs.length).toBe(1);
+    const [auditLog] = auditLogs;
+    expect(auditLog.memberId).toBe(invoker.id);
+    expect(auditLog.target).toBe('someUrl');
+    expect(auditLog.action).toBe('download');
+  });
+
+  it('Should upload orderLog csv file with proper format', async () => {
+    const exporterTasker = application.get<ExporterTasker>(Tasker);
+    let savedKey: string;
+    let savedFile: string;
+
+    mockStorageService.saveFilesInBucketStorage.mockImplementationOnce(
+      (awsPayload: { Key: string; Body: string; ContentType: string }) => {
+        savedKey = awsPayload.Key;
+        savedFile = awsPayload.Body;
+        return {
+          ETag: '"someETag"',
+          ServerSideEncryption: 'AES256',
+        };
+      },
+    );
+    mockStorageService.getSignedUrlForDownloadStorage.mockImplementationOnce(() => {
+      return 'someUrl';
+    });
+
+    const invoker = new Member();
+    invoker.id = v4();
+    invoker.app = app;
+    invoker.name = 'invoker';
+    invoker.username = 'invoker_account';
+    invoker.email = 'invoker_email@example.com';
+    invoker.role = 'general-member';
+    invoker.loginedAt = new Date();
+
+    const testMember = new Member();
+    testMember.id = v4();
+    testMember.app = app;
+    testMember.name = 'John';
+    testMember.username = 'john_account';
+    testMember.email = 'john@example.com';
+    testMember.role = 'general-member';
+    testMember.loginedAt = new Date();
+
+    const orderLog = new OrderLog();
+    orderLog.appId = app.id;
+    orderLog.member = testMember;
+    orderLog.createdAt = new Date();
+    orderLog.invoiceOptions = {};
+    orderLog.status = 'SUCCESS';
+
+    await manager.save([invoker, testMember, orderLog]);
+
+    await exporterTasker.process({
+      data: {
+        appId: app.id,
+        category: 'orderLog',
+        invokerMemberId: invoker.id,
+        conditions: { statuses: ['SUCCESS'] },
+        exportMime: 'text/csv',
+      },
+    } as Job<OrderLogExportJob>);
+    const { Sheets, SheetNames } = XLSX.read(savedFile);
+    const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
+    expect(parsed.length).toBe(2);
+
+    const [, data] = parsed;
+    expect(data['訂單狀態']).toBe('SUCCESS');
+    expect(data['會員姓名']).toBe(`${testMember.name}(${testMember.username})`);
+    expect(data['會員信箱']).toBe(testMember.email);
 
     const auditLogs = await memberAuditLogRepo.find({});
     expect(auditLogs.length).toBe(1);
