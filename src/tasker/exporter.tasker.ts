@@ -72,6 +72,7 @@ export class ExporterTasker extends Tasker {
         OrderService,
         OrderInfrastructure,
         CouponInfrastructure,
+        AppInfrastructure,
         VoucherInfrastructure,
         PaymentInfrastructure,
         SharingCodeInfrastructure,
@@ -87,6 +88,7 @@ export class ExporterTasker extends Tasker {
     private readonly mailService: EmailService,
     private readonly orderService: OrderService,
     private readonly memberInfra: MemberInfrastructure,
+    private readonly appInfra: AppInfrastructure,
     // @InjectQueue(MailerTasker.name) private readonly mailerQueue: Queue,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager() private readonly entityManager: EntityManager,
@@ -108,7 +110,12 @@ export class ExporterTasker extends Tasker {
         { id: invokerMemberId },
         this.entityManager,
       );
-      const admins = await this.memberInfra.getMembersByConditions(appId, { role: 'app-owner' }, this.entityManager);
+      const appSettings = await this.appInfra.getAppSettings(appId, this.entityManager);
+      const exportToAllAdmin = appSettings.find((setting) => setting.key === 'export.to_all_admins')?.value;
+      let admins = [];
+      if (exportToAllAdmin === '1') {
+        admins = await this.memberInfra.getMembersByConditions(appId, { role: 'app-owner' }, this.entityManager);
+      }
 
       const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}.${ext}`;
       const { ETag } = await this.storageService.saveFilesInBucketStorage({
