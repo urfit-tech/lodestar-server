@@ -44,4 +44,12 @@ export class PaymentInfrastructure {
     const paymentLogRepo = manager.getRepository(PaymentLog);
     return paymentLogRepo.save(isArray(paymentLogs) ? paymentLogs : [paymentLogs]);
   }
+
+  async getPaymentLogsByOrderIds(orderIds: Array<string>, manager: EntityManager): Promise<Array<PaymentLog>> {
+    const paymentLogRepo = manager.getRepository(PaymentLog);
+    const paymentLogs = await paymentLogRepo.find({
+      where: { orderId: In(orderIds) },
+    });
+    return paymentLogs;
+  }
 }

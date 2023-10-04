@@ -1,6 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
 import { Member } from '~/member/entity/member.entity';
-import { Permission } from './Permission';
+import { Permission } from '~/permission/entity/permission.entity';
 
 @Index('member_permission_pkey', ['id'], { unique: true })
 @Entity('member_permission_extra', { schema: 'public' })

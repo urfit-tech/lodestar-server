@@ -1,8 +1,10 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
+import { Member } from '~/member/entity/member.entity';
+
 import { IssueReaction } from './IssueReaction';
 import { IssueReply } from './IssueReply';
-import { Member } from '~/member/entity/member.entity';
 
 @Index('issue_pkey', ['id'], { unique: true })
 @Entity('issue', { schema: 'public' })

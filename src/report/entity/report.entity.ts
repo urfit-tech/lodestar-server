@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
-import { App } from '~/entity/App';
+
+import { App } from '~/app/entity/app.entity';
 
 @Index('report_pkey', ['id'], { unique: true })
 @Entity('report', { schema: 'public' })

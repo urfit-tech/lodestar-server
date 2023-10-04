@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
 
 @Index('sharing_code_pkey', ['id'], { unique: true })
 @Entity('sharing_code', { schema: 'public' })
@@ -9,6 +10,9 @@ export class SharingCode {
 
   @Column('text', { name: 'path' })
   path: string;
+
+  @Column('text', { name: 'app_id' })
+  appId: string;
 
   @Column('text', { name: 'code' })
   code: string;

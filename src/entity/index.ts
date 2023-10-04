@@ -5,11 +5,9 @@ import { ActivitySession } from './ActivitySession';
 import { ActivitySessionTicket } from './ActivitySessionTicket';
 import { ActivityTag } from './ActivityTag';
 import { ActivityTicket } from './ActivityTicket';
-import { App } from './App';
 import { AppAdmin } from './AppAdmin';
 import { AppChannel } from './AppChannel';
 import { AppDefaultPermission } from './AppDefaultPermission';
-import { AppEmailTemplate } from './AppEmailTemplate';
 import { AppExtendedModule } from './AppExtendedModule';
 import { AppLanguage } from './AppLanguage';
 import { AppNav } from './AppNav';
@@ -39,7 +37,7 @@ import { CommentReaction } from './CommentReaction';
 import { CommentReply } from './CommentReply';
 import { CommentReplyReaction } from './CommentReplyReaction';
 import { Contract } from './Contract';
-import { Coupon } from './Coupon';
+import { Coupon } from '../coupon/entity/coupon.entity';
 import { CouponCode } from './CouponCode';
 import { CouponPlan } from './CouponPlan';
 import { CouponPlanProduct } from './CouponPlanProduct';
@@ -80,9 +78,7 @@ import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { MemberCard } from './MemberCard';
 import { MemberCertificate } from './MemberCertificate';
 import { MemberContract } from './MemberContract';
-import { MemberDevice } from './MemberDevice';
 import { MemberNote } from './MemberNote';
-import { MemberOauth } from './MemberOauth';
 import { MemberPermissionExtra } from './MemberPermissionExtra';
 import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 import { MemberShop } from './MemberShop';
@@ -101,15 +97,14 @@ import { Migrations } from './Migrations';
 import { Module } from './Module';
 import { Notification } from './Notification';
 import { OrderContact } from './OrderContact';
-import { OrderDiscount } from './OrderDiscount';
-import { OrderExecutor } from './OrderExecutor';
+import { OrderDiscount } from '../order/entity/order_discount.entity';
+import { OrderExecutor } from '../order/entity/order_executor.entity';
 import { OrderProductFile } from './OrderProductFile';
 import { Org } from './Org';
 import { Package } from './Package';
 import { PackageItem } from './PackageItem';
 import { PackageItemGroup } from './PackageItemGroup';
 import { PackageSection } from './PackageSection';
-import { Permission } from './Permission';
 import { PermissionGroup } from './PermissionGroup';
 import { PermissionGroupPermission } from './PermissionGroupPermission';
 import { Playlist } from './Playlist';
@@ -184,7 +179,7 @@ import { RolePermission } from './RolePermission';
 import { SearchTag } from './SearchTag';
 import { Service } from './Service';
 import { Setting } from './Setting';
-import { SharingCode } from './SharingCode';
+import { SharingCode } from '../sharingCode/entity/sharing_code.entity.';
 import { SignupProperty } from './SignupProperty';
 import { SmsVerificationCode } from './SmsVerificationCode';
 import { SocialCard } from './SocialCard';
@@ -196,12 +191,14 @@ import { UserOauth } from './UserOauth';
 import { UserPermission } from './UserPermission';
 import { Venue } from './Venue';
 import { VenueSeat } from './VenueSeat';
-import { Voucher } from './Voucher';
+import { Voucher } from '../voucher/entity/voucher.entity';
 import { VoucherCode } from './VoucherCode';
 import { VoucherPlan } from './VoucherPlan';
 import { VoucherPlanProduct } from './VoucherPlanProduct';
 import { WebhookLog } from './WebhookLog';
 
+import { App } from '~/app/entity/app.entity';
+import { AppEmailTemplate } from '~/app/entity/app_email_template.entity';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { AppModule } from '~/app/entity/app_module.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
@@ -209,12 +206,16 @@ import { AppSetting } from '~/app/entity/app_setting.entity';
 import { Invoice } from '~/invoice/invoice.entity';
 import { Attachment } from '~/media/attachment.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
+import { MemberDevice } from '~/member/entity/member_device.entity';
+import { MemberOauth } from '~/member/entity/member_oauth.entity';
+import { MemberPermission } from '~/member/entity/member_permission.entity';
 import { MemberPhone } from '~/member/entity/member_phone.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
+import { Permission } from '~/permission/entity/permission.entity';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { TableLog } from '~/table_log/table_log.entity';
 import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
@@ -315,6 +316,7 @@ export const PostgresEntities = [
   MemberDevice,
   MemberNote,
   MemberOauth,
+  MemberPermission,
   MemberPermissionExtra,
   MemberPermissionGroup,
   MemberPhone,

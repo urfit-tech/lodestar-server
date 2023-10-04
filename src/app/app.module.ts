@@ -1,9 +1,19 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module, Logger } from '@nestjs/common';
+import { PermissionModule } from '~/permission/permission.module';
 
+import { UtilityModule } from '~/utility/utility.module';
+
+import { AppController } from './app.controller';
+import { AppInfrastructure } from './app.infra';
 import { AppService } from './app.service';
 
 @Module({
-  providers: [AppService],
-  exports: [AppService],
+  controllers: [AppController],
+  imports: [
+    forwardRef(() => UtilityModule),
+    PermissionModule,
+  ],
+  providers: [Logger, AppService, AppInfrastructure],
+  exports: [AppService, AppInfrastructure],
 })
 export class AppModule {}

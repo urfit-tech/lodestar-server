@@ -1,8 +1,9 @@
 import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { AppDefaultPermission } from './AppDefaultPermission';
-import { MemberPermissionExtra } from './MemberPermissionExtra';
-import { PermissionGroupPermission } from './PermissionGroupPermission';
-import { RolePermission } from './RolePermission';
+
+import { AppDefaultPermission } from '~/entity/AppDefaultPermission';
+import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
+import { PermissionGroupPermission } from '~/entity/PermissionGroupPermission';
+import { RolePermission } from '~/entity/RolePermission';
 
 @Index('permission_pkey', ['id'], { unique: true })
 @Entity('permission', { schema: 'public' })

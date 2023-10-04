@@ -1,6 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { App } from './App';
+
+import { App } from '~/app/entity/app.entity';
 import { Member } from '~/member/entity/member.entity';
+
 import { MemberShop } from './MemberShop';
 import { MerchandiseCategory } from './MerchandiseCategory';
 import { MerchandiseFile } from './MerchandiseFile';

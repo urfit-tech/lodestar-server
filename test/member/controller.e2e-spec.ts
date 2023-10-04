@@ -13,12 +13,12 @@ import { ApplicationModule } from '~/application.module';
 import { ApiExceptionFilter } from '~/api.filter';
 import { ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker } from '~/tasker/exporter.tasker';
-import { App } from '~/entity/App';
 import { AppPlan } from '~/entity/AppPlan';
+import { App } from '~/app/entity/app.entity';
+import { AppHost } from '~/app/entity/app_host.entity';
 import { Member } from '~/member/entity/member.entity';
 import { MemberGetResultDTO } from '~/member/member.dto';
 
-import { app, appPlan, memberProperty } from '../data';
 import { Property } from '~/definition/entity/property.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
@@ -29,12 +29,15 @@ import { MemberCategory } from '~/member/entity/member_category.entity';
 import { PermissionGroup } from '~/entity/PermissionGroup';
 import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 
+import { app, appHost, appPlan, memberProperty } from '../data';
+
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
 
   let manager: EntityManager;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
+  let appHostRepo: Repository<AppHost>;
   let memberRepo: Repository<Member>;
   let propertyRepo: Repository<Property>;
   let tagRepo: Repository<Tag>;
@@ -58,6 +61,7 @@ describe('MemberController (e2e)', () => {
     manager = application.get<EntityManager>(getEntityManagerToken());
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
+    appHostRepo = manager.getRepository(AppHost);
     memberRepo = manager.getRepository(Member);
     propertyRepo = manager.getRepository(Property);
     tagRepo = manager.getRepository(Tag);
@@ -79,11 +83,13 @@ describe('MemberController (e2e)', () => {
     await tagRepo.delete({});
     await categoryRepo.delete({});
     await permissionGroupRepo.delete({});
+    await appHostRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
+    await appHostRepo.save(appHost);
 
     await application.init();
   });
@@ -99,6 +105,7 @@ describe('MemberController (e2e)', () => {
     await tagRepo.delete({});
     await categoryRepo.delete({});
     await permissionGroupRepo.delete({});
+    await appHostRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
 
@@ -112,6 +119,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer something`)
+        .set('host', appHost.host)
         .send({
           appId: app.id,
           fileInfos: [],
@@ -134,6 +142,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({})
         .expect(401);
       expect(res.body.message).toBe('missing required permission');
@@ -156,6 +165,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           option: {
             nextToken: '123',
@@ -197,6 +207,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({})
         .expect(200);
       const { data: fetched }: MemberGetResultDTO = res.body;
@@ -239,6 +250,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: { name: '%name%' },
         })
@@ -296,6 +308,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: { managerName: `%${managerMember.name}%` },
         })
@@ -340,6 +353,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: { email: '%example.com%' },
         })
@@ -384,6 +398,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             name: '%name%',
@@ -426,6 +441,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .get(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             name: '%name%',
@@ -480,6 +496,7 @@ describe('MemberController (e2e)', () => {
         res = await request(application.getHttpServer())
           .get(route)
           .set('Authorization', `Bearer ${token}`)
+          .set('host', appHost.host)
           .send({
             option,
             condition: {
@@ -503,6 +520,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer something`)
+        .set('host', appHost.host)
         .send({
           appId: app.id,
           fileInfos: [],
@@ -525,6 +543,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({})
         .expect(401);
       expect(res.body.message).toBe('missing required permission');
@@ -547,6 +566,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           option: {
             nextToken: '123',
@@ -588,6 +608,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({})
         .expect(201);
       const { data: fetched }: MemberGetResultDTO = res.body;
@@ -630,6 +651,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: { name: '%name%' },
         })
@@ -687,6 +709,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: { managerName: `%${managerMember.name}%` },
         })
@@ -741,6 +764,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             properties: [
@@ -797,6 +821,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             properties: [
@@ -850,6 +875,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             phone: '%09000000001%',
@@ -899,6 +925,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             phone: '%0000%',
@@ -953,6 +980,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             tag: '%tag 1%',
@@ -1007,6 +1035,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             tag: '%tag%',
@@ -1064,6 +1093,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             category: '%category 1%',
@@ -1121,6 +1151,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             category: '%category%',
@@ -1175,6 +1206,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             permissionGroup: 'test permission group 1',
@@ -1217,6 +1249,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             name: '%name%',
@@ -1259,6 +1292,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           condition: {
             name: '%name%',
@@ -1313,6 +1347,7 @@ describe('MemberController (e2e)', () => {
         res = await request(application.getHttpServer())
           .post(route)
           .set('Authorization', `Bearer ${token}`)
+          .set('host', appHost.host)
           .send({
             option,
             condition: {
@@ -1336,6 +1371,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer something`)
+        .set('host', appHost.host)
         .send({
           appId: app.id,
           fileInfos: [],
@@ -1357,6 +1393,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({})
         .expect(400);
     });
@@ -1377,6 +1414,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           appId: app.id,
           fileInfos: [
@@ -1408,6 +1446,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', 'Bearer something')
+        .set('host', appHost.host)
         .send({
           appId: app.id,
           memberIds: [],
@@ -1430,6 +1469,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({})
         .expect(400);
     });
@@ -1450,6 +1490,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .post(route)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .send({
           appId: app.id,
           memberIds: [],

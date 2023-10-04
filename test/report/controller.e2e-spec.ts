@@ -1,18 +1,21 @@
+import { EntityManager, Repository } from 'typeorm';
+import request from 'supertest';
+import { v4 } from 'uuid';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
+import { getEntityManagerToken } from '@nestjs/typeorm';
+
 import { ApplicationModule } from '~/application.module';
 import { Role } from '~/entity/Role';
-import { Member } from '~/member/entity/member.entity';
-import { App } from '~/entity/App';
 import { AppPlan } from '~/entity/AppPlan';
+import { App } from '~/app/entity/app.entity';
+import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
-import { Report } from '../../src/report/entity/report.entity';
-import { EntityManager, Repository } from 'typeorm';
 import { AppSecret } from '~/app/entity/app_secret.entity';
-import { v4 } from 'uuid';
-import { role, app, appPlan, appSecret, appSetting } from '~/../test/data';
-import { getEntityManagerToken } from '@nestjs/typeorm';
+import { Member } from '~/member/entity/member.entity';
+import { Report } from '~/report/entity/report.entity';
+
+import { role, app, appPlan, appSecret, appSetting, appHost } from '../data';
 
 describe('ReportController (e2e)', () => {
   let application: INestApplication;
@@ -20,6 +23,7 @@ describe('ReportController (e2e)', () => {
   let roleRepo: Repository<Role>;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
+  let appHostRepo: Repository<AppHost>;
   let appSecretRepo: Repository<AppSecret>;
   let appSettingRepo: Repository<AppSetting>;
   let memberRepo: Repository<Member>;
@@ -35,6 +39,7 @@ describe('ReportController (e2e)', () => {
     roleRepo = manager.getRepository(Role);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
+    appHostRepo = manager.getRepository(AppHost);
     appSecretRepo = manager.getRepository(AppSecret);
     appSettingRepo = manager.getRepository(AppSetting);
     memberRepo = manager.getRepository(Member);
@@ -42,6 +47,7 @@ describe('ReportController (e2e)', () => {
 
     await reportRepo.delete({});
     await memberRepo.delete({});
+    await appHostRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
     await appRepo.delete({});
@@ -51,6 +57,7 @@ describe('ReportController (e2e)', () => {
     await roleRepo.save(role);
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
+    await appHostRepo.save(appHost);
     await appSecretRepo.save(appSecret);
     await appSettingRepo.save(appSetting);
 
@@ -60,6 +67,7 @@ describe('ReportController (e2e)', () => {
   afterEach(async () => {
     await reportRepo.delete({});
     await memberRepo.delete({});
+    await appHostRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
     await appRepo.delete({});
@@ -89,6 +97,7 @@ describe('ReportController (e2e)', () => {
     it('should AuthToken is invalid', async () => {
       const requestHeader = {
         authorization: 'Bearer ' + '',
+        host: 'test.something.com',
       };
 
       await request(application.getHttpServer())
@@ -105,6 +114,7 @@ describe('ReportController (e2e)', () => {
       await reportRepo.save(metabaseReport);
       const tokenResponse = await request(application.getHttpServer())
         .post(authTokenRoute)
+        .set('host', appHost.host)
         .send({ clientId: 'test', key: 'testKey', permissions: [] });
       const {
         result: { authToken },
@@ -112,6 +122,7 @@ describe('ReportController (e2e)', () => {
 
       const requestHeader = {
         Authorization: 'Bearer ' + authToken,
+        host: 'test.something.com',
       };
 
       await request(application.getHttpServer())

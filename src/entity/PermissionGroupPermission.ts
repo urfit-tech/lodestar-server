@@ -1,5 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Permission } from './Permission';
+
+import { Permission } from '~/permission/entity/permission.entity';
+
 import { PermissionGroup } from './PermissionGroup';
 
 @Index('permission_group_permission_pkey', ['id'], { unique: true })

@@ -40,7 +40,9 @@ jobs:
           parse_json: true
       
       - name: Install
+        # bcrypt depends on post-scripts since --ignore-scripts flag will disable it.
         run: |
+          yarn add bcrypt
           yarn install --ignore-scripts --netwrok-timeout 100000
           curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
 

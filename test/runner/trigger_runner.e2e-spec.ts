@@ -5,7 +5,7 @@ import { getEntityManagerToken } from '@nestjs/typeorm';
 
 import { Setting } from '~/entity/Setting';
 import { AppPlan } from '~/entity/AppPlan';
-import { App } from '~/entity/App';
+import { App } from '~/app/entity/app.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppHost } from '~/app/entity/app_host.entity';

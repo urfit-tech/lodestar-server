@@ -1,37 +1,37 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
 
-import { AppHost } from '~/app/entity/app_host.entity';
-import { AppSecret } from '~/app/entity/app_secret.entity';
-import { AppSetting } from '~/app/entity/app_setting.entity';
-
-import { Activity } from './Activity';
-import { AppAdmin } from './AppAdmin';
-import { AppChannel } from './AppChannel';
-import { AppDefaultPermission } from './AppDefaultPermission';
-import { AppEmailTemplate } from './AppEmailTemplate';
-import { AppExtendedModule } from './AppExtendedModule';
-import { AppLanguage } from './AppLanguage';
-import { AppNav } from './AppNav';
-import { AppPlan } from './AppPlan';
-import { AppUsage } from './AppUsage';
-import { AppWebhook } from './AppWebhook';
-import { Card } from './Card';
-import { CartItem } from './CartItem';
-import { Comment } from './Comment';
-import { Issue } from './Issue';
+import { Activity } from '~/entity/Activity';
+import { AppAdmin } from '~/entity/AppAdmin';
+import { AppChannel } from '~/entity/AppChannel';
+import { AppDefaultPermission } from '~/entity/AppDefaultPermission';
+import { AppExtendedModule } from '~/entity/AppExtendedModule';
+import { AppLanguage } from '~/entity/AppLanguage';
+import { AppNav } from '~/entity/AppNav';
+import { AppPlan } from '~/entity/AppPlan';
+import { AppUsage } from '~/entity/AppUsage';
+import { AppWebhook } from '~/entity/AppWebhook';
+import { Card } from '~/entity/Card';
+import { CartItem } from '~/entity/CartItem';
+import { Comment } from '~/entity/Comment';
+import { Issue } from '~/entity/Issue';
+import { Merchandise } from '~/entity/Merchandise';
+import { Package } from '~/entity/Package';
+import { Podcast } from '~/entity/Podcast';
+import { Post } from '~/entity/Post';
+import { ProductChannel } from '~/entity/ProductChannel';
+import { Program } from '~/entity/Program';
+import { ProgramPackage } from '~/entity/ProgramPackage';
+import { SharingCode } from '~/sharingCode/entity/sharing_code.entity.';
+import { SmsVerificationCode } from '~/entity/SmsVerificationCode';
+import { VoucherPlan } from '~/entity/VoucherPlan';
 import { Member } from '~/member/entity/member.entity';
-import { Merchandise } from './Merchandise';
-import { Package } from './Package';
-import { Podcast } from './Podcast';
-import { Post } from './Post';
-import { ProductChannel } from './ProductChannel';
-import { Program } from './Program';
-import { ProgramPackage } from './ProgramPackage';
 import { Property } from '~/definition/entity/property.entity';
-import { SharingCode } from './SharingCode';
-import { SmsVerificationCode } from './SmsVerificationCode';
-import { VoucherPlan } from './VoucherPlan';
 import { Report } from '~/report/entity/report.entity';
+
+import { AppEmailTemplate } from './app_email_template.entity';
+import { AppHost } from './app_host.entity';
+import { AppSecret } from './app_secret.entity';
+import { AppSetting } from './app_setting.entity';
 
 @Index('App_pkey', ['id'], { unique: true })
 @Index('app_symbol_key', ['symbol'], { unique: true })

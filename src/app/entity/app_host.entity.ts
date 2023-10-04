@@ -1,12 +1,15 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
-import { App } from '~/entity/App';
+import { App } from './app.entity';
 
 @Index('app_host_pkey', ['host'], { unique: true })
 @Entity('app_host', { schema: 'public' })
 export class AppHost {
   @PrimaryColumn()
   host: string;
+
+  @Column('text', { name: 'app_id' })
+  appId: string;
 
   @Column('integer', { name: 'priority', default: () => 0 })
   priority: number;

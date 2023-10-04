@@ -7,16 +7,17 @@ import { Test } from '@nestjs/testing';
 
 import { ApplicationModule } from '~/application.module';
 import { AppPlan } from '~/entity/AppPlan';
-import { App } from '~/entity/App';
 import { Category } from '~/definition/entity/category.entity';
 import { Property } from '~/definition/entity/property.entity';
 import { Tag } from '~/definition/entity/tag.entity';
+import { App } from '~/app/entity/app.entity';
 import { MemberService } from '~/member/member.service';
 import { Member } from '~/member/entity/member.entity';
 import { MemberPhone } from '~/member/entity/member_phone.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
+
 import { anotherCategory, anotherMemberTag, app, appPlan, category, memberProperty, memberTag } from '../data';
 
 describe('MemberService (e2e)', () => {

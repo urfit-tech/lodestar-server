@@ -1,15 +1,20 @@
-import { EntityManager, FindOptionsWhere, OrderByCondition, In } from 'typeorm';
+import { EntityManager, FindOptionsWhere, OrderByCondition, In, Equal } from 'typeorm';
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
-import { MemberProperty } from './entity/member_property.entity';
+import { first, keys, omit, pick, values } from 'lodash';
+
 import { Member } from './entity/member.entity';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
-import { first, keys, omit, pick, values } from 'lodash';
-import { MemberPropertiesCondition } from './member.dto';
-import { MemberPhone } from './entity/member_phone.entity';
-import { MemberTag } from './entity/member_tag.entity';
 import { MemberCategory } from './entity/member_category.entity';
-import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
+import { MemberDevice } from './entity/member_device.entity';
+import { MemberOauth } from './entity/member_oauth.entity';
+import { MemberPermission } from './entity/member_permission.entity';
+import { MemberPermissionGroup } from './entity/member_permission_group.entity';
+import { MemberPhone } from './entity/member_phone.entity';
+import { MemberProperty } from './entity/member_property.entity';
+import { MemberTag } from './entity/member_tag.entity';
+import { MemberPropertiesCondition } from './member.dto';
+import { LoginMemberMetadata } from './member.type';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -128,12 +133,101 @@ export class MemberInfrastructure {
     });
   }
 
+  async getMemberDevices(memberId: string, manager: EntityManager): Promise<Array<MemberDevice>> {
+    const memberDeviceRepo = manager.getRepository(MemberDevice);
+    const founds = await memberDeviceRepo.findBy({ memberId });
+    return founds;
+  }
+
+  async getLoginMemberMetadata(memberId: string, manager: EntityManager): Promise<Array<LoginMemberMetadata>> {
+    const builder = manager
+      .createQueryBuilder()
+      .select('to_json(array_agg(distinct member_phone.*))', 'phones')
+      .addSelect('to_json(array_agg(distinct member_oauth.*))', 'oauths')
+      .addSelect('to_json(array_agg(distinct member_permission.*))', 'permissions')
+      .from(Member, 'member')
+      .leftJoin(MemberPhone, 'member_phone', 'member.id = member_phone.member_id')
+      .leftJoin(MemberOauth, 'member_oauth', 'member.id = member_oauth.member_id')
+      .leftJoin(MemberPermission, 'member_permission', 'member.id = member_permission.member_id')
+      .where(`member.id = '${memberId}'`);
+
+    const datas = await builder.execute();
+
+    return (datas || []).map((data) => {
+      const filteredPhones = (data.phones || []).filter((phone) => phone);
+      const filteredOauths = (data.oauths || []).filter((oauth) => oauth);
+      const filteredPermissions = (data.permissions || []).filter((permission) => permission);
+
+      return {
+        phones: filteredPhones,
+        oauths: filteredOauths.reduce((accum, v) => {
+          accum[v.provider] = {}
+          Object.keys(v?.options || {}).forEach((key) => {
+            if (key.includes('id')) {
+              accum[v.provider][key] = v.options[key]
+            }
+          })
+          return accum
+        }, {} as { [key: string]: any }),
+        permissions: filteredPermissions.map((permission) => ({
+          memberId: permission.member_id,
+          permissionId: permission.permission_id, 
+        })),
+      };
+    });
+  }
+
+
   async getMemberPropertiesByIds(memberId: string, propertyIds: Array<string>, manager: EntityManager) {
     const memberPropertyRepo = manager.getRepository(MemberProperty);
     const founds = await memberPropertyRepo.find({
       where: { id: In(propertyIds), memberId },
     });
     return founds;
+  }
+  
+  async getGeneralLoginMemberByUsernameOrEmail(appId: string, usernameOrEmail: string, manager: EntityManager): Promise<Member | null> {
+    const memberRepo = manager.getRepository(Member);
+    return memberRepo.findOne({
+      where: [
+        { appId: Equal(appId), username: Equal(usernameOrEmail) },
+        { appId: Equal(appId), email: Equal(usernameOrEmail) },
+      ],
+    });
+  }
+
+  async upsertMemberDevice(
+    memberId: string,
+    fingerPrintId: string,
+    options: {
+      browser: string;
+      osName: string;
+      ipAddress: string | null;
+      type: string;
+      options: Record<string, any>;
+    },
+    manager: EntityManager,
+  ): Promise<MemberDevice> {
+    const memberDeviceRepo = manager.getRepository(MemberDevice);
+    const found: MemberDevice = (
+      await memberDeviceRepo.findOneBy({
+        memberId, fingerprintId: fingerPrintId,
+      })
+      || memberDeviceRepo.create({ memberId, fingerprintId: fingerPrintId })
+    );
+
+    const { browser, osName, ipAddress, type } = options;
+    const currentDatetime = new Date();
+    found.loginedAt = currentDatetime;
+    found.lastLoginAt = currentDatetime;
+    found.browser = browser;
+    found.osName = osName;
+    found.ipAddress = ipAddress;
+    found.isLogin = true;
+    found.type = type;
+    found.options = options;
+
+    return memberDeviceRepo.save(found);
   }
 
   async insertMemberAuditLog(

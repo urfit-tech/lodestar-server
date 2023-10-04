@@ -48,6 +48,7 @@ export class ImporterTasker extends Tasker {
     private readonly storageService: StorageService,
     private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
+    // @InjectQueue(MailerTasker.name) private readonly mailerQueue: Queue,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
