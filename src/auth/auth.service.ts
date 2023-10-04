@@ -20,9 +20,9 @@ import { CacheService } from '~/utility/cache/cache.service';
 import { APIException } from '~/api.excetion';
 import { AppCache } from '~/app/app.type';
 
+import { AuthAuditLog } from './entity/auth_audit_log.entity';
 import { JwtDTO } from './auth.dto';
 import { CrossServerTokenDTO, LoginStatus } from './auth.type';
-import { AuthAuditLog } from './entity/auth_audit_log.entity';
 import { AuthInfrastructure } from './auth.infra';
 
 @Injectable()
@@ -55,7 +55,7 @@ export class AuthService {
       appId: string;
       account: string;
       password: string;
-      loggedInMembers?: PublicMember[] | null;
+      loggedInMembers: PublicMember[];
     },
     manager?: EntityManager,
   ): Promise<{ status: LoginStatus; authToken?: string; member?: any; }> {
@@ -83,18 +83,7 @@ export class AuthService {
         await this.insertLastLoginJobIntoQueue(member.id);
       }
 
-      const publicMember: PublicMember = {
-        orgId: orgId || '',
-        id: member.id,
-        appId: member.appId,
-        email: member.email,
-        username: member.username,
-        name: member.name,
-        pictureUrl: member.pictureUrl,
-        isBusiness: member.isBusiness,
-      };
-
-      const jwtPayload = await this.buildGeneralLoginJwtPayload(orgId, member, publicMember, loggedInMembers, manager);
+      const jwtPayload = await this.buildJwtPayload(orgId, member, loggedInMembers, manager);
       const authToken = await this.signJWT(appCache, jwtPayload, '1 day', manager);
 
       return { status: LoginStatus.SUCCESS, member, authToken };
@@ -135,13 +124,23 @@ export class AuthService {
     return jwtVerify(token, this.hasuraJwtSecret) as Record<string, any>;
   }
 
-  private async buildGeneralLoginJwtPayload(
+  private async buildJwtPayload(
     orgId: string | undefined,
     member: Member,
-    publicMember: PublicMember,
     logginedInMembersInSession: Array<PublicMember>,
     manager: EntityManager,
   ): Promise<JwtDTO> {
+    const publicMember: PublicMember = {
+      orgId: orgId || '',
+      id: member.id,
+      appId: member.appId,
+      email: member.email,
+      username: member.username,
+      name: member.name,
+      pictureUrl: member.pictureUrl,
+      isBusiness: member.isBusiness,
+    };
+
     const { id: memberId } = member;
     const metadata = await this.memberInfra.getLoginMemberMetadata(memberId, manager);
     const { phones, oauths, permissions } = metadata.pop();
