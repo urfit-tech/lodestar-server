@@ -145,10 +145,11 @@ export class MemberInfrastructure {
       .select('to_json(array_agg(distinct member_phone.*))', 'phones')
       .addSelect('to_json(array_agg(distinct member_oauth.*))', 'oauths')
       .addSelect('to_json(array_agg(distinct member_permission.*))', 'permissions')
-      .from(MemberPhone, 'member_phone')
-      .leftJoin(MemberOauth, 'member_oauth', 'member_phone.member_id = member_oauth.member_id')
-      .leftJoin(MemberPermission, 'member_permission', 'member_phone.member_id = member_permission.member_id')
-      .where(`member_phone.member_id = '${memberId}'`);
+      .from(Member, 'member')
+      .leftJoin(MemberPhone, 'member_phone', 'member_phone.member_id = member.id')
+      .leftJoin(MemberOauth, 'member_oauth', 'member_oauth.member_id = member.id')
+      .leftJoin(MemberPermission, 'member_permission', 'member_permission.member_id = member.id')
+      .where(`member.id = '${memberId}'`);
 
     const datas = await builder.execute();
 
