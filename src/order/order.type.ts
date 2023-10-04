@@ -8,13 +8,3 @@ export interface TransferReceivedOrderToken {
   iat: number;
   exp: number;
 }
-
-export interface TransferReceivedOrderDTO {
-  memberId: string;
-  orderId: string;
-}
-
-export interface TransferReceivedOrderBodyDTO {
-  token: string;
-  memberId: string;
-}
