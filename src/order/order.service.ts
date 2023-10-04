@@ -35,15 +35,9 @@ export class OrderService {
     private readonly productInfra: ProductInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
-  async transferReceivedOrder(dto: TransferReceivedOrderDTO) {
+  public async transferReceivedOrder(dto: TransferReceivedOrderDTO) {
     const OrderLogRepo = this.entityManager.getRepository(OrderLog);
     const { orderId, memberId } = dto;
-    if (!memberId) {
-      throw new APIException({ code: 'E_NULL_MEMBER', message: 'memberId is null or undefined' });
-    }
-    if (!orderId) {
-      throw new APIException({ code: 'E_NULL_ORDER', message: 'orderId is null or undefined' });
-    }
     try {
       const updateResult = await OrderLogRepo.update(orderId, {
         memberId: memberId,
@@ -54,7 +48,7 @@ export class OrderService {
       throw new APIException({ code: 'E_DB_UPDATE', message: 'data update failed' });
     }
   }
-  async getOrderById(orderId: string) {
+  public async getOrderById(orderId: string) {
     const OrderLogRepo = this.entityManager.getRepository(OrderLog);
     let orderLog;
     try {
@@ -69,7 +63,7 @@ export class OrderService {
     return orderLog;
   }
 
-  async exportOrderLogsFromDatabase(
+  private async exportOrderLogsFromDatabase(
     appId: string,
     conditions: OrderExportDTO,
     discountTargets?: Array<string>,
@@ -95,7 +89,7 @@ export class OrderService {
           }),
         }
       : {};
-    const warpSelect: FindOptionsSelect<OrderLog> = {
+    const wrapSelect: FindOptionsSelect<OrderLog> = {
       id: true,
       status: true,
       createdAt: true,
@@ -149,14 +143,14 @@ export class OrderService {
       appId,
       this.entityManager,
       wrapCondition,
-      warpSelect,
+      wrapSelect,
       wrapOrder,
     );
 
     return orderLogs;
   }
 
-  async exportOrderProductsFromDatabase(
+  private async exportOrderProductsFromDatabase(
     appId: string,
     conditions: OrderExportDTO,
     discountTargets?: Array<string>,
@@ -182,7 +176,7 @@ export class OrderService {
           }),
         }
       : {};
-    const warpSelect: FindOptionsSelect<OrderProduct> = {
+    const wrapSelect: FindOptionsSelect<OrderProduct> = {
       productId: true,
       price: true,
       name: true,
@@ -209,14 +203,14 @@ export class OrderService {
       appId,
       this.entityManager,
       wrapCondition,
-      warpSelect,
+      wrapSelect,
       wrapOrder,
     );
 
     return orderProducts;
   }
 
-  async exportOrderDiscountsFromDatabase(
+  private async exportOrderDiscountsFromDatabase(
     appId: string,
     conditions: OrderExportDTO,
     discountTargets?: Array<string>,
@@ -240,7 +234,7 @@ export class OrderService {
           }),
         }
       : {};
-    const warpSelect: FindOptionsSelect<OrderDiscount> = {
+    const wrapSelect: FindOptionsSelect<OrderDiscount> = {
       id: true,
       price: true,
       name: true,
@@ -258,14 +252,14 @@ export class OrderService {
       appId,
       this.entityManager,
       wrapCondition,
-      warpSelect,
+      wrapSelect,
       wrapOrder,
     );
 
     return orderDiscounts;
   }
 
-  async orderLogToRawCsv(
+  public async orderLogToRawCsv(
     headerInfos: OrderLogCsvHeaderMapping,
     orderLogs: Array<OrderLog>,
     coupons: Array<Coupon>,
@@ -424,7 +418,7 @@ export class OrderService {
       .map((each) => each.serializeToCsvRawRow(headerInfos));
   }
 
-  async orderProductToRawCsv(
+  public async orderProductToRawCsv(
     headerInfos: OrderProductCsvHeaderMapping,
     orderProducts: Array<OrderProduct>,
     productOwners: Array<ProductOwner>,
@@ -459,7 +453,7 @@ export class OrderService {
       .map((each) => each.serializeToCsvRawRow(headerInfos));
   }
 
-  async orderDiscountToRawCsv(
+  public async orderDiscountToRawCsv(
     headerInfos: OrderDiscountCsvHeaderMapping,
     orderDiscounts: Array<OrderDiscount>,
   ): Promise<Array<Record<string, any>>> {

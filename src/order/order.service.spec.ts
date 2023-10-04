@@ -1,5 +1,3 @@
-import { v4 } from 'uuid';
-import { EntityManager } from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
@@ -18,9 +16,7 @@ import { OrderLog } from './entity/order_log.entity';
 import { OrderProduct } from './entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { OrderDiscount } from './entity/order_discount.entity';
-import { OrderExecutor } from './entity/order_executor.entity';
 import { Member } from '~/member/entity/member.entity';
-import { Invoice } from '~/invoice/invoice.entity';
 import { Product } from '~/entity/Product';
 
 describe('OrderService', () => {

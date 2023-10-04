@@ -28,7 +28,7 @@ export class OrderController {
   ) {}
 
   @Put('transfer-received-order')
-  async transferOrder(@Body() dto: TransferReceivedOrderBodyDTO) {
+  public async transferOrder(@Body() dto: TransferReceivedOrderBodyDTO) {
     const { token, memberId } = dto;
     let transferOrderToken;
 
@@ -46,11 +46,7 @@ export class OrderController {
   }
 
   @Get(':orderId')
-  async getOrderById(@Param('orderId') orderId: string) {
-    if (!orderId) {
-      throw new APIException({ code: 'E_NULL_ORDER', message: 'orderId is null or undefined' });
-    }
-
+  public async getOrderById(@Param('orderId') orderId: string) {
     const order = await this.orderService.getOrderById(orderId);
     return { code: 'SUCCESS', message: 'Get order successfully.', result: order };
   }
