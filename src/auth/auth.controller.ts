@@ -6,6 +6,7 @@ import { AppCache } from '~/app/app.type';
 import { Local } from '~/decorator';
 
 import { AuthService } from './auth.service';
+import { RefreshTokenDTO } from './auth.dto';
 import { CrossServerTokenDTO, GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus } from './auth.type';
 import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
@@ -109,11 +110,23 @@ export class AuthController {
       };
     } catch (error) {
       this.logger.error(error);
+      return { code: error.name, message: error.message };
+    }
+  }
+
+  @Post('refresh-token')
+  async refreshToken(
+    @Body() body: RefreshTokenDTO,
+  ) {
+    try {
       return {
-        code: error.name,
-        message: error.message,
-        result: null,
+        code: 'SUCCESS',
+        message: 'refresh a new auth token',
+        result: body,
       };
+    } catch (error) {
+      this.logger.error(error);
+      return { code: error.name, message: error.message };
     }
   }
 

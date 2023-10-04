@@ -1,7 +1,7 @@
 import { IsArray, IsBoolean, IsEmail, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { IsUndefinable } from '~/decorator';
+import { IsNullable, IsUndefinable } from '~/decorator';
 import { PublicMember } from '~/member/member.type';
 
 export class JwtDTO {
@@ -60,3 +60,31 @@ export class JwtDTO {
 };
 
 export type JwtMember = JwtDTO;
+
+
+export class GeoLocation {
+  @IsString()
+  @IsNullable()
+  ip: string;
+
+  @IsString()
+  @IsNullable()
+  country: string;
+
+  @IsString()
+  @IsNullable()
+  countryCode: string;
+};
+
+export class RefreshTokenDTO {
+  @IsString()
+  appId: string;
+
+  @IsString()
+  @IsNullable()
+  fingerPrintId: string;
+
+  @ValidateNested()
+  @Type(() => GeoLocation)
+  geoLocation: GeoLocation;
+};
