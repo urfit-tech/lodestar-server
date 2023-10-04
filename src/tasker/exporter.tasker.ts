@@ -208,7 +208,7 @@ export class ExporterTasker extends Tasker {
     await this.mailService.insertEmailJobIntoQueue({
       appId,
       catalog: 'export',
-      targetMemberIds: invokerMember.map((member) => member.id),
+      targetMemberIds: invokerMember.map((member) => member.email),
       partials,
       subject,
       manager,
