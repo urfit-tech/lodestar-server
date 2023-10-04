@@ -146,19 +146,26 @@ export class MemberInfrastructure {
       .addSelect('to_json(array_agg(distinct member_oauth.*))', 'oauths')
       .addSelect('to_json(array_agg(distinct member_permission.*))', 'permissions')
       .from(Member, 'member')
-      .leftJoin(MemberPhone, 'member_phone', 'member_phone.member_id = member.id')
-      .leftJoin(MemberOauth, 'member_oauth', 'member_oauth.member_id = member.id')
-      .leftJoin(MemberPermission, 'member_permission', 'member_permission.member_id = member.id')
+      .leftJoin(MemberPhone, 'member_phone', 'member.id = member_phone.member_id')
+      .leftJoin(MemberOauth, 'member_oauth', 'member.id = member_oauth.member_id')
+      .leftJoin(MemberPermission, 'member_permission', 'member.id = member_permission.member_id')
       .where(`member.id = '${memberId}'`);
 
     const datas = await builder.execute();
 
-    return (datas || []).map((each) => ({
-      permissions: (each.permissions || []).map((permission) => ({
-        memberId: permission.member_id,
-        permissionId: permission.permission_id, 
-      })),
-    }));
+    return (datas || []).map((data) => {
+      const filteredPhones = (data.phones || []).filter((phone) => phone);
+      const filteredOauths = (data.oauths || []).filter((oauth) => oauth);
+      const filteredPermissions = (data.permissions || []).filter((permission) => permission);
+      return {
+        phones: filteredPhones,
+        oauths: filteredOauths,
+        permissions: filteredPermissions.map((permission) => ({
+          memberId: permission.member_id,
+          permissionId: permission.permission_id, 
+        })),
+      };
+    });
   }
 
 
