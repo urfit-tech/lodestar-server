@@ -771,6 +771,18 @@ describe('AuthController (e2e)', () => {
     });
   });
 
+  describe('/auth/refresh-token (POST)', () => {
+    const route = '/auth/refresh-token';
+
+    it('Should raise error due to incorrect payload', async () => {
+      await request(application.getHttpServer())
+        .post(route)
+        .set('host', appHost.host)
+        .send({})
+        .expect(400);
+    });
+  });
+
   describe('/auth/token (POST)', () => {
     const route = '/auth/token';
 
