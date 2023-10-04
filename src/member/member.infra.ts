@@ -3,16 +3,16 @@ import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 import { first, keys, omit, pick, values } from 'lodash';
 
-import { MemberTag } from './entity/member_tag.entity';
-import { MemberCategory } from './entity/member_category.entity';
-import { MemberPermissionGroup } from './entity/member_permission_group.entity';
 import { Member } from './entity/member.entity';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
-import { MemberOauth } from './entity/member_oauth.entity';
-import { MemberProperty } from './entity/member_property.entity';
-import { MemberPhone } from './entity/member_phone.entity';
-import { MemberPermission } from './entity/member_permission.entity';
+import { MemberCategory } from './entity/member_category.entity';
 import { MemberDevice } from './entity/member_device.entity';
+import { MemberOauth } from './entity/member_oauth.entity';
+import { MemberPermission } from './entity/member_permission.entity';
+import { MemberPermissionGroup } from './entity/member_permission_group.entity';
+import { MemberPhone } from './entity/member_phone.entity';
+import { MemberProperty } from './entity/member_property.entity';
+import { MemberTag } from './entity/member_tag.entity';
 import { MemberPropertiesCondition } from './member.dto';
 import { LoginMemberMetadata } from './member.type';
 
@@ -157,9 +157,18 @@ export class MemberInfrastructure {
       const filteredPhones = (data.phones || []).filter((phone) => phone);
       const filteredOauths = (data.oauths || []).filter((oauth) => oauth);
       const filteredPermissions = (data.permissions || []).filter((permission) => permission);
+
       return {
         phones: filteredPhones,
-        oauths: filteredOauths,
+        oauths: filteredOauths.reduce((accum, v) => {
+          accum[v.provider] = {}
+          Object.keys(v?.options || {}).forEach((key) => {
+            if (key.includes('id')) {
+              accum[v.provider][key] = v.options[key]
+            }
+          })
+          return accum
+        }, {} as { [key: string]: any }),
         permissions: filteredPermissions.map((permission) => ({
           memberId: permission.member_id,
           permissionId: permission.permission_id, 

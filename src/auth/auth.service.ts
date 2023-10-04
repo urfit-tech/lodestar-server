@@ -160,6 +160,7 @@ export class AuthService {
       phoneNumber: phones && phones.length > 0 ? phones.pop().phone : '',
       isBusiness: member.isBusiness,
       loggedInMembers: [...loggedInMembers, publicMember],
+      pictureUrl: member.pictureUrl,
       options: oauths || {},
     };
     return plainToInstance(JwtDTO, plain);

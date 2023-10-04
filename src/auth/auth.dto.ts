@@ -51,6 +51,10 @@ export class JwtDTO {
   @IsUndefinable()
   loggedInMembers?: Array<PublicMember>;
 
+  @IsString()
+  @IsOptional()
+  pictureUrl?: string | null;
+
   @IsUndefinable()
   options?: Record<string, any>;
 };
