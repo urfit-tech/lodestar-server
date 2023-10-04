@@ -13,9 +13,18 @@ import { MemberInfrastructure } from '~/member/member.infra';
 import { StorageService } from '~/utility/storage/storage.service';
 
 import { Tasker } from './tasker';
-import { MailJob } from './mailer.tasker';
+import { OrderService } from '~/order/order.service';
+import { OrderInfrastructure } from '~/order/order.infra';
+import { CouponInfrastructure } from '~/coupon/coupon.infra';
+import { PaymentInfrastructure } from '~/payment/payment.infra';
+import { OrderExportDTO } from '~/order/order.dto';
+import { SharingCodeInfrastructure } from '~/sharingCode/sharingCode.infra';
+import { ProductInfrastructure } from '~/product/product.infra';
+import { EmailService } from '~/mailer/email/email.service';
+import { AppInfrastructure } from '~/app/app.infra';
+import { VoucherInfrastructure } from '~/voucher/voucher.infra';
 
-export type ExportCategory = 'member';
+export type ExportCategory = 'member' | 'orderLog' | 'orderProduct' | 'orderDiscount';
 
 export interface ExportJob {
   appId: string;
@@ -29,6 +38,21 @@ export type MemberExportJob = ExportJob & {
   memberIds: Array<string>;
 };
 
+export type OrderLogExportJob = ExportJob & {
+  category: 'orderLog';
+  conditions: OrderExportDTO;
+};
+
+export type OrderProductExportJob = ExportJob & {
+  category: 'orderProduct';
+  conditions: OrderExportDTO;
+};
+
+export type OrderDiscountExportJob = ExportJob & {
+  category: 'orderDiscount';
+  conditions: OrderExportDTO;
+};
+
 @Processor(ExporterTasker.name)
 export class ExporterTasker extends Tasker {
   static forRoot(): DynamicModule {
@@ -39,7 +63,20 @@ export class ExporterTasker extends Tasker {
         // BullModule.registerQueue({ name: MailerTasker.name }),
         BullModule.registerQueue({ name: 'mailer' }),
       ],
-      providers: [StorageService, MemberService, MemberInfrastructure],
+      providers: [
+        StorageService,
+        MemberService,
+        EmailService,
+        AppInfrastructure,
+        MemberInfrastructure,
+        OrderService,
+        OrderInfrastructure,
+        CouponInfrastructure,
+        VoucherInfrastructure,
+        PaymentInfrastructure,
+        SharingCodeInfrastructure,
+        ProductInfrastructure,
+      ],
     };
   }
 
@@ -47,6 +84,8 @@ export class ExporterTasker extends Tasker {
     protected readonly logger: Logger,
     private readonly storageService: StorageService,
     private readonly memberService: MemberService,
+    private readonly mailService: EmailService,
+    private readonly orderService: OrderService,
     private readonly memberInfra: MemberInfrastructure,
     // @InjectQueue(MailerTasker.name) private readonly mailerQueue: Queue,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
@@ -83,12 +122,24 @@ export class ExporterTasker extends Tasker {
 
       await this.memberInfra.insertMemberAuditLog(invokers, signedDownloadUrl, 'download', this.entityManager);
 
-      await this.putEmailQueue(
-        appId,
-        [...invokers, ...admins],
-        '匯出結果(MemberExport)',
-        `檔案下載連結: ${signedDownloadUrl}</br>請在24小時內下載，逾時連結將失效。`,
-      );
+      let subject;
+      switch (job.data.category) {
+        case 'member':
+          subject = '會員匯出結果';
+          break;
+        case 'orderLog':
+          subject = '訂單匯出結果';
+          break;
+        case 'orderProduct':
+          subject = '訂單產品匯出結果';
+          break;
+        case 'orderDiscount':
+          subject = '訂單折扣匯出結果';
+          break;
+      }
+      const partial = { url: signedDownloadUrl, title: subject };
+      await this.putEmailQueue(appId, partial, subject, [...invokers, ...admins], this.entityManager);
+
       this.logger.log(`Export task: ${id} completed.`);
     } catch (error) {
       this.logger.error('Export task error:');
@@ -104,6 +155,18 @@ export class ExporterTasker extends Tasker {
       case 'member':
         const { memberIds } = data as MemberExportJob;
         rawRows = await this.memberService.processExportFromDatabase(appId, memberIds);
+        break;
+      case 'orderLog':
+        const { conditions: orderLogConditions } = data as OrderLogExportJob;
+        rawRows = await this.orderService.processOrderLogExportFromDatabase(appId, orderLogConditions);
+        break;
+      case 'orderProduct':
+        const { conditions: orderProductConditions } = data as OrderProductExportJob;
+        rawRows = await this.orderService.processOrderProductExportFromDatabase(appId, orderProductConditions);
+        break;
+      case 'orderDiscount':
+        const { conditions: orderDiscountConditions } = data as OrderProductExportJob;
+        rawRows = await this.orderService.processOrderDiscountExportFromDatabase(appId, orderDiscountConditions);
         break;
     }
 
@@ -130,21 +193,18 @@ export class ExporterTasker extends Tasker {
 
   private async putEmailQueue(
     appId: string,
-    invokerMember: Array<Member>,
+    partials: Record<string, string>,
     subject: string,
-    content: string,
+    invokerMember: Array<Member>,
+    manager: EntityManager,
   ): Promise<void> {
-    this.mailerQueue.add({
+    await this.mailService.insertEmailJobIntoQueue({
       appId,
-      to: invokerMember.map(({ email }) => email),
+      catalog: 'export',
+      targetMemberIds: invokerMember.map((member) => member.id),
+      partials,
       subject,
-      cc: [],
-      bcc: [],
-      content: `<html>
-        <body>
-          ${content}
-        </body>
-      </html>`,
-    } as MailJob);
+      manager,
+    });
   }
 }
