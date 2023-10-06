@@ -783,7 +783,7 @@ describe('AuthController (e2e)', () => {
     });
 
     it('Should raise E_NO_MEMBER error due to empty session', async () => {
-      await request(application.getHttpServer())
+      const { body } = await request(application.getHttpServer())
         .post(route)
         .set('host', appHost.host)
         .send({
@@ -791,6 +791,8 @@ describe('AuthController (e2e)', () => {
           fingerPrintId: 'not-exists-fingerprint',
         })
         .expect(201);
+      expect(body.code).toBe('E_NO_MEMBER');
+      expect(body.message).toBe('no such member');
     });
   });
 
