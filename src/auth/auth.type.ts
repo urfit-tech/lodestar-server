@@ -7,6 +7,13 @@ export enum LoginStatus {
   SUCCESS,
 }
 
+export enum RefreshStatus {
+  E_NO_MEMBER,
+  E_SESSION_DESTROY,
+  E_NO_DEVICE,
+  SUCCESS,
+}
+
 export class GeneralLoginDTO {
   @IsString()
   appId: string;

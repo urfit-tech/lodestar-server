@@ -2,10 +2,10 @@ import { Body, Controller, Get, Param, Post, Put, UseGuards, Request } from '@ne
 import { InjectQueue } from '@nestjs/bull';
 import { Request as ExRequest } from 'express';
 import { AuthGuard } from '~/auth/auth.guard';
+import { AuthService } from '~/auth/auth.service';
 import { APIException } from '~/api.excetion';
 import { OrderService } from './order.service';
 import { TransferReceivedOrderToken } from './order.type';
-import { AuthService } from '~/auth/auth.service';
 import { TransferReceivedOrderBodyDTO, TransferReceivedOrderDTO, OrderExportDTO } from './order.dto';
 import {
   OrderLogExportJob,
@@ -14,6 +14,8 @@ import {
   OrderDiscountExportJob,
 } from '~/tasker/exporter.tasker';
 import { Queue } from 'bull';
+import { Local } from '~/decorator';
+import { JwtMember } from '~/auth/auth.dto';
 
 @UseGuards(AuthGuard)
 @Controller({
@@ -56,8 +58,9 @@ export class OrderController {
   }
 
   @Post('export')
-  public async exportOrderLogs(@Request() request: ExRequest, @Body() metadata: OrderExportDTO): Promise<void> {
-    const { appId, memberId: invokerMemberId } = (request as any).member;
+  public async exportOrderLogs(@Local('member') member: JwtMember, @Body() metadata: OrderExportDTO): Promise<void> {
+    const { appId, memberId: invokerMemberId } = member;
+
     const { exportMime, ...conditions } = metadata;
     const exportJob: OrderLogExportJob = {
       appId,
@@ -70,8 +73,11 @@ export class OrderController {
   }
 
   @Post('export/products')
-  public async exportOrderProducts(@Request() request: ExRequest, @Body() metadata: OrderExportDTO): Promise<void> {
-    const { appId, memberId: invokerMemberId } = (request as any).member;
+  public async exportOrderProducts(
+    @Local('member') member: JwtMember,
+    @Body() metadata: OrderExportDTO,
+  ): Promise<void> {
+    const { appId, memberId: invokerMemberId } = member;
     const { exportMime, ...conditions } = metadata;
     const exportJob: OrderProductExportJob = {
       appId,
@@ -84,8 +90,11 @@ export class OrderController {
   }
 
   @Post('export/discounts')
-  public async exportOrderDiscounts(@Request() request: ExRequest, @Body() metadata: OrderExportDTO): Promise<void> {
-    const { appId, memberId: invokerMemberId } = (request as any).member;
+  public async exportOrderDiscounts(
+    @Local('member') member: JwtMember,
+    @Body() metadata: OrderExportDTO,
+  ): Promise<void> {
+    const { appId, memberId: invokerMemberId } = member;
     const { exportMime, ...conditions } = metadata;
     const exportJob: OrderDiscountExportJob = {
       appId,

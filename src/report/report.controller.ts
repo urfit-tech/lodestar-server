@@ -1,8 +1,11 @@
 import { Get, Controller, Param, UseGuards } from '@nestjs/common';
+
+import { AuthGuard } from '~/auth/auth.guard';
 import { APIException } from '~/api.excetion';
+
 import { ReportService } from './report.service';
 import { GetReportDTO } from './report.type';
-import { AuthGuard } from '~/auth/auth.guard';
+
 @UseGuards(AuthGuard)
 @Controller({
   path: 'report',

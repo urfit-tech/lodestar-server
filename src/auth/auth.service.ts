@@ -13,6 +13,7 @@ import { MemberInfrastructure } from '~/member/member.infra';
 import { MemberRole, PublicMember } from '~/member/member.type';
 import { MemberService } from '~/member/member.service';
 import { Member } from '~/member/entity/member.entity';
+import { MemberDevice } from '~/member/entity/member_device.entity';
 import { AppService } from '~/app/app.service';
 import { EmailService } from '~/mailer/email/email.service';
 import { UtilityService } from '~/utility/utility.service';
@@ -20,10 +21,11 @@ import { CacheService } from '~/utility/cache/cache.service';
 import { APIException } from '~/api.excetion';
 import { AppCache } from '~/app/app.type';
 
-import { JwtDTO } from './auth.dto';
-import { CrossServerTokenDTO, LoginStatus } from './auth.type';
 import { AuthAuditLog } from './entity/auth_audit_log.entity';
+import { JwtDTO } from './auth.dto';
+import { CrossServerTokenDTO, LoginStatus, RefreshStatus } from './auth.type';
 import { AuthInfrastructure } from './auth.infra';
+import DeviceService from './device/device.service';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +39,7 @@ export class AuthService {
       HASURA_JWT_SECRET: string;
     }>,
     private readonly appService: AppService,
+    private readonly deviceService: DeviceService,
     private readonly mailService: EmailService,
     private readonly cacheService: CacheService,
     private readonly authInfra: AuthInfrastructure,
@@ -55,7 +58,7 @@ export class AuthService {
       appId: string;
       account: string;
       password: string;
-      loggedInMembers?: PublicMember[] | null;
+      loggedInMembers: PublicMember[];
     },
     manager?: EntityManager,
   ): Promise<{ status: LoginStatus; authToken?: string; member?: any; }> {
@@ -83,21 +86,50 @@ export class AuthService {
         await this.insertLastLoginJobIntoQueue(member.id);
       }
 
-      const publicMember: PublicMember = {
-        orgId: orgId || '',
-        id: member.id,
-        appId: member.appId,
-        email: member.email,
-        username: member.username,
-        name: member.name,
-        pictureUrl: member.pictureUrl,
-        isBusiness: member.isBusiness,
-      };
-
-      const jwtPayload = await this.buildGeneralLoginJwtPayload(orgId, member, publicMember, loggedInMembers, manager);
+      const jwtPayload = await this.buildJwtPayload(orgId, member, loggedInMembers, manager);
       const authToken = await this.signJWT(appCache, jwtPayload, '1 day', manager);
 
       return { status: LoginStatus.SUCCESS, member, authToken };
+    };
+    return cb(manager ? manager : this.entityManager);
+  }
+
+  async refreshToken(
+    appCache: AppCache,
+    options: {
+      fingerPrintId: string;
+      sessionMemberId: string,
+      loggedInMembers: Array<PublicMember>,
+    },
+    manager?: EntityManager,
+  ): Promise<{ status: RefreshStatus; fingerPrintId?: string; refreshedToken?: string }> {
+    const cb = async (manager: EntityManager) => {
+      const { id: appId, orgId } = appCache;
+      const { fingerPrintId, sessionMemberId, loggedInMembers } = options;
+      if (!sessionMemberId) {
+        return { status: RefreshStatus.E_NO_MEMBER };
+      }
+
+      const member = await this.memberInfra.getById(appId, sessionMemberId, manager);
+      if (!member) {
+        return { status: RefreshStatus.E_NO_MEMBER };
+      }
+
+      const { modules: appModules } = appCache;
+      const isLoginAndDeviceModuleEnable = appModules.includes('login_restriction') || appModules.includes('device_management');
+      
+      if (member.role !== 'app-owner' && isLoginAndDeviceModuleEnable) {
+        const device: MemberDevice | undefined = await this.deviceService.getByFingerprintId(member.id, fingerPrintId);
+        if (device && !device.isLogin) {
+          return { status: RefreshStatus.E_SESSION_DESTROY };
+        }
+      }
+      await this.insertLastLoginJobIntoQueue(member.id);
+
+      const jwtPayload = await this.buildJwtPayload(orgId, member, loggedInMembers, manager);
+      const refreshedToken = await this.signJWT(appCache, jwtPayload, '1 day', manager);
+
+      return { status: RefreshStatus.SUCCESS, fingerPrintId, refreshedToken };
     };
     return cb(manager ? manager : this.entityManager);
   }
@@ -135,13 +167,23 @@ export class AuthService {
     return jwtVerify(token, this.hasuraJwtSecret) as Record<string, any>;
   }
 
-  private async buildGeneralLoginJwtPayload(
+  private async buildJwtPayload(
     orgId: string | undefined,
     member: Member,
-    publicMember: PublicMember,
     logginedInMembersInSession: Array<PublicMember>,
     manager: EntityManager,
   ): Promise<JwtDTO> {
+    const publicMember: PublicMember = {
+      orgId: orgId || '',
+      id: member.id,
+      appId: member.appId,
+      email: member.email,
+      username: member.username,
+      name: member.name,
+      pictureUrl: member.pictureUrl,
+      isBusiness: member.isBusiness,
+    };
+
     const { id: memberId } = member;
     const metadata = await this.memberInfra.getLoginMemberMetadata(memberId, manager);
     const { phones, oauths, permissions } = metadata.pop();
