@@ -1,5 +1,4 @@
 import { Queue } from 'bull';
-import { Request as ExRequest } from 'express';
 import {
   Logger,
   Controller,
@@ -8,15 +7,16 @@ import {
   Post,
   UnauthorizedException,
   BadRequestException,
-  Request,
   UseGuards,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
 
 import { AuthGuard } from '~/auth/auth.guard';
+import { JwtMember } from '~/auth/auth.dto';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
+import { Local } from '~/decorator';
 
 import { MemberExportDTO, MemberGetDTO, MemberGetResultDTO, MemberImportDTO } from './member.dto';
 import { MemberService } from './member.service';
@@ -43,13 +43,16 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
-  public async getMembersByPost(@Request() request: ExRequest, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
+  public async getMembersByPost(
+    @Local('member') member: JwtMember,
+    @Body() dto: MemberGetDTO,
+  ): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
     if (option && option.nextToken && option.prevToken) {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
     }
 
-    const { appId, permissions } = (request as any).member;
+    const { appId, permissions } = member;
 
     if (
       ![
@@ -83,13 +86,16 @@ export class MemberController {
   }
 
   @Get()
-  public async getMembers(@Request() request: ExRequest, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
+  public async getMembers(
+    @Local('member') member: JwtMember,
+    @Body() dto: MemberGetDTO,
+  ): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
     if (option && option.nextToken && option.prevToken) {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
     }
 
-    const { appId, permissions } = (request as any).member;
+    const { appId, permissions } = member;
 
     if (
       ![
@@ -123,8 +129,11 @@ export class MemberController {
   }
 
   @Post('import')
-  public async importMembers(@Request() request: ExRequest, @Body() metadata: MemberImportDTO): Promise<void> {
-    const { memberId: invokerMemberId } = (request as any).member;
+  public async importMembers(
+    @Local('member') member: JwtMember,
+    @Body() metadata: MemberImportDTO,
+  ): Promise<void> {
+    const { memberId: invokerMemberId } = member;
 
     const { appId, fileInfos } = metadata;
     const importJob: ImportJob = {
@@ -140,8 +149,11 @@ export class MemberController {
   }
 
   @Post('export')
-  public async exportMembers(@Request() request: ExRequest, @Body() metadata: MemberExportDTO): Promise<void> {
-    const { memberId: invokerMemberId } = (request as any).member;
+  public async exportMembers(
+    @Local('member') member: JwtMember,
+    @Body() metadata: MemberExportDTO,
+  ): Promise<void> {
+    const { memberId: invokerMemberId } = member;
 
     const { appId, memberIds, exportMime } = metadata;
     const exportJob: MemberExportJob = {

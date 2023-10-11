@@ -1,12 +1,13 @@
-import { Request } from 'express';
-import { Body, Controller, Headers, Logger, Post, Req, Session } from '@nestjs/common';
+import { Request, Response } from 'express';
+import { Body, Controller, Headers, Logger, Post, Req, Res, Session } from '@nestjs/common';
 
 import { PublicMember } from '~/member/member.type';
 import { AppCache } from '~/app/app.type';
 import { Local } from '~/decorator';
 
 import { AuthService } from './auth.service';
-import { CrossServerTokenDTO, GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus } from './auth.type';
+import { RefreshTokenDTO } from './auth.dto';
+import { CrossServerTokenDTO, GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus, RefreshStatus } from './auth.type';
 import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
 
@@ -109,11 +110,60 @@ export class AuthController {
       };
     } catch (error) {
       this.logger.error(error);
+      return { code: error.name, message: error.message };
+    }
+  }
+
+  @Post('refresh-token')
+  async refreshToken(
+    @Local('appCache') appCache: AppCache,
+    @Headers('user-agent') userAgents: string,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Session() session: Record<string, any> | undefined,
+    @Body() body: RefreshTokenDTO,
+  ) {
+    const { cookies } = request;
+    const { appId, fingerPrintId: bodyFingerPrint, geoLocation } = body;
+    const { fingerPrintId: cookieFingerPrint } = cookies;
+    const fingerPrintId = bodyFingerPrint && !cookieFingerPrint
+        ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgents)
+        : cookieFingerPrint;
+    const sessionMemberId = session[appId] && session[appId].currentMemberId;
+    const loggedInMembers: Array<PublicMember> = session[appId] && session[appId].members || [];
+
+    response.cookie('fingerPrintId', fingerPrintId, { maxAge: 86400 * 1000 });
+    geoLocation && response.cookie('geoLocation', geoLocation, { maxAge: 86400 * 1000 });
+
+    if (!session) {
+      if (bodyFingerPrint) {
+        await this.deviceService.expireFingerPrintId(bodyFingerPrint);
+      }
+      return { code: 'E_SESSION', message: 'cannot get session' };
+    }
+
+    try {      
+      const { status, refreshedToken } = await this.authService.refreshToken(
+        appCache, { fingerPrintId, sessionMemberId, loggedInMembers },
+      );
+
+      switch (status) {
+        case RefreshStatus.E_NO_MEMBER:
+          return { code: 'E_NO_MEMBER', message: 'no such member' };
+        case RefreshStatus.E_SESSION_DESTROY:
+          await new Promise((resolve) => request.session.destroy(resolve));
+        case RefreshStatus.E_NO_DEVICE:
+          return { code: 'E_NO_DEVICE', message: 'device is not available' };
+      }
+
       return {
-        code: error.name,
-        message: error.message,
-        result: null,
+        code: 'SUCCESS',
+        message: 'refresh a new auth token',
+        result: { authToken: refreshedToken },
       };
+    } catch (error) {
+      this.logger.error(error);
+      return { code: error.name, message: error.message };
     }
   }
 

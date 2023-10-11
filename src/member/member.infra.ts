@@ -106,6 +106,11 @@ export class MemberInfrastructure {
     return paginator.paginate(queryBuilder);
   }
 
+  async getById(appId: string, memberId: string, entityManager: EntityManager): Promise<Member> {
+    const memberRepo = entityManager.getRepository(Member);
+    return memberRepo.findOneBy({ appId, id: memberId });
+  }
+
   async getMembersByConditions(
     appId: string,
     conditions: FindOptionsWhere<Member>,
