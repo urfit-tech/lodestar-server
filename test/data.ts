@@ -10,6 +10,12 @@ import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { Member } from '~/member/entity/member.entity';
+import { Program } from '~/entity/Program';
+import { ProgramRole } from '~/entity/ProgramRole';
+import { ProgramContentBody } from '~/entity/ProgramContentBody';
+import { ProgramContent } from '~/program/entity/program_content.entity';
+import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
+import { ProgramContentSection } from '~/entity/ProgramContentSection';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -70,3 +76,38 @@ member.email = 'test@example.com';
 member.username = 'test';
 member.role = role.name;
 member.name = 'testMember';
+
+export const program = new Program();
+program.id = v4();
+program.title = 'test program';
+program.abstract = 'test program abstract';
+program.appId = app.id;
+
+export const programRole = new ProgramRole();
+programRole.id = v4();
+programRole.name = 'owner';
+programRole.memberId = member.id;
+
+export const programContentSection = new ProgramContentSection();
+programContentSection.id = v4();
+programContentSection.programId = program.id;
+programContentSection.title = 'test program content section title';
+programContentSection.position = 0;
+
+export const programContentBody = new ProgramContentBody();
+programContentBody.id = v4();
+
+export const programContent = new ProgramContent();
+programContent.id = v4();
+programContent.contentSectionId = programContentSection.id;
+programContent.contentBodyId = programContentBody.id;
+programContent.title = 'test program content title';
+programContent.position = 0;
+programContent.displayMode = 'payToWatch';
+
+export const programContentProgress = new ProgramContentProgress();
+programContentProgress.id = v4();
+programContentProgress.programContentId = programContent.id;
+programContentProgress.memberId = member.id;
+programContentProgress.progress = 1;
+programContentProgress.lastProgress = 1;
