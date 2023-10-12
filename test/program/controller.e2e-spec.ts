@@ -5,6 +5,8 @@ import {
   app,
   appHost,
   appPlan,
+  appSecret,
+  appSetting,
   member,
   program,
   programContent,
@@ -12,7 +14,7 @@ import {
   programContentProgress,
   programContentSection,
   role,
-} from 'test/data';
+} from '../data';
 import { EntityManager, Repository } from 'typeorm';
 import { ApiExceptionFilter } from '~/api.filter';
 import { App } from '~/app/entity/app.entity';
@@ -30,7 +32,7 @@ import { ProgramContentBody } from '~/entity/ProgramContentBody';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
 
-describe('AuthController (e2e)', () => {
+describe('ProgramController (e2e)', () => {
   let application: INestApplication;
   let manager: EntityManager;
   let roleRepo: Repository<Role>;
@@ -60,6 +62,7 @@ describe('AuthController (e2e)', () => {
     appSettingRepo = manager.getRepository(AppSetting);
     appSecretRepo = manager.getRepository(AppSecret);
     appHostRepo = manager.getRepository(AppHost);
+    roleRepo = manager.getRepository(Role);
     memberRepo = manager.getRepository(Member);
     programRepo = manager.getRepository(Program);
     programContentSectionRepo = manager.getRepository(ProgramContentSection);
@@ -67,6 +70,11 @@ describe('AuthController (e2e)', () => {
     programContentRepo = manager.getRepository(ProgramContent);
     programContentProgressRepo = manager.getRepository(ProgramContentProgress);
 
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programContentBodyRepo.delete({});
+    await programRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
@@ -74,27 +82,29 @@ describe('AuthController (e2e)', () => {
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await roleRepo.delete({});
-    await programContentProgressRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programRepo.delete({});
 
     await roleRepo.save(role);
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
+    await appSettingRepo.save(appSetting);
+    await appSecretRepo.save(appSecret);
     await appHostRepo.save(appHost);
     await memberRepo.save(member);
-    await programContentProgressRepo.save(programContentProgress);
-    await programContentRepo.save(programContent);
-    await programContentSectionRepo.save(programContentSection);
-    await programContentBodyRepo.save(programContentBody);
     await programRepo.save(program);
+    await programContentBodyRepo.save(programContentBody);
+    await programContentSectionRepo.save(programContentSection);
+    await programContentRepo.save(programContent);
+    await programContentProgressRepo.save(programContentProgress);
 
     await application.init();
   });
 
   afterEach(async () => {
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programContentBodyRepo.delete({});
+    await programRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
@@ -102,11 +112,6 @@ describe('AuthController (e2e)', () => {
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await roleRepo.delete({});
-    await programContentProgressRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programRepo.delete({});
 
     await application.close();
   });
@@ -121,6 +126,8 @@ describe('AuthController (e2e)', () => {
         .post(getTokenRoute)
         .set('host', appHost.host)
         .send({ clientId: 'test', key: 'testKey', permissions: [] });
+      console.log(tokenResponse.body);
+
       const authToken = tokenResponse.body.result.authToken;
       const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
 
