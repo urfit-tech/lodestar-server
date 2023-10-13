@@ -87,7 +87,7 @@ export class VideoService {
 
   private async generateCfStreamingToken(cfUid: string): Promise<string> {
     const encoder = new TextEncoder();
-    const expiresIn = Math.floor(Date.now() / 1000) + 3600;
+    const expiresIn = Math.floor(Date.now() / 1000) + 3600 * 6;
     const headers = {
       alg: 'RS256',
       kid: this.cfStreamingKeyId,
