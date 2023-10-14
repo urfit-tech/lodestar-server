@@ -16,6 +16,11 @@ import { ProgramContentBody } from '~/entity/ProgramContentBody';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
 import { ProgramContentSection } from '~/entity/ProgramContentSection';
+import { OrderLog } from '~/order/entity/order_log.entity';
+import { OrderProduct } from '~/order/entity/order_product.entity';
+import { Product } from '~/entity/Product';
+import { ProgramPlan } from '~/entity/ProgramPlan';
+import { Currency } from '~/entity/Currency';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -83,6 +88,12 @@ program.title = 'test program';
 program.abstract = 'test program abstract';
 program.appId = app.id;
 
+export const programPlan = new ProgramPlan();
+programPlan.id = v4();
+programPlan.programId = program.id;
+programPlan.title = 'test program plan';
+programPlan.listPrice = 0;
+
 export const programRole = new ProgramRole();
 programRole.id = v4();
 programRole.name = 'owner';
@@ -111,3 +122,29 @@ programContentProgress.programContentId = programContent.id;
 programContentProgress.memberId = member.id;
 programContentProgress.progress = 1;
 programContentProgress.lastProgress = 1;
+
+export const orderLog = new OrderLog();
+orderLog.id = 'TES1234567890';
+orderLog.memberId = member.id;
+orderLog.status = 'SUCCESS';
+orderLog.appId = app.id;
+orderLog.invoiceOptions = {};
+
+export const product = new Product();
+product.type = 'ProgramPlan';
+product.id = `${product.type}_${programPlan.id}`;
+product.target = programPlan.id;
+
+export const currency = new Currency();
+currency.id = 'TWD';
+currency.label = '';
+currency.unit = '';
+currency.name = '';
+
+export const orderProduct = new OrderProduct();
+orderProduct.id = v4();
+orderProduct.orderId = orderLog.id;
+orderProduct.productId = product.id;
+orderProduct.name = programPlan.title;
+orderProduct.deliveredAt = new Date();
+orderProduct.price = programPlan.listPrice;
