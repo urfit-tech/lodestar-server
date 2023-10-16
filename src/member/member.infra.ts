@@ -23,9 +23,11 @@ import { PaymentLog } from '~/payment/payment_log.entity';
 import { MemberTrackingLog } from '~/entity/MemberTrackingLog';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
 import { Invoice } from '~/invoice/invoice.entity';
-import { MemberOauth } from '~/entity/MemberOauth';
 import { MemberNote } from '~/entity/MemberNote';
 import { MemberTask } from '~/entity/MemberTask';
+import { Coupon } from '~/coupon/entity/coupon.entity';
+import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
+import { ProgramContentLog } from '~/entity/ProgramContentLog';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -355,7 +357,12 @@ export class MemberInfrastructure {
       const memberTrackingLogRepo = manager.getRepository(MemberTrackingLog);
       const memberNoteRepo = manager.getRepository(MemberNote);
       const memberTaskRepo = manager.getRepository(MemberTask);
+
+      const programContentProgressRepo = manager.getRepository(ProgramContentProgress);
+      const programContentLogRepo = manager.getRepository(ProgramContentLog);
+
       const notificationRepo = manager.getRepository(Notification);
+      const couponRepo = manager.getRepository(Coupon);
       const paymentLogRepo = manager.getRepository(PaymentLog);
       const invoiceRepo = manager.getRepository(Invoice);
       const orderProductRepo = manager.getRepository(OrderProduct);
@@ -407,6 +414,9 @@ export class MemberInfrastructure {
       );
       await orderLogRepo.remove(orderLogs);
 
+      await programContentLogRepo.delete({ memberId: member.id });
+      await programContentProgressRepo.delete({ memberId: member.id });
+      await couponRepo.delete({ memberId: member.id });
       await memberTagRepo.delete({ memberId: member.id });
       await memberOauthRepo.delete({ memberId: member.id });
       await memberCategoryRepo.delete({ memberId: member.id });
