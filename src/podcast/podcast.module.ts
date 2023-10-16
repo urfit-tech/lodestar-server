@@ -1,7 +1,16 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from '~/auth/auth.module';
+import { DefinitionInfrastructure } from '~/definition/definition.infra';
+import { MemberModule } from '~/member/member.module';
+import { MemberService } from '~/member/member.service';
 import { PodcastPlanService } from './podcast-plan/podcast-plan.service';
+import { PodcastController } from './podcast.controller';
+import { PodcastService } from './podcast.service';
 
 @Module({
-  providers: [PodcastPlanService],
+  controllers: [PodcastController],
+  imports: [AuthModule, MemberModule],
+  providers: [PodcastPlanService, PodcastService, MemberService, DefinitionInfrastructure],
+  exports: [],
 })
 export class PodcastModule {}

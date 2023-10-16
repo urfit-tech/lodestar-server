@@ -25,7 +25,7 @@ export class ProgramService {
     });
   }
 
-  async getProgramByMemberId(appId: string, memberId: string) {
+  public async getProgramByMemberId(appId: string, memberId: string) {
     // Todo: check permission
     // ...
 
@@ -173,7 +173,7 @@ export class ProgramService {
     return programs;
   }
 
-  async getExpiredProgramByMemberId(appId: string, memberId: string) {
+  public async getExpiredProgramByMemberId(appId: string, memberId: string) {
     // Todo: check permission
     // ...
 

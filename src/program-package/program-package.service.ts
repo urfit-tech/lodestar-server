@@ -13,7 +13,7 @@ export class ProgramPackageService {
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
-  async getProgramPackageByMemberId(appId: string, memberId: string) {
+  public async getProgramPackageByMemberId(appId: string, memberId: string) {
     // Todo: check permission
     // ...
 
@@ -77,7 +77,7 @@ export class ProgramPackageService {
     return programPackages;
   }
 
-  async getExpiredProgramPackageByMemberId(appId: string, memberId: string) {
+  public async getExpiredProgramPackageByMemberId(appId: string, memberId: string) {
     // Todo: check permission
     // ...
 
