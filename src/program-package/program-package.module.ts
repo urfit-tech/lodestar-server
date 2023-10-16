@@ -11,4 +11,4 @@ import { AuthModule } from '~/auth/auth.module';
   providers: [ProgramPackageService, ProgramPackagePlanService],
   exports: [],
 })
-export class ProgramModule {}
+export class ProgramPackageModule {}
