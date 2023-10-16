@@ -3,12 +3,29 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { OrderLog } from '~/order/entity/order_log.entity';
+import { MemberService } from '~/member/member.service';
+import { APIException } from '~/api.excetion';
 
 @Injectable()
 export class ProgramPackageService {
-  constructor(@InjectEntityManager() private readonly entityManager: EntityManager) {}
+  constructor(
+    private readonly memberService: MemberService,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
+  ) {}
 
-  async getProgramPackageByMemberId(memberId: string) {
+  async getProgramPackageByMemberId(appId: string, memberId: string) {
+    // Todo: check permission
+    // ...
+
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { id: memberId });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
     const ownedProgramPackages = await this.entityManager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
@@ -60,7 +77,19 @@ export class ProgramPackageService {
     return programPackages;
   }
 
-  async getExpiredProgramPackageByMemberId(memberId: string) {
+  async getExpiredProgramPackageByMemberId(appId: string, memberId: string) {
+    // Todo: check permission
+    // ...
+
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { id: memberId });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
     const expiredProgramPackages = await this.entityManager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')

@@ -1,3 +1,14 @@
 {
-  "cSpell.words": ["HASURA", "ILIKE", "kolable", "logined", "metabase", "nestjs", "pkey", "tasker", "typeorm"]
+  "cSpell.words": [
+    "excetion",
+    "HASURA",
+    "ILIKE",
+    "kolable",
+    "logined",
+    "metabase",
+    "nestjs",
+    "pkey",
+    "tasker",
+    "typeorm"
+  ]
 }

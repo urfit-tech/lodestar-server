@@ -6,10 +6,15 @@ import { ProgramContent } from './entity/program_content.entity';
 import { Program } from '~/entity/Program';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import dayjs from 'dayjs';
+import { MemberService } from '~/member/member.service';
+import { APIException } from '~/api.excetion';
 
 @Injectable()
 export class ProgramService {
-  constructor(@InjectEntityManager() private readonly entityManager: EntityManager) {}
+  constructor(
+    private readonly memberService: MemberService,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
+  ) {}
 
   public async getProgramContentByAttachmentId(attachmentId: string): Promise<Array<ProgramContent>> {
     const programContentRepo = this.entityManager.getRepository(ProgramContent);
@@ -20,7 +25,19 @@ export class ProgramService {
     });
   }
 
-  async getProgramByMemberId(memberId: string) {
+  async getProgramByMemberId(appId: string, memberId: string) {
+    // Todo: check permission
+    // ...
+
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { id: memberId });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
     const ownedProgramsFromProgramPlan = await this.entityManager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
@@ -156,7 +173,19 @@ export class ProgramService {
     return programs;
   }
 
-  async getExpiredProgramByMemberId(memberId: string) {
+  async getExpiredProgramByMemberId(appId: string, memberId: string) {
+    // Todo: check permission
+    // ...
+
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { id: memberId });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
     const expiredPrograms = await this.entityManager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
@@ -198,7 +227,7 @@ export class ProgramService {
     return programs;
   }
 
-  sortProgramRole(
+  public sortProgramRole(
     roles: { id: string | null; member_id: string | null; name: string | null; created_at: string | null }[],
   ) {
     return roles

@@ -1,5 +1,8 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
+import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
+import { Local } from '~/decorator';
 import { ProgramService } from './program.service';
 
 @UseGuards(AuthGuard)
@@ -10,13 +13,17 @@ import { ProgramService } from './program.service';
 export class ProgramController {
   constructor(private programService: ProgramService) {}
 
-  @Get(':memberId')
-  async getProgramByMemberId(@Param('memberId') memberId: string) {
-    return this.programService.getProgramByMemberId(memberId);
+  @Get()
+  async getProgramByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
+    const { memberId } = request.query;
+
+    return this.programService.getProgramByMemberId(member.appId, String(memberId || member.memberId));
   }
 
-  @Get(':memberId/expired')
-  async getExpiredProgramByMemberId(@Param('memberId') memberId: string) {
-    return this.programService.getExpiredProgramByMemberId(memberId);
+  @Get('/expired')
+  async getExpiredProgramByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
+    const { memberId } = request.query;
+
+    return this.programService.getExpiredProgramByMemberId(member.appId, String(memberId || member.memberId));
   }
 }
