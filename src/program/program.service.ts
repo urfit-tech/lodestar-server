@@ -31,7 +31,7 @@ export class ProgramService {
         'program.cover_mobile_url AS cover_mobile_url',
         'program.abstract AS abstract',
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', program_role.member_id, 'created_at', program_role.created_at)) AS roles`,
-        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('program_content_id', program_content.id,'progress', COALESCE(program_content_progress.progress,0))) AS progress`,
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('program_content_id', program_content.id,'progress', COALESCE(program_content_progress.progress,0),'updated_at', program_content_progress.updated_at)) AS progress`,
         'MIN(order_product.delivered_at) AS delivered_at',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
@@ -54,18 +54,14 @@ export class ProgramService {
       .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = product.target')
       .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .innerJoin('program_role', 'program_role', 'program_role.program_id = program.id')
-      .innerJoin(
-        'program_content_section',
-        'program_content_section',
-        'program_content_section.program_id = program.id',
-      )
-      .innerJoin(
+      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .leftJoin(
         'program_content',
         'program_content',
         'program_content.content_section_id = program_content_section.id' +
           ' AND program_content.published_at IS NOT NULL',
       )
-      .innerJoin(
+      .leftJoin(
         'program_content_body',
         'program_content_body',
         'program_content_body.id = program_content.content_body_id',
@@ -113,6 +109,72 @@ export class ProgramService {
           ),
         })),
         ...assistantPrograms.map((program) => ({
+          ...program,
+          roles: program.roles.sort(
+            (a: { created_at: string }, b: { created_at: string }) =>
+              dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf(),
+          ),
+        })),
+      ]),
+    ];
+
+    return programs;
+  }
+
+  async getExpiredProgramByMemberId(memberId: string) {
+    const expiredPrograms = await this.entityManager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'program.id AS id',
+        'program.title AS title',
+        'program.cover_url AS cover_url',
+        'program.cover_mobile_url AS cover_mobile_url',
+        'program.abstract AS abstract',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', program_role.member_id, 'created_at', program_role.created_at)) AS roles`,
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('program_content_id', program_content.id,'progress', COALESCE(program_content_progress.progress,0),'updated_at', program_content_progress.updated_at)) AS progress`,
+        'MIN(order_product.delivered_at) AS delivered_at',
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .andWhere('order_log.status = :orderStatus', { orderStatus: 'SUCCESS' })
+      .innerJoin(
+        'order_product',
+        'order_product',
+        'order_product.order_id = order_log.id' +
+          ' AND order_product.ended_at IS NOT NULL' +
+          ' AND order_product.ended_at < NOW()',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ' AND product.type = :productType', {
+        productType: 'ProgramPlan',
+      })
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = product.target')
+      .innerJoin('program', 'program', 'program.id = program_plan.program_id')
+      .innerJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .leftJoin(
+        'program_content',
+        'program_content',
+        'program_content.content_section_id = program_content_section.id' +
+          ' AND program_content.published_at IS NOT NULL',
+      )
+      .leftJoin(
+        'program_content_body',
+        'program_content_body',
+        'program_content_body.id = program_content.content_body_id',
+      )
+      .leftJoin(
+        'program_content_progress',
+        'program_content_progress',
+        'program_content_progress.program_content_id = program_content.id' +
+          ' AND program_content_progress.member_id = :memberId',
+        { memberId },
+      )
+      .groupBy('program.id')
+      .getRawMany();
+
+    const programs = [
+      ...new Set([
+        ...expiredPrograms.map((program) => ({
           ...program,
           roles: program.roles.sort(
             (a: { created_at: string }, b: { created_at: string }) =>

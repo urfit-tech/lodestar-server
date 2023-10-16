@@ -14,4 +14,9 @@ export class ProgramController {
   async getProgramByMemberId(@Param('memberId') memberId: string) {
     return this.programService.getProgramByMemberId(memberId);
   }
+
+  @Get(':memberId/expired')
+  async getExpiredProgramByMemberId(@Param('memberId') memberId: string) {
+    return this.programService.getExpiredProgramByMemberId(memberId);
+  }
 }
