@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-
+import bcrypt from 'bcrypt';
 import { Role } from '~/entity/Role';
 import { AppPlan } from '~/entity/AppPlan';
 import { Category } from '~/definition/entity/category.entity';
@@ -21,6 +21,15 @@ import { OrderProduct } from '~/order/entity/order_product.entity';
 import { Product } from '~/entity/Product';
 import { ProgramPlan } from '~/entity/ProgramPlan';
 import { Currency } from '~/entity/Currency';
+import dayjs from 'dayjs';
+import { ProgramPackage } from '~/entity/ProgramPackage';
+import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
+import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
+import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastPlan } from '~/entity/PodcastPlan';
+import { PodcastAlbum } from '~/entity/PodcastAlbum';
+import { PodcastAlbumPodcastProgram } from '~/entity/PodcastAlbumPodcastProgram';
+import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -81,6 +90,7 @@ member.email = 'test@example.com';
 member.username = 'test';
 member.role = role.name;
 member.name = 'testMember';
+member.passhash = bcrypt.hashSync('test_password', 1);
 
 export const program = new Program();
 program.id = v4();
@@ -123,6 +133,55 @@ programContentProgress.memberId = member.id;
 programContentProgress.progress = 1;
 programContentProgress.lastProgress = 1;
 
+export const programPackage = new ProgramPackage();
+programPackage.id = v4();
+programPackage.title = 'test program package title';
+programPackage.appId = app.id;
+
+export const programPackagePlan = new ProgramPackagePlan();
+programPackagePlan.id = v4();
+programPackagePlan.programPackageId = programPackage.id;
+programPackagePlan.isSubscription = false;
+programPackagePlan.title = 'test program package plan title';
+programPackagePlan.listPrice = 0;
+programPackagePlan.position = 0;
+
+export const programPackageProgram = new ProgramPackageProgram();
+programPackageProgram.id = v4();
+programPackageProgram.programPackageId = programPackage.id;
+programPackageProgram.programId = program.id;
+
+export const podcastProgram = new PodcastProgram();
+podcastProgram.id = v4();
+podcastProgram.title = 'test podcast title';
+podcastProgram.creatorId = member.id;
+
+export const podcastPlan = new PodcastPlan();
+podcastPlan.id = v4();
+podcastPlan.isSubscription = true;
+podcastPlan.title = 'test podcast plan title';
+podcastPlan.listPrice = 0;
+podcastPlan.periodAmount = 1;
+podcastPlan.periodType = 'M';
+podcastPlan.creatorId = member.id;
+
+export const podcastAlbum = new PodcastAlbum();
+podcastAlbum.id = v4();
+podcastAlbum.title = 'test podcast album title';
+podcastAlbum.authorId = member.id;
+podcastAlbum.appId = app.id;
+
+export const podcastAlbumPodcastProgram = new PodcastAlbumPodcastProgram();
+podcastAlbumPodcastProgram.id = v4();
+podcastAlbumPodcastProgram.podcastAlbumId = podcastAlbum.id;
+podcastAlbumPodcastProgram.podcastProgramId = podcastProgram.id;
+
+export const podcastProgramRole = new PodcastProgramRole();
+podcastProgramRole.id = v4();
+podcastProgramRole.podcastProgramId = podcastProgram.id;
+podcastProgramRole.memberId = member.id;
+podcastProgramRole.name = 'instructor';
+
 export const orderLog = new OrderLog();
 orderLog.id = 'TES1234567890';
 orderLog.memberId = member.id;
@@ -130,10 +189,20 @@ orderLog.status = 'SUCCESS';
 orderLog.appId = app.id;
 orderLog.invoiceOptions = {};
 
-export const product = new Product();
-product.type = 'ProgramPlan';
-product.id = `${product.type}_${programPlan.id}`;
-product.target = programPlan.id;
+export const programPlanProduct = new Product();
+programPlanProduct.type = 'ProgramPlan';
+programPlanProduct.id = `${programPlanProduct.type}_${programPlan.id}`;
+programPlanProduct.target = programPlan.id;
+
+export const programPackagePlanProduct = new Product();
+programPackagePlanProduct.type = 'ProgramPackagePlan';
+programPackagePlanProduct.id = `${programPackagePlanProduct.type}_${programPackagePlan.id}`;
+programPackagePlanProduct.target = programPackagePlan.id;
+
+export const podcastProduct = new Product();
+podcastProduct.type = 'PodcastProgram';
+podcastProduct.id = `${podcastProduct.type}_${podcastProgram.id}`;
+podcastProduct.target = podcastProgram.id;
 
 export const currency = new Currency();
 currency.id = 'TWD';
@@ -144,7 +213,4 @@ currency.name = '';
 export const orderProduct = new OrderProduct();
 orderProduct.id = v4();
 orderProduct.orderId = orderLog.id;
-orderProduct.productId = product.id;
-orderProduct.name = programPlan.title;
-orderProduct.deliveredAt = new Date();
-orderProduct.price = programPlan.listPrice;
+orderProduct.deliveredAt = dayjs().subtract(1, 'day').toDate();

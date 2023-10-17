@@ -16,8 +16,11 @@ import {
   programContentBody,
   programContentProgress,
   programContentSection,
+  programPackage,
+  programPackagePlan,
+  programPackagePlanProduct,
+  programPackageProgram,
   programPlan,
-  programPlanProduct,
   role,
 } from '../data';
 import { EntityManager, Repository } from 'typeorm';
@@ -46,8 +49,11 @@ import RedisStore from 'connect-redis';
 import { CacheService } from '~/utility/cache/cache.service';
 import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
+import { ProgramPackage } from '~/entity/ProgramPackage';
+import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
+import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
 
-describe('ProgramController (e2e)', () => {
+describe('ProgramPackageController (e2e)', () => {
   let application: INestApplication;
   let manager: EntityManager;
   let roleRepo: Repository<Role>;
@@ -64,6 +70,9 @@ describe('ProgramController (e2e)', () => {
   let programContentBodyRepo: Repository<ProgramContentBody>;
   let programContentRepo: Repository<ProgramContent>;
   let programContentProgressRepo: Repository<ProgramContentProgress>;
+  let programPackageRepo: Repository<ProgramPackage>;
+  let programPackagePlanRepo: Repository<ProgramPackagePlan>;
+  let programPackageProgramRepo: Repository<ProgramPackageProgram>;
   let orderLogRepo: Repository<OrderLog>;
   let orderProductRepo: Repository<OrderProduct>;
   let currencyRepo: Repository<Currency>;
@@ -115,12 +124,18 @@ describe('ProgramController (e2e)', () => {
     orderLogRepo = manager.getRepository(OrderLog);
     orderProductRepo = manager.getRepository(OrderProduct);
     currencyRepo = manager.getRepository(Currency);
+    programPackageRepo = manager.getRepository(ProgramPackage);
+    programPackagePlanRepo = manager.getRepository(ProgramPackagePlan);
+    programPackageProgramRepo = manager.getRepository(ProgramPackageProgram);
 
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
     await productRepo.delete({});
     await programPlanRepo.delete({});
     await currencyRepo.delete({});
+    await programPackageProgramRepo.delete({});
+    await programPackagePlanRepo.delete({});
+    await programPackageRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
     await programContentSectionRepo.delete({});
@@ -148,11 +163,14 @@ describe('ProgramController (e2e)', () => {
     await programContentSectionRepo.save(programContentSection);
     await programContentRepo.save(programContent);
     await programContentProgressRepo.save(programContentProgress);
-    await productRepo.save(programPlanProduct);
+    await programPackageRepo.save(programPackage);
+    await programPackagePlanRepo.save(programPackagePlan);
+    await programPackageProgramRepo.save(programPackageProgram);
+    await productRepo.save(programPackagePlanProduct);
     await orderLogRepo.save(orderLog);
-    orderProduct.productId = programPlanProduct.id;
-    orderProduct.name = programPlan.title;
-    orderProduct.price = programPlan.listPrice;
+    orderProduct.productId = programPackagePlanProduct.id;
+    orderProduct.name = programPackagePlan.title;
+    orderProduct.price = programPackagePlan.listPrice;
     await orderProductRepo.save(orderProduct);
 
     await application.init();
@@ -162,6 +180,9 @@ describe('ProgramController (e2e)', () => {
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
     await productRepo.delete({});
+    await programPackageProgramRepo.delete({});
+    await programPackagePlanRepo.delete({});
+    await programPackageRepo.delete({});
     await programPlanRepo.delete({});
     await currencyRepo.delete({});
     await programContentProgressRepo.delete({});
@@ -180,8 +201,8 @@ describe('ProgramController (e2e)', () => {
     await application.close();
   });
 
-  describe('/programs (GET)', () => {
-    const route = `/programs`;
+  describe('/program-packages (GET)', () => {
+    const route = `/program-packages`;
     const appId = member.appId;
     const email = member.email;
     const password = 'test_password';
@@ -195,7 +216,7 @@ describe('ProgramController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
-    it('Should successfully get owned programs by member', async () => {
+    it('Should successfully get owned program packages by member', async () => {
       const {
         body: {
           result: { authToken },
@@ -214,8 +235,8 @@ describe('ProgramController (e2e)', () => {
     });
   });
 
-  describe('/programs/expired (GET)', () => {
-    const route = `/programs/expired`;
+  describe('/program-packages/expired (GET)', () => {
+    const route = `/program-packages/expired`;
     const appId = member.appId;
     const email = member.email;
     const password = 'test_password';
@@ -229,7 +250,7 @@ describe('ProgramController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
-    it('Should successfully get expired programs by member', async () => {
+    it('Should successfully get expired program packages by member', async () => {
       const {
         body: {
           result: { authToken },

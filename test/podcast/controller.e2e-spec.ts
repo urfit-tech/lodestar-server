@@ -11,13 +11,12 @@ import {
   member,
   orderLog,
   orderProduct,
-  program,
-  programContent,
-  programContentBody,
-  programContentProgress,
-  programContentSection,
-  programPlan,
-  programPlanProduct,
+  podcastAlbum,
+  podcastAlbumPodcastProgram,
+  podcastPlan,
+  podcastProduct,
+  podcastProgram,
+  podcastProgramRole,
   role,
 } from '../data';
 import { EntityManager, Repository } from 'typeorm';
@@ -31,12 +30,6 @@ import { AppPlan } from '~/entity/AppPlan';
 import { Role } from '~/entity/Role';
 import { Member } from '~/member/entity/member.entity';
 import request from 'supertest';
-import { Program } from '~/entity/Program';
-import { ProgramContentSection } from '~/entity/ProgramContentSection';
-import { ProgramContentBody } from '~/entity/ProgramContentBody';
-import { ProgramContent } from '~/program/entity/program_content.entity';
-import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
-import { ProgramPlan } from '~/entity/ProgramPlan';
 import { Product } from '~/entity/Product';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
@@ -46,8 +39,13 @@ import RedisStore from 'connect-redis';
 import { CacheService } from '~/utility/cache/cache.service';
 import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
+import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastPlan } from '~/entity/PodcastPlan';
+import { PodcastAlbum } from '~/entity/PodcastAlbum';
+import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
+import { PodcastAlbumPodcastProgram } from '~/entity/PodcastAlbumPodcastProgram';
 
-describe('ProgramController (e2e)', () => {
+describe('PodcastController (e2e)', () => {
   let application: INestApplication;
   let manager: EntityManager;
   let roleRepo: Repository<Role>;
@@ -58,16 +56,15 @@ describe('ProgramController (e2e)', () => {
   let appSettingRepo: Repository<AppSetting>;
   let memberRepo: Repository<Member>;
   let productRepo: Repository<Product>;
-  let programRepo: Repository<Program>;
-  let programPlanRepo: Repository<ProgramPlan>;
-  let programContentSectionRepo: Repository<ProgramContentSection>;
-  let programContentBodyRepo: Repository<ProgramContentBody>;
-  let programContentRepo: Repository<ProgramContent>;
-  let programContentProgressRepo: Repository<ProgramContentProgress>;
   let orderLogRepo: Repository<OrderLog>;
   let orderProductRepo: Repository<OrderProduct>;
   let currencyRepo: Repository<Currency>;
   let cacheService: CacheService;
+  let podcastProgramRepo: Repository<PodcastProgram>;
+  let podcastPlanRepo: Repository<PodcastPlan>;
+  let podcastAlbumRepo: Repository<PodcastAlbum>;
+  let podcastProgramRoleRepo: Repository<PodcastProgramRole>;
+  let podcastAlbumPodcastProgramRepo: Repository<PodcastAlbumPodcastProgram>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -106,26 +103,24 @@ describe('ProgramController (e2e)', () => {
     roleRepo = manager.getRepository(Role);
     memberRepo = manager.getRepository(Member);
     productRepo = manager.getRepository(Product);
-    programRepo = manager.getRepository(Program);
-    programPlanRepo = manager.getRepository(ProgramPlan);
-    programContentSectionRepo = manager.getRepository(ProgramContentSection);
-    programContentBodyRepo = manager.getRepository(ProgramContentBody);
-    programContentRepo = manager.getRepository(ProgramContent);
-    programContentProgressRepo = manager.getRepository(ProgramContentProgress);
     orderLogRepo = manager.getRepository(OrderLog);
     orderProductRepo = manager.getRepository(OrderProduct);
     currencyRepo = manager.getRepository(Currency);
+    podcastProgramRepo = manager.getRepository(PodcastProgram);
+    podcastPlanRepo = manager.getRepository(PodcastPlan);
+    podcastAlbumRepo = manager.getRepository(PodcastAlbum);
+    podcastProgramRoleRepo = manager.getRepository(PodcastProgramRole);
+    podcastAlbumPodcastProgramRepo = manager.getRepository(PodcastAlbumPodcastProgram);
 
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
     await productRepo.delete({});
-    await programPlanRepo.delete({});
     await currencyRepo.delete({});
-    await programContentProgressRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programRepo.delete({});
+    await podcastAlbumPodcastProgramRepo.delete({});
+    await podcastProgramRoleRepo.delete({});
+    await podcastPlanRepo.delete({});
+    await podcastAlbumRepo.delete({});
+    await podcastProgramRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
@@ -142,17 +137,16 @@ describe('ProgramController (e2e)', () => {
     await appSecretRepo.save(appSecret);
     await appHostRepo.save(appHost);
     await memberRepo.save(member);
-    await programRepo.save(program);
-    await programPlanRepo.save(programPlan);
-    await programContentBodyRepo.save(programContentBody);
-    await programContentSectionRepo.save(programContentSection);
-    await programContentRepo.save(programContent);
-    await programContentProgressRepo.save(programContentProgress);
-    await productRepo.save(programPlanProduct);
+    await podcastProgramRepo.save(podcastProgram);
+    await podcastAlbumRepo.save(podcastAlbum);
+    await podcastProgramRoleRepo.save(podcastProgramRole);
+    await podcastPlanRepo.save(podcastPlan);
+    await podcastAlbumPodcastProgramRepo.save(podcastAlbumPodcastProgram);
+    await productRepo.save(podcastProduct);
     await orderLogRepo.save(orderLog);
-    orderProduct.productId = programPlanProduct.id;
-    orderProduct.name = programPlan.title;
-    orderProduct.price = programPlan.listPrice;
+    orderProduct.productId = podcastProduct.id;
+    orderProduct.name = podcastProgram.title;
+    orderProduct.price = podcastProgram.listPrice;
     await orderProductRepo.save(orderProduct);
 
     await application.init();
@@ -162,13 +156,12 @@ describe('ProgramController (e2e)', () => {
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
     await productRepo.delete({});
-    await programPlanRepo.delete({});
     await currencyRepo.delete({});
-    await programContentProgressRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programRepo.delete({});
+    await podcastAlbumPodcastProgramRepo.delete({});
+    await podcastProgramRoleRepo.delete({});
+    await podcastPlanRepo.delete({});
+    await podcastAlbumRepo.delete({});
+    await podcastProgramRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
@@ -180,8 +173,8 @@ describe('ProgramController (e2e)', () => {
     await application.close();
   });
 
-  describe('/programs (GET)', () => {
-    const route = `/programs`;
+  describe('/podcasts (GET)', () => {
+    const route = `/podcasts`;
     const appId = member.appId;
     const email = member.email;
     const password = 'test_password';
@@ -195,41 +188,7 @@ describe('ProgramController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
-    it('Should successfully get owned programs by member', async () => {
-      const {
-        body: {
-          result: { authToken },
-        },
-      } = await request(application.getHttpServer()).post('/auth/general-login').set('host', appHost.host).send({
-        appId,
-        account: email,
-        password: password,
-      });
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-  });
-
-  describe('/programs/expired (GET)', () => {
-    const route = `/programs/expired`;
-    const appId = member.appId;
-    const email = member.email;
-    const password = 'test_password';
-
-    it('Should raise error due to unauthorized', async () => {
-      const header = { host: appHost.host };
-
-      request(application.getHttpServer())
-        .get(`${route}`)
-        .set(header)
-        .expect({ statusCode: 401, message: 'Unauthorized' });
-    });
-
-    it('Should successfully get expired programs by member', async () => {
+    it('Should successfully get owned podcasts by member', async () => {
       const {
         body: {
           result: { authToken },
