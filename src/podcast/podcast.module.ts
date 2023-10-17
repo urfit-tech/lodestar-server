@@ -6,11 +6,12 @@ import { MemberService } from '~/member/member.service';
 import { PodcastPlanService } from './podcast-plan/podcast-plan.service';
 import { PodcastController } from './podcast.controller';
 import { PodcastService } from './podcast.service';
+import { PodcastInfrastructure } from './podcast.infra';
 
 @Module({
   controllers: [PodcastController],
   imports: [AuthModule, MemberModule],
-  providers: [PodcastPlanService, PodcastService, MemberService, DefinitionInfrastructure],
+  providers: [PodcastPlanService, PodcastService, MemberService, DefinitionInfrastructure, PodcastInfrastructure],
   exports: [],
 })
 export class PodcastModule {}
