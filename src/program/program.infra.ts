@@ -15,7 +15,7 @@ export class ProgramInfrastructure {
         'program.cover_url AS cover_url',
         'program.cover_mobile_url AS cover_mobile_url',
         'program.abstract AS abstract',
-        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', program_role.member_id, 'created_at', program_role.created_at)) AS roles`,
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
         '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
@@ -35,6 +35,7 @@ export class ProgramInfrastructure {
       .leftJoin('program_plan', 'program_plan', 'program_plan.id::text = product.target')
       .leftJoin('program', 'program', 'program.id = program_plan.program_id')
       .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .leftJoin('member', 'member', 'member.id = program_role.member_id')
       .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
       .leftJoin(
         'program_content',
@@ -63,7 +64,7 @@ export class ProgramInfrastructure {
         'program.cover_url AS cover_url',
         'program.cover_mobile_url AS cover_mobile_url',
         'program.abstract AS abstract',
-        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', program_role.member_id, 'created_at', program_role.created_at)) AS roles`,
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
         '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
@@ -82,6 +83,7 @@ export class ProgramInfrastructure {
       })
       .leftJoin('program', 'program', 'program.id::text = product.target')
       .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .leftJoin('member', 'member', 'member.id = program_role.member_id')
       .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
       .leftJoin(
         'program_content',
@@ -110,7 +112,7 @@ export class ProgramInfrastructure {
         'program.cover_url AS cover_url',
         'program.cover_mobile_url AS cover_mobile_url',
         'program.abstract AS abstract',
-        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', program_role.member_id, 'created_at', program_role.created_at)) AS roles`,
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
         'NULL AS view_rate',
         'NULL AS last_viewed_at',
         'NULL AS delivered_at',
@@ -122,6 +124,7 @@ export class ProgramInfrastructure {
         { memberId, role: 'assistant' },
       )
       .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .leftJoin('member', 'member', 'member.id = program_role.member_id')
       .groupBy('program.id')
       .getRawMany();
   }
@@ -136,7 +139,10 @@ export class ProgramInfrastructure {
         'program.cover_url AS cover_url',
         'program.cover_mobile_url AS cover_mobile_url',
         'program.abstract AS abstract',
-        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', program_role.member_id, 'created_at', program_role.created_at)) AS roles`,
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
+        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        'MAX(program_content_progress.updated_at) AS last_viewed_at',
+        'MIN(order_product.delivered_at) AS delivered_at',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere('order_log.status = :orderStatus', { orderStatus: 'SUCCESS' })
@@ -153,6 +159,21 @@ export class ProgramInfrastructure {
       .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = product.target')
       .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .innerJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .leftJoin('member', 'member', 'member.id = program_role.member_id')
+      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .leftJoin(
+        'program_content',
+        'program_content',
+        'program_content.content_section_id = program_content_section.id' +
+          ' AND program_content.published_at IS NOT NULL',
+      )
+      .leftJoin(
+        'program_content_progress',
+        'program_content_progress',
+        'program_content_progress.program_content_id = program_content.id' +
+          ' AND program_content_progress.member_id = :memberId',
+        { memberId },
+      )
       .groupBy('program.id')
       .getRawMany();
   }
