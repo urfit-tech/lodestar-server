@@ -33,11 +33,7 @@ export class UtilityService {
   convertObjectKeysToCamelCase(obj): any {
     return transform(obj, (acc, value, key, target) => {
       const camelKey = isArray(target) ? key : camelCase(key as any);
-      acc[camelKey] = isDate(value)
-        ? new Date(value).toISOString()
-        : isObject(value)
-        ? this.convertObjectKeysToCamelCase(value)
-        : value;
+      acc[camelKey] = isDate(value) ? value : isObject(value) ? this.convertObjectKeysToCamelCase(value) : value;
     });
   }
 }

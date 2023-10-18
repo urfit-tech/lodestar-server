@@ -26,6 +26,13 @@ export class PodcastService {
       });
     }
 
-    return this.podcastInfra.getOwnedPodcasts(appId, memberId, this.entityManager);
+    const podcasts = await this.podcastInfra.getOwnedPodcasts(appId, memberId, this.entityManager);
+
+    return podcasts.map((podcast) => ({
+      ...podcast,
+      durationSecond: Number(podcast.durationSecond || 0),
+      salePrice: Number(podcast.salePrice || 0),
+      listPrice: Number(podcast.durationSecond || 0),
+    }));
   }
 }
