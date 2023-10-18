@@ -8,9 +8,11 @@ import { PodcastController } from './podcast.controller';
 import { PodcastService } from './podcast.service';
 import { PodcastInfrastructure } from './podcast.infra';
 import { UtilityService } from '~/utility/utility.service';
+import { PodcastPlanController } from './podcast-plan/podcast-plan.controller';
+import { PodcastPlanInfrastructure } from './podcast-plan/podcast-plan.infra';
 
 @Module({
-  controllers: [PodcastController],
+  controllers: [PodcastController, PodcastPlanController],
   imports: [AuthModule, MemberModule],
   providers: [
     PodcastPlanService,
@@ -19,6 +21,8 @@ import { UtilityService } from '~/utility/utility.service';
     DefinitionInfrastructure,
     PodcastInfrastructure,
     UtilityService,
+    PodcastPlanService,
+    PodcastPlanInfrastructure,
   ],
   exports: [],
 })

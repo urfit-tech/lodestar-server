@@ -204,6 +204,11 @@ podcastProduct.type = 'PodcastProgram';
 podcastProduct.id = `${podcastProduct.type}_${podcastProgram.id}`;
 podcastProduct.target = podcastProgram.id;
 
+export const podcastPlanProduct = new Product();
+podcastPlanProduct.type = 'PodcastPlan';
+podcastPlanProduct.id = `${podcastPlanProduct.type}_${podcastPlan.id}`;
+podcastPlanProduct.target = podcastPlan.id;
+
 export const currency = new Currency();
 currency.id = 'TWD';
 currency.label = '';

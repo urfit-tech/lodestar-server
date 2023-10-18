@@ -31,8 +31,8 @@ export class PodcastService {
     return podcasts.map((podcast) => ({
       ...podcast,
       durationSecond: Number(podcast.durationSecond || 0),
-      salePrice: Number(podcast.salePrice || 0),
-      listPrice: Number(podcast.durationSecond || 0),
+      salePrice: podcast.salePrice ? Number(podcast.salePrice) : null,
+      listPrice: Number(podcast.listPrice || 0),
     }));
   }
 }
