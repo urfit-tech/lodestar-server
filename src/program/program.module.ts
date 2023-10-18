@@ -8,11 +8,19 @@ import { MemberService } from '~/member/member.service';
 import { MemberModule } from '~/member/member.module';
 import { DefinitionInfrastructure } from '~/definition/definition.infra';
 import { ProgramInfrastructure } from './program.infra';
+import { UtilityService } from '~/utility/utility.service';
 
 @Module({
   controllers: [ProgramController],
   imports: [AuthModule, MemberModule],
-  providers: [ProgramService, ProgramPlanService, MemberService, DefinitionInfrastructure, ProgramInfrastructure],
+  providers: [
+    ProgramService,
+    ProgramPlanService,
+    MemberService,
+    DefinitionInfrastructure,
+    ProgramInfrastructure,
+    UtilityService,
+  ],
   exports: [ProgramService],
 })
 export class ProgramModule {}

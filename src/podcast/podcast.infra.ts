@@ -2,15 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { PodcastAlbum } from '~/entity/PodcastAlbum';
 import { OrderLog } from '~/order/entity/order_log.entity';
+import { UtilityService } from '~/utility/utility.service';
 
 @Injectable()
 export class PodcastInfrastructure {
+  constructor(private readonly utilityService: UtilityService) {}
+
   async getOwnedPodcasts(appId: string, memberId: string, manager: EntityManager) {
     const [ownedPodcastsSql, ownedPodcastsParameters] = this.getOwnedPodcastsDirectlyQuery(memberId, manager);
     const [ownedPodcastsFromPodcastPlanSql] = this.getOwnedPodcastsFromPodcastPlanQuery(memberId, manager);
     const [ownedPodcastsFromPublicPodcastAlbumSql] = this.getOwnedPodcastsFromPublicPodcastAlbumQuery(appId, manager);
 
-    return manager.query(
+    const podcasts = await manager.query(
       `
 SELECT DISTINCT
 	podcast_program.id AS id,
@@ -38,6 +41,8 @@ GROUP BY
 `,
       [...ownedPodcastsParameters],
     );
+
+    return this.utilityService.convertObjectKeysToCamelCase(podcasts);
   }
 
   private getOwnedPodcastsDirectlyQuery(memberId: string, manager: EntityManager) {

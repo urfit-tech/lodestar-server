@@ -16,6 +16,8 @@ import { ReportModule } from './report/report.module';
 import { AppMiddleware } from './app/app.middleware';
 import { AppModule } from './app/app.module';
 import { ProgramPackageModule } from './program-package/program-package.module';
+import { ProgramModule } from './program/program.module';
+import { PodcastModule } from './podcast/podcast.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -75,6 +77,8 @@ import { ProgramPackageModule } from './program-package/program-package.module';
     OrderModule,
     ReportModule,
     ProgramPackageModule,
+    ProgramModule,
+    PodcastModule,
   ],
 })
 export class ApplicationModule {

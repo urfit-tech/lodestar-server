@@ -1,5 +1,6 @@
 import { createCipheriv, createHash } from 'crypto';
 import { Injectable } from '@nestjs/common';
+import { camelCase, isArray, isDate, isObject, transform } from 'lodash';
 
 @Injectable()
 export class UtilityService {
@@ -27,5 +28,16 @@ export class UtilityService {
 
   objectToBase64url(payload: any): string {
     return this.arrayBufferToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
+  }
+
+  convertObjectKeysToCamelCase(obj): any {
+    return transform(obj, (acc, value, key, target) => {
+      const camelKey = isArray(target) ? key : camelCase(key as any);
+      acc[camelKey] = isDate(value)
+        ? new Date(value).toISOString()
+        : isObject(value)
+        ? this.convertObjectKeysToCamelCase(value)
+        : value;
+    });
   }
 }

@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { OrderLog } from '~/order/entity/order_log.entity';
+import { UtilityService } from '~/utility/utility.service';
 
 @Injectable()
 export class ProgramPackageInfrastructure {
+  constructor(private readonly utilityService: UtilityService) {}
   async getOwnedProgramPackages(memberId: string, manager: EntityManager) {
-    return manager
+    const programPackages = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
       .select([
@@ -51,10 +53,12 @@ export class ProgramPackageInfrastructure {
       )
       .groupBy('program_package.id')
       .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programPackages);
   }
 
   async getExpiredProgramPackages(memberId: string, manager: EntityManager) {
-    return manager
+    const programPackages = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
       .select([
@@ -100,5 +104,7 @@ export class ProgramPackageInfrastructure {
       )
       .groupBy('program_package.id')
       .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programPackages);
   }
 }

@@ -30,7 +30,14 @@ export class ProgramPackageService {
 
     const ownedProgramPackages = await this.programPackageInfra.getOwnedProgramPackages(memberId, this.entityManager);
 
-    return [...new Set(ownedProgramPackages)];
+    return [
+      ...new Set(
+        ownedProgramPackages.map((programPackage) => ({
+          ...programPackage,
+          viewRate: Number(programPackage.viewRate || 0),
+        })),
+      ),
+    ];
   }
 
   public async getExpiredProgramPackageByMemberId(appId: string, memberId: string) {
@@ -51,6 +58,13 @@ export class ProgramPackageService {
       this.entityManager,
     );
 
-    return [...new Set(expiredProgramPackages)];
+    return [
+      ...new Set(
+        expiredProgramPackages.map((programPackage) => ({
+          ...programPackage,
+          viewRate: Number(programPackage.viewRate || 0),
+        })),
+      ),
+    ];
   }
 }

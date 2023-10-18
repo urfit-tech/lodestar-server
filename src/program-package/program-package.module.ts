@@ -8,6 +8,7 @@ import { MemberModule } from '~/member/member.module';
 import { MemberService } from '~/member/member.service';
 import { DefinitionInfrastructure } from '~/definition/definition.infra';
 import { ProgramPackageInfrastructure } from './program-package.infra';
+import { UtilityService } from '~/utility/utility.service';
 
 @Module({
   controllers: [ProgramPackageController],
@@ -18,6 +19,7 @@ import { ProgramPackageInfrastructure } from './program-package.infra';
     MemberService,
     DefinitionInfrastructure,
     ProgramPackageInfrastructure,
+    UtilityService,
   ],
   exports: [],
 })

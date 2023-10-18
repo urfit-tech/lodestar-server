@@ -53,14 +53,17 @@ export class ProgramService {
       ...new Set([
         ...ownedProgramDirectly.map((program) => ({
           ...program,
+          viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
         ...ownedProgramsFromProgramPlan.map((program) => ({
           ...program,
+          viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
         ...programWithRoleIsAssistant.map((program) => ({
           ...program,
+          viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
       ]),
@@ -86,20 +89,19 @@ export class ProgramService {
       ...new Set([
         ...expiredPrograms.map((program) => ({
           ...program,
+          viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
       ]),
     ];
   }
 
-  public sortProgramRole(
-    roles: { id: string | null; member_id: string | null; name: string | null; created_at: string | null }[],
-  ) {
+  public sortProgramRole(roles: { id: string; member_id: string; name: string; createdAt: string }[]) {
     return roles
       .filter((role) => role.id)
       .sort(
-        (a: { created_at: string }, b: { created_at: string }) =>
-          dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf(),
+        (a: { createdAt: string }, b: { createdAt: string }) =>
+          dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
       );
   }
 }

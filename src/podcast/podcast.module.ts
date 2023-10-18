@@ -7,11 +7,19 @@ import { PodcastPlanService } from './podcast-plan/podcast-plan.service';
 import { PodcastController } from './podcast.controller';
 import { PodcastService } from './podcast.service';
 import { PodcastInfrastructure } from './podcast.infra';
+import { UtilityService } from '~/utility/utility.service';
 
 @Module({
   controllers: [PodcastController],
   imports: [AuthModule, MemberModule],
-  providers: [PodcastPlanService, PodcastService, MemberService, DefinitionInfrastructure, PodcastInfrastructure],
+  providers: [
+    PodcastPlanService,
+    PodcastService,
+    MemberService,
+    DefinitionInfrastructure,
+    PodcastInfrastructure,
+    UtilityService,
+  ],
   exports: [],
 })
 export class PodcastModule {}

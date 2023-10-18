@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { Program } from '~/entity/Program';
 import { OrderLog } from '~/order/entity/order_log.entity';
+import { UtilityService } from '~/utility/utility.service';
 
 @Injectable()
 export class ProgramInfrastructure {
+  constructor(private readonly utilityService: UtilityService) {}
+
   async getOwnedProgramsFromProgramPlan(memberId: string, manager: EntityManager) {
-    return manager
+    const programs = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
       .select([
@@ -53,10 +56,12 @@ export class ProgramInfrastructure {
       )
       .groupBy('program.id')
       .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
   async getOwnedProgramsDirectly(memberId: string, manager: EntityManager) {
-    return manager
+    const programs = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
       .select([
@@ -102,10 +107,11 @@ export class ProgramInfrastructure {
       )
       .groupBy('program.id')
       .getRawMany();
+    return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
   async getProgramsWithRoleIsAssistant(memberId: string, manager: EntityManager) {
-    return manager
+    const programs = await manager
       .getRepository(Program)
       .createQueryBuilder('program')
       .select([
@@ -130,10 +136,12 @@ export class ProgramInfrastructure {
       .leftJoin('member', 'member', 'member.id = program_role.member_id')
       .groupBy('program.id')
       .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
   async getExpiredPrograms(memberId: string, manager: EntityManager) {
-    return manager
+    const programs = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
       .select([
@@ -180,5 +188,7 @@ export class ProgramInfrastructure {
       )
       .groupBy('program.id')
       .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 }
