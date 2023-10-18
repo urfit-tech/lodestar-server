@@ -18,7 +18,7 @@ import {
   podcastProgram,
   podcastProgramRole,
   role,
-} from '../../data';
+} from '../data';
 import { EntityManager, Repository } from 'typeorm';
 import { ApiExceptionFilter } from '~/api.filter';
 import { App } from '~/app/entity/app.entity';
