@@ -23,6 +23,9 @@ export class ProgramContent {
   @Column('uuid', { name: 'content_section_id' })
   contentSectionId: string;
 
+  @Column('uuid', { name: 'content_body_id' })
+  contentBodyId: string;
+
   @Column('text', { name: 'title' })
   title: string;
 

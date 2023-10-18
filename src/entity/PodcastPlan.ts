@@ -14,6 +14,9 @@ export class PodcastPlan {
   @Column('text', { name: 'title' })
   title: string;
 
+  @Column('text', { name: 'creator_id' })
+  creatorId: string;
+
   @Column('numeric', { name: 'list_price' })
   listPrice: number;
 

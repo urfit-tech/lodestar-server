@@ -29,6 +29,10 @@ export class MemberGetQueryOptionsDTO {
 export class MemberGetConditionDTO {
   @IsString()
   @IsOptional()
+  id?: string;
+
+  @IsString()
+  @IsOptional()
   role?: string;
 
   @IsString()

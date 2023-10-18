@@ -42,6 +42,7 @@ export class MemberService {
     const cb = async (manager: EntityManager): Promise<MemberGetResultDTO> => {
       const wrapCondition: FindOptionsWhere<Member> = condition
         ? {
+            ...(condition.id && { id: Equal(condition.id) }),
             ...(condition.role && { role: Equal(condition.role) }),
             ...(condition.name && { name: ILike(condition.name) }),
             ...(condition.username && { username: ILike(condition.username) }),

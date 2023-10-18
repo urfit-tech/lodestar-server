@@ -7,6 +7,9 @@ export class ProgramPackagePlan {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('uuid', { name: 'program_package_id' })
+  programPackageId: string;
+
   @Column('boolean', { name: 'is_subscription' })
   isSubscription: boolean;
 

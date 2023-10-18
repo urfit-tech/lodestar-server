@@ -19,6 +19,9 @@ export class PodcastProgram {
   @Column('text', { name: 'title' })
   title: string;
 
+  @Column('text', { name: 'creator_id' })
+  creatorId: string;
+
   @Column('timestamp with time zone', { name: 'sold_at', nullable: true })
   soldAt: Date | null;
 

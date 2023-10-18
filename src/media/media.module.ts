@@ -9,10 +9,21 @@ import { ImageService } from './image/image.service';
 import { VideoService } from './video/video.service';
 import { VideoController } from './video/video.controller';
 import { MediaInfrastructure } from './media.infra';
+import { MemberModule } from '~/member/member.module';
+import { ProgramInfrastructure } from '~/program/program.infra';
 
 @Module({
   controllers: [VideoController],
-  imports: [AuthModule],
-  providers: [Logger, AudioService, ImageService, MediaInfrastructure, ProgramService, UtilityService, VideoService],
+  imports: [AuthModule, MemberModule],
+  providers: [
+    Logger,
+    AudioService,
+    ImageService,
+    MediaInfrastructure,
+    ProgramService,
+    UtilityService,
+    VideoService,
+    ProgramInfrastructure,
+  ],
 })
 export class MediaModule {}

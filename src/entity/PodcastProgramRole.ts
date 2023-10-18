@@ -11,6 +11,12 @@ export class PodcastProgramRole {
   @Column('text', { name: 'name' })
   name: string;
 
+  @Column('uuid', { name: 'podcast_program_id' })
+  podcastProgramId: string;
+
+  @Column('text', { name: 'member_id' })
+  memberId: string;
+
   @ManyToOne(() => Member, (member) => member.podcastProgramRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

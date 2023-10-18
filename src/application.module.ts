@@ -15,6 +15,9 @@ import { OrderModule } from './order/order.module';
 import { ReportModule } from './report/report.module';
 import { AppMiddleware } from './app/app.middleware';
 import { AppModule } from './app/app.module';
+import { ProgramPackageModule } from './program-package/program-package.module';
+import { ProgramModule } from './program/program.module';
+import { PodcastModule } from './podcast/podcast.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -73,13 +76,13 @@ import { AppModule } from './app/app.module';
     // TriggerModule,
     OrderModule,
     ReportModule,
+    ProgramPackageModule,
+    ProgramModule,
+    PodcastModule,
   ],
 })
 export class ApplicationModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AppMiddleware)
-      .exclude({ path: 'healthz', method: RequestMethod.GET })
-      .forRoutes('*');
+    consumer.apply(AppMiddleware).exclude({ path: 'healthz', method: RequestMethod.GET }).forRoutes('*');
   }
 }

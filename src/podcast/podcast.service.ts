@@ -3,17 +3,17 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { APIException } from '~/api.excetion';
 import { MemberService } from '~/member/member.service';
-import { PodcastPlanInfrastructure } from './podcast-plan.infra';
+import { PodcastInfrastructure } from './podcast.infra';
 
 @Injectable()
-export class PodcastPlanService {
+export class PodcastService {
   constructor(
-    private readonly podcastPlanInfra: PodcastPlanInfrastructure,
+    private readonly podcastInfra: PodcastInfrastructure,
     private readonly memberService: MemberService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
-  public async getPodcastPlanByMemberId(appId: string, memberId: string) {
+  public async getPodcastByMemberId(appId: string, memberId: string) {
     // Todo: check permission
     // ...
 
@@ -26,6 +26,13 @@ export class PodcastPlanService {
       });
     }
 
-    return await this.podcastPlanInfra.getOwnedPodcastPlan(memberId, this.entityManager);
+    const podcasts = await this.podcastInfra.getOwnedPodcasts(appId, memberId, this.entityManager);
+
+    return podcasts.map((podcast) => ({
+      ...podcast,
+      durationSecond: Number(podcast.durationSecond || 0),
+      salePrice: podcast.salePrice ? Number(podcast.salePrice) : null,
+      listPrice: Number(podcast.listPrice || 0),
+    }));
   }
 }
