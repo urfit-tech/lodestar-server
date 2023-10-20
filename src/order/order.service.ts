@@ -275,7 +275,8 @@ export class OrderService {
     sharingCodes: Array<SharingCode>,
     productOwners: Array<ProductOwner>,
   ): Promise<Array<Record<string, any>>> {
-    const dateFormatter = (value: Date | string, format?: string) => dayjs(value).format(format || `YYYY/MM/DD HH:mm`);
+    const dateFormatter = (value: Date | string, format?: string) =>
+      dayjs.tz(value).format(format || `YYYY/MM/DD HH:mm`);
     const getValue = (object: object, key: string) => {
       return defaultTo(get(object, key), '');
     };
@@ -432,7 +433,8 @@ export class OrderService {
     orderProducts: Array<OrderProduct>,
     productOwners: Array<ProductOwner>,
   ): Promise<Array<Record<string, any>>> {
-    const dateFormatter = (value: Date | string, format?: string) => dayjs(value).format(format || `YYYY/MM/DD HH:mm`);
+    const dateFormatter = (value: Date | string, format?: string) =>
+      dayjs.tz(value).format(format || `YYYY/MM/DD HH:mm`);
     const getValue = (object: object, key: string) => {
       return defaultTo(get(object, key), '');
     };
