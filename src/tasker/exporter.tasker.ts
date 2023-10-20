@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
 import { Job, Queue } from 'bull';
 import * as XLSX from 'xlsx';
 import { EntityManager } from 'typeorm';
@@ -23,6 +24,9 @@ import { ProductInfrastructure } from '~/product/product.infra';
 import { EmailService } from '~/mailer/email/email.service';
 import { AppInfrastructure } from '~/app/app.infra';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
+
+dayjs.extend(timezone);
+dayjs.tz.setDefault('Asia/Taipei');
 
 export type ExportCategory = 'member' | 'orderLog' | 'orderProduct' | 'orderDiscount';
 

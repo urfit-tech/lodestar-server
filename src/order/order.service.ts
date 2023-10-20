@@ -13,6 +13,7 @@ import {
 } from './class/csvHeaderMapping';
 import { CsvRawOrderLog } from './class/csvRawOrderLog';
 import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
 import { defaultTo, flatten, get, isEmpty } from 'lodash';
 import { OrderProduct } from './entity/order_product.entity';
 import { OrderDiscount } from './entity/order_discount.entity';
@@ -25,6 +26,7 @@ import { ProductInfrastructure } from '~/product/product.infra';
 import { ProductOwner } from '~/product/product.type';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
 
+dayjs.extend(timezone);
 @Injectable()
 export class OrderService {
   constructor(
@@ -112,6 +114,7 @@ export class OrderService {
       paymentLogs: {
         no: true,
         createdAt: true,
+        paidAt: true,
         options: true,
         invoiceIssuedAt: true,
       },
@@ -484,6 +487,7 @@ export class OrderService {
   }
 
   public async processOrderLogExportFromDatabase(appId: string, condition: OrderExportDTO) {
+    dayjs.tz.setDefault(condition.timezone);
     const discountTargets = await this.getOrderDiscountTargetsByPlanIds(appId, condition);
     const orderLogs = await this.exportOrderLogsFromDatabase(appId, condition, discountTargets);
     const coupons = await this.couponInfra.getCouponsByConditions(
@@ -510,6 +514,7 @@ export class OrderService {
   }
 
   public async processOrderProductExportFromDatabase(appId: string, condition: OrderExportDTO) {
+    dayjs.tz.setDefault(condition.timezone);
     const discountTargets = await this.getOrderDiscountTargetsByPlanIds(appId, condition);
     const orderProducts = await this.exportOrderProductsFromDatabase(appId, condition, discountTargets);
     const productOwners = await this.productInfra.getProductOwnerByProducts(
@@ -525,6 +530,7 @@ export class OrderService {
   }
 
   public async processOrderDiscountExportFromDatabase(appId: string, condition: OrderExportDTO) {
+    dayjs.tz.setDefault(condition.timezone);
     const discountTargets = await this.getOrderDiscountTargetsByPlanIds(appId, condition);
     const orderDiscounts = await this.exportOrderDiscountsFromDatabase(appId, condition, discountTargets);
     const headerInfos = await new OrderDiscountCsvHeaderMapping().createHeader();
