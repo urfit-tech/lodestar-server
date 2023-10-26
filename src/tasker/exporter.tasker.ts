@@ -121,7 +121,7 @@ export class ExporterTasker extends Tasker {
         admins = await this.memberInfra.getMembersByConditions(appId, { role: 'app-owner' }, this.entityManager);
       }
 
-      const fileKey = `${appId}/${category}_export_${dayjs.utc().format('YYYY-MM-DDTHH:mm:ss')}.${ext}`;
+      const fileKey = `${appId}/${category}_export_${dayjs.tz(dayjs.utc()).format('YYYY-MM-DDTHH:mm:ss')}.${ext}`;
       const { ETag } = await this.storageService.saveFilesInBucketStorage({
         Key: fileKey,
         Body: raw,
