@@ -53,4 +53,10 @@ export class OrderExportDTO {
   @IsString()
   @IsOptional()
   exportMime?: 'text/csv' | 'xlsx';
+
+  /**
+   * a parameter controlling timezone
+   */
+  @IsString()
+  timezone: string;
 }

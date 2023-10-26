@@ -13,6 +13,9 @@ export class PodcastAlbum {
   @Column('text', { name: 'title' })
   title: string;
 
+  @Column('text', { name: 'author_id' })
+  authorId: string;
+
   @Column('text', { name: 'cover_url', nullable: true })
   coverUrl: string | null;
 

@@ -361,6 +361,7 @@ describe('OrderController (e2e)', () => {
         .set('host', appHost.host)
         .send({
           statuses: ['SUCCESS'],
+          timezone: 'Asia/Taipei',
         })
         .expect(201);
 
@@ -425,6 +426,7 @@ describe('OrderController (e2e)', () => {
         .set('host', appHost.host)
         .send({
           statuses: ['SUCCESS'],
+          timezone: 'Asia/Taipei',
         })
         .expect(201);
 
@@ -489,6 +491,7 @@ describe('OrderController (e2e)', () => {
         .set('host', appHost.host)
         .send({
           statuses: ['SUCCESS'],
+          timezone: 'Asia/Taipei',
         })
         .expect(201);
 
