@@ -25,7 +25,7 @@ export class AppService {
     let appId;
     try {
       ({ appId } = await this.cacheService.getClient().hgetall(`host:${host}`));
-    
+
       if (!appId) {
         throw new Error('no host');
       }
@@ -42,7 +42,7 @@ export class AppService {
     return this.getAppInfo(appId);
   }
 
-  async getAppInfo(appId: string): Promise<AppCache> { 
+  async getAppInfo(appId: string): Promise<AppCache> {
     try {
       return await this.getAppCache(appId);
     } catch (error) {
@@ -52,8 +52,10 @@ export class AppService {
       const secrets = await this.getAppSecrets(appId);
       const settings = await this.getAppSettings(appId);
       const modules = await this.getAppModules(appId);
-      const settingDefaultPermissions: Array<string> = JSON.parse(settings['feature.membership_default_permission'] || '[]');
-      const defaultPermissions = await this.permissionInfra.getByIds(settingDefaultPermissions, this.entityManager); 
+      const settingDefaultPermissions: Array<string> = JSON.parse(
+        settings['feature.membership_default_permission'] || '[]',
+      );
+      const defaultPermissions = await this.permissionInfra.getByIds(settingDefaultPermissions, this.entityManager);
 
       let appCache: AppCache = {
         id: appId,
@@ -75,12 +77,11 @@ export class AppService {
   }
 
   async setAppCache(host: string, appCache: AppCache) {
-    const expireTime = 60 * 60 // 1 hour
+    const expireTime = 60 * 60; // 1 hour
     await this.cacheService.getClient().hset(`host:${host}`, { appId: appCache.id });
     await this.cacheService.getClient().expire(`host:${host}`, expireTime);
 
-    await this.cacheService.getClient()
-      .hset(`app:${appCache.id}`, { name: appCache.name, host: appCache.host });
+    await this.cacheService.getClient().hset(`app:${appCache.id}`, { name: appCache.name, host: appCache.host });
     await this.cacheService.getClient().expire(`app:${appCache.id}`, expireTime);
 
     appCache.orgId && (await this.cacheService.getClient().set(`app:${appCache.id}:orgId`, appCache.orgId));
@@ -100,9 +101,9 @@ export class AppService {
   }
 
   async getAppCache(appId: string): Promise<AppCache> {
-    const existed = await this.cacheService.getClient().exists(
-      `app:${appId}`, `app:${appId}:settings`, `app:${appId}:secrets`, `app:${appId}:modules`,
-    );
+    const existed = await this.cacheService
+      .getClient()
+      .exists(`app:${appId}`, `app:${appId}:settings`, `app:${appId}:secrets`, `app:${appId}:modules`);
 
     if (existed < 4) {
       throw new Error('cache is not completed');
@@ -113,8 +114,10 @@ export class AppService {
     const settings = await this.cacheService.getClient().hgetall(`app:${appId}:settings`);
     const secrets = await this.cacheService.getClient().hgetall(`app:${appId}:secrets`);
     const modules = await this.cacheService.getClient().smembers(`app:${appId}:modules`);
-    const settingDefaultPermissions: Array<string> = JSON.parse(settings['feature.membership_default_permission'] || '[]');
-    const defaultPermissions = await this.permissionInfra.getByIds(settingDefaultPermissions, this.entityManager); 
+    const settingDefaultPermissions: Array<string> = JSON.parse(
+      settings['feature.membership_default_permission'] || '[]',
+    );
+    const defaultPermissions = await this.permissionInfra.getByIds(settingDefaultPermissions, this.entityManager);
 
     const instance = plainToInstance(AppCache, {
       id: appId,
@@ -174,7 +177,7 @@ export class AppService {
   async getFirstMatchedAppHost(appId: string, entityManager?: EntityManager): Promise<AppHost | null> {
     const cb = async (manager: EntityManager) => {
       const founds = await this.appInfra.getAppHosts(appId, manager);
-      return founds.length > 0 ? founds.pop() : null;
+      return founds.length > 0 ? founds[0] : null;
     };
     return cb(entityManager ? entityManager : this.entityManager);
   }
