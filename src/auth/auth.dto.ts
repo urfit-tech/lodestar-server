@@ -57,10 +57,9 @@ export class JwtDTO {
 
   @IsUndefinable()
   options?: Record<string, any>;
-};
+}
 
 export type JwtMember = JwtDTO;
-
 
 export class GeoLocation {
   @IsString()
@@ -74,17 +73,17 @@ export class GeoLocation {
   @IsString()
   @IsNullable()
   countryCode: string;
-};
+}
 
 export class RefreshTokenDTO {
   @IsString()
   appId: string;
 
   @IsString()
-  @IsNullable()
-  fingerPrintId: string;
+  @IsOptional()
+  fingerPrintId: string | null;
 
   @ValidateNested()
   @Type(() => GeoLocation)
   geoLocation: GeoLocation;
-};
+}
