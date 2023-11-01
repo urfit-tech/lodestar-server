@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
 import { EntityManager } from 'typeorm';
-import UAParser from 'ua-parser-js'
+import UAParser from 'ua-parser-js';
 
 import { AppCache } from '~/app/app.type';
 import { MemberDevice } from '~/member/entity/member_device.entity';
@@ -34,7 +34,7 @@ export default class DeviceService {
 
   async getByFingerprintId(memberId: string, fingerPrintId: string) {
     const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
-    return devices.find((device) => device.id === fingerPrintId);
+    return devices.find((device) => device.fingerprintId === fingerPrintId);
   }
 
   async checkAndBindDevices(
@@ -43,14 +43,14 @@ export default class DeviceService {
       appId: string;
       memberId: string;
       memberRole?: MemberRole;
-      userAgent: string
-      fingerPrintId: string
-      geoLocation?: { ip: string | null; country: string | null; countryCode: string | null }
+      userAgent: string;
+      fingerPrintId: string;
+      geoLocation?: { ip: string | null; country: string | null; countryCode: string | null };
     },
   ): Promise<LoginDeviceStatus> {
     const { settings: appSettings, modules: appModules } = appCache;
     const { memberId, memberRole, userAgent, fingerPrintId, geoLocation } = options;
-    
+
     const uaResult = UAParser(userAgent);
     const { browser, os, device } = uaResult;
 
@@ -78,7 +78,7 @@ export default class DeviceService {
       );
       return LoginDeviceStatus.AVAILABLE;
     }
-    
+
     const memberDevices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
     const loginedDevices = memberDevices.filter((device) => device.isLogin);
 
