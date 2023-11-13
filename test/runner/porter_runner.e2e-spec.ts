@@ -16,9 +16,18 @@ jest.mock('axios', () => ({
 describe('PorterRunner', () => {
   let application: INestApplication;
   
-  let cacheService: CacheService;
+  let cacheService: any;
   let manager: EntityManager;
   let memberRepo: Repository<Member>;
+
+  const mockCacheService = {
+    getClient: jest.fn().mockReturnValue({
+      get: jest.fn().mockResolvedValue(['last-logged-in:123']),
+      mget: jest.fn().mockResolvedValue(['2023-01-01T00:00:00Z']),
+      del: jest.fn().mockResolvedValue(null),
+    }),
+  };
+
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -29,6 +38,9 @@ describe('PorterRunner', () => {
           clazz: PorterRunner,
           noGo: true,
         }),
+      ],
+      providers: [
+        { provide: CacheService, useValue: mockCacheService },
       ],
     }).compile();
 
@@ -47,6 +59,7 @@ describe('PorterRunner', () => {
   afterAll(async () => {
     await application.close();
   });
+  
 
 
   it('should call the heartbeat URL if PORTER_HEARTBEAT_URL is set', async () => {
@@ -60,6 +73,19 @@ describe('PorterRunner', () => {
     await porterRunner.execute();
 
     expect(mockedAxiosGet).toHaveBeenCalledWith(testUrl);
+  });
+
+  it('should get the redis key last logged in', async () => {
+    jest.spyOn(cacheService, 'getClient').mockReturnValue({
+      get: jest.fn().mockResolvedValue(['last-logged-in:123']),
+      mget: jest.fn().mockResolvedValue(['2023-01-01T00:00:00Z']),
+      del: jest.fn().mockResolvedValue(null),
+    });
+
+    const porterRunner = application.get<PorterRunner>(Runner);
+    await porterRunner.execute();
+  
+    expect(cacheService.getClient().get).toHaveBeenCalledWith('last-logged-in:*');
   });
 
 
