@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { APIException } from '~/api.excetion';
 import { MemberService } from '~/member/member.service';
 import { PodcastInfrastructure } from './podcast.infra';
@@ -12,8 +12,7 @@ export class PodcastService {
   constructor(
     private readonly podcastInfra: PodcastInfrastructure,
     private readonly memberService: MemberService,
-  private podcastAlbumRepository: Repository<PodcastAlbum>,
-  private podcastProgramProgressRepository: Repository<PodcastProgramProgress>,
+    
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
@@ -40,20 +39,23 @@ export class PodcastService {
     }));
   }
 
-  async upsertPodcastProgramProgress(
+  public async upsertPodcastProgramProgress(
     memberId: string,
     podcastProgramId: string,
     progress: number,
     lastProgress: number,
     podcastAlbumId: string | null,
   ): Promise<PodcastProgramProgress> {
-    let podcastProgramProgress = await this.podcastProgramProgressRepository.findOne({
+    const podcastProgramProgressRepo = this.entityManager.getRepository(PodcastProgramProgress);
+    let podcastProgramProgress = await podcastProgramProgressRepo.findOne({
       where: { memberId, podcastProgramId },
     });
 
     let podcastAlbum = null;
     if (podcastAlbumId) {
-      podcastAlbum = await this.podcastAlbumRepository.findOneBy({ id: podcastAlbumId });
+      const podcastAlbumRepo = this.entityManager.getRepository(PodcastAlbum);
+
+      podcastAlbum = await podcastAlbumRepo.findOneBy({ id: podcastAlbumId });
     }
 
     if (podcastProgramProgress) {
@@ -62,7 +64,7 @@ export class PodcastService {
       podcastProgramProgress.podcastAlbum = podcastAlbum; 
     } else {
       
-      podcastProgramProgress = this.podcastProgramProgressRepository.create({
+      podcastProgramProgress = podcastProgramProgressRepo.create({
         memberId,
         podcastProgramId,
         progress,
@@ -71,6 +73,6 @@ export class PodcastService {
       });
     }
 
-    return this.podcastProgramProgressRepository.save(podcastProgramProgress);
+    return podcastProgramProgressRepo.save(podcastProgramProgress);
   }
 }
