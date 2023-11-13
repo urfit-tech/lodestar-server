@@ -55,6 +55,35 @@ export class PorterRunner extends Runner {
     }
   }
 
+  async portPlayerEvent(): Promise<void> {
+    const keys: string[] = await this.cacheService.getClient().keys('program-content-event:*:program-content:*:*');
+
+    const values: (string | null)[] = keys.length > 0 ? await this.cacheService.getClient().mget(keys) : [];
+
+    for (let index = 0; index < keys.length; index++) {
+        const key: string = keys[index];
+      const [, memberId, , programContentId]: string[] = key.split(':');
+
+      const value: { playbackRate?: number; startedAt?: number; endedAt?: number } = JSON.parse(values[index] || '{}');
+
+      try {
+          const programContent: ProgramContent = await this.programService.getProgramContentById(programContentId); 
+          const programContentLog = new ProgramContentLog();
+          programContentLog.memberId = memberId;
+          programContentLog.programContent = programContent; 
+          programContentLog.playbackRate = value.playbackRate;
+          programContentLog.startedAt = value.startedAt || 0;
+          programContentLog.endedAt = value.endedAt || 0;
+
+          await this.entityManager.save(programContentLog);
+          await this.cacheService.getClient().del(key);
+      } catch (error) {
+          console.error(`porting ${key} failed: ${error}`)
+      }
+    }
+  }
+
+
   async execute(): Promise<void> {
     console.log("start")
     if (process.env.PORTER_HEARTBEAT_URL) {
@@ -67,6 +96,14 @@ export class PorterRunner extends Runner {
       console.log('finishing porting last logged in')
     } catch (error) {
       console.error('port last logged in failed:', error)
+    }
+
+    try {
+      console.log('porting player event')
+      await this.portPlayerEvent()
+      console.log('finishing porting player event')
+    } catch (error) {
+      console.error('port player event failed:', error)
     }
   }
 
