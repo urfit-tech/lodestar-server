@@ -29,11 +29,11 @@ export class ProgramService {
     const programContent = await programContentRepo.findOneBy({ id: programContentId });
 
     if (!programContent) {
-        throw new APIException({
-            code: 'E_NO_PROGRAM_CONTENT',
-            message: 'Program content not found',
-            result: null,
-        });
+      throw new APIException({
+          code: 'E_NO_PROGRAM_CONTENT',
+          message: 'Program content not found',
+          result: null,
+      });
     }
 
     return programContent;
