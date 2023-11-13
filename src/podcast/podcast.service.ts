@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { APIException } from '~/api.excetion';
 import { MemberService } from '~/member/member.service';
 import { PodcastInfrastructure } from './podcast.infra';
+import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress'
+import { PodcastAlbum } from '~/entity/PodcastAlbum'
 
 @Injectable()
 export class PodcastService {
   constructor(
     private readonly podcastInfra: PodcastInfrastructure,
     private readonly memberService: MemberService,
+  private podcastAlbumRepository: Repository<PodcastAlbum>,
+  private podcastProgramProgressRepository: Repository<PodcastProgramProgress>,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
@@ -34,5 +38,39 @@ export class PodcastService {
       salePrice: podcast.salePrice ? Number(podcast.salePrice) : null,
       listPrice: Number(podcast.listPrice || 0),
     }));
+  }
+
+  async upsertPodcastProgramProgress(
+    memberId: string,
+    podcastProgramId: string,
+    progress: number,
+    lastProgress: number,
+    podcastAlbumId: string | null,
+  ): Promise<PodcastProgramProgress> {
+    let podcastProgramProgress = await this.podcastProgramProgressRepository.findOne({
+      where: { memberId, podcastProgramId },
+    });
+
+    let podcastAlbum = null;
+    if (podcastAlbumId) {
+      podcastAlbum = await this.podcastAlbumRepository.findOneBy({ id: podcastAlbumId });
+    }
+
+    if (podcastProgramProgress) {
+      podcastProgramProgress.progress = progress;
+      podcastProgramProgress.lastProgress = lastProgress;
+      podcastProgramProgress.podcastAlbum = podcastAlbum; 
+    } else {
+      
+      podcastProgramProgress = this.podcastProgramProgressRepository.create({
+        memberId,
+        podcastProgramId,
+        progress,
+        lastProgress,
+        podcastAlbum, 
+      });
+    }
+
+    return this.podcastProgramProgressRepository.save(podcastProgramProgress);
   }
 }
