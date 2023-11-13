@@ -24,6 +24,21 @@ export class ProgramService {
     });
   }
 
+  public async getProgramContentById(programContentId: string): Promise<ProgramContent> {
+    const programContentRepo = this.entityManager.getRepository(ProgramContent);
+    const programContent = await programContentRepo.findOneBy({ id: programContentId });
+
+    if (!programContent) {
+        throw new APIException({
+            code: 'E_NO_PROGRAM_CONTENT',
+            message: 'Program content not found',
+            result: null,
+        });
+    }
+
+    return programContent;
+  }
+
   public async getProgramByMemberId(appId: string, memberId: string) {
     // Todo: check permission
     // ...
