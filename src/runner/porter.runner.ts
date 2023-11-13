@@ -83,6 +83,32 @@ export class PorterRunner extends Runner {
     }
   }
 
+  async portPodcastProgram(): Promise<void> {
+    const keys: string[] = await this.cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+
+    const values: (string | null)[] = keys.length > 0 ? await this.cacheService.getClient().mget(keys) : [];
+
+    for (let index = 0; index < keys.length; index++) {
+      const key: string = keys[index];
+      const [, memberId, , podcastProgramId]: string[] = key.split(':');
+
+      const value: { progress?: number; podcastAlbumId?: string } = JSON.parse(values[index] || '{}');
+
+      try {
+        await this.podcastService.upsertPodcastProgramProgress(
+            memberId,
+            podcastProgramId,
+            value.progress,
+            value.progress,
+            value.podcastAlbumId || null,
+        );
+
+        await this.cacheService.getClient().del(key);
+      } catch (error) {
+        console.error(`porting ${key} failed: ${error}`);
+      }
+    }
+  }
 
   async execute(): Promise<void> {
     console.log("start")
@@ -104,6 +130,14 @@ export class PorterRunner extends Runner {
       console.log('finishing porting player event')
     } catch (error) {
       console.error('port player event failed:', error)
+    }
+
+    try {
+      console.log('porting podcast event')
+      await this.portPodcastProgram()
+      console.log('finishing porting podcast event')
+    } catch (error) {
+      console.error('port podcast event failed:', error)
     }
   }
 
