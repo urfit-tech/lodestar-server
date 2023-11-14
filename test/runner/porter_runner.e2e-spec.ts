@@ -11,7 +11,7 @@ import { Runner } from '~/runner/runner';
 import { v4 } from 'uuid';
 import { Role } from '~/entity/Role';
 import { App } from '~/app/entity/app.entity';
-import { app, appHost, appPlan, appSecret, appSetting, currency, member, memberTag, program, programContent, programContentBody, programContentProgress, programContentSection, programPlan, role } from '../data';
+import { app, appHost, appPlan, appSecret, appSetting, currency, member, memberTag, podcastProgram, program, programContent, programContentBody, programContentProgress, programContentSection, programPlan, role } from '../data';
 import { AppPlan } from '~/entity/AppPlan';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
@@ -24,6 +24,8 @@ import { ProgramPlan } from '~/entity/ProgramPlan';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { Currency } from '~/entity/Currency';
 import { ProgramContentLog } from '~/entity/ProgramContentLog';
+import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
+import { PodcastProgram } from '~/entity/PodcastProgram';
 
 jest.mock('axios', () => ({
   get: jest.fn()
@@ -48,6 +50,8 @@ describe('PorterRunner', () => {
   let programRepo: Repository<Program>;
   let currencyRepo: Repository<Currency>;
   let programContentLogRepo: Repository<ProgramContentLog>;
+  let podcastProgramProgressRepo: Repository<PodcastProgramProgress>
+  let podcastProgramRepo: Repository<PodcastProgram>
 
 
 
@@ -85,6 +89,10 @@ describe('PorterRunner', () => {
     programContentProgressRepo = manager.getRepository(ProgramContentProgress);
     currencyRepo = manager.getRepository(Currency);
     programContentLogRepo = manager.getRepository(ProgramContentLog);
+    podcastProgramRepo = manager.getRepository(PodcastProgram)
+    podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress)
+
+    await cacheService.getClient().flushdb();
 
     await programPlanRepo.delete({});
     await currencyRepo.delete({});
@@ -94,6 +102,8 @@ describe('PorterRunner', () => {
     await programContentSectionRepo.delete({});
     await programContentBodyRepo.delete({});
     await programRepo.delete({});
+    await podcastProgramProgressRepo.delete({})
+    await podcastProgramRepo.delete({})
     await memberRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
@@ -118,20 +128,19 @@ describe('PorterRunner', () => {
     await programContentSectionRepo.save(programContentSection);
     await programContentRepo.save(programContent);
     await programContentProgressRepo.save(programContentProgress);
-
-
-    await application.init();
-  });
-
-  beforeEach(async () => {
+    await podcastProgramRepo.save(podcastProgram)
 
     await cacheService.getClient().set(`last-logged-in:${member.id}`, '2023-01-02T00:00:00Z');
 
     await cacheService.getClient().set(`program-content-event:${member.id}:${programContent.id}`,'{"playbackRate":1.25,"startedAt":496.957357,"endedAt":502.26019}')
 
     await cacheService.getClient().set(`program-content-event:${member.id}:program-content:${programContent.id}:111111`, '{"playbackRate":1.25,"startedAt":496.957357,"endedAt":502.26019}');
-    console.log("aaaaasqw",`program-content-event:${member.id}:${programContent.id}` )
-    
+
+    await cacheService.getClient().set(`podcast-program-event:${member.id}:podcast-program:${podcastProgram.id}:111111`, '{"progress":"190.2503679064795","lastProgress":190.2503679064795,"podcastAlbumId":"73cf33ca-4bae-4c28-8e8a-87122c2096cb"}');
+
+
+    await application.init();
+
   });
 
   afterAll(async () => {
@@ -187,6 +196,26 @@ describe('PorterRunner', () => {
       expect(latestLog.startedAt).toEqual('496.957357')
       expect(latestLog.endedAt).toEqual('502.26019')
       expect(latestLog.memberId).toEqual(member.id)
+    });
+  
+  });
+
+
+  describe("portPodcastProgram", () => {
+
+    it('should correctly save podcast program progress', async () => {
+
+      const porterRunner = application.get<PorterRunner>(Runner);
+        
+      await porterRunner.execute();
+
+      const [latesProgress] = await podcastProgramProgressRepo.find({
+        order: { createdAt: 'DESC' },
+        take: 1
+      });
+
+      expect(latesProgress.memberId).toEqual(member.id)
+      expect(latesProgress.podcastProgramId).toEqual(podcastProgram.id)
     });
   
   });
