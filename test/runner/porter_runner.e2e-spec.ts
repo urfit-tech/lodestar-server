@@ -11,7 +11,7 @@ import { Runner } from '~/runner/runner';
 import { v4 } from 'uuid';
 import { Role } from '~/entity/Role';
 import { App } from '~/app/entity/app.entity';
-import { app, appHost, appPlan, appSecret, appSetting, member, role } from '../data';
+import { app, appHost, appPlan, appSecret, appSetting, member, memberTag, role } from '../data';
 import { AppPlan } from '~/entity/AppPlan';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
@@ -95,12 +95,10 @@ describe('PorterRunner', () => {
 
   describe("last-logged-in", () => {
     describe('success process', () => {
+      let mockLastLoggedInKeys;
+      let mockMemberLastLoggedInTimestamps;
+
       beforeAll(async ()=> {
-        jest.spyOn(cacheService, 'getClient').mockReturnValue({
-          get: jest.fn().mockResolvedValue(['last-logged-in:123']),
-          mget: jest.fn().mockResolvedValue(['2023-01-01T00:00:00Z']),
-          del: jest.fn().mockResolvedValue(null),
-        });
         await roleRepo.save(role);
         await appPlanRepo.save(appPlan);
         await appRepo.save(app);
@@ -108,6 +106,16 @@ describe('PorterRunner', () => {
         await appSecretRepo.save(appSecret);
         await appHostRepo.save(appHost);
         await memberRepo.save(member);
+
+        mockLastLoggedInKeys = [`last-logged-in:${member.id}`];
+        mockMemberLastLoggedInTimestamps = ['2023-01-02T00:00:00Z'];
+
+        jest.spyOn(cacheService, 'getClient').mockReturnValue({
+          get: jest.fn().mockResolvedValue(mockLastLoggedInKeys),
+          mget: jest.fn().mockResolvedValue(mockMemberLastLoggedInTimestamps),
+          del: jest.fn().mockResolvedValue(null),
+        });
+
       })
 
       it('should get the redis key last logged in', async () => {
@@ -116,6 +124,22 @@ describe('PorterRunner', () => {
         await porterRunner.execute();
       
         expect(cacheService.getClient().get).toHaveBeenCalledWith('last-logged-in:*');
+        expect(cacheService.getClient().mget).toHaveBeenCalledWith(mockLastLoggedInKeys);
+      });
+
+      it('should update member after get the value from redis', async () => {
+        const porterRunner = application.get<PorterRunner>(Runner);
+        
+        await porterRunner.execute();
+        const updatedMember = await memberRepo.findOneById(member.id);
+        
+        const updatedDateUTC = updatedMember.loginedAt.toUTCString();
+        const expectedDateUTC = new Date(mockMemberLastLoggedInTimestamps[0]);
+        expectedDateUTC.setHours(expectedDateUTC.getHours() - 8);
+        const expectedDateString = expectedDateUTC.toUTCString();  
+      
+        expect(updatedDateUTC).toEqual(expectedDateString);
+        expect(cacheService.getClient().del).toHaveBeenCalledWith(mockLastLoggedInKeys[0]);
       });
 
 
