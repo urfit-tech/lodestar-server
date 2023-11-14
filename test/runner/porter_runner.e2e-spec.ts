@@ -11,11 +11,19 @@ import { Runner } from '~/runner/runner';
 import { v4 } from 'uuid';
 import { Role } from '~/entity/Role';
 import { App } from '~/app/entity/app.entity';
-import { app, appHost, appPlan, appSecret, appSetting, member, memberTag, role } from '../data';
+import { app, appHost, appPlan, appSecret, appSetting, currency, member, memberTag, program, programContent, programContentBody, programContentProgress, programContentSection, programPlan, role } from '../data';
 import { AppPlan } from '~/entity/AppPlan';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
+import { ProgramContentSection } from '~/entity/ProgramContentSection';
+import { Program } from '~/entity/Program';
+import { ProgramContentBody } from '~/entity/ProgramContentBody';
+import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
+import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramContent } from '~/program/entity/program_content.entity';
+import { Currency } from '~/entity/Currency';
+import { ProgramContentLog } from '~/entity/ProgramContentLog';
 
 jest.mock('axios', () => ({
   get: jest.fn()
@@ -32,6 +40,16 @@ describe('PorterRunner', () => {
   let appSecretRepo: Repository<AppSecret>;
   let appSettingRepo: Repository<AppSetting>;
   let memberRepo: Repository<Member>;
+  let programPlanRepo: Repository<ProgramPlan>;
+  let programContentSectionRepo: Repository<ProgramContentSection>;
+  let programContentBodyRepo: Repository<ProgramContentBody>;
+  let programContentRepo: Repository<ProgramContent>;
+  let programContentProgressRepo: Repository<ProgramContentProgress>;
+  let programRepo: Repository<Program>;
+  let currencyRepo: Repository<Currency>;
+  let programContentLogRepo: Repository<ProgramContentLog>;
+
+
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -59,7 +77,23 @@ describe('PorterRunner', () => {
     appHostRepo = manager.getRepository(AppHost);
     roleRepo = manager.getRepository(Role);
     memberRepo = manager.getRepository(Member);
+    programRepo = manager.getRepository(Program);
+    programPlanRepo = manager.getRepository(ProgramPlan);
+    programContentSectionRepo = manager.getRepository(ProgramContentSection);
+    programContentBodyRepo = manager.getRepository(ProgramContentBody);
+    programContentRepo = manager.getRepository(ProgramContent);
+    programContentProgressRepo = manager.getRepository(ProgramContentProgress);
+    currencyRepo = manager.getRepository(Currency);
+    programContentLogRepo = manager.getRepository(ProgramContentLog);
 
+    await programPlanRepo.delete({});
+    await currencyRepo.delete({});
+    await programContentLogRepo.delete({})
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programContentBodyRepo.delete({});
+    await programRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
@@ -69,10 +103,7 @@ describe('PorterRunner', () => {
     await roleRepo.delete({});
 
 
-    await application.init();
-  });
 
-  beforeEach(async () => {
     await roleRepo.save(role);
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -80,8 +111,27 @@ describe('PorterRunner', () => {
     await appSecretRepo.save(appSecret);
     await appHostRepo.save(appHost);
     await memberRepo.save(member);
+    await currencyRepo.save(currency);
+    await programRepo.save(program);
+    await programPlanRepo.save(programPlan);
+    await programContentBodyRepo.save(programContentBody);
+    await programContentSectionRepo.save(programContentSection);
+    await programContentRepo.save(programContent);
+    await programContentProgressRepo.save(programContentProgress);
+
+
+    await application.init();
+  });
+
+  beforeEach(async () => {
 
     await cacheService.getClient().set(`last-logged-in:${member.id}`, '2023-01-02T00:00:00Z');
+
+    await cacheService.getClient().set(`program-content-event:${member.id}:${programContent.id}`,'{"playbackRate":1.25,"startedAt":496.957357,"endedAt":502.26019}')
+
+    await cacheService.getClient().set(`program-content-event:${member.id}:program-content:${programContent.id}:111111`, '{"playbackRate":1.25,"startedAt":496.957357,"endedAt":502.26019}');
+    console.log("aaaaasqw",`program-content-event:${member.id}:${programContent.id}` )
+    
   });
 
   afterAll(async () => {
@@ -102,38 +152,44 @@ describe('PorterRunner', () => {
   })
 
   describe("last-logged-in", () => {
-    describe('success process', () => {
 
-      it('should update member after get the value from redis', async () => {
-
-        const porterRunner = application.get<PorterRunner>(Runner);
-        
-        await porterRunner.execute();
-        const updatedMember = await memberRepo.findOneById(member.id);
-
-        console.log('updatedMember', updatedMember)
-        
-        const updatedDateUTC = updatedMember.loginedAt.toUTCString();
-        const expectedDateUTC = new Date('2023-01-02T00:00:00Z');
-        expectedDateUTC.setHours(expectedDateUTC.getHours() - 8);
-        const expectedDateString = expectedDateUTC.toUTCString();  
+    it('should update member after get the value from redis', async () => {
+      const porterRunner = application.get<PorterRunner>(Runner);
       
-        expect(updatedDateUTC).toEqual(expectedDateString);
-      });
-    })
+      await porterRunner.execute();
+      const updatedMember = await memberRepo.findOneById(member.id);
+
+      console.log('updatedMember', updatedMember)
+      
+      const updatedDateUTC = updatedMember.loginedAt.toUTCString();
+      const expectedDateUTC = new Date('2023-01-02T00:00:00Z');
+      expectedDateUTC.setHours(expectedDateUTC.getHours() - 8);
+      const expectedDateString = expectedDateUTC.toUTCString();  
+    
+      expect(updatedDateUTC).toEqual(expectedDateString);
+    });
   })
 
   describe("portPlayerEvent", () => {
 
+    it('should correctly save program content log', async () => {
 
-    xit('should correctly process player events from Redis', async () => {
-      jest.clearAllMocks();
       const porterRunner = application.get<PorterRunner>(Runner);
-      await porterRunner.portPlayerEvent();
-  
-      expect(cacheService.getClient().keys).toHaveBeenCalledWith('program-content-event:*:program-content:*:*');
+        
+      await porterRunner.execute();
+
+      const [latestLog] = await programContentLogRepo.find({
+        order: { createdAt: 'DESC' },
+        take: 1
+      });
+
+      expect(latestLog.playbackRate).toEqual('1.25')
+      expect(latestLog.startedAt).toEqual('496.957357')
+      expect(latestLog.endedAt).toEqual('502.26019')
+      expect(latestLog.memberId).toEqual(member.id)
     });
   
   });
+  
   
 });
