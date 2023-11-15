@@ -6,6 +6,7 @@ import { MemberService } from '~/member/member.service';
 import { PodcastInfrastructure } from './podcast.infra';
 import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress'
 import { PodcastAlbum } from '~/entity/PodcastAlbum'
+import { Member } from '~/member/entity/member.entity';
 
 @Injectable()
 export class PodcastService {
@@ -39,40 +40,64 @@ export class PodcastService {
     }));
   }
 
-  public async upsertPodcastProgramProgress(
-    memberId: string,
-    podcastProgramId: string,
-    progress: number,
-    lastProgress: number,
-    podcastAlbumId: string | null,
-  ): Promise<PodcastProgramProgress> {
+  public async upsertPodcastProgramProgressBatch(
+    updates: {
+      memberId: string,
+      podcastProgramId: string,
+      progress: number,
+      lastProgress: number,
+      podcastAlbumId: string | null,
+    }[]
+  ): Promise<PodcastProgramProgress[]> {
     const podcastProgramProgressRepo = this.entityManager.getRepository(PodcastProgramProgress);
-    let podcastProgramProgress = await podcastProgramProgressRepo.findOne({
-      where: { memberId, podcastProgramId },
-    });
-
-    let podcastAlbum = null;
-    if (podcastAlbumId) {
-      const podcastAlbumRepo = this.entityManager.getRepository(PodcastAlbum);
-
-      podcastAlbum = await podcastAlbumRepo.findOneBy({ id: podcastAlbumId });
+    const updatesToSave = [];
+  
+    for (const update of updates) {
+      const member = await this.findMember(update.memberId);
+      if (!member) {
+        console.log(`Member with id ${update.memberId} not found. Skipping update.`);
+        continue;
+      }
+  
+      const podcastAlbum = update.podcastAlbumId ? await this.findPodcastAlbum(update.podcastAlbumId) : null;
+      let podcastProgramProgress = await podcastProgramProgressRepo.findOneBy({
+        memberId: update.memberId,
+        podcastProgramId: update.podcastProgramId,
+      });
+  
+      if (!podcastProgramProgress) {
+        podcastProgramProgress = podcastProgramProgressRepo.create({
+          member,
+          podcastProgramId: update.podcastProgramId,
+        });
+      }
+  
+      podcastProgramProgress.progress = update.progress;
+      podcastProgramProgress.lastProgress = update.lastProgress;
+      podcastProgramProgress.podcastAlbum = podcastAlbum;
+  
+      updatesToSave.push(podcastProgramProgress);
     }
-
-    if (podcastProgramProgress) {
-      podcastProgramProgress.progress = progress;
-      podcastProgramProgress.lastProgress = lastProgress;
-      podcastProgramProgress.podcastAlbum = podcastAlbum; 
-    } else {
-      
-      podcastProgramProgress = podcastProgramProgressRepo.create({
-        memberId,
-        podcastProgramId,
-        progress,
-        lastProgress,
-        podcastAlbum, 
+  
+    return await podcastProgramProgressRepo.save(updatesToSave);
+  }
+  
+  private async findMember(memberId: string): Promise<Member> {
+    const memberRepo = this.entityManager.getRepository(Member);
+    const member = await memberRepo.findOneBy({ id: memberId });
+    if (!member) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: `Member with id ${memberId} not found`,
+        result: null,
       });
     }
-
-    return podcastProgramProgressRepo.save(podcastProgramProgress);
+    return member;
   }
+
+  private async findPodcastAlbum(podcastAlbumId: string): Promise<PodcastAlbum | null> {
+    const podcastAlbumRepo = this.entityManager.getRepository(PodcastAlbum);
+    return await podcastAlbumRepo.findOneBy({ id: podcastAlbumId });
+  }
+  
 }
