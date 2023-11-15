@@ -8,10 +8,9 @@ import { EntityManager, Repository } from 'typeorm';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 import { Member } from '~/member/entity/member.entity';
 import { Runner } from '~/runner/runner';
-import { v4 } from 'uuid';
 import { Role } from '~/entity/Role';
 import { App } from '~/app/entity/app.entity';
-import { app, appHost, appPlan, appSecret, appSetting, currency, member, memberTag, podcastProgram, program, programContent, programContentBody, programContentProgress, programContentSection, programPlan, role } from '../data';
+import { app, appHost, appPlan, appSecret, appSetting, currency, member, podcastProgram, program, programContent, programContentBody, programContentProgress, programContentSection, programPlan, role } from '../data';
 import { AppPlan } from '~/entity/AppPlan';
 import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
@@ -31,7 +30,7 @@ jest.mock('axios', () => ({
   get: jest.fn()
 }));
 
-describe('PorterRunner', () => {
+describe('PorterRunner (e2e)', () => {
   let application: INestApplication;
   let cacheService: CacheService;
   let manager: EntityManager;
@@ -219,6 +218,5 @@ describe('PorterRunner', () => {
     });
   
   });
-  
   
 });
