@@ -30,6 +30,10 @@ export class PorterRunner extends Runner {
   ) {
     super(PorterRunner.name, 1000, logger, distributedLockService, shutdownService);
   }
+
+  async delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
   
 
   async portLastLoggedIn(): Promise<void> {
@@ -71,34 +75,31 @@ export class PorterRunner extends Runner {
   }
 
   async portPlayerEvent(): Promise<void> {
-    let cursor = '0';
-    let scanResult: [string, string[]];
     const pattern = 'program-content-event:*:program-content:*:*';
-    const count = 10000;
-    this.cacheService.getClient().scanStream()
+    const allKeys = await this.cacheService.getClient().keys(pattern);
+    const batchSize = 1; 
   
-    do {
-      scanResult = await this.cacheService.getClient().scan(cursor, 'MATCH', pattern, 'COUNT', count);
-      cursor = scanResult[0];
-      const keys = scanResult[1];
+    for (let i = 0; i < allKeys.length; i += batchSize) {
+      const batchKeys = allKeys.slice(i, i + batchSize);
+      const values = await this.cacheService.getClient().mget(batchKeys);
       const programContentLogs: ProgramContentLog[] = [];
-
-      for (let key of keys) {
-        const [, memberId, , programContentId]: string[] = key.split(':');
-        const valueString = await this.cacheService.getClient().get(key);
-        const value: { playbackRate?: number; startedAt?: number; endedAt?: number } = JSON.parse(valueString || '{}');
+  
+      for (let j = 0; j < batchKeys.length; j++) {
+        const key = batchKeys[j];
+        const valueString = values[j];
+        const [, memberId, , programContentId] = key.split(':');
+        const value = JSON.parse(valueString || '{}');
   
         try {
-          const programContent: ProgramContent = await this.programService.getProgramContentById(programContentId); 
+          const programContent = await this.programService.getProgramContentById(programContentId);
           const programContentLog = new ProgramContentLog();
           programContentLog.memberId = memberId;
-          programContentLog.programContent = programContent; 
+          programContentLog.programContent = programContent;
           programContentLog.playbackRate = value.playbackRate;
           programContentLog.startedAt = value.startedAt || 0;
           programContentLog.endedAt = value.endedAt || 0;
   
-          programContentLogs.push(programContentLog); 
-          await this.cacheService.getClient().del(key);
+          programContentLogs.push(programContentLog);
         } catch (error) {
           console.error(`Processing ${key} failed: ${error}`);
         }
@@ -107,53 +108,55 @@ export class PorterRunner extends Runner {
       if (programContentLogs.length > 0) {
         try {
           await this.entityManager.save(programContentLogs);
+          for (let key of batchKeys) {
+            await this.cacheService.getClient().del(key);
+          }
         } catch (error) {
           console.error(`Batch saving failed: ${error}`);
         }
       }
-    } while (cursor !== '0');
+
+    }
   }
+  
+  
   
   async portPodcastProgram(): Promise<void> {
-    let cursor = '0';
-    let scanResult;
     const pattern = 'podcast-program-event:*:podcast-program:*:*';
-    const count = 10000; 
+    const batchSize = 10; 
   
-    do {
-      scanResult = await this.cacheService.getClient().scan(cursor, 'MATCH', pattern, 'COUNT', count);
-      cursor = scanResult[0];
-      const keys = scanResult[1];
+    const allKeys = await this.cacheService.getClient().keys(pattern);
   
-      if (keys.length > 0) {
-        const values: (string | null)[] = await this.cacheService.getClient().mget(keys);
-        const updateData = []; 
+    for (let i = 0; i < allKeys.length; i += batchSize) {
+      const batchKeys = allKeys.slice(i, i + batchSize);
+      const values: (string | null)[] = await this.cacheService.getClient().mget(batchKeys);
+      const updateData = [];
   
-        for (let index = 0; index < keys.length; index++) {
-          const key: string = keys[index];
-          const [, memberId, , podcastProgramId]: string[] = key.split(':');
-          const value: { progress?: number; podcastAlbumId?: string } = JSON.parse(values[index] || '{}');
+      for (let j = 0; j < batchKeys.length; j++) {
+        const key = batchKeys[j];
+        const [, memberId, , podcastProgramId]: string[] = key.split(':');
+        const value: { progress?: number; podcastAlbumId?: string } = JSON.parse(values[j] || '{}');
   
-          updateData.push({ 
-            memberId: memberId,
-            podcastProgramId: podcastProgramId,
-            progress: value.progress,
-            lastProgress: value.progress,
-            podcastAlbumId: value.podcastAlbumId || null
-          });
-        }
-  
-        try {
-          if (updateData.length > 0) {
-            await this.podcastService.upsertPodcastProgramProgressBatch(updateData);
-            await Promise.all(keys.map(key => this.cacheService.getClient().del(key))); 
-          }
-        } catch (error) {
-          console.error(`Batch upsert failed: ${error}`);
-        }
+        updateData.push({
+          memberId,
+          podcastProgramId,
+          progress: value.progress,
+          lastProgress: value.progress,
+          podcastAlbumId: value.podcastAlbumId || null
+        });
       }
-    } while (cursor !== '0');
+  
+      try {
+        if (updateData.length > 0) {
+          await this.podcastService.upsertPodcastProgramProgressBatch(updateData);
+          await Promise.all(batchKeys.map(key => this.cacheService.getClient().del(key)));
+        }
+      } catch (error) {
+        console.error(`Batch upsert failed: ${error}`);
+      }
+    }
   }
+  
   
 
   async execute(): Promise<void> {

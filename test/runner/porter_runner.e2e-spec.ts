@@ -129,14 +129,32 @@ describe('PorterRunner (e2e)', () => {
     await programContentProgressRepo.save(programContentProgress);
     await podcastProgramRepo.save(podcastProgram)
 
-    await cacheService.getClient().set(`last-logged-in:${member.id}`, '2023-01-02T00:00:00Z');
+    await cacheService.getClient().set(
+      `last-logged-in:${member.id}`, 
+      '2023-01-02T00:00:00Z', 
+      'EX', 
+      7 * 86400
+    );
 
-    await cacheService.getClient().set(`program-content-event:${member.id}:${programContent.id}`,'{"playbackRate":1.25,"startedAt":496.957357,"endedAt":502.26019}')
+    await cacheService.getClient().set(
+      `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+      JSON.stringify({"playbackRate":1.25,"startedAt":496.957357,
+      "endedAt":502.26019
+      }),
+      'EX',
+      7 * 86400,
+    )
 
-    await cacheService.getClient().set(`program-content-event:${member.id}:program-content:${programContent.id}:111111`, '{"playbackRate":1.25,"startedAt":496.957357,"endedAt":502.26019}');
-
-    await cacheService.getClient().set(`podcast-program-event:${member.id}:podcast-program:${podcastProgram.id}:111111`, '{"progress":"190.2503679064795","lastProgress":190.2503679064795,"podcastAlbumId":"73cf33ca-4bae-4c28-8e8a-87122c2096cb"}');
-
+    await cacheService.getClient().set(
+      `podcast-program-event:${member.id}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+      JSON.stringify({
+        progress: "190.2503679064795",
+        lastProgress: 190.2503679064795,
+        podcastAlbumId: "73cf33ca-4bae-4c28-8e8a-87122c2096cb",
+      }),
+      'EX',
+      7 * 86400,
+    )
 
     await application.init();
 
