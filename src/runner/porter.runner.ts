@@ -10,10 +10,9 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { Member } from '~/member/entity/member.entity';
 import { EntityManager } from 'typeorm';
 import { ProgramContentLog } from '~/entity/ProgramContentLog';
-import { ProgramService } from '~/program/program.service';
-import { PodcastService } from '~/podcast/podcast.service';
 import { ProgramContent } from '../program/entity/program_content.entity';
 import { APIException } from '~/api.excetion';
+import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
 
 @Injectable()
 export class PorterRunner extends Runner {
@@ -22,12 +21,10 @@ export class PorterRunner extends Runner {
     protected readonly distributedLockService: DistributedLockService,
     protected readonly shutdownService: ShutdownService,
     private readonly cacheService: CacheService,
-    private readonly programService: ProgramService,
-    private readonly podcastService: PodcastService,
 
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(PorterRunner.name, 5000, logger, distributedLockService, shutdownService);
+    super(PorterRunner.name, 60000, logger, distributedLockService, shutdownService);
   }
 
   async delay(ms) {
@@ -127,43 +124,75 @@ export class PorterRunner extends Runner {
     }
   }
 
-  async portPodcastProgram(manager: EntityManager): Promise<void> {
+  async portPodcastProgram(entityManager?: EntityManager): Promise<void> {
+    const errors: Array<{ error: any }> = [];
     const pattern = 'podcast-program-event:*:podcast-program:*:*';
-    const batchSize = 1;
-
     const allKeys = await this.cacheService.getClient().keys(pattern);
-    const updateData = [];
+    const batchSize = 30;
 
     for (let i = 0; i < allKeys.length; i += batchSize) {
       const batchKeys = allKeys.slice(i, i + batchSize);
-      const values: (string | null)[] = await this.cacheService.getClient().mget(batchKeys);
+      const values = await this.cacheService.getClient().mget(batchKeys);
 
       for (let j = 0; j < batchKeys.length; j++) {
         const key = batchKeys[j];
-        const [, memberId, , podcastProgramId]: string[] = key.split(':');
-        const value: { progress?: number; podcastAlbumId?: string } = JSON.parse(values[j] || '{}');
+        const valueString = values[j];
+        if (!valueString) continue;
+        const [, memberId, , podcastProgramId] = key.split(':');
+        const value = JSON.parse(valueString);
 
-        updateData.push({
-          memberId,
-          podcastProgramId,
-          progress: value.progress,
-          lastProgress: value.progress,
-          podcastAlbumId: value.podcastAlbumId || null,
-        });
-      }
+        try {
+          let podcastProgramProgress = await entityManager.getRepository(PodcastProgramProgress).findOne({
+            where: {
+              memberId: memberId,
+              podcastProgramId: podcastProgramId,
+            },
+          });
 
-      try {
-        if (updateData.length > 0) {
-          await this.podcastService.upsertPodcastProgramProgressBatch(manager, updateData);
-          await Promise.all(batchKeys.map((key) => this.cacheService.getClient().del(key)));
+          if (!podcastProgramProgress) {
+            podcastProgramProgress = entityManager.getRepository(PodcastProgramProgress).create({
+              memberId: memberId,
+              podcastProgramId: podcastProgramId,
+              progress: value.progress,
+              lastProgress: value.progress,
+              podcastAlbumId: value.podcastAlbumId,
+            });
+          } else {
+            podcastProgramProgress.progress = value.progress;
+            podcastProgramProgress.lastProgress = value.progress;
+          }
+
+          await entityManager.save(podcastProgramProgress);
+        } catch (error) {
+          console.error(`Processing ${key} failed:`, error);
+          errors.push({ error: error.message });
         }
-      } catch (error) {
-        console.error(`Batch upsert failed: ${error}`);
       }
+    }
+
+    if (allKeys.length > 0) {
+      try {
+        await this.cacheService.getClient().del(...allKeys);
+      } catch (error) {
+        console.error('Error deleting keys:', error);
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new Error(JSON.stringify(errors));
     }
   }
 
-  async execute(manager: EntityManager): Promise<void> {
+  async checkAndCallHeartbeat(): Promise<void> {
+    const heartbeatUrl = process.env.PORTER_HEARTBEAT_URL;
+    if (!heartbeatUrl) {
+      console.warn('Heartbeat URL is not set.');
+      return;
+    }
+    await axios.get(heartbeatUrl);
+  }
+
+  async execute(entityManager?: EntityManager): Promise<void> {
     console.log('start');
 
     const errors: any[] = [];
@@ -181,19 +210,10 @@ export class PorterRunner extends Runner {
 
     await handlePorting('last logged in', () => this.portLastLoggedIn(this.entityManager));
     await handlePorting('player event', () => this.portPlayerEvent(this.entityManager));
-    // await handlePorting('podcast event', () => this.portPodcastProgram(this.entityManager));
+    await handlePorting('podcast event', () => this.portPodcastProgram(this.entityManager));
 
     if (errors.length > 0) {
       console.error(errors, 'Porting errors occurred');
     }
-  }
-
-  async checkAndCallHeartbeat(): Promise<void> {
-    const heartbeatUrl = process.env.PORTER_HEARTBEAT_URL;
-    if (!heartbeatUrl) {
-      console.warn('Heartbeat URL is not set.');
-      return;
-    }
-    await axios.get(heartbeatUrl);
   }
 }
