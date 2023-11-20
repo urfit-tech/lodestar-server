@@ -28,9 +28,27 @@ import { Category } from '~/definition/entity/category.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
 import { PermissionGroup } from '~/entity/PermissionGroup';
 import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
-import { MemberDevice } from '~/entity/MemberDevice';
+import { MemberDevice } from '~/member/entity/member_device.entity';
 
 import { app, appHost, appPlan, memberProperty } from '../data';
+import { MemberOauth } from '~/member/entity/member_oauth.entity';
+import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
+import { Permission } from '~/permission/entity/permission.entity';
+import { MemberNote } from '~/entity/MemberNote';
+import { MemberTask } from '~/entity/MemberTask';
+import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
+import { ProgramContentLog } from '~/entity/ProgramContentLog';
+import { Coupon } from '~/coupon/entity/coupon.entity';
+import { PaymentLog } from '~/payment/payment_log.entity';
+import { Invoice } from '~/invoice/invoice.entity';
+import { OrderDiscount } from '~/order/entity/order_discount.entity';
+import { OrderLog } from '~/order/entity/order_log.entity';
+import { OrderProduct } from '~/order/entity/order_product.entity';
+import { Notification } from '~/entity/Notification';
+import { ProgramContent } from '~/program/entity/program_content.entity';
+import { ProgramContentBody } from '~/entity/ProgramContentBody';
+import { ProgramContentSection } from '~/entity/ProgramContentSection';
+import { Program } from '~/entity/Program';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -50,6 +68,24 @@ describe('MemberController (e2e)', () => {
   let memberPhoneRepo: Repository<MemberPhone>;
   let memberDeviceRepo: Repository<MemberDevice>;
   let memberPermissionGroupRepo: Repository<MemberPermissionGroup>;
+  let memberOauthRepo: Repository<MemberOauth>;
+  let permissionRepo: Repository<Permission>;
+  let memberPermissionExtraRepo: Repository<MemberPermissionExtra>;
+  let memberNoteRepo: Repository<MemberNote>;
+  let memberTaskRepo: Repository<MemberTask>;
+  let programContentProgressRepo: Repository<ProgramContentProgress>;
+  let programContentLogRepo: Repository<ProgramContentLog>;
+  let notificationRepo: Repository<Notification>;
+  let couponRepo: Repository<Coupon>;
+  let paymentLogRepo: Repository<PaymentLog>;
+  let invoiceRepo: Repository<Invoice>;
+  let orderProductRepo: Repository<OrderProduct>;
+  let orderDiscountRepo: Repository<OrderDiscount>;
+  let orderLogRepo: Repository<OrderLog>;
+  let programContentRepo: Repository<ProgramContent>;
+  let programContentBodyRepo: Repository<ProgramContentBody>;
+  let programRepo: Repository<Program>;
+  let programContentSectionRepo: Repository<ProgramContentSection>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -75,7 +111,43 @@ describe('MemberController (e2e)', () => {
     memberDeviceRepo = manager.getRepository(MemberDevice);
     memberCategoryRepo = manager.getRepository(MemberCategory);
     memberPermissionGroupRepo = manager.getRepository(MemberPermissionGroup);
+    memberOauthRepo = manager.getRepository(MemberOauth);
+    permissionRepo = manager.getRepository(Permission);
+    memberPermissionExtraRepo = manager.getRepository(MemberPermissionExtra);
+    memberNoteRepo = manager.getRepository(MemberNote);
+    memberTaskRepo = manager.getRepository(MemberTask);
+    orderLogRepo = manager.getRepository(OrderLog);
+    orderProductRepo = manager.getRepository(OrderProduct);
+    orderDiscountRepo = manager.getRepository(OrderDiscount);
+    invoiceRepo = manager.getRepository(Invoice);
+    paymentLogRepo = manager.getRepository(PaymentLog);
+    notificationRepo = manager.getRepository(Notification);
+    couponRepo = manager.getRepository(Coupon);
+    programContentProgressRepo = manager.getRepository(ProgramContentProgress);
+    programContentLogRepo = manager.getRepository(ProgramContentLog);
+    programContentRepo = manager.getRepository(ProgramContent);
+    programContentBodyRepo = manager.getRepository(ProgramContentBody);
+    programRepo = manager.getRepository(Program);
+    programContentSectionRepo = manager.getRepository(ProgramContentSection);
 
+    await programContentLogRepo.delete({});
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentBodyRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programRepo.delete({});
+    await paymentLogRepo.delete({});
+    await couponRepo.delete({});
+    await notificationRepo.delete({});
+    await invoiceRepo.delete({});
+    await orderProductRepo.delete({});
+    await orderDiscountRepo.delete({});
+    await orderLogRepo.delete({});
+    await memberTaskRepo.delete({});
+    await memberNoteRepo.delete({});
+    await memberPermissionExtraRepo.delete({});
+    await permissionRepo.delete({});
+    await memberOauthRepo.delete({});
     await memberDeviceRepo.delete({});
     await memberPermissionGroupRepo.delete({});
     await memberPhoneRepo.delete({});
@@ -99,6 +171,24 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await programContentLogRepo.delete({});
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentBodyRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programRepo.delete({});
+    await paymentLogRepo.delete({});
+    await couponRepo.delete({});
+    await notificationRepo.delete({});
+    await invoiceRepo.delete({});
+    await orderProductRepo.delete({});
+    await orderDiscountRepo.delete({});
+    await orderLogRepo.delete({});
+    await memberTaskRepo.delete({});
+    await memberNoteRepo.delete({});
+    await memberPermissionExtraRepo.delete({});
+    await permissionRepo.delete({});
+    await memberOauthRepo.delete({});
     await memberDeviceRepo.delete({});
     await memberPermissionGroupRepo.delete({});
     await memberPhoneRepo.delete({});
@@ -1621,6 +1711,75 @@ describe('MemberController (e2e)', () => {
       insertedMemberDevice.fingerprintId = 'test';
       await manager.save(insertedMemberDevice);
 
+      const insertedMemberOauth = new MemberOauth();
+      insertedMemberOauth.id = v4();
+      insertedMemberOauth.memberId = memberId;
+      insertedMemberOauth.provider = 'cw';
+      insertedMemberOauth.providerUserId = 'some_provider_id';
+      await manager.save(insertedMemberOauth);
+
+      const insertedPermission = new Permission();
+      insertedPermission.id = 'default';
+      insertedPermission.description = 'default';
+      insertedPermission.group = 'activity';
+      await manager.save(insertedPermission);
+
+      const insertedMemberPermissionExtra = new MemberPermissionExtra();
+      insertedMemberPermissionExtra.id = v4();
+      insertedMemberPermissionExtra.memberId = memberId;
+      insertedMemberPermissionExtra.permission = insertedPermission;
+      await manager.save(insertedMemberPermissionExtra);
+
+      const insertedMemberNote = new MemberNote();
+      insertedMemberNote.memberId = memberId;
+      insertedMemberNote.authorId = memberId;
+      insertedMemberNote.type = 'outbound';
+      insertedMemberNote.status = 'missed';
+      await manager.save(insertedMemberNote);
+
+      const insertedMemberTask = new MemberTask();
+      insertedMemberTask.memberId = memberId;
+      insertedMemberTask.title = 'title';
+      insertedMemberTask.priority = 'high';
+      insertedMemberTask.status = 'done';
+      await manager.save(insertedMemberTask);
+
+      const insertProgramContentBody = new ProgramContentBody();
+      insertProgramContentBody.id = v4();
+      await manager.save(insertProgramContentBody);
+
+      const insertedProgram = new Program();
+      insertedProgram.id = v4();
+      insertedProgram.title = 'AAA';
+      insertedProgram.appId = 'demo';
+      insertedProgram.inAdvance = false;
+      insertedProgram.isDeleted = false;
+      insertedProgram.appId = app.id;
+      await manager.save(insertedProgram);
+
+      const insertProgramContentSection = new ProgramContentSection();
+      insertProgramContentSection.id = v4();
+      insertProgramContentSection.program = insertedProgram;
+      insertProgramContentSection.title = 'QQQ';
+      insertProgramContentSection.position = 1;
+      await manager.save(insertProgramContentSection);
+
+      const insertedProgramContent = new ProgramContent();
+      insertedProgramContent.id = v4();
+      insertedProgramContent.title = '4-8用蒙氏概念解決8大教養難題-8';
+      insertedProgramContent.position = 1;
+      insertedProgramContent.contentSectionId = v4();
+      insertedProgramContent.displayMode = 'payToWatch';
+      insertedProgramContent.contentBody = insertProgramContentBody;
+      insertedProgramContent.contentSection = insertProgramContentSection;
+      await manager.save(insertedProgramContent);
+
+      const insertedProgramContentProgress = new ProgramContentProgress();
+      insertedProgramContentProgress.programContent = insertedProgramContent;
+      insertedProgramContentProgress.id = v4();
+      insertedProgramContentProgress.memberId = memberId;
+      await manager.save(insertedProgramContentProgress);
+
       // TODO: add more relations
 
       const jwtSecret = application
@@ -1638,6 +1797,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .delete(`${route}/delete@example.com`)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .expect(200);
 
       expect(res.body).toHaveProperty('code', 'SUCCESS');
