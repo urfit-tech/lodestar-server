@@ -112,7 +112,6 @@ describe('PorterRunner (e2e)', () => {
 
     await programPlanRepo.delete({});
     await currencyRepo.delete({});
-    await podcastAlbumRepo.delete({});
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -121,6 +120,7 @@ describe('PorterRunner (e2e)', () => {
     await programRepo.delete({});
     await podcastProgramProgressRepo.delete({});
     await podcastProgramRepo.delete({});
+    await podcastAlbumRepo.delete({});
     await memberRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
@@ -145,8 +145,6 @@ describe('PorterRunner (e2e)', () => {
     await programContentRepo.save(programContent);
     await programContentProgressRepo.save(programContentProgress);
     await podcastProgramRepo.save(podcastProgram);
-
-    await cacheService.getClient().set(`last-logged-in:${member.id}`, '2023-01-02T00:00:00Z', 'EX', 7 * 86400);
 
     await cacheService
       .getClient()
@@ -187,22 +185,25 @@ describe('PorterRunner (e2e)', () => {
       expect(mockedAxiosGet).toHaveBeenCalledWith(testUrl);
     });
   });
-
   describe('last-logged-in', () => {
-    it('should update member after get the value from redis', async () => {
+    it('should update member after getting the value from redis', async () => {
+      const testDate = new Date().toISOString();
+
+      await cacheService.getClient().set(`last-logged-in:${member.id}`, testDate, 'EX', 7 * 86400);
+
       const porterRunner = application.get<PorterRunner>(Runner);
-
       await porterRunner.execute(manager);
-      const updatedMember = await memberRepo.findOneById(member.id);
+      const updatedMember = await memberRepo.findOne({
+        where: { id: member.id },
+      });
 
-      console.log('updatedMember', updatedMember);
+      const expectedDate = new Date(testDate);
+      expectedDate.setHours(expectedDate.getHours() - 8);
+      const expectedDateUTC = expectedDate.toUTCString();
 
       const updatedDateUTC = updatedMember.loginedAt.toUTCString();
-      const expectedDateUTC = new Date('2023-01-02T00:00:00Z');
-      expectedDateUTC.setHours(expectedDateUTC.getHours() - 8);
-      const expectedDateString = expectedDateUTC.toUTCString();
 
-      expect(updatedDateUTC).toEqual(expectedDateString);
+      expect(updatedDateUTC).toEqual(expectedDateUTC);
     });
   });
 
