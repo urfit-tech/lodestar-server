@@ -11,8 +11,15 @@ import { Member } from '~/member/entity/member.entity';
 import { EntityManager } from 'typeorm';
 import { ProgramContentLog } from '~/entity/ProgramContentLog';
 import { ProgramContent } from '../program/entity/program_content.entity';
-import { APIException } from '~/api.excetion';
 import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
+
+interface PodcastProgressInfo {
+  memberId: string;
+  podcastProgramId: string;
+  progress: number;
+  lastProgress: number;
+  podcastAlbumId: string;
+}
 
 @Injectable()
 export class PorterRunner extends Runner {
@@ -24,26 +31,7 @@ export class PorterRunner extends Runner {
 
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(PorterRunner.name, 60000, logger, distributedLockService, shutdownService);
-  }
-
-  async delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  public async getProgramContentById(manager: EntityManager, programContentId: string): Promise<ProgramContent> {
-    const programContentRepo = manager.getRepository(ProgramContent);
-    const programContent = await programContentRepo.findOneBy({ id: programContentId });
-
-    if (!programContent) {
-      throw new APIException({
-        code: 'E_NO_PROGRAM_CONTENT',
-        message: 'Program content not found',
-        result: null,
-      });
-    }
-
-    return programContent;
+    super(PorterRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
   }
 
   async portLastLoggedIn(manager: EntityManager): Promise<void> {
@@ -88,18 +76,19 @@ export class PorterRunner extends Runner {
     const batchSize = 30;
     const programContentLogs: ProgramContentLog[] = [];
 
-    for (let i = 0; i < allKeys.length; i += batchSize) {
-      const batchKeys = allKeys.slice(i, i + batchSize);
+    for (let batchIndex = 0; batchIndex < allKeys.length; batchIndex += batchSize) {
+      const batchKeys = allKeys.slice(batchIndex, batchIndex + batchSize);
       const values = await this.cacheService.getClient().mget(batchKeys);
 
-      for (let j = 0; j < batchKeys.length; j++) {
-        const key = batchKeys[j];
-        const valueString = values[j];
+      for (let keyIndex = 0; keyIndex < batchKeys.length; keyIndex++) {
+        const key = batchKeys[keyIndex];
+        const valueString = values[keyIndex];
         const [, memberId, , programContentId] = key.split(':');
         const value = JSON.parse(valueString || '{}');
 
         try {
-          const programContent = await this.getProgramContentById(manager, programContentId);
+          const programContentRepo = manager.getRepository(ProgramContent);
+          const programContent = await programContentRepo.findOneBy({ id: programContentId });
           const programContentLog = new ProgramContentLog();
           programContentLog.memberId = memberId;
           programContentLog.programContent = programContent;
@@ -124,54 +113,56 @@ export class PorterRunner extends Runner {
     }
   }
 
-  async portPodcastProgram(entityManager?: EntityManager): Promise<void> {
+  async portPodcastProgram(manager: EntityManager): Promise<void> {
     const errors: Array<{ error: any }> = [];
     const pattern = 'podcast-program-event:*:podcast-program:*:*';
     const allKeys = await this.cacheService.getClient().keys(pattern);
-    const batchSize = 30;
 
-    for (let i = 0; i < allKeys.length; i += batchSize) {
-      const batchKeys = allKeys.slice(i, i + batchSize);
-      const values = await this.cacheService.getClient().mget(batchKeys);
+    const progressMap = new Map<string, PodcastProgressInfo>();
+    const podcastProgramProgresssToSave: PodcastProgramProgress[] = [];
 
-      for (let j = 0; j < batchKeys.length; j++) {
-        const key = batchKeys[j];
-        const valueString = values[j];
-        if (!valueString) continue;
-        const [, memberId, , podcastProgramId] = key.split(':');
-        const value = JSON.parse(valueString);
+    for (const key of allKeys) {
+      const valueString = await this.cacheService.getClient().get(key);
+      if (!valueString) continue;
+      const [, memberId, , podcastProgramId] = key.split(':');
+      const value = JSON.parse(valueString);
+      const progressInfo: PodcastProgressInfo = {
+        memberId,
+        podcastProgramId,
+        progress: value.progress,
+        lastProgress: value.progress,
+        podcastAlbumId: value.podcastAlbumId,
+      };
+      progressMap.set(memberId + '_' + podcastProgramId, progressInfo);
+    }
 
-        try {
-          let podcastProgramProgress = await entityManager.getRepository(PodcastProgramProgress).findOne({
-            where: {
-              memberId: memberId,
-              podcastProgramId: podcastProgramId,
-            },
-          });
+    try {
+      for (const [, info] of progressMap) {
+        let podcastProgramProgress = await manager.getRepository(PodcastProgramProgress).findOne({
+          where: {
+            memberId: info.memberId,
+            podcastProgramId: info.podcastProgramId,
+          },
+        });
 
-          if (!podcastProgramProgress) {
-            podcastProgramProgress = entityManager.getRepository(PodcastProgramProgress).create({
-              memberId: memberId,
-              podcastProgramId: podcastProgramId,
-              progress: value.progress,
-              lastProgress: value.progress,
-              podcastAlbumId: value.podcastAlbumId,
-            });
-          } else {
-            podcastProgramProgress.progress = value.progress;
-            podcastProgramProgress.lastProgress = value.progress;
-          }
-
-          await entityManager.save(podcastProgramProgress);
-        } catch (error) {
-          console.error(`Processing ${key} failed:`, error);
-          errors.push({ error: error.message });
+        if (!podcastProgramProgress) {
+          podcastProgramProgress = manager.getRepository(PodcastProgramProgress).create(info);
+        } else {
+          podcastProgramProgress.progress = info.progress;
+          podcastProgramProgress.lastProgress = info.lastProgress;
+          podcastProgramProgress.podcastAlbumId = info.podcastAlbumId;
         }
+
+        podcastProgramProgresssToSave.push(podcastProgramProgress);
       }
+    } catch (error) {
+      console.error('Error processing podcast program progress:', error);
+      errors.push({ error: error.message });
     }
 
     if (allKeys.length > 0) {
       try {
+        await manager.save(podcastProgramProgresssToSave);
         await this.cacheService.getClient().del(...allKeys);
       } catch (error) {
         console.error('Error deleting keys:', error);
@@ -186,7 +177,7 @@ export class PorterRunner extends Runner {
   async checkAndCallHeartbeat(): Promise<void> {
     const heartbeatUrl = process.env.PORTER_HEARTBEAT_URL;
     if (!heartbeatUrl) {
-      console.warn('Heartbeat URL is not set.');
+      axios.get(heartbeatUrl);
       return;
     }
     await axios.get(heartbeatUrl);
@@ -194,6 +185,7 @@ export class PorterRunner extends Runner {
 
   async execute(entityManager?: EntityManager): Promise<void> {
     console.log('start');
+    await this.checkAndCallHeartbeat();
 
     const errors: any[] = [];
 
