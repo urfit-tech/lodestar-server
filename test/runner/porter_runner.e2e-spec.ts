@@ -18,6 +18,7 @@ import {
   appSetting,
   currency,
   member,
+  podcastAlbum,
   podcastProgram,
   program,
   programContent,
@@ -41,6 +42,7 @@ import { Currency } from '~/entity/Currency';
 import { ProgramContentLog } from '~/entity/ProgramContentLog';
 import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
 import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastAlbum } from '~/entity/PodcastAlbum';
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -67,6 +69,7 @@ describe('PorterRunner (e2e)', () => {
   let programContentLogRepo: Repository<ProgramContentLog>;
   let podcastProgramProgressRepo: Repository<PodcastProgramProgress>;
   let podcastProgramRepo: Repository<PodcastProgram>;
+  let podcastAlbumRepo: Repository<PodcastAlbum>;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -103,11 +106,13 @@ describe('PorterRunner (e2e)', () => {
     programContentLogRepo = manager.getRepository(ProgramContentLog);
     podcastProgramRepo = manager.getRepository(PodcastProgram);
     podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
+    podcastAlbumRepo = manager.getRepository(PodcastAlbum);
 
     await cacheService.getClient().flushdb();
 
     await programPlanRepo.delete({});
     await currencyRepo.delete({});
+    await podcastAlbumRepo.delete({});
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -132,6 +137,7 @@ describe('PorterRunner (e2e)', () => {
     await appHostRepo.save(appHost);
     await memberRepo.save(member);
     await currencyRepo.save(currency);
+    await podcastAlbumRepo.save(podcastAlbum);
     await programRepo.save(program);
     await programPlanRepo.save(programPlan);
     await programContentBodyRepo.save(programContentBody);
@@ -156,7 +162,7 @@ describe('PorterRunner (e2e)', () => {
       JSON.stringify({
         progress: '190.2503679064795',
         lastProgress: 190.2503679064795,
-        podcastAlbumId: '73cf33ca-4bae-4c28-8e8a-87122c2096cb',
+        podcastAlbumId: `${podcastAlbum.id}`,
       }),
       'EX',
       7 * 86400,
