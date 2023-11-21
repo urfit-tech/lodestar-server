@@ -57,7 +57,7 @@ export class EmailService {
         bcc: [],
         content: content ? Mustache.render(content, partials) : this.renderPartials(partials),
       };
-      this.mailerQueue.add(job);
+      this.mailerQueue.add(job, { removeOnComplete: true, removeOnFail: true });
     } catch {}
   }
 

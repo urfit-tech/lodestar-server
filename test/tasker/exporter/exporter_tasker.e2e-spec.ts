@@ -18,7 +18,6 @@ import { MemberTag } from '~/member/entity/member_tag.entity';
 import { Member } from '~/member/entity/member.entity';
 import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { StorageService } from '~/utility/storage/storage.service';
-import { CacheService } from '~/utility/cache/cache.service';
 import { TaskerModule } from '~/tasker/tasker.module';
 import { ExporterTasker, MemberExportJob, OrderLogExportJob } from '~/tasker/exporter.tasker';
 import { Tasker } from '~/tasker/tasker';
@@ -30,10 +29,12 @@ import { Product } from '~/entity/Product';
 
 describe('ExporterTasker', () => {
   let application: INestApplication;
-  let cacheService: CacheService;
   const mockStorageService = {
     saveFilesInBucketStorage: jest.fn(),
     getSignedUrlForDownloadStorage: jest.fn(),
+  };
+  const mockJobFunction = {
+    moveToCompleted: jest.fn(),
   };
 
   let manager: EntityManager;
@@ -67,7 +68,6 @@ describe('ExporterTasker', () => {
       .compile();
 
     application = moduleFixture.createNestApplication();
-    cacheService = application.get(CacheService);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     memberPhoneRepo = manager.getRepository(MemberPhone);
@@ -99,7 +99,6 @@ describe('ExporterTasker', () => {
     await categoryRepo.delete({});
     await propertyRepo.delete({});
     await tagRepo.delete({});
-    await cacheService.getClient().flushall();
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -124,7 +123,6 @@ describe('ExporterTasker', () => {
     await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
-    await cacheService.getClient().flushall();
 
     await application.close();
   });
@@ -176,6 +174,7 @@ describe('ExporterTasker', () => {
         memberIds: [testMember.id],
         exportMime: 'text/csv',
       },
+      moveToCompleted: mockJobFunction.moveToCompleted as unknown,
     } as Job<MemberExportJob>);
     const { Sheets, SheetNames } = XLSX.read(savedFile);
     const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
@@ -248,6 +247,7 @@ describe('ExporterTasker', () => {
         conditions: { statuses: ['SUCCESS'] },
         exportMime: 'text/csv',
       },
+      moveToCompleted: mockJobFunction.moveToCompleted as unknown,
     } as Job<OrderLogExportJob>);
     const { Sheets, SheetNames } = XLSX.read(savedFile);
     const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });

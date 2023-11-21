@@ -33,6 +33,9 @@ describe('ImporterTasker', () => {
     getFileFromBucketStorage: jest.fn(),
     deleteFileAtBucketStorage: jest.fn(),
   };
+  const mockJobFunction = {
+    moveToCompleted: jest.fn(),
+  };
  
   let manager: EntityManager;
   let memberPhoneRepo: Repository<MemberPhone>;
@@ -153,6 +156,7 @@ describe('ImporterTasker', () => {
               checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             }],
           },
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
         }  as Job<ImportJob>);
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },
@@ -231,6 +235,7 @@ describe('ImporterTasker', () => {
               checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             }],
           },
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
         }  as Job<ImportJob>);
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },

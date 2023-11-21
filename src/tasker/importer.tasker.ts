@@ -98,6 +98,7 @@ export class ImporterTasker extends Tasker {
         '匯入結果(MemberImport)',
         JSON.stringify(processResult),
       );
+      await job.moveToCompleted(undefined, undefined, true);
       this.logger.log(`Import task: ${id} completed.`);
     } catch (error) {
       this.logger.error('Import task error:');
@@ -171,6 +172,6 @@ export class ImporterTasker extends Tasker {
           ${content}
         </body>
       </html>`,
-    } as MailJob);
+    } as MailJob, { removeOnComplete: true, removeOnFail: true });
   }
 }
