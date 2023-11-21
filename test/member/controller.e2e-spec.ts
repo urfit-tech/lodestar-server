@@ -1627,6 +1627,7 @@ describe('MemberController (e2e)', () => {
       await request(application.getHttpServer())
         .delete(`${route}/no@mail.com`)
         .set('Authorization', 'Bearer something')
+        .set('host', appHost.host)
         .expect(401);
     });
 
@@ -1645,6 +1646,7 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .delete(`${route}/no@mail.com`)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .expect(401);
 
       expect(res.body).toHaveProperty('message');
@@ -1666,13 +1668,14 @@ describe('MemberController (e2e)', () => {
       const res = await request(application.getHttpServer())
         .delete(`${route}/no@mail.com`)
         .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
         .expect(400);
 
       expect(res.body).toHaveProperty('code', 'ERROR');
       expect(res.body).toHaveProperty('message');
     });
 
-    it.only('Should delete member successfully', async () => {
+    it('Should delete member successfully', async () => {
       const memberId = v4();
       const insertedMember = new Member();
       insertedMember.appId = app.id;
