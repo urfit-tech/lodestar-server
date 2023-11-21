@@ -71,7 +71,7 @@ describe('PorterRunner (e2e)', () => {
   let podcastProgramRepo: Repository<PodcastProgram>;
   let podcastAlbumRepo: Repository<PodcastAlbum>;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         RunnerModule.forRoot({
@@ -110,21 +110,21 @@ describe('PorterRunner (e2e)', () => {
 
     await cacheService.getClient().flushdb();
 
-    await programPlanRepo.delete({});
-    await currencyRepo.delete({});
-    await programContentLogRepo.delete({});
+    await podcastProgramProgressRepo.delete({});
+    await podcastProgramRepo.delete({});
     await programContentProgressRepo.delete({});
+    await programContentLogRepo.delete({});
     await programContentRepo.delete({});
     await programContentSectionRepo.delete({});
     await programContentBodyRepo.delete({});
+    await programPlanRepo.delete({});
     await programRepo.delete({});
-    await podcastProgramProgressRepo.delete({});
-    await podcastProgramRepo.delete({});
     await podcastAlbumRepo.delete({});
+    await currencyRepo.delete({});
     await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
     await appHostRepo.delete({});
+    await appSecretRepo.delete({});
+    await appSettingRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await roleRepo.delete({});
@@ -169,7 +169,26 @@ describe('PorterRunner (e2e)', () => {
     await application.init();
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
+    await podcastProgramProgressRepo.delete({});
+    await podcastProgramRepo.delete({});
+    await programContentProgressRepo.delete({});
+    await programContentLogRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programContentBodyRepo.delete({});
+    await programPlanRepo.delete({});
+    await programRepo.delete({});
+    await podcastAlbumRepo.delete({});
+    await currencyRepo.delete({});
+    await memberRepo.delete({});
+    await appHostRepo.delete({});
+    await appSecretRepo.delete({});
+    await appSettingRepo.delete({});
+    await appRepo.delete({});
+    await appPlanRepo.delete({});
+    await roleRepo.delete({});
+
     await application.close();
   });
 
