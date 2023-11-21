@@ -49,6 +49,10 @@ import { ProgramContent } from '~/program/entity/program_content.entity';
 import { ProgramContentBody } from '~/entity/ProgramContentBody';
 import { ProgramContentSection } from '~/entity/ProgramContentSection';
 import { Program } from '~/entity/Program';
+import { CouponCode } from '~/entity/CouponCode';
+import { CouponPlan } from '~/entity/CouponPlan';
+import { Product } from '~/entity/Product';
+import { Currency } from '~/entity/Currency';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -86,6 +90,10 @@ describe('MemberController (e2e)', () => {
   let programContentBodyRepo: Repository<ProgramContentBody>;
   let programRepo: Repository<Program>;
   let programContentSectionRepo: Repository<ProgramContentSection>;
+  let couponCodeRepo: Repository<CouponCode>;
+  let couponPlanRepo: Repository<CouponPlan>;
+  let productRepo: Repository<Product>;
+  let currencyRepo: Repository<Currency>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -129,6 +137,10 @@ describe('MemberController (e2e)', () => {
     programContentBodyRepo = manager.getRepository(ProgramContentBody);
     programRepo = manager.getRepository(Program);
     programContentSectionRepo = manager.getRepository(ProgramContentSection);
+    couponCodeRepo = manager.getRepository(CouponCode);
+    couponPlanRepo = manager.getRepository(CouponPlan);
+    productRepo = manager.getRepository(Product);
+    currencyRepo = manager.getRepository(Currency);
 
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
@@ -138,11 +150,15 @@ describe('MemberController (e2e)', () => {
     await programRepo.delete({});
     await paymentLogRepo.delete({});
     await couponRepo.delete({});
+    await couponCodeRepo.delete({});
+    await couponPlanRepo.delete({});
     await notificationRepo.delete({});
     await invoiceRepo.delete({});
     await orderProductRepo.delete({});
+    await productRepo.delete({});
     await orderDiscountRepo.delete({});
     await orderLogRepo.delete({});
+    await currencyRepo.delete({});
     await memberTaskRepo.delete({});
     await memberNoteRepo.delete({});
     await memberPermissionExtraRepo.delete({});
@@ -179,11 +195,15 @@ describe('MemberController (e2e)', () => {
     await programRepo.delete({});
     await paymentLogRepo.delete({});
     await couponRepo.delete({});
+    await couponCodeRepo.delete({});
+    await couponPlanRepo.delete({});
     await notificationRepo.delete({});
     await invoiceRepo.delete({});
     await orderProductRepo.delete({});
+    await productRepo.delete({});
     await orderDiscountRepo.delete({});
     await orderLogRepo.delete({});
+    await currencyRepo.delete({});
     await memberTaskRepo.delete({});
     await memberNoteRepo.delete({});
     await memberPermissionExtraRepo.delete({});
@@ -1779,6 +1799,75 @@ describe('MemberController (e2e)', () => {
       insertedProgramContentProgress.id = v4();
       insertedProgramContentProgress.memberId = memberId;
       await manager.save(insertedProgramContentProgress);
+
+      const insertedNotification = new Notification();
+      insertedNotification.id = v4();
+      insertedNotification.description = 'default';
+      insertedNotification.sourceMember = insertedMember;
+      insertedNotification.targetMember = insertedMember;
+      await manager.save(insertedNotification);
+
+      const insertCouponPlan = new CouponPlan();
+      insertCouponPlan.title = 'default';
+      insertCouponPlan.amount = 100;
+      await manager.save(insertCouponPlan);
+
+      const insertCouponCode = new CouponCode();
+      insertCouponCode.appId = app.id;
+      insertCouponCode.code = 'default';
+      insertCouponCode.count = 1;
+      insertCouponCode.couponPlan = insertCouponPlan;
+      insertCouponCode.remaining = 100;
+      await manager.save(insertCouponCode);
+
+      const insertedCoupon = new Coupon();
+      insertedCoupon.id = v4();
+      insertedCoupon.memberId = memberId;
+      insertedCoupon.couponCode = insertCouponCode;
+      await manager.save(insertedCoupon);
+
+      const insertedOrderLog = new OrderLog();
+      insertedOrderLog.appId = app.id;
+      insertedOrderLog.member = insertedMember;
+      insertedOrderLog.invoiceOptions = {
+        name: 'cc',
+        email: 'cc@qraft.app',
+        phone: '1111111111',
+      };
+      insertedOrderLog.status = 'SUCCESS';
+      await manager.save(insertedOrderLog);
+
+      const insertedOrderDiscount = new OrderDiscount();
+      insertedOrderDiscount.id = v4();
+      insertedOrderDiscount.name = 'default';
+      insertedOrderDiscount.target = v4();
+      insertedOrderDiscount.price = 100;
+      insertedOrderDiscount.type = 'Coupon';
+      insertedOrderDiscount.order = insertedOrderLog;
+      await manager.save(insertedOrderDiscount);
+
+      const insertedProduct = new Product();
+      insertedProduct.id = v4();
+      insertedProduct.type = 'ActivityTicket';
+      insertedProduct.target = v4();
+      await manager.save(insertedProduct);
+
+      const insertedCurrency = new Currency();
+      insertedCurrency.id = 'TWD';
+      insertedCurrency.minorUnits = 2;
+      insertedCurrency.label = 'default';
+      insertedCurrency.unit = 'default';
+      insertedCurrency.name = 'default';
+      await manager.save(insertedCurrency);
+
+      const insertedOrderProduct = new OrderProduct();
+      insertedOrderProduct.id = v4();
+      insertedOrderProduct.product = insertedProduct;
+      insertedOrderProduct.order = insertedOrderLog;
+      insertedOrderProduct.name = 'default';
+      insertedOrderProduct.price = 1000;
+      insertedOrderProduct.currency = insertedCurrency;
+      await manager.save(insertedOrderProduct);
 
       // TODO: add more relations
 
