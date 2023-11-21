@@ -16,30 +16,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@main
+        with:
+          fetch-depth: 2
 
       - name: Install Docker
         # uses: docker-practice/actions-setup-docker@master
         # docker-practice/actions-setup-docker@master waiting for PR
         # REF: https://github.com/docker-practice/actions-setup-docker/pull/33
         uses: DimosthenisK/actions-setup-docker@fc48ecc37a6c3fe57342c08b4bc548926a27aa4a
-      
+
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: yarn
-      
+
       - name: Install Yarn
         run: npm install -g yarn
-      
+
       - name: Set resolutions to correct typescript version
         uses: jossef/action-set-json-field@v2
         with:
           file: package.json
           field: resolutions
-          value: "{ \"typescript\": \"${{ matrix.typescript-version }}\"}"
+          value: '{ "typescript": "${{ matrix.typescript-version }}"}'
           parse_json: true
-      
+
       - name: Install
         # bcrypt depends on post-scripts since --ignore-scripts flag will disable it.
         run: |
