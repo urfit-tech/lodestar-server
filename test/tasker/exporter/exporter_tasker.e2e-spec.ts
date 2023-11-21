@@ -19,7 +19,7 @@ import { Member } from '~/member/entity/member.entity';
 import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { StorageService } from '~/utility/storage/storage.service';
 import { TaskerModule } from '~/tasker/tasker.module';
-import { ExporterTasker, MemberExportJob, OrderLogExportJob, OrderProductExportJob } from '~/tasker/exporter.tasker';
+import { ExporterTasker, MemberExportJob, OrderLogExportJob } from '~/tasker/exporter.tasker';
 import { Tasker } from '~/tasker/tasker';
 
 import { app, appPlan, category, memberProperty, memberTag } from '../../data';
@@ -32,6 +32,9 @@ describe('ExporterTasker', () => {
   const mockStorageService = {
     saveFilesInBucketStorage: jest.fn(),
     getSignedUrlForDownloadStorage: jest.fn(),
+  };
+  const mockJobFunction = {
+    moveToCompleted: jest.fn(),
   };
 
   let manager: EntityManager;
@@ -171,6 +174,7 @@ describe('ExporterTasker', () => {
         memberIds: [testMember.id],
         exportMime: 'text/csv',
       },
+      moveToCompleted: mockJobFunction.moveToCompleted as unknown,
     } as Job<MemberExportJob>);
     const { Sheets, SheetNames } = XLSX.read(savedFile);
     const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
@@ -243,6 +247,7 @@ describe('ExporterTasker', () => {
         conditions: { statuses: ['SUCCESS'] },
         exportMime: 'text/csv',
       },
+      moveToCompleted: mockJobFunction.moveToCompleted as unknown,
     } as Job<OrderLogExportJob>);
     const { Sheets, SheetNames } = XLSX.read(savedFile);
     const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });

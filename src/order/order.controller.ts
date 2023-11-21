@@ -69,7 +69,7 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob);
+    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
   }
 
   @Post('export/products')
@@ -86,7 +86,7 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob);
+    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
   }
 
   @Post('export/discounts')
@@ -103,6 +103,6 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob);
+    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
   }
 }

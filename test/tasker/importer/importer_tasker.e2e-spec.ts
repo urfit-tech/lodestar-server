@@ -22,14 +22,19 @@ import { TaskerModule } from '~/tasker/tasker.module';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { Tasker } from '~/tasker/tasker';
 import { StorageService } from '~/utility/storage/storage.service';
+import { CacheService } from '~/utility/cache/cache.service';
 
 import { app, appPlan, category, memberTag, memberProperty } from '../../data';
 
 describe('ImporterTasker', () => {
   let application: INestApplication;
+  let cacheService: CacheService;
   let mockStorageService = {
     getFileFromBucketStorage: jest.fn(),
     deleteFileAtBucketStorage: jest.fn(),
+  };
+  const mockJobFunction = {
+    moveToCompleted: jest.fn(),
   };
  
   let manager: EntityManager;
@@ -55,10 +60,12 @@ describe('ImporterTasker', () => {
         }),
       ],
     })
-      .overrideProvider(StorageService).useValue(mockStorageService)
+      .overrideProvider(StorageService)
+      .useValue(mockStorageService)
       .compile();
 
     application = moduleFixture.createNestApplication();
+    cacheService = application.get(CacheService);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     memberPhoneRepo = manager.getRepository(MemberPhone);
@@ -90,6 +97,7 @@ describe('ImporterTasker', () => {
     await categoryRepo.save(category);
     await propertyRepo.save(memberProperty);
     await tagRepo.save(memberTag);
+    await cacheService.getClient().flushall();
 
     await application.init();
   });
@@ -106,6 +114,7 @@ describe('ImporterTasker', () => {
     await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
+    await cacheService.getClient().flushall();
 
     await application.close();
   });
@@ -147,6 +156,7 @@ describe('ImporterTasker', () => {
               checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             }],
           },
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
         }  as Job<ImportJob>);
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },
@@ -225,6 +235,7 @@ describe('ImporterTasker', () => {
               checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             }],
           },
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
         }  as Job<ImportJob>);
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },

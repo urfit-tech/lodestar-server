@@ -151,6 +151,7 @@ export class ExporterTasker extends Tasker {
       const partial = { url: signedDownloadUrl, title: subject };
       await this.putEmailQueue(appId, partial, subject, [...invokers, ...admins], this.entityManager);
 
+      await job.moveToCompleted(undefined, undefined, true);
       this.logger.log(`Export task: ${id} completed.`);
     } catch (error) {
       this.logger.error('Export task error:');
