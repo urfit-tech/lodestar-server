@@ -22,10 +22,11 @@ import { TaskerModule } from '~/tasker/tasker.module';
 import { ExporterTasker, MemberExportJob, OrderLogExportJob } from '~/tasker/exporter.tasker';
 import { Tasker } from '~/tasker/tasker';
 
-import { app, appPlan, category, memberProperty, memberTag } from '../../data';
+import { app, appPlan, category, currency, memberProperty, memberTag } from '../../data';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { Product } from '~/entity/Product';
+import { Currency } from '~/entity/Currency';
 
 describe('ExporterTasker', () => {
   let application: INestApplication;
@@ -52,6 +53,7 @@ describe('ExporterTasker', () => {
   let orderRepo: Repository<OrderLog>;
   let orderProductRepo: Repository<OrderProduct>;
   let productRepo: Repository<Product>;
+  let currencyRepo: Repository<Currency>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -84,6 +86,7 @@ describe('ExporterTasker', () => {
     orderRepo = manager.getRepository(OrderLog);
     orderProductRepo = manager.getRepository(OrderProduct);
     productRepo = manager.getRepository(Product);
+    currencyRepo = manager.getRepository(Currency);
 
     await productRepo.delete({});
     await orderProductRepo.delete({});
@@ -98,6 +101,7 @@ describe('ExporterTasker', () => {
     await appPlanRepo.delete({});
     await categoryRepo.delete({});
     await propertyRepo.delete({});
+    await currencyRepo.delete({});
     await tagRepo.delete({});
 
     await appPlanRepo.save(appPlan);
@@ -230,14 +234,71 @@ describe('ExporterTasker', () => {
     testMember.role = 'general-member';
     testMember.loginedAt = new Date();
 
+    const currency = new Currency();
+    currency.id = v4();
+    currency.label = 'TWD';
+    currency.unit = '';
+    currency.label = '';
+    currency.name = '';
+
+    const product = new Product();
+    product.id = v4();
+    product.type = 'ProgramPlan';
+    product.target = v4();
+
+    const orderProduct = new OrderProduct();
+    orderProduct.currency = currency;
+    orderProduct.product = product;
+    orderProduct.orderId = 'TEST12345678';
+    orderProduct.name = 'testOrderProduct';
+    orderProduct.price = 1000;
+    orderProduct.options = {
+      id: product.id,
+      quantity: 1,
+      type: 'gift',
+      price: 0,
+      title: 'testShippingOrderProduct',
+      coverUrl: null,
+      currencyId: 'TWD',
+      currencyPrice: 0,
+      isDeliverable: true,
+      parentOrderProductId: 'TEST12345678',
+    };
+
     const orderLog = new OrderLog();
+    orderLog.id = 'TEST12345678';
     orderLog.appId = app.id;
     orderLog.member = testMember;
     orderLog.createdAt = new Date();
-    orderLog.invoiceOptions = {};
+    orderLog.invoiceOptions = {
+      name: 'John',
+      email: 'john@example.com',
+      retry: 1,
+      status: 'SUCCESS',
+      invoiceNumber: 'NN12345678',
+      invoiceTransNo: '111111111111111',
+    };
+    orderLog.shipping = {
+      city: '台北市',
+      name: 'John',
+      phone: '0912345678',
+      address: 'test路一段test號test樓',
+      storeId: '',
+      zipCode: '104',
+      district: '中山區',
+      storeName: '',
+      specification: '',
+      isOutsideTaiwanIsland: 'false',
+    };
+    orderLog.options = {
+      country: 'Taiwan',
+      countryCode: 'TW',
+    };
     orderLog.status = 'SUCCESS';
+    orderLog.orderProducts = [orderProduct];
+    orderLog.createdAt = new Date();
 
-    await manager.save([invoker, testMember, orderLog]);
+    await manager.save([invoker, testMember, orderLog, orderProduct, currency, product]);
 
     await exporterTasker.process({
       data: {
@@ -250,13 +311,29 @@ describe('ExporterTasker', () => {
       moveToCompleted: mockJobFunction.moveToCompleted as unknown,
     } as Job<OrderLogExportJob>);
     const { Sheets, SheetNames } = XLSX.read(savedFile);
-    const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
+    const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { raw: false });
     expect(parsed.length).toBe(2);
 
     const [, data] = parsed;
-    expect(data['訂單狀態']).toBe('SUCCESS');
+    expect(data['訂單編號']).toBe(orderLog.id);
+    expect(data['訂單狀態']).toBe(orderLog.status);
+    expect(data['下單國家']).toBe(`${orderLog.options['country']} ${orderLog.options['countryCode']}`);
     expect(data['會員姓名']).toBe(`${testMember.name}(${testMember.username})`);
     expect(data['會員信箱']).toBe(testMember.email);
+    expect(data['收件電話']).toBe(orderLog.shipping['phone']);
+    expect(data['收件地址']).toBe(
+      `${orderLog.shipping['zipCode']}${orderLog.shipping['city']}${orderLog.shipping['district']}${orderLog.shipping['address']}`,
+    );
+    expect(data['項目名稱']).toBe('testOrderProduct * 1 -  $1000');
+    expect(data['項目總額']).toBe('1000');
+    expect(data['折扣總額']).toBe('0');
+    expect(data['訂單總額']).toBe('1000');
+    expect(data['贈品項目']).toBe('testOrderProduct');
+    expect(data['寄送']).toBe('是');
+    expect(data['發票姓名']).toBe(orderLog.invoiceOptions['name']);
+    expect(data['發票對象']).toBe('個人');
+    expect(data['發票編號']).toBe(orderLog.invoiceOptions['invoiceNumber']);
+    expect(data['發票狀態']).toBe(orderLog.invoiceOptions['status']);
 
     const auditLogs = await memberAuditLogRepo.find({});
     expect(auditLogs.length).toBe(1);
