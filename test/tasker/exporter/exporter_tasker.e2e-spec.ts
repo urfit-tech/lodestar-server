@@ -88,7 +88,6 @@ describe('ExporterTasker', () => {
     productRepo = manager.getRepository(Product);
     currencyRepo = manager.getRepository(Currency);
 
-    await productRepo.delete({});
     await orderProductRepo.delete({});
     await orderRepo.delete({});
     await memberPhoneRepo.delete({});
@@ -102,6 +101,7 @@ describe('ExporterTasker', () => {
     await categoryRepo.delete({});
     await propertyRepo.delete({});
     await currencyRepo.delete({});
+    await productRepo.delete({});
     await tagRepo.delete({});
 
     await appPlanRepo.save(appPlan);
@@ -124,6 +124,8 @@ describe('ExporterTasker', () => {
     await memberAuditLogRepo.delete({});
     await categoryRepo.delete({});
     await propertyRepo.delete({});
+    await currencyRepo.delete({});
+    await productRepo.delete({});
     await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
@@ -180,10 +182,11 @@ describe('ExporterTasker', () => {
       },
       moveToCompleted: mockJobFunction.moveToCompleted as unknown,
     } as Job<MemberExportJob>);
+    console.log(savedKey); // DEBUG exporter sometimes fails
     const { Sheets, SheetNames } = XLSX.read(savedFile);
     const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
     expect(parsed.length).toBe(2);
-    const [_, data] = parsed;
+    const [, data] = parsed;
     expect(data['流水號']).toBe(testMember.id);
     expect(data['姓名']).toBe(testMember.name);
     expect(data['帳號']).toBe(testMember.username);
@@ -242,9 +245,9 @@ describe('ExporterTasker', () => {
     currency.name = '';
 
     const product = new Product();
-    product.id = v4();
-    product.type = 'ProgramPlan';
     product.target = v4();
+    product.id = `ProgramPlan_${product.target}`;
+    product.type = 'ProgramPlan';
 
     const orderProduct = new OrderProduct();
     orderProduct.currency = currency;
@@ -310,6 +313,7 @@ describe('ExporterTasker', () => {
       },
       moveToCompleted: mockJobFunction.moveToCompleted as unknown,
     } as Job<OrderLogExportJob>);
+    console.log(savedKey); // DEBUG exporter sometimes fails
     const { Sheets, SheetNames } = XLSX.read(savedFile);
     const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { raw: false });
     expect(parsed.length).toBe(2);
