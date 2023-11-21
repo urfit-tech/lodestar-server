@@ -1786,7 +1786,7 @@ describe('MemberController (e2e)', () => {
 
       const insertedProgramContent = new ProgramContent();
       insertedProgramContent.id = v4();
-      insertedProgramContent.title = '4-8用蒙氏概念解決8大教養難題-8';
+      insertedProgramContent.title = 'default';
       insertedProgramContent.position = 1;
       insertedProgramContent.contentSectionId = v4();
       insertedProgramContent.displayMode = 'payToWatch';
@@ -1826,9 +1826,22 @@ describe('MemberController (e2e)', () => {
       insertedCoupon.couponCode = insertCouponCode;
       await manager.save(insertedCoupon);
 
+      const insertedParentOrderLog = new OrderLog();
+      insertedParentOrderLog.id = v4();
+      insertedParentOrderLog.appId = app.id;
+      insertedParentOrderLog.member = insertedMember;
+      insertedParentOrderLog.invoiceOptions = {
+        name: 'cc',
+        email: 'cc@qraft.app',
+        phone: '1111111111',
+      };
+      insertedParentOrderLog.status = 'SUCCESS';
+      await manager.save(insertedParentOrderLog);
+
       const insertedOrderLog = new OrderLog();
       insertedOrderLog.appId = app.id;
       insertedOrderLog.member = insertedMember;
+      insertedOrderLog.parentOrder = insertedParentOrderLog;
       insertedOrderLog.invoiceOptions = {
         name: 'cc',
         email: 'cc@qraft.app',
@@ -1868,6 +1881,19 @@ describe('MemberController (e2e)', () => {
       insertedOrderProduct.price = 1000;
       insertedOrderProduct.currency = insertedCurrency;
       await manager.save(insertedOrderProduct);
+
+      const insertedInvoice = new Invoice();
+      insertedInvoice.order = insertedOrderLog;
+      insertedInvoice.price = 1000;
+      insertedInvoice.no = 'AA00000001';
+      await manager.save(insertedInvoice);
+
+      const insertedPaymentLog = new PaymentLog();
+      insertedPaymentLog.order = insertedOrderLog;
+      insertedPaymentLog.no = '1555336487636';
+      insertedPaymentLog.status = 'SUCCESS';
+      insertedPaymentLog.price = 1000;
+      await manager.save(insertedPaymentLog);
 
       // TODO: add more relations
 
