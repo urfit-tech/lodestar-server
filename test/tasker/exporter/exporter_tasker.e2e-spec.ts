@@ -22,14 +22,16 @@ import { TaskerModule } from '~/tasker/tasker.module';
 import { ExporterTasker, MemberExportJob, OrderLogExportJob } from '~/tasker/exporter.tasker';
 import { Tasker } from '~/tasker/tasker';
 
-import { app, appPlan, category, currency, memberProperty, memberTag } from '../../data';
+import { app, appPlan, category, memberProperty, memberTag } from '../../data';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { Product } from '~/entity/Product';
 import { Currency } from '~/entity/Currency';
+import { CacheService } from '~/utility/cache/cache.service';
 
 describe('ExporterTasker', () => {
   let application: INestApplication;
+  let cacheService: CacheService;
   const mockStorageService = {
     saveFilesInBucketStorage: jest.fn(),
     getSignedUrlForDownloadStorage: jest.fn(),
@@ -70,6 +72,7 @@ describe('ExporterTasker', () => {
       .compile();
 
     application = moduleFixture.createNestApplication();
+    cacheService = application.get(CacheService);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     memberPhoneRepo = manager.getRepository(MemberPhone);
@@ -103,6 +106,7 @@ describe('ExporterTasker', () => {
     await currencyRepo.delete({});
     await productRepo.delete({});
     await tagRepo.delete({});
+    await cacheService.getClient().flushall();
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -129,6 +133,7 @@ describe('ExporterTasker', () => {
     await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
+    await cacheService.getClient().flushall();
 
     await application.close();
   });
