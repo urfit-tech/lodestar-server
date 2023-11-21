@@ -1624,9 +1624,11 @@ describe('MemberController (e2e)', () => {
     const route = '/members/email';
 
     it('Should raise unauthorized exception', async () => {
+      const testAuthToken = 'TestTokenWithNoRealCredentials';
+
       await request(application.getHttpServer())
         .delete(`${route}/no@mail.com`)
-        .set('Authorization', 'Bearer something')
+        .set('Authorization', `Bearer ${testAuthToken}`)
         .set('host', appHost.host)
         .expect(401);
     });
