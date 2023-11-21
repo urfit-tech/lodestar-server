@@ -1693,7 +1693,7 @@ describe('MemberController (e2e)', () => {
 
       const insertedMemberTag = new MemberTag();
       insertedMemberTag.id = v4();
-      insertedMemberTag.memberId = memberId;
+      insertedMemberTag.member = insertedMember;
       insertedMemberTag.tagName = insertedTag.name;
       await manager.save(insertedMemberTag);
 
@@ -1706,7 +1706,7 @@ describe('MemberController (e2e)', () => {
 
       const insertedMemberCategory = new MemberCategory();
       insertedMemberCategory.id = v4();
-      insertedMemberCategory.memberId = memberId;
+      insertedMemberCategory.member = insertedMember;
       insertedMemberCategory.categoryId = categoryId;
       insertedMemberCategory.position = 0;
       await manager.save(insertedMemberCategory);
@@ -1714,26 +1714,26 @@ describe('MemberController (e2e)', () => {
       const { id: propertyId } = await manager.save(memberProperty);
       const insertedMemberProperty = new MemberProperty();
       insertedMemberProperty.id = v4();
-      insertedMemberProperty.memberId = memberId;
+      insertedMemberProperty.member = insertedMember;
       insertedMemberProperty.propertyId = propertyId;
       insertedMemberProperty.value = `test member property value`;
       await manager.save(insertedMemberProperty);
 
       const insertedMemberPhone = new MemberPhone();
       insertedMemberPhone.id = v4();
-      insertedMemberPhone.memberId = memberId;
+      insertedMemberPhone.member = insertedMember;
       insertedMemberPhone.phone = `09000000000`;
       await manager.save(insertedMemberPhone);
 
       const insertedMemberDevice = new MemberDevice();
       insertedMemberDevice.id = v4();
-      insertedMemberDevice.memberId = memberId;
+      insertedMemberDevice.member = insertedMember;
       insertedMemberDevice.fingerprintId = 'test';
       await manager.save(insertedMemberDevice);
 
       const insertedMemberOauth = new MemberOauth();
       insertedMemberOauth.id = v4();
-      insertedMemberOauth.memberId = memberId;
+      insertedMemberOauth.member = insertedMember;
       insertedMemberOauth.provider = 'cw';
       insertedMemberOauth.providerUserId = 'some_provider_id';
       await manager.save(insertedMemberOauth);
@@ -1746,19 +1746,19 @@ describe('MemberController (e2e)', () => {
 
       const insertedMemberPermissionExtra = new MemberPermissionExtra();
       insertedMemberPermissionExtra.id = v4();
-      insertedMemberPermissionExtra.memberId = memberId;
+      insertedMemberPermissionExtra.member = insertedMember;
       insertedMemberPermissionExtra.permission = insertedPermission;
       await manager.save(insertedMemberPermissionExtra);
 
       const insertedMemberNote = new MemberNote();
-      insertedMemberNote.memberId = memberId;
+      insertedMemberNote.member = insertedMember;
       insertedMemberNote.authorId = memberId;
       insertedMemberNote.type = 'outbound';
       insertedMemberNote.status = 'missed';
       await manager.save(insertedMemberNote);
 
       const insertedMemberTask = new MemberTask();
-      insertedMemberTask.memberId = memberId;
+      insertedMemberTask.member = insertedMember;
       insertedMemberTask.title = 'title';
       insertedMemberTask.priority = 'high';
       insertedMemberTask.status = 'done';
@@ -1797,7 +1797,7 @@ describe('MemberController (e2e)', () => {
       const insertedProgramContentProgress = new ProgramContentProgress();
       insertedProgramContentProgress.programContent = insertedProgramContent;
       insertedProgramContentProgress.id = v4();
-      insertedProgramContentProgress.memberId = memberId;
+      insertedProgramContentProgress.member = insertedMember;
       await manager.save(insertedProgramContentProgress);
 
       const insertedNotification = new Notification();
@@ -1822,7 +1822,7 @@ describe('MemberController (e2e)', () => {
 
       const insertedCoupon = new Coupon();
       insertedCoupon.id = v4();
-      insertedCoupon.memberId = memberId;
+      insertedCoupon.member = insertedMember;
       insertedCoupon.couponCode = insertCouponCode;
       await manager.save(insertedCoupon);
 
