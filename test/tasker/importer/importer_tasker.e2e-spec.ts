@@ -6,7 +6,6 @@ import { EntityManager, Equal, Not, Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
-import { BullModule, getQueueToken } from '@nestjs/bull';
 
 import { AppPlan } from '~/entity/AppPlan';
 import { App } from '~/app/entity/app.entity';
@@ -23,11 +22,13 @@ import { TaskerModule } from '~/tasker/tasker.module';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { Tasker } from '~/tasker/tasker';
 import { StorageService } from '~/utility/storage/storage.service';
+import { CacheService } from '~/utility/cache/cache.service';
 
 import { app, appPlan, category, memberTag, memberProperty } from '../../data';
 
 describe('ImporterTasker', () => {
   let application: INestApplication;
+  let cacheService: CacheService;
   let mockStorageService = {
     getFileFromBucketStorage: jest.fn(),
     deleteFileAtBucketStorage: jest.fn(),
@@ -58,11 +59,10 @@ describe('ImporterTasker', () => {
     })
       .overrideProvider(StorageService)
       .useValue(mockStorageService)
-      .overrideProvider(getQueueToken(ImporterTasker.name))
-      .useValue(BullModule.registerQueue({ name: `Test${ImporterTasker.name}` }))
       .compile();
 
     application = moduleFixture.createNestApplication();
+    cacheService = application.get(CacheService);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     memberPhoneRepo = manager.getRepository(MemberPhone);
@@ -94,6 +94,7 @@ describe('ImporterTasker', () => {
     await categoryRepo.save(category);
     await propertyRepo.save(memberProperty);
     await tagRepo.save(memberTag);
+    await cacheService.getClient().flushall();
 
     await application.init();
   });
@@ -110,6 +111,7 @@ describe('ImporterTasker', () => {
     await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
+    await cacheService.getClient().flushall();
 
     await application.close();
   });

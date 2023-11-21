@@ -5,7 +5,6 @@ import { EntityManager, Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
-import { BullModule, getQueueToken } from '@nestjs/bull';
 
 import { AppPlan } from '~/entity/AppPlan';
 import { App } from '~/app/entity/app.entity';
@@ -19,6 +18,7 @@ import { MemberTag } from '~/member/entity/member_tag.entity';
 import { Member } from '~/member/entity/member.entity';
 import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { StorageService } from '~/utility/storage/storage.service';
+import { CacheService } from '~/utility/cache/cache.service';
 import { TaskerModule } from '~/tasker/tasker.module';
 import { ExporterTasker, MemberExportJob, OrderLogExportJob } from '~/tasker/exporter.tasker';
 import { Tasker } from '~/tasker/tasker';
@@ -30,6 +30,7 @@ import { Product } from '~/entity/Product';
 
 describe('ExporterTasker', () => {
   let application: INestApplication;
+  let cacheService: CacheService;
   const mockStorageService = {
     saveFilesInBucketStorage: jest.fn(),
     getSignedUrlForDownloadStorage: jest.fn(),
@@ -63,11 +64,10 @@ describe('ExporterTasker', () => {
     })
       .overrideProvider(StorageService)
       .useValue(mockStorageService)
-      .overrideProvider(getQueueToken(ExporterTasker.name))
-      .useValue(BullModule.registerQueue({ name: `Test${ExporterTasker.name}` }))
       .compile();
 
     application = moduleFixture.createNestApplication();
+    cacheService = application.get(CacheService);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     memberPhoneRepo = manager.getRepository(MemberPhone);
@@ -99,6 +99,7 @@ describe('ExporterTasker', () => {
     await categoryRepo.delete({});
     await propertyRepo.delete({});
     await tagRepo.delete({});
+    await cacheService.getClient().flushall();
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -123,6 +124,7 @@ describe('ExporterTasker', () => {
     await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
+    await cacheService.getClient().flushall();
 
     await application.close();
   });
