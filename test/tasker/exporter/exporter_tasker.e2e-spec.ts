@@ -174,6 +174,10 @@ describe('ExporterTasker', () => {
     } as Job<MemberExportJob>);
     const { Sheets, SheetNames } = XLSX.read(savedFile);
     const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
+
+    console.log('parsed', parsed);
+    console.log('parsed.length', parsed.length);
+
     expect(parsed.length).toBe(2);
     const [_, data] = parsed;
     expect(data['流水號']).toBe(testMember.id);
@@ -246,6 +250,7 @@ describe('ExporterTasker', () => {
     } as Job<OrderLogExportJob>);
     const { Sheets, SheetNames } = XLSX.read(savedFile);
     const parsed = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '' });
+    console.log('parsed ', parsed);
     expect(parsed.length).toBe(2);
 
     const [, data] = parsed;
