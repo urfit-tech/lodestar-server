@@ -103,7 +103,9 @@ export class OrderService {
       createdAt: true,
       updatedAt: true,
       appId: true,
+      shipping: true,
       paymentModel: {},
+      options: {},
       invoiceOptions: {}, // ref: https://github.com/typeorm/typeorm/issues/9852
       memberId: true,
       member: {
