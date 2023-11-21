@@ -6,6 +6,7 @@ import { EntityManager, Equal, Not, Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 
 import { AppPlan } from '~/entity/AppPlan';
 import { App } from '~/app/entity/app.entity';
@@ -55,7 +56,10 @@ describe('ImporterTasker', () => {
         }),
       ],
     })
-      .overrideProvider(StorageService).useValue(mockStorageService)
+      .overrideProvider(StorageService)
+      .useValue(mockStorageService)
+      .overrideProvider(ImporterTasker.name)
+      .useValue(BullModule.registerQueue({ name: ImporterTasker.name }))
       .compile();
 
     application = moduleFixture.createNestApplication();
