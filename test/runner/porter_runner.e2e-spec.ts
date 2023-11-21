@@ -217,7 +217,6 @@ describe('PorterRunner (e2e)', () => {
       });
 
       const expectedDate = new Date(testDate);
-      expectedDate.setHours(expectedDate.getHours() - 8);
       const expectedDateUTC = expectedDate.toUTCString();
 
       const updatedDateUTC = updatedMember.loginedAt.toUTCString();
