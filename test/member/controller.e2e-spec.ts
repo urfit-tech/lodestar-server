@@ -53,6 +53,9 @@ import { CouponCode } from '~/entity/CouponCode';
 import { CouponPlan } from '~/entity/CouponPlan';
 import { Product } from '~/entity/Product';
 import { Currency } from '~/entity/Currency';
+import { Voucher } from '~/voucher/entity/voucher.entity';
+import { VoucherCode } from '~/entity/VoucherCode';
+import { VoucherPlan } from '~/entity/VoucherPlan';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -94,6 +97,9 @@ describe('MemberController (e2e)', () => {
   let couponPlanRepo: Repository<CouponPlan>;
   let productRepo: Repository<Product>;
   let currencyRepo: Repository<Currency>;
+  let voucherRepo: Repository<Voucher>;
+  let voucherCodeRepo: Repository<VoucherCode>;
+  let voucherPlanRepo: Repository<VoucherPlan>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -141,7 +147,13 @@ describe('MemberController (e2e)', () => {
     couponPlanRepo = manager.getRepository(CouponPlan);
     productRepo = manager.getRepository(Product);
     currencyRepo = manager.getRepository(Currency);
+    voucherPlanRepo = manager.getRepository(VoucherPlan);
+    voucherCodeRepo = manager.getRepository(VoucherCode);
+    voucherRepo = manager.getRepository(Voucher);
 
+    await voucherRepo.delete({});
+    await voucherCodeRepo.delete({});
+    await voucherPlanRepo.delete({});
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -187,6 +199,9 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await voucherRepo.delete({});
+    await voucherCodeRepo.delete({});
+    await voucherPlanRepo.delete({});
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -1899,6 +1914,25 @@ describe('MemberController (e2e)', () => {
       insertedPaymentLog.status = 'SUCCESS';
       insertedPaymentLog.price = 1000;
       await manager.save(insertedPaymentLog);
+
+      const insertedVoucherPlan = new VoucherPlan();
+      insertedVoucherPlan.app = app;
+      insertedVoucherPlan.title = 'AAA';
+      insertedVoucherPlan.description = 'AAA';
+      await manager.save(insertedVoucherPlan);
+
+      const insertedVoucherCode = new VoucherCode();
+      insertedVoucherCode.voucherPlan = insertedVoucherPlan;
+      insertedVoucherCode.count = 1;
+      insertedVoucherCode.remaining = 1;
+      insertedVoucherCode.code = 'BREVGZJP61EA32E8';
+
+      await manager.save(insertedVoucherCode);
+
+      const insertedVoucher = new Voucher();
+      insertedVoucher.member = insertedMember;
+      insertedVoucher.voucherCode = insertedVoucherCode;
+      await manager.save(insertedVoucher);
 
       // TODO: add more relations
 

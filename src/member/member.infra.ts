@@ -28,6 +28,7 @@ import { MemberTask } from '~/entity/MemberTask';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
 import { ProgramContentLog } from '~/entity/ProgramContentLog';
+import { Voucher } from '~/voucher/entity/voucher.entity';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -179,22 +180,21 @@ export class MemberInfrastructure {
       return {
         phones: filteredPhones,
         oauths: filteredOauths.reduce((accum, v) => {
-          accum[v.provider] = {}
+          accum[v.provider] = {};
           Object.keys(v?.options || {}).forEach((key) => {
             if (key.includes('id')) {
-              accum[v.provider][key] = v.options[key]
+              accum[v.provider][key] = v.options[key];
             }
-          })
-          return accum
+          });
+          return accum;
         }, {} as { [key: string]: any }),
         permissions: filteredPermissions.map((permission) => ({
           memberId: permission.member_id,
-          permissionId: permission.permission_id, 
+          permissionId: permission.permission_id,
         })),
       };
     });
   }
-
 
   async getMemberPropertiesByIds(memberId: string, propertyIds: Array<string>, manager: EntityManager) {
     const memberPropertyRepo = manager.getRepository(MemberProperty);
@@ -203,8 +203,12 @@ export class MemberInfrastructure {
     });
     return founds;
   }
-  
-  async getGeneralLoginMemberByUsernameOrEmail(appId: string, usernameOrEmail: string, manager: EntityManager): Promise<Member | null> {
+
+  async getGeneralLoginMemberByUsernameOrEmail(
+    appId: string,
+    usernameOrEmail: string,
+    manager: EntityManager,
+  ): Promise<Member | null> {
     const memberRepo = manager.getRepository(Member);
     return memberRepo.findOne({
       where: [
@@ -227,12 +231,11 @@ export class MemberInfrastructure {
     manager: EntityManager,
   ): Promise<MemberDevice> {
     const memberDeviceRepo = manager.getRepository(MemberDevice);
-    const found: MemberDevice = (
-      await memberDeviceRepo.findOneBy({
-        memberId, fingerprintId: fingerPrintId,
-      })
-      || memberDeviceRepo.create({ memberId, fingerprintId: fingerPrintId })
-    );
+    const found: MemberDevice =
+      (await memberDeviceRepo.findOneBy({
+        memberId,
+        fingerprintId: fingerPrintId,
+      })) || memberDeviceRepo.create({ memberId, fingerprintId: fingerPrintId });
 
     const { browser, osName, ipAddress, type } = options;
     const currentDatetime = new Date();
@@ -368,14 +371,12 @@ export class MemberInfrastructure {
       const orderProductRepo = manager.getRepository(OrderProduct);
       const orderDiscountRepo = manager.getRepository(OrderDiscount);
       const orderLogRepo = manager.getRepository(OrderLog);
+      const voucherRepo = manager.getRepository(Voucher);
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
-      const notifications = await notificationRepo.findBy([
-        { sourceMember: { id: member.id } },
-        { targetMember: { id: member.id } },
-      ]);
-      await notificationRepo.remove(notifications);
+      await notificationRepo.delete({ targetMember: { id: member.id } });
+      await notificationRepo.delete({ sourceMember: { id: member.id } });
 
       const orderProducts = await orderProductRepo.find({
         where: { order: { memberId: member.id } },
@@ -414,6 +415,7 @@ export class MemberInfrastructure {
       );
       await orderLogRepo.remove(orderLogs);
 
+      await voucherRepo.delete({ memberId: member.id });
       await programContentLogRepo.delete({ memberId: member.id });
       await programContentProgressRepo.delete({ memberId: member.id });
       await couponRepo.delete({ memberId: member.id });
@@ -430,7 +432,7 @@ export class MemberInfrastructure {
 
       const deleteResult = await memberRepo.delete({ id: member.id });
       deleteResult.raw.push({ member });
-      deleteResult.raw.push({ notifications });
+      // deleteResult.raw.push({ notifications });
       deleteResult.raw.push({ orderDiscounts });
       deleteResult.raw.push({ orderProducts });
       deleteResult.raw.push({ paymentLogs });
