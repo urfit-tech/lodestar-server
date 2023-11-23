@@ -14,6 +14,9 @@ export class CommentReaction {
   })
   createdAt: Date;
 
+  @Column('text', { name: 'member_id', unique: true })
+  memberId: string;
+
   @ManyToOne(() => Comment, (comment) => comment.commentReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

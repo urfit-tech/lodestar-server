@@ -61,6 +61,10 @@ import { Issue } from '~/entity/Issue';
 import { IssueReaction } from '~/entity/IssueReaction';
 import { IssueReply } from '~/entity/IssueReply';
 import { IssueReplyReaction } from '~/entity/IssueReplyReaction';
+import { CommentReaction } from '~/entity/CommentReaction';
+import { CommentReply } from '~/entity/CommentReply';
+import { CommentReplyReaction } from '~/entity/CommentReplyReaction';
+import { Comment } from '~/entity/Comment';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -110,6 +114,10 @@ describe('MemberController (e2e)', () => {
   let issueRepo: Repository<Issue>;
   let issueReplyRepo: Repository<IssueReply>;
   let issueReplyReactionRepo: Repository<IssueReplyReaction>;
+  let commentRepo: Repository<Comment>;
+  let commentReactionRepo: Repository<CommentReaction>;
+  let commentReplyRepo: Repository<CommentReply>;
+  let commentReplyReactionRepo: Repository<CommentReplyReaction>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -165,7 +173,15 @@ describe('MemberController (e2e)', () => {
     issueRepo = manager.getRepository(Issue);
     issueReactionRepo = manager.getRepository(IssueReaction);
     issueReplyReactionRepo = manager.getRepository(IssueReplyReaction);
+    commentReplyReactionRepo = manager.getRepository(CommentReplyReaction);
+    commentReplyRepo = manager.getRepository(CommentReply);
+    commentReactionRepo = manager.getRepository(CommentReaction);
+    commentRepo = manager.getRepository(Comment);
 
+    await commentReplyReactionRepo.delete({});
+    await commentReplyRepo.delete({});
+    await commentReactionRepo.delete({});
+    await commentRepo.delete({});
     await issueReplyReactionRepo.delete({});
     await issueReactionRepo.delete({});
     await issueReplyRepo.delete({});
@@ -219,6 +235,10 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await commentReplyReactionRepo.delete({});
+    await commentReplyRepo.delete({});
+    await commentReactionRepo.delete({});
+    await commentRepo.delete({});
     await issueReplyReactionRepo.delete({});
     await issueReactionRepo.delete({});
     await issueReplyRepo.delete({});
@@ -1987,6 +2007,29 @@ describe('MemberController (e2e)', () => {
       insertedIssueReplyReaction.issueReply = insertedIssueReply;
       insertedIssueReplyReaction.member = insertedMember;
       await manager.save(insertedIssueReplyReaction);
+
+      const insertedComment = new Comment();
+      insertedComment.app = app;
+      insertedComment.threadId = 'AAAAA';
+      insertedComment.member = insertedMember;
+      insertedComment.content = 'AAA';
+      await manager.save(insertedComment);
+
+      const insertedCommentReply = new CommentReply();
+      insertedCommentReply.comment = insertedComment;
+      insertedCommentReply.member = insertedMember;
+      insertedCommentReply.content = 'AAAA';
+      await manager.save(insertedCommentReply);
+
+      const insertedCommentReplyReaction = new CommentReplyReaction();
+      insertedCommentReplyReaction.commentReply = insertedCommentReply;
+      insertedCommentReplyReaction.member = insertedMember;
+      await manager.save(insertedCommentReplyReaction);
+
+      const insertedCommentReaction = new CommentReaction();
+      insertedCommentReaction.comment = insertedComment;
+      insertedCommentReaction.member = insertedMember;
+      await manager.save(insertedCommentReaction);
 
       // TODO: add more relations
 

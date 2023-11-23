@@ -34,6 +34,10 @@ import { IssueReply } from '~/entity/IssueReply';
 import { Issue } from '~/entity/Issue';
 import { IssueReaction } from '~/entity/IssueReaction';
 import { IssueReplyReaction } from '~/entity/IssueReplyReaction';
+import { CommentReply } from '~/entity/CommentReply';
+import { CommentReplyReaction } from '~/entity/CommentReplyReaction';
+import { CommentReaction } from '~/entity/CommentReaction';
+import { Comment } from '~/entity/Comment';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -382,6 +386,10 @@ export class MemberInfrastructure {
       const issueRepo = manager.getRepository(Issue);
       const issueReactionRepo = manager.getRepository(IssueReaction);
       const issueReplyReactionRepo = manager.getRepository(IssueReplyReaction);
+      const commentReplyReactionRepo = manager.getRepository(CommentReplyReaction);
+      const commentReplyRepo = manager.getRepository(CommentReply);
+      const commentReactionRepo = manager.getRepository(CommentReaction);
+      const commentRepo = manager.getRepository(Comment);
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
@@ -431,6 +439,10 @@ export class MemberInfrastructure {
       await issueReactionRepo.delete({ memberId: member.id });
       await issueReplyRepo.delete({ memberId: member.id });
       await issueRepo.delete({ memberId: member.id });
+      await commentReplyReactionRepo.delete({ memberId: member.id });
+      await commentReplyRepo.delete({ memberId: member.id });
+      await commentReactionRepo.delete({ memberId: member.id });
+      await commentRepo.delete({ memberId: member.id });
 
       await programContentLogRepo.delete({ memberId: member.id });
       await programContentProgressRepo.delete({ memberId: member.id });
