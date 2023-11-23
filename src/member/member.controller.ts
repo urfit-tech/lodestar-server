@@ -145,7 +145,7 @@ export class MemberController {
         fileName: key,
       })),
     };
-    await this.importerQueue.add(importJob);
+    await this.importerQueue.add(importJob, { removeOnComplete: true, removeOnFail: true });
   }
 
   @Post('export')
@@ -163,6 +163,6 @@ export class MemberController {
       memberIds,
       exportMime,
     };
-    await this.exportQueue.add(exportJob);
+    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
   }
 }

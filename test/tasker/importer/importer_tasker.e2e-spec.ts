@@ -22,16 +22,21 @@ import { TaskerModule } from '~/tasker/tasker.module';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { Tasker } from '~/tasker/tasker';
 import { StorageService } from '~/utility/storage/storage.service';
+import { CacheService } from '~/utility/cache/cache.service';
 
 import { app, appPlan, category, memberTag, memberProperty } from '../../data';
 
 describe('ImporterTasker', () => {
   let application: INestApplication;
-  let mockStorageService = {
+  let cacheService: CacheService;
+  const mockStorageService = {
     getFileFromBucketStorage: jest.fn(),
     deleteFileAtBucketStorage: jest.fn(),
   };
- 
+  const mockJobFunction = {
+    moveToCompleted: jest.fn(),
+  };
+
   let manager: EntityManager;
   let memberPhoneRepo: Repository<MemberPhone>;
   let memberCategoryRepo: Repository<MemberCategory>;
@@ -55,10 +60,12 @@ describe('ImporterTasker', () => {
         }),
       ],
     })
-      .overrideProvider(StorageService).useValue(mockStorageService)
+      .overrideProvider(StorageService)
+      .useValue(mockStorageService)
       .compile();
 
     application = moduleFixture.createNestApplication();
+    cacheService = application.get(CacheService);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     memberPhoneRepo = manager.getRepository(MemberPhone);
@@ -90,6 +97,7 @@ describe('ImporterTasker', () => {
     await categoryRepo.save(category);
     await propertyRepo.save(memberProperty);
     await tagRepo.save(memberTag);
+    await cacheService.getClient().flushall();
 
     await application.init();
   });
@@ -106,6 +114,7 @@ describe('ImporterTasker', () => {
     await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
+    await cacheService.getClient().flushall();
 
     await application.close();
   });
@@ -142,15 +151,18 @@ describe('ImporterTasker', () => {
             appId: app.id,
             invokerMemberId: invoker.id,
             category: 'member',
-            fileInfos: [{
-              fileName: 'test-data.csv',
-              checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-            }],
+            fileInfos: [
+              {
+                fileName: 'test-data.csv',
+                checksumETag: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+              },
+            ],
           },
-        }  as Job<ImportJob>);
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
+        } as Job<ImportJob>);
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },
-          relations:{
+          relations: {
             memberPhones: true,
             memberCategories: true,
             memberProperties: true,
@@ -161,9 +173,9 @@ describe('ImporterTasker', () => {
         const kkMember = members.find(({ name }) => name === 'KK');
         const zzMember = members.find(({ name }) => name === 'ZZ');
         const cases = {
-          'name': ['KK', 'ZZ'],
-          'email': ['kk@example.com', 'zz@example.com'],
-          'star': ['999', '0'],
+          name: ['KK', 'ZZ'],
+          email: ['kk@example.com', 'zz@example.com'],
+          star: ['999', '0'],
         };
         for (const key in cases) {
           expect(kkMember[key]).toBe(cases[key][0]);
@@ -220,15 +232,18 @@ describe('ImporterTasker', () => {
             appId: app.id,
             invokerMemberId: invoker.id,
             category: 'member',
-            fileInfos: [{
-              fileName: 'test-data.xlsx',
-              checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-            }],
+            fileInfos: [
+              {
+                fileName: 'test-data.xlsx',
+                checksumETag: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+              },
+            ],
           },
-        }  as Job<ImportJob>);
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
+        } as Job<ImportJob>);
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },
-          relations:{
+          relations: {
             memberPhones: true,
             memberCategories: true,
             memberProperties: true,
@@ -239,9 +254,9 @@ describe('ImporterTasker', () => {
         const kkMember = members.find(({ name }) => name === 'KK');
         const zzMember = members.find(({ name }) => name === 'ZZ');
         const cases = {
-          'name': ['KK', 'ZZ'],
-          'email': ['kk@example.com', 'zz@example.com'],
-          'star': ['999', '0'],
+          name: ['KK', 'ZZ'],
+          email: ['kk@example.com', 'zz@example.com'],
+          star: ['999', '0'],
         };
         for (const key in cases) {
           expect(kkMember[key]).toBe(cases[key][0]);
