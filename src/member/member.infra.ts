@@ -29,6 +29,11 @@ import { Coupon } from '~/coupon/entity/coupon.entity';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
 import { ProgramContentLog } from '~/entity/ProgramContentLog';
 import { Voucher } from '~/voucher/entity/voucher.entity';
+import { Exercise } from '~/entity/Exercise';
+import { IssueReply } from '~/entity/IssueReply';
+import { Issue } from '~/entity/Issue';
+import { IssueReaction } from '~/entity/IssueReaction';
+import { IssueReplyReaction } from '~/entity/IssueReplyReaction';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -372,6 +377,11 @@ export class MemberInfrastructure {
       const orderDiscountRepo = manager.getRepository(OrderDiscount);
       const orderLogRepo = manager.getRepository(OrderLog);
       const voucherRepo = manager.getRepository(Voucher);
+      const exerciseRepo = manager.getRepository(Exercise);
+      const issueReplyRepo = manager.getRepository(IssueReply);
+      const issueRepo = manager.getRepository(Issue);
+      const issueReactionRepo = manager.getRepository(IssueReaction);
+      const issueReplyReactionRepo = manager.getRepository(IssueReplyReaction);
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
@@ -416,6 +426,12 @@ export class MemberInfrastructure {
       await orderLogRepo.remove(orderLogs);
 
       await voucherRepo.delete({ memberId: member.id });
+      await exerciseRepo.delete({ memberId: member.id });
+      await issueReplyReactionRepo.delete({ memberId: member.id });
+      await issueReactionRepo.delete({ memberId: member.id });
+      await issueReplyRepo.delete({ memberId: member.id });
+      await issueRepo.delete({ memberId: member.id });
+
       await programContentLogRepo.delete({ memberId: member.id });
       await programContentProgressRepo.delete({ memberId: member.id });
       await couponRepo.delete({ memberId: member.id });

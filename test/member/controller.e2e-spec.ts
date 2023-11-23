@@ -56,6 +56,11 @@ import { Currency } from '~/entity/Currency';
 import { Voucher } from '~/voucher/entity/voucher.entity';
 import { VoucherCode } from '~/entity/VoucherCode';
 import { VoucherPlan } from '~/entity/VoucherPlan';
+import { Exercise } from '~/entity/Exercise';
+import { Issue } from '~/entity/Issue';
+import { IssueReaction } from '~/entity/IssueReaction';
+import { IssueReply } from '~/entity/IssueReply';
+import { IssueReplyReaction } from '~/entity/IssueReplyReaction';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -100,6 +105,11 @@ describe('MemberController (e2e)', () => {
   let voucherRepo: Repository<Voucher>;
   let voucherCodeRepo: Repository<VoucherCode>;
   let voucherPlanRepo: Repository<VoucherPlan>;
+  let exerciseRepo: Repository<Exercise>;
+  let issueReactionRepo: Repository<IssueReaction>;
+  let issueRepo: Repository<Issue>;
+  let issueReplyRepo: Repository<IssueReply>;
+  let issueReplyReactionRepo: Repository<IssueReplyReaction>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -150,7 +160,17 @@ describe('MemberController (e2e)', () => {
     voucherPlanRepo = manager.getRepository(VoucherPlan);
     voucherCodeRepo = manager.getRepository(VoucherCode);
     voucherRepo = manager.getRepository(Voucher);
+    exerciseRepo = manager.getRepository(Exercise);
+    issueReplyRepo = manager.getRepository(IssueReply);
+    issueRepo = manager.getRepository(Issue);
+    issueReactionRepo = manager.getRepository(IssueReaction);
+    issueReplyReactionRepo = manager.getRepository(IssueReplyReaction);
 
+    await issueReplyReactionRepo.delete({});
+    await issueReactionRepo.delete({});
+    await issueReplyRepo.delete({});
+    await issueRepo.delete({});
+    await exerciseRepo.delete({});
     await voucherRepo.delete({});
     await voucherCodeRepo.delete({});
     await voucherPlanRepo.delete({});
@@ -199,6 +219,11 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await issueReplyReactionRepo.delete({});
+    await issueReactionRepo.delete({});
+    await issueReplyRepo.delete({});
+    await issueRepo.delete({});
+    await exerciseRepo.delete({});
     await voucherRepo.delete({});
     await voucherCodeRepo.delete({});
     await voucherPlanRepo.delete({});
@@ -1933,6 +1958,35 @@ describe('MemberController (e2e)', () => {
       insertedVoucher.member = insertedMember;
       insertedVoucher.voucherCode = insertedVoucherCode;
       await manager.save(insertedVoucher);
+
+      const insertedExercise = new Exercise();
+      insertedExercise.member = insertedMember;
+      insertedExercise.programContent = insertedProgramContent;
+      await manager.save(insertedExercise);
+
+      const insertedIssue = new Issue();
+      insertedIssue.member = insertedMember;
+      insertedIssue.app = app;
+      insertedIssue.threadId = 'SSSSSSSS';
+      insertedIssue.title = 'AAA';
+      insertedIssue.description = 'AAAA';
+      await manager.save(insertedIssue);
+
+      const insertedIssueReaction = new IssueReaction();
+      insertedIssueReaction.member = insertedMember;
+      insertedIssueReaction.issue = insertedIssue;
+      await manager.save(insertedIssueReaction);
+
+      const insertedIssueReply = new IssueReply();
+      insertedIssueReply.content = 'aAAa';
+      insertedIssueReply.issue = insertedIssue;
+      insertedIssueReply.member = insertedMember;
+      await manager.save(insertedIssueReply);
+
+      const insertedIssueReplyReaction = new IssueReplyReaction();
+      insertedIssueReplyReaction.issueReply = insertedIssueReply;
+      insertedIssueReplyReaction.member = insertedMember;
+      await manager.save(insertedIssueReplyReaction);
 
       // TODO: add more relations
 

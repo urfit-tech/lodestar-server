@@ -14,6 +14,9 @@ export class IssueReplyReaction {
   })
   createdAt: Date;
 
+  @Column('text', { name: 'member_id', unique: true })
+  memberId: string;
+
   @ManyToOne(() => IssueReply, (issueReply) => issueReply.issueReplyReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

@@ -12,6 +12,9 @@ export class IssueReply {
   @Column('text', { name: 'content' })
   content: string;
 
+  @Column('text', { name: 'member_id', unique: true })
+  memberId: string;
+
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',
