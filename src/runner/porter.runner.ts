@@ -19,6 +19,7 @@ interface PodcastProgressInfo {
   progress: number;
   lastProgress: number;
   podcastAlbumId: string;
+  created_at: Date;
 }
 
 @Injectable()
@@ -31,7 +32,7 @@ export class PorterRunner extends Runner {
 
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(PorterRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
+    super(PorterRunner.name, 61000, logger, distributedLockService, shutdownService);
   }
 
   async portLastLoggedIn(manager: EntityManager): Promise<void> {
@@ -83,7 +84,13 @@ export class PorterRunner extends Runner {
       for (let keyIndex = 0; keyIndex < batchKeys.length; keyIndex++) {
         const key = batchKeys[keyIndex];
         const valueString = values[keyIndex];
-        const [, memberId, , programContentId] = key.split(':');
+        const [, memberId, , programContentId, createdAtString] = key.split(':');
+
+        const createdAtTimestamp = parseInt(createdAtString, 10);
+        const createdAtDate = new Date(createdAtTimestamp);
+
+        console.log(key, createdAtDate);
+
         const value = JSON.parse(valueString || '{}');
 
         try {
@@ -92,9 +99,10 @@ export class PorterRunner extends Runner {
           const programContentLog = new ProgramContentLog();
           programContentLog.memberId = memberId;
           programContentLog.programContent = programContent;
-          programContentLog.playbackRate = value.playbackRate;
+          programContentLog.playbackRate = value.playbackRate || 1;
           programContentLog.startedAt = value.startedAt || 0;
           programContentLog.endedAt = value.endedAt || 0;
+          programContentLog.createdAt = createdAtDate;
 
           programContentLogs.push(programContentLog);
         } catch (error) {
@@ -124,7 +132,11 @@ export class PorterRunner extends Runner {
     for (const key of allKeys) {
       const valueString = await this.cacheService.getClient().get(key);
       if (!valueString) continue;
-      const [, memberId, , podcastProgramId] = key.split(':');
+
+      const [, memberId, , podcastProgramId, createdAtString] = key.split(':');
+      const createdAtTimestamp = parseInt(createdAtString, 10);
+      const createdAtDate = new Date(createdAtTimestamp);
+
       const value = JSON.parse(valueString);
       const progressInfo: PodcastProgressInfo = {
         memberId,
@@ -132,6 +144,7 @@ export class PorterRunner extends Runner {
         progress: value.progress,
         lastProgress: value.progress,
         podcastAlbumId: value.podcastAlbumId,
+        created_at: createdAtDate,
       };
       progressMap.set(memberId + '_' + podcastProgramId, progressInfo);
     }
@@ -147,10 +160,12 @@ export class PorterRunner extends Runner {
 
         if (!podcastProgramProgress) {
           podcastProgramProgress = manager.getRepository(PodcastProgramProgress).create(info);
+          podcastProgramProgress.createdAt = info.created_at;
         } else {
           podcastProgramProgress.progress = info.progress;
           podcastProgramProgress.lastProgress = info.lastProgress;
           podcastProgramProgress.podcastAlbumId = info.podcastAlbumId;
+          podcastProgramProgress.updatedAt = info.created_at;
         }
 
         podcastProgramProgresssToSave.push(podcastProgramProgress);
