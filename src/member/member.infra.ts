@@ -44,6 +44,7 @@ import { Review } from '~/entity/Review';
 import { ReviewReaction } from '~/entity/ReviewReaction';
 import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { OrderContact } from '~/entity/OrderContact';
+import { Merchandise } from '~/entity/Merchandise';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -402,6 +403,7 @@ export class MemberInfrastructure {
       const reviewReactionRepo = manager.getRepository(ReviewReaction);
       const orderExecutorRepo = manager.getRepository(OrderExecutor);
       const orderContractRepo = manager.getRepository(OrderContact);
+      const merchandiseRepo = manager.getRepository(Merchandise);
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
@@ -448,6 +450,7 @@ export class MemberInfrastructure {
       );
       await orderLogRepo.remove(orderLogs);
 
+      await merchandiseRepo.delete({ memberId: member.id });
       await voucherRepo.delete({ memberId: member.id });
       await exerciseRepo.delete({ memberId: member.id });
       await issueReplyReactionRepo.delete({ memberId: member.id });

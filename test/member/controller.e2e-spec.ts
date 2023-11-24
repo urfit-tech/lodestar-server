@@ -72,6 +72,7 @@ import { Review } from '~/entity/Review';
 import { ReviewReaction } from '~/entity/ReviewReaction';
 import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { OrderContact } from '~/entity/OrderContact';
+import { Merchandise } from '~/entity/Merchandise';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -132,6 +133,7 @@ describe('MemberController (e2e)', () => {
   let reviewReactionRepo: Repository<ReviewReaction>;
   let orderExecutorRepo: Repository<OrderExecutor>;
   let orderContractRepo: Repository<OrderContact>;
+  let merchandiseRepo: Repository<Merchandise>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -198,7 +200,9 @@ describe('MemberController (e2e)', () => {
     reviewRepo = manager.getRepository(Review);
     reviewReactionRepo = manager.getRepository(ReviewReaction);
     orderExecutorRepo = manager.getRepository(OrderExecutor);
+    merchandiseRepo = manager.getRepository(Merchandise);
 
+    await merchandiseRepo.delete({});
     await orderContractRepo.delete({});
     await orderExecutorRepo.delete({});
     await reviewReactionRepo.delete({});
@@ -263,6 +267,7 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await merchandiseRepo.delete({});
     await orderContractRepo.delete({});
     await orderExecutorRepo.delete({});
     await reviewReactionRepo.delete({});
@@ -2132,6 +2137,15 @@ describe('MemberController (e2e)', () => {
       insertedOrderContract.message = 'AAA';
       insertedOrderContract.message = 'AAAA';
       await manager.save(insertedOrderContract);
+
+      const insertedMerchandise = new Merchandise();
+      insertedMerchandise.app = app;
+      insertedMerchandise.position = 0;
+      insertedMerchandise.member = insertedMember;
+      insertedMerchandise.currencyId = 'TWD';
+      insertedMerchandise.listPrice = 100;
+      insertedMerchandise.title = 'AAAA';
+      await manager.save(insertedMerchandise);
 
       // TODO: add more relations
 
