@@ -65,6 +65,13 @@ import { CommentReaction } from '~/entity/CommentReaction';
 import { CommentReply } from '~/entity/CommentReply';
 import { CommentReplyReaction } from '~/entity/CommentReplyReaction';
 import { Comment } from '~/entity/Comment';
+import { MemberCard } from '~/entity/MemberCard';
+import { Contract } from '~/entity/Contract';
+import { MemberContract } from '~/entity/MemberContract';
+import { Review } from '~/entity/Review';
+import { ReviewReaction } from '~/entity/ReviewReaction';
+import { OrderExecutor } from '~/order/entity/order_executor.entity';
+import { OrderContact } from '~/entity/OrderContact';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -118,6 +125,13 @@ describe('MemberController (e2e)', () => {
   let commentReactionRepo: Repository<CommentReaction>;
   let commentReplyRepo: Repository<CommentReply>;
   let commentReplyReactionRepo: Repository<CommentReplyReaction>;
+  let memberCardRepo: Repository<MemberCard>;
+  let contractRepo: Repository<Contract>;
+  let memberContractRepo: Repository<MemberContract>;
+  let reviewRepo: Repository<Review>;
+  let reviewReactionRepo: Repository<ReviewReaction>;
+  let orderExecutorRepo: Repository<OrderExecutor>;
+  let orderContractRepo: Repository<OrderContact>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -137,6 +151,8 @@ describe('MemberController (e2e)', () => {
     tagRepo = manager.getRepository(Tag);
     categoryRepo = manager.getRepository(Category);
     permissionGroupRepo = manager.getRepository(PermissionGroup);
+    memberContractRepo = manager.getRepository(MemberContract);
+    contractRepo = manager.getRepository(Contract);
     memberPropertyRepo = manager.getRepository(MemberProperty);
     memberTagRepo = manager.getRepository(MemberTag);
     memberPhoneRepo = manager.getRepository(MemberPhone);
@@ -151,6 +167,7 @@ describe('MemberController (e2e)', () => {
     orderLogRepo = manager.getRepository(OrderLog);
     orderProductRepo = manager.getRepository(OrderProduct);
     orderDiscountRepo = manager.getRepository(OrderDiscount);
+    orderContractRepo = manager.getRepository(OrderContact);
     invoiceRepo = manager.getRepository(Invoice);
     paymentLogRepo = manager.getRepository(PaymentLog);
     notificationRepo = manager.getRepository(Notification);
@@ -177,7 +194,15 @@ describe('MemberController (e2e)', () => {
     commentReplyRepo = manager.getRepository(CommentReply);
     commentReactionRepo = manager.getRepository(CommentReaction);
     commentRepo = manager.getRepository(Comment);
+    memberCardRepo = manager.getRepository(MemberCard);
+    reviewRepo = manager.getRepository(Review);
+    reviewReactionRepo = manager.getRepository(ReviewReaction);
+    orderExecutorRepo = manager.getRepository(OrderExecutor);
 
+    await orderContractRepo.delete({});
+    await orderExecutorRepo.delete({});
+    await reviewReactionRepo.delete({});
+    await reviewRepo.delete({});
     await commentReplyReactionRepo.delete({});
     await commentReplyRepo.delete({});
     await commentReactionRepo.delete({});
@@ -207,10 +232,13 @@ describe('MemberController (e2e)', () => {
     await orderDiscountRepo.delete({});
     await orderLogRepo.delete({});
     await currencyRepo.delete({});
+    await memberContractRepo.delete({});
+    await contractRepo.delete({});
     await memberTaskRepo.delete({});
     await memberNoteRepo.delete({});
     await memberPermissionExtraRepo.delete({});
     await permissionRepo.delete({});
+    await memberCardRepo.delete({});
     await memberOauthRepo.delete({});
     await memberDeviceRepo.delete({});
     await memberPermissionGroupRepo.delete({});
@@ -235,6 +263,10 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await orderContractRepo.delete({});
+    await orderExecutorRepo.delete({});
+    await reviewReactionRepo.delete({});
+    await reviewRepo.delete({});
     await commentReplyReactionRepo.delete({});
     await commentReplyRepo.delete({});
     await commentReactionRepo.delete({});
@@ -264,10 +296,13 @@ describe('MemberController (e2e)', () => {
     await orderDiscountRepo.delete({});
     await orderLogRepo.delete({});
     await currencyRepo.delete({});
+    await memberContractRepo.delete({});
+    await contractRepo.delete({});
     await memberTaskRepo.delete({});
     await memberNoteRepo.delete({});
     await memberPermissionExtraRepo.delete({});
     await permissionRepo.delete({});
+    await memberCardRepo.delete({});
     await memberOauthRepo.delete({});
     await memberDeviceRepo.delete({});
     await memberPermissionGroupRepo.delete({});
@@ -2030,6 +2065,73 @@ describe('MemberController (e2e)', () => {
       insertedCommentReaction.comment = insertedComment;
       insertedCommentReaction.member = insertedMember;
       await manager.save(insertedCommentReaction);
+
+      const insertedMemberCard = new MemberCard();
+      insertedMemberCard.member = insertedMember;
+      insertedMemberCard.cardIdentifier = 'AAAAAAAAAA';
+      insertedMemberCard.cardInfo = {
+        type: 1,
+        level: '',
+        issuer: '',
+        bank_id: '',
+        country: 'UNITED KINGDOM',
+        funding: 0,
+        bin_code: '424242',
+        last_four: '4242',
+        expiry_date: '202301',
+        country_code: 'GB',
+        issuer_zh_tw: '',
+      };
+      insertedMemberCard.cardSecret = {
+        card_key: 'AAAAAAAAAA',
+        card_token: 'AAAAAAAAAA',
+      };
+      insertedMemberCard.priority = 0;
+      insertedMemberCard.cardHolder = {
+        name: 'AAAAAAAAAA',
+        email: 'AAAAAAAAAA',
+        memberId: 'AAAAAAAAAA',
+        phoneNumber: '0999999999',
+      };
+      await manager.save(insertedMemberCard);
+
+      const insertedContract = new Contract();
+      insertedContract.appId = app.id;
+      insertedContract.name = '私塾課合約2020';
+      insertedContract.description = '私塾課合約2020';
+      insertedContract.template = '<div> 1 </div>';
+      await manager.save(insertedContract);
+
+      const insertedMemberContract = new MemberContract();
+      insertedMemberContract.member = insertedMember;
+      insertedMemberContract.contract = insertedContract;
+      await manager.save(insertedMemberContract);
+
+      const insertedReview = new Review();
+      insertedReview.member = insertedMember;
+      insertedReview.appId = app.id;
+      insertedReview.score = 100;
+      insertedReview.title = 'AAAA';
+      insertedReview.path = '/programs/AAAAA';
+      await manager.save(insertedReview);
+
+      const insertedReviewReaction = new ReviewReaction();
+      insertedReviewReaction.review = insertedReview;
+      insertedReviewReaction.member = insertedMember;
+      await manager.save(insertedReviewReaction);
+
+      const insertedOrderExecutor = new OrderExecutor();
+      insertedOrderExecutor.member = insertedMember;
+      insertedOrderExecutor.order = insertedOrderLog;
+      insertedOrderExecutor.ratio = 1;
+      await manager.save(insertedOrderExecutor);
+
+      const insertedOrderContract = new OrderContact();
+      insertedOrderContract.member = insertedMember;
+      insertedOrderContract.order = insertedOrderLog;
+      insertedOrderContract.message = 'AAA';
+      insertedOrderContract.message = 'AAAA';
+      await manager.save(insertedOrderContract);
 
       // TODO: add more relations
 

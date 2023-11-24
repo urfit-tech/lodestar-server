@@ -52,6 +52,9 @@ export class MemberContract {
   })
   updatedAt: Date | null;
 
+  @Column('text', { name: 'member_id', unique: true })
+  memberId: string;
+
   @ManyToOne(() => Member, (member) => member.memberContracts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

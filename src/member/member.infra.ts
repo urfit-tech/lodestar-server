@@ -38,6 +38,12 @@ import { CommentReply } from '~/entity/CommentReply';
 import { CommentReplyReaction } from '~/entity/CommentReplyReaction';
 import { CommentReaction } from '~/entity/CommentReaction';
 import { Comment } from '~/entity/Comment';
+import { MemberCard } from '~/entity/MemberCard';
+import { MemberContract } from '~/entity/MemberContract';
+import { Review } from '~/entity/Review';
+import { ReviewReaction } from '~/entity/ReviewReaction';
+import { OrderExecutor } from '~/order/entity/order_executor.entity';
+import { OrderContact } from '~/entity/OrderContact';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -390,11 +396,20 @@ export class MemberInfrastructure {
       const commentReplyRepo = manager.getRepository(CommentReply);
       const commentReactionRepo = manager.getRepository(CommentReaction);
       const commentRepo = manager.getRepository(Comment);
+      const memberCardRepo = manager.getRepository(MemberCard);
+      const memberContractRepo = manager.getRepository(MemberContract);
+      const reviewRepo = manager.getRepository(Review);
+      const reviewReactionRepo = manager.getRepository(ReviewReaction);
+      const orderExecutorRepo = manager.getRepository(OrderExecutor);
+      const orderContractRepo = manager.getRepository(OrderContact);
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
       await notificationRepo.delete({ targetMember: { id: member.id } });
       await notificationRepo.delete({ sourceMember: { id: member.id } });
+
+      await orderContractRepo.delete({ memberId: member.id });
+      await orderExecutorRepo.delete({ memberId: member.id });
 
       const orderProducts = await orderProductRepo.find({
         where: { order: { memberId: member.id } },
@@ -447,6 +462,10 @@ export class MemberInfrastructure {
       await programContentLogRepo.delete({ memberId: member.id });
       await programContentProgressRepo.delete({ memberId: member.id });
       await couponRepo.delete({ memberId: member.id });
+      await reviewReactionRepo.delete({ memberId: member.id });
+      await reviewRepo.delete({ memberId: member.id });
+      await memberContractRepo.delete({ memberId: member.id });
+      await memberCardRepo.delete({ memberId: member.id });
       await memberTagRepo.delete({ memberId: member.id });
       await memberOauthRepo.delete({ memberId: member.id });
       await memberCategoryRepo.delete({ memberId: member.id });

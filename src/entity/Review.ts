@@ -41,6 +41,9 @@ export class Review {
   @Column('text', { name: 'app_id' })
   appId: string;
 
+  @Column('text', { name: 'member_id', unique: true })
+  memberId: string;
+
   @ManyToOne(() => Member, (member) => member.reviews, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
