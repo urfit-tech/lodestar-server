@@ -41,7 +41,7 @@ import { Playlist } from '~/entity/Playlist';
 import { Podcast } from '~/entity/Podcast';
 import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 import { PodcastPlan } from '~/entity/PodcastPlan';
-import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
 import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
 import { PointLog } from '~/entity/PointLog';

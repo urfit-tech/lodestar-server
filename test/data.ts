@@ -25,10 +25,10 @@ import dayjs from 'dayjs';
 import { ProgramPackage } from '~/entity/ProgramPackage';
 import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
 import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
-import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastPlan } from '~/entity/PodcastPlan';
 import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
-import { PodcastAlbumPodcastProgram } from '~/entity/PodcastAlbumPodcastProgram';
+import { PodcastAlbumPodcastProgram } from '~/podcast/entity/PodcastAlbumPodcastProgram';
 import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
 
 export const role = new Role();

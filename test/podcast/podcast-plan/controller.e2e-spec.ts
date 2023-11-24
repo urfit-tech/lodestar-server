@@ -39,11 +39,11 @@ import RedisStore from 'connect-redis';
 import { CacheService } from '~/utility/cache/cache.service';
 import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
-import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastPlan } from '~/entity/PodcastPlan';
 import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
-import { PodcastAlbumPodcastProgram } from '~/entity/PodcastAlbumPodcastProgram';
+import { PodcastAlbumPodcastProgram } from '~/podcast/entity/PodcastAlbumPodcastProgram';
 
 describe('PodcastPlanController (e2e)', () => {
   let application: INestApplication;

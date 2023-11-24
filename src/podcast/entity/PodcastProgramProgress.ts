@@ -1,7 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
 import { PodcastAlbum } from './PodcastAlbum';
-import { PodcastProgram } from '../../entity/PodcastProgram';
+import { PodcastProgram } from './PodcastProgram';
 
 @Index('podcast_program_progress_pkey', ['id'], { unique: true })
 @Index('podcast_program_progress_member_id_podcast_program_id_key', ['memberId', 'podcastProgramId'], { unique: true })

@@ -4,7 +4,7 @@ import { App } from '~/app/entity/app.entity';
 import { Member } from '~/member/entity/member.entity';
 
 import { PodcastPlan } from './PodcastPlan';
-import { PodcastProgram } from './PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 
 @Index('podcast_pkey', ['id'], { unique: true })
 @Entity('podcast', { schema: 'public' })

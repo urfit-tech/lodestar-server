@@ -1,14 +1,14 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Member } from '~/member/entity/member.entity';
-import { PlaylistPodcastProgram } from './PlaylistPodcastProgram';
-import { Podcast } from './Podcast';
+import { PlaylistPodcastProgram } from '../../entity/PlaylistPodcastProgram';
+import { Podcast } from '../../entity/Podcast';
 import { PodcastAlbumPodcastProgram } from './PodcastAlbumPodcastProgram';
-import { PodcastProgramAudio } from './PodcastProgramAudio';
-import { PodcastProgramBody } from './PodcastProgramBody';
-import { PodcastProgramCategory } from './PodcastProgramCategory';
+import { PodcastProgramAudio } from '../../entity/PodcastProgramAudio';
+import { PodcastProgramBody } from '../../entity/PodcastProgramBody';
+import { PodcastProgramCategory } from '../../entity/PodcastProgramCategory';
 import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
-import { PodcastProgramRole } from './PodcastProgramRole';
-import { PodcastProgramTag } from './PodcastProgramTag';
+import { PodcastProgramRole } from '../../entity/PodcastProgramRole';
+import { PodcastProgramTag } from '../../entity/PodcastProgramTag';
 
 @Index('podcast_program_pkey', ['id'], { unique: true })
 @Entity('podcast_program', { schema: 'public' })

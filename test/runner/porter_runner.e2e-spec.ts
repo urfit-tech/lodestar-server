@@ -41,7 +41,7 @@ import { ProgramContent } from '~/program/entity/program_content.entity';
 import { Currency } from '~/entity/Currency';
 import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
-import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 
 jest.mock('axios', () => ({

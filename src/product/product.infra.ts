@@ -9,7 +9,7 @@ import { ProgramPlan } from '~/entity/ProgramPlan';
 import { ProjectPlan } from '~/entity/ProjectPlan';
 import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
 import { Program } from '~/entity/Program';
-import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastPlan } from '~/entity/PodcastPlan';
 import { Merchandise } from '~/entity/Merchandise';
 import { MerchandiseSpec } from '~/entity/MerchandiseSpec';
