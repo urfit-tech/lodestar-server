@@ -254,6 +254,8 @@ describe('PorterRunner (e2e)', () => {
 
       expect(latesProgress.memberId).toEqual(member.id);
       expect(latesProgress.podcastProgramId).toEqual(podcastProgram.id);
+      expect(latesProgress.progress).toEqual('190.2503679064795');
+      expect(latesProgress.podcastAlbumId).toEqual(podcastAlbum.id);
     });
   });
 });
