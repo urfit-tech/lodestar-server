@@ -76,6 +76,8 @@ import { Merchandise } from '~/entity/Merchandise';
 import { CoinLog } from '~/entity/CoinLog';
 import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
 import { PodcastProgram } from '~/entity/PodcastProgram';
+import { Post } from '~/entity/Post';
+import { PostRole } from '~/entity/PostRole';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -140,6 +142,8 @@ describe('MemberController (e2e)', () => {
   let coinLogRepo: Repository<CoinLog>;
   let podcastProgramProgressRepo: Repository<PodcastProgramProgress>;
   let podcastProgramRepo: Repository<PodcastProgram>;
+  let postRepo: Repository<Post>;
+  let postRoleRepo: Repository<PostRole>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -210,7 +214,11 @@ describe('MemberController (e2e)', () => {
     coinLogRepo = manager.getRepository(CoinLog);
     podcastProgramRepo = manager.getRepository(PodcastProgram);
     podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
+    postRepo = manager.getRepository(Post);
+    postRoleRepo = manager.getRepository(PostRole);
 
+    await postRoleRepo.delete({});
+    await postRepo.delete({});
     await coinLogRepo.delete({});
     await merchandiseRepo.delete({});
     await orderContractRepo.delete({});
@@ -279,6 +287,8 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await postRoleRepo.delete({});
+    await postRepo.delete({});
     await coinLogRepo.delete({});
     await merchandiseRepo.delete({});
     await orderContractRepo.delete({});
@@ -2195,6 +2205,22 @@ describe('MemberController (e2e)', () => {
       insertedPodcastProgramProgress.progress = 1.22;
       insertedPodcastProgramProgress.podcastProgram = insertedPodcastProgram;
       await manager.save(insertedPodcastProgramProgress);
+
+      const insertedPost = new Post();
+      insertedPost.title = 'AAAA';
+      insertedPost.coverUrl = 'AAAA';
+      insertedPost.views = 2;
+      insertedPost.position = 1;
+      insertedPost.isDeleted = false;
+      insertedPost.app = app;
+      await manager.save(insertedPost);
+
+      const insertedPostRole = new PostRole();
+      insertedPostRole.member = insertedMember;
+      insertedPostRole.name = 'AAAA';
+      insertedPostRole.position = 1;
+      insertedPostRole.post = insertedPost;
+      await manager.save(insertedPostRole);
 
       // TODO: add more relations
 

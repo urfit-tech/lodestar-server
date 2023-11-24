@@ -47,6 +47,7 @@ import { OrderContact } from '~/entity/OrderContact';
 import { Merchandise } from '~/entity/Merchandise';
 import { CoinLog } from '~/entity/CoinLog';
 import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
+import { PostRole } from '~/entity/PostRole';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -408,6 +409,7 @@ export class MemberInfrastructure {
       const merchandiseRepo = manager.getRepository(Merchandise);
       const coinLogRepo = manager.getRepository(CoinLog);
       const podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
+      const postRoleRepo = manager.getRepository(PostRole);
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
@@ -467,6 +469,7 @@ export class MemberInfrastructure {
       await commentRepo.delete({ memberId: member.id });
       await coinLogRepo.delete({ memberId: member.id });
       await podcastProgramProgressRepo.delete({ memberId: member.id });
+      await postRoleRepo.delete({ memberId: member.id });
 
       await programContentLogRepo.delete({ memberId: member.id });
       await programContentProgressRepo.delete({ memberId: member.id });
