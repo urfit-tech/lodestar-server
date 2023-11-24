@@ -73,6 +73,7 @@ import { ReviewReaction } from '~/entity/ReviewReaction';
 import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { OrderContact } from '~/entity/OrderContact';
 import { Merchandise } from '~/entity/Merchandise';
+import { CoinLog } from '~/entity/CoinLog';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -134,6 +135,7 @@ describe('MemberController (e2e)', () => {
   let orderExecutorRepo: Repository<OrderExecutor>;
   let orderContractRepo: Repository<OrderContact>;
   let merchandiseRepo: Repository<Merchandise>;
+  let coinLogRepo: Repository<CoinLog>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -201,7 +203,9 @@ describe('MemberController (e2e)', () => {
     reviewReactionRepo = manager.getRepository(ReviewReaction);
     orderExecutorRepo = manager.getRepository(OrderExecutor);
     merchandiseRepo = manager.getRepository(Merchandise);
+    coinLogRepo = manager.getRepository(CoinLog);
 
+    await coinLogRepo.delete({});
     await merchandiseRepo.delete({});
     await orderContractRepo.delete({});
     await orderExecutorRepo.delete({});
@@ -267,6 +271,7 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await coinLogRepo.delete({});
     await merchandiseRepo.delete({});
     await orderContractRepo.delete({});
     await orderExecutorRepo.delete({});
@@ -2146,6 +2151,13 @@ describe('MemberController (e2e)', () => {
       insertedMerchandise.listPrice = 100;
       insertedMerchandise.title = 'AAAA';
       await manager.save(insertedMerchandise);
+
+      const insertedCoinLog = new CoinLog();
+      insertedCoinLog.member = insertedMember;
+      insertedCoinLog.title = 'AAAAAA';
+      insertedCoinLog.amount = 111;
+      insertedCoinLog.description = 'AAAAA';
+      await manager.save(insertedCoinLog);
 
       // TODO: add more relations
 
