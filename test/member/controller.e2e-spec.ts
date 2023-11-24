@@ -74,6 +74,8 @@ import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { OrderContact } from '~/entity/OrderContact';
 import { Merchandise } from '~/entity/Merchandise';
 import { CoinLog } from '~/entity/CoinLog';
+import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
+import { PodcastProgram } from '~/entity/PodcastProgram';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -136,6 +138,8 @@ describe('MemberController (e2e)', () => {
   let orderContractRepo: Repository<OrderContact>;
   let merchandiseRepo: Repository<Merchandise>;
   let coinLogRepo: Repository<CoinLog>;
+  let podcastProgramProgressRepo: Repository<PodcastProgramProgress>;
+  let podcastProgramRepo: Repository<PodcastProgram>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -204,6 +208,8 @@ describe('MemberController (e2e)', () => {
     orderExecutorRepo = manager.getRepository(OrderExecutor);
     merchandiseRepo = manager.getRepository(Merchandise);
     coinLogRepo = manager.getRepository(CoinLog);
+    podcastProgramRepo = manager.getRepository(PodcastProgram);
+    podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
 
     await coinLogRepo.delete({});
     await merchandiseRepo.delete({});
@@ -223,6 +229,8 @@ describe('MemberController (e2e)', () => {
     await voucherRepo.delete({});
     await voucherCodeRepo.delete({});
     await voucherPlanRepo.delete({});
+    await podcastProgramProgressRepo.delete({});
+    await podcastProgramRepo.delete({});
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -289,6 +297,8 @@ describe('MemberController (e2e)', () => {
     await voucherRepo.delete({});
     await voucherCodeRepo.delete({});
     await voucherPlanRepo.delete({});
+    await podcastProgramProgressRepo.delete({});
+    await podcastProgramRepo.delete({});
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -1796,6 +1806,18 @@ describe('MemberController (e2e)', () => {
       insertedMember.loginedAt = new Date();
       await manager.save(insertedMember);
 
+      const insertedMember2 = new Member();
+      insertedMember2.appId = app.id;
+      insertedMember2.id = v4();
+      insertedMember2.name = `name2`;
+      insertedMember2.username = `username2`;
+      insertedMember2.email = `delete2@example.com`;
+      insertedMember2.role = 'general-member';
+      insertedMember2.star = 0;
+      insertedMember2.createdAt = new Date();
+      insertedMember2.loginedAt = new Date();
+      await manager.save(insertedMember2);
+
       const insertedTag = new Tag();
       insertedTag.name = `tag`;
       insertedTag.type = 'member';
@@ -2158,6 +2180,21 @@ describe('MemberController (e2e)', () => {
       insertedCoinLog.amount = 111;
       insertedCoinLog.description = 'AAAAA';
       await manager.save(insertedCoinLog);
+
+      const insertedPodcastProgram = new PodcastProgram();
+      insertedPodcastProgram.title = 'AAAA';
+      insertedPodcastProgram.contentType = 'mp3';
+      insertedPodcastProgram.creator = insertedMember2;
+      insertedPodcastProgram.duration = 1;
+      insertedPodcastProgram.durationSecond = 2;
+      await manager.save(insertedPodcastProgram);
+
+      const insertedPodcastProgramProgress = new PodcastProgramProgress();
+      insertedPodcastProgramProgress.member = insertedMember;
+      insertedPodcastProgramProgress.lastProgress = 1.22;
+      insertedPodcastProgramProgress.progress = 1.22;
+      insertedPodcastProgramProgress.podcastProgram = insertedPodcastProgram;
+      await manager.save(insertedPodcastProgramProgress);
 
       // TODO: add more relations
 
