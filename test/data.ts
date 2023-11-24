@@ -27,7 +27,7 @@ import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
 import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
 import { PodcastProgram } from '~/entity/PodcastProgram';
 import { PodcastPlan } from '~/entity/PodcastPlan';
-import { PodcastAlbum } from '~/entity/PodcastAlbum';
+import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 import { PodcastAlbumPodcastProgram } from '~/entity/PodcastAlbumPodcastProgram';
 import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
 

@@ -6,7 +6,7 @@ import { PodcastAlbumPodcastProgram } from './PodcastAlbumPodcastProgram';
 import { PodcastProgramAudio } from './PodcastProgramAudio';
 import { PodcastProgramBody } from './PodcastProgramBody';
 import { PodcastProgramCategory } from './PodcastProgramCategory';
-import { PodcastProgramProgress } from './PodcastProgramProgress';
+import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
 import { PodcastProgramRole } from './PodcastProgramRole';
 import { PodcastProgramTag } from './PodcastProgramTag';
 

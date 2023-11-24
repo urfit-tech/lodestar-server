@@ -4,7 +4,7 @@ import { Exercise } from '~/entity/Exercise';
 import { Practice } from '~/entity/Practice';
 import { ProgramContentAudio } from '~/entity/ProgramContentAudio';
 import { ProgramContentBody } from '~/entity/ProgramContentBody';
-import { ProgramContentLog } from '~/entity/ProgramContentLog';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { ProgramContentMaterial } from '~/entity/ProgramContentMaterial';
 import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';

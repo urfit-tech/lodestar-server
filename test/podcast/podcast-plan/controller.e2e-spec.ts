@@ -41,7 +41,7 @@ import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { PodcastProgram } from '~/entity/PodcastProgram';
 import { PodcastPlan } from '~/entity/PodcastPlan';
-import { PodcastAlbum } from '~/entity/PodcastAlbum';
+import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
 import { PodcastAlbumPodcastProgram } from '~/entity/PodcastAlbumPodcastProgram';
 

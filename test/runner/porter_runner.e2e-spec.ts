@@ -39,10 +39,10 @@ import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
 import { ProgramPlan } from '~/entity/ProgramPlan';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { Currency } from '~/entity/Currency';
-import { ProgramContentLog } from '~/entity/ProgramContentLog';
-import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
+import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
 import { PodcastProgram } from '~/entity/PodcastProgram';
-import { PodcastAlbum } from '~/entity/PodcastAlbum';
+import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 
 jest.mock('axios', () => ({
   get: jest.fn(),

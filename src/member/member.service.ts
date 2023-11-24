@@ -336,4 +336,8 @@ export class MemberService {
       })
       .map((each) => each.serializeToCsvRawRow(headerInfos));
   }
+
+  async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
+    await this.memberInfra.updateMemberLoginDate(memberId, loginedAt, entityManager);
+  }
 }

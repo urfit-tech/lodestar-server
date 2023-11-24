@@ -166,22 +166,21 @@ export class MemberInfrastructure {
       return {
         phones: filteredPhones,
         oauths: filteredOauths.reduce((accum, v) => {
-          accum[v.provider] = {}
+          accum[v.provider] = {};
           Object.keys(v?.options || {}).forEach((key) => {
             if (key.includes('id')) {
-              accum[v.provider][key] = v.options[key]
+              accum[v.provider][key] = v.options[key];
             }
-          })
-          return accum
+          });
+          return accum;
         }, {} as { [key: string]: any }),
         permissions: filteredPermissions.map((permission) => ({
           memberId: permission.member_id,
-          permissionId: permission.permission_id, 
+          permissionId: permission.permission_id,
         })),
       };
     });
   }
-
 
   async getMemberPropertiesByIds(memberId: string, propertyIds: Array<string>, manager: EntityManager) {
     const memberPropertyRepo = manager.getRepository(MemberProperty);
@@ -190,8 +189,12 @@ export class MemberInfrastructure {
     });
     return founds;
   }
-  
-  async getGeneralLoginMemberByUsernameOrEmail(appId: string, usernameOrEmail: string, manager: EntityManager): Promise<Member | null> {
+
+  async getGeneralLoginMemberByUsernameOrEmail(
+    appId: string,
+    usernameOrEmail: string,
+    manager: EntityManager,
+  ): Promise<Member | null> {
     const memberRepo = manager.getRepository(Member);
     return memberRepo.findOne({
       where: [
@@ -214,12 +217,11 @@ export class MemberInfrastructure {
     manager: EntityManager,
   ): Promise<MemberDevice> {
     const memberDeviceRepo = manager.getRepository(MemberDevice);
-    const found: MemberDevice = (
-      await memberDeviceRepo.findOneBy({
-        memberId, fingerprintId: fingerPrintId,
-      })
-      || memberDeviceRepo.create({ memberId, fingerprintId: fingerPrintId })
-    );
+    const found: MemberDevice =
+      (await memberDeviceRepo.findOneBy({
+        memberId,
+        fingerprintId: fingerPrintId,
+      })) || memberDeviceRepo.create({ memberId, fingerprintId: fingerPrintId });
 
     const { browser, osName, ipAddress, type } = options;
     const currentDatetime = new Date();
@@ -253,6 +255,11 @@ export class MemberInfrastructure {
         return memberAuditLogRepo.save(toInsert);
       }),
     );
+  }
+
+  async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
+    const memberRepo = entityManager.getRepository(Member);
+    await memberRepo.update(memberId, { loginedAt });
   }
 
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {

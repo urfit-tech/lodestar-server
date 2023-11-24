@@ -15,6 +15,8 @@ import { RunnerService } from './runner.service';
 import { RunnerController } from './runner.controller';
 import { ProgramModule } from '~/program/program.module';
 import { PodcastModule } from '~/podcast/podcast.module';
+import { MemberModule } from '~/member/member.module';
+import { PodcastService } from '~/podcast/podcast.service';
 
 dayjs.extend(utc);
 
@@ -56,6 +58,9 @@ export class RunnerModule {
         PostgresModule.forRootAsync(),
         LockModule.forFeature({ key: workerName }),
         UtilityModule,
+        ProgramModule,
+        PodcastModule,
+        MemberModule,
         ProgramModule,
         PodcastModule,
         ...(invokedRunnerModule.imports || []),

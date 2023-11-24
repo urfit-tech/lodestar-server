@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
@@ -7,20 +7,12 @@ import { Runner } from './runner';
 import { CacheService } from '~/utility/cache/cache.service';
 import axios from 'axios';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { Member } from '~/member/entity/member.entity';
 import { EntityManager } from 'typeorm';
-import { ProgramContentLog } from '~/entity/ProgramContentLog';
-import { ProgramContent } from '../program/entity/program_content.entity';
-import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
-
-interface PodcastProgressInfo {
-  memberId: string;
-  podcastProgramId: string;
-  progress: number;
-  lastProgress: number;
-  podcastAlbumId: string;
-  created_at: Date;
-}
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
+import { MemberService } from '~/member/member.service';
+import { ProgramService } from '~/program/program.service';
+import { PodcastService } from '~/podcast/podcast.service';
+import { PodcastProgressInfo } from '~/podcast/podcast.types';
 
 @Injectable()
 export class PorterRunner extends Runner {
@@ -29,10 +21,13 @@ export class PorterRunner extends Runner {
     protected readonly distributedLockService: DistributedLockService,
     protected readonly shutdownService: ShutdownService,
     private readonly cacheService: CacheService,
+    private readonly memberService: MemberService,
+    private readonly programService: ProgramService,
+    private readonly podcastService: PodcastService,
 
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(PorterRunner.name, 61000, logger, distributedLockService, shutdownService);
+    super(PorterRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
   }
 
   async portLastLoggedIn(manager: EntityManager): Promise<void> {
@@ -52,17 +47,10 @@ export class PorterRunner extends Runner {
       const key: string = lastLoggedInMemberKeys[index];
       const [, memberId]: string[] = key.split(':');
 
-      let loginedAt: string | null = memberLastLoggedInTimestamps[index];
-
-      if (loginedAt) {
-        const localDate = new Date(loginedAt);
-        loginedAt = localDate.toISOString();
-      }
+      const loginedAt: string | null = memberLastLoggedInTimestamps[index];
 
       try {
-        await manager.update(Member, memberId, { loginedAt });
-
-        await manager.findOne(Member, { where: { id: memberId } });
+        await this.memberService.updateMemberLoginDate(memberId, new Date(loginedAt), this.entityManager);
 
         await this.cacheService.getClient().del(key);
       } catch (error) {
@@ -85,26 +73,24 @@ export class PorterRunner extends Runner {
         const key = batchKeys[keyIndex];
         const valueString = values[keyIndex];
         const [, memberId, , programContentId, createdAtString] = key.split(':');
-
         const createdAtTimestamp = parseInt(createdAtString, 10);
         const createdAtDate = new Date(createdAtTimestamp);
-
-        console.log(key, createdAtDate);
-
         const value = JSON.parse(valueString || '{}');
 
         try {
-          const programContentRepo = manager.getRepository(ProgramContent);
-          const programContent = await programContentRepo.findOneBy({ id: programContentId });
-          const programContentLog = new ProgramContentLog();
-          programContentLog.memberId = memberId;
-          programContentLog.programContent = programContent;
-          programContentLog.playbackRate = value.playbackRate || 1;
-          programContentLog.startedAt = value.startedAt || 0;
-          programContentLog.endedAt = value.endedAt || 0;
-          programContentLog.createdAt = createdAtDate;
+          const programContent = await this.programService.findProgramContentById(programContentId, manager);
 
-          programContentLogs.push(programContentLog);
+          if (programContent) {
+            const programContentLog = new ProgramContentLog();
+            programContentLog.memberId = memberId;
+            programContentLog.programContent = programContent;
+            programContentLog.playbackRate = value.playbackRate || 1;
+            programContentLog.startedAt = value.startedAt || 0;
+            programContentLog.endedAt = value.endedAt || 0;
+            programContentLog.createdAt = createdAtDate;
+
+            programContentLogs.push(programContentLog);
+          }
         } catch (error) {
           console.error(`Processing ${key} failed: ${error}`);
         }
@@ -113,7 +99,7 @@ export class PorterRunner extends Runner {
 
     if (programContentLogs.length > 0) {
       try {
-        await manager.save(programContentLogs);
+        await this.programService.saveProgramContentLogs(programContentLogs, manager);
         await this.cacheService.getClient().del(...allKeys);
       } catch (error) {
         console.error(`Batch saving or deleting keys failed: ${error}`);
@@ -127,7 +113,6 @@ export class PorterRunner extends Runner {
     const allKeys = await this.cacheService.getClient().keys(pattern);
 
     const progressMap = new Map<string, PodcastProgressInfo>();
-    const podcastProgramProgresssToSave: PodcastProgramProgress[] = [];
 
     for (const key of allKeys) {
       const valueString = await this.cacheService.getClient().get(key);
@@ -150,38 +135,11 @@ export class PorterRunner extends Runner {
     }
 
     try {
-      for (const [, info] of progressMap) {
-        let podcastProgramProgress = await manager.getRepository(PodcastProgramProgress).findOne({
-          where: {
-            memberId: info.memberId,
-            podcastProgramId: info.podcastProgramId,
-          },
-        });
-
-        if (!podcastProgramProgress) {
-          podcastProgramProgress = manager.getRepository(PodcastProgramProgress).create(info);
-          podcastProgramProgress.createdAt = info.created_at;
-        } else {
-          podcastProgramProgress.progress = info.progress;
-          podcastProgramProgress.lastProgress = info.lastProgress;
-          podcastProgramProgress.podcastAlbumId = info.podcastAlbumId;
-          podcastProgramProgress.updatedAt = info.created_at;
-        }
-
-        podcastProgramProgresssToSave.push(podcastProgramProgress);
-      }
+      await this.podcastService.processPodcastProgramProgress(progressMap, manager);
+      await this.cacheService.getClient().del(...allKeys);
     } catch (error) {
       console.error('Error processing podcast program progress:', error);
       errors.push({ error: error.message });
-    }
-
-    if (allKeys.length > 0) {
-      try {
-        await manager.save(podcastProgramProgresssToSave);
-        await this.cacheService.getClient().del(...allKeys);
-      } catch (error) {
-        console.error('Error deleting keys:', error);
-      }
     }
 
     if (errors.length > 0) {
