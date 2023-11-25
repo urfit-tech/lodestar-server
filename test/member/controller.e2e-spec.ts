@@ -81,6 +81,7 @@ import { PostRole } from '~/entity/PostRole';
 import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
 import { ProgramPackage } from '~/entity/ProgramPackage';
 import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
+import { Practice } from '~/entity/Practice';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -150,6 +151,7 @@ describe('MemberController (e2e)', () => {
   let programPackageRepo: Repository<ProgramPackage>;
   let programPackageProgramRepo: Repository<ProgramPackageProgram>;
   let programTempoDeliveryRepo: Repository<ProgramTempoDelivery>;
+  let practiceRepo: Repository<Practice>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -225,7 +227,9 @@ describe('MemberController (e2e)', () => {
     podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
     postRepo = manager.getRepository(Post);
     postRoleRepo = manager.getRepository(PostRole);
+    practiceRepo = manager.getRepository(Practice);
 
+    await practiceRepo.delete({});
     await postRoleRepo.delete({});
     await postRepo.delete({});
     await coinLogRepo.delete({});
@@ -299,6 +303,7 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await practiceRepo.delete({});
     await postRoleRepo.delete({});
     await postRepo.delete({});
     await coinLogRepo.delete({});
@@ -2254,6 +2259,16 @@ describe('MemberController (e2e)', () => {
       insertedPostRole.position = 1;
       insertedPostRole.post = insertedPost;
       await manager.save(insertedPostRole);
+
+      const insertedPratice = new Practice();
+      insertedPratice.member = insertedMember;
+      insertedPratice.coverUrl = 'AAAAAA';
+      insertedPratice.isDeleted = false;
+      insertedPratice.programContent = insertedProgramContent;
+      insertedPratice.reviewedAt = new Date();
+      insertedPratice.title = 'AAAAAA';
+      insertedPratice.description = 'AAAAAAAA';
+      await manager.save(insertedPratice);
 
       // TODO: add more relations
 
