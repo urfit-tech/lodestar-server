@@ -30,7 +30,7 @@ import { PermissionGroup } from '~/entity/PermissionGroup';
 import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 import { MemberDevice } from '~/member/entity/member_device.entity';
 
-import { app, appHost, appPlan, memberProperty } from '../data';
+import { app, appHost, appPlan, memberProperty, programPackage, programPackageProgram } from '../data';
 import { MemberOauth } from '~/member/entity/member_oauth.entity';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
 import { Permission } from '~/permission/entity/permission.entity';
@@ -78,6 +78,9 @@ import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
 import { PodcastProgram } from '~/entity/PodcastProgram';
 import { Post } from '~/entity/Post';
 import { PostRole } from '~/entity/PostRole';
+import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
+import { ProgramPackage } from '~/entity/ProgramPackage';
+import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -144,6 +147,9 @@ describe('MemberController (e2e)', () => {
   let podcastProgramRepo: Repository<PodcastProgram>;
   let postRepo: Repository<Post>;
   let postRoleRepo: Repository<PostRole>;
+  let programPackageRepo: Repository<ProgramPackage>;
+  let programPackageProgramRepo: Repository<ProgramPackageProgram>;
+  let programTempoDeliveryRepo: Repository<ProgramTempoDelivery>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -184,6 +190,9 @@ describe('MemberController (e2e)', () => {
     paymentLogRepo = manager.getRepository(PaymentLog);
     notificationRepo = manager.getRepository(Notification);
     couponRepo = manager.getRepository(Coupon);
+    programPackageRepo = manager.getRepository(ProgramPackage);
+    programPackageProgramRepo = manager.getRepository(ProgramPackageProgram);
+    programTempoDeliveryRepo = manager.getRepository(ProgramTempoDelivery);
     programContentProgressRepo = manager.getRepository(ProgramContentProgress);
     programContentLogRepo = manager.getRepository(ProgramContentLog);
     programContentRepo = manager.getRepository(ProgramContent);
@@ -239,6 +248,9 @@ describe('MemberController (e2e)', () => {
     await voucherPlanRepo.delete({});
     await podcastProgramProgressRepo.delete({});
     await podcastProgramRepo.delete({});
+    await programTempoDeliveryRepo.delete({});
+    await programPackageProgramRepo.delete({});
+    await programPackageRepo.delete({});
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -309,6 +321,9 @@ describe('MemberController (e2e)', () => {
     await voucherPlanRepo.delete({});
     await podcastProgramProgressRepo.delete({});
     await podcastProgramRepo.delete({});
+    await programTempoDeliveryRepo.delete({});
+    await programPackageProgramRepo.delete({});
+    await programPackageRepo.delete({});
     await programContentLogRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -1941,6 +1956,24 @@ describe('MemberController (e2e)', () => {
       insertedProgramContentProgress.id = v4();
       insertedProgramContentProgress.member = insertedMember;
       await manager.save(insertedProgramContentProgress);
+
+      const insertedProgramPackage = new ProgramPackage();
+      insertedProgramPackage.app = app;
+      insertedProgramPackage.isPrivate = false;
+      insertedProgramPackage.title = 'AAAA';
+      await manager.save(insertedProgramPackage);
+
+      const insertedProgramPackageProgram = new ProgramPackageProgram();
+      insertedProgramPackageProgram.program = insertedProgram;
+      insertedProgramPackageProgram.position = 1;
+      insertedProgramPackageProgram.programPackage = insertedProgramPackage;
+      await manager.save(insertedProgramPackageProgram);
+
+      const insertedProgramTempoDelivery = new ProgramTempoDelivery();
+      insertedProgramTempoDelivery.member = insertedMember;
+      insertedProgramTempoDelivery.programPackageProgram = insertedProgramPackageProgram;
+      insertedProgramTempoDelivery.deliveredAt = new Date(11111111);
+      await manager.save(insertedProgramTempoDelivery);
 
       const insertedNotification = new Notification();
       insertedNotification.id = v4();
