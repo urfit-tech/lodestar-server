@@ -51,6 +51,7 @@ import { PostRole } from '~/entity/PostRole';
 import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
+import { Attend } from '~/entity/Attend';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -416,6 +417,7 @@ export class MemberInfrastructure {
       const programTempoDeliveryRepo = manager.getRepository(ProgramTempoDelivery);
       const practiceRepo = manager.getRepository(Practice);
       const programTimeableRepo = manager.getRepository(ProgramTimetable);
+      const attendRepo = manager.getRepository(Attend);
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
@@ -462,7 +464,8 @@ export class MemberInfrastructure {
       );
       await orderLogRepo.remove(orderLogs);
 
-      await practiceRepo.delete({});
+      await attendRepo.delete({ memberId: member.id });
+      await practiceRepo.delete({ memberId: member.id });
       await merchandiseRepo.delete({ memberId: member.id });
       await voucherRepo.delete({ memberId: member.id });
       await exerciseRepo.delete({ memberId: member.id });

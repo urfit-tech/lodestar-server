@@ -83,6 +83,7 @@ import { ProgramPackage } from '~/entity/ProgramPackage';
 import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
+import { Attend } from '~/entity/Attend';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -154,6 +155,7 @@ describe('MemberController (e2e)', () => {
   let programTempoDeliveryRepo: Repository<ProgramTempoDelivery>;
   let practiceRepo: Repository<Practice>;
   let programTimeableRepo: Repository<ProgramTimetable>;
+  let attendRepo: Repository<Attend>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -231,7 +233,9 @@ describe('MemberController (e2e)', () => {
     postRoleRepo = manager.getRepository(PostRole);
     practiceRepo = manager.getRepository(Practice);
     programTimeableRepo = manager.getRepository(ProgramTimetable);
+    attendRepo = manager.getRepository(Attend);
 
+    await attendRepo.delete({});
     await practiceRepo.delete({});
     await postRoleRepo.delete({});
     await postRepo.delete({});
@@ -307,6 +311,7 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await attendRepo.delete({});
     await practiceRepo.delete({});
     await postRoleRepo.delete({});
     await postRepo.delete({});
@@ -2281,6 +2286,11 @@ describe('MemberController (e2e)', () => {
       insertedProgramTimeable.program = insertedProgram;
       insertedProgramTimeable.time = new Date();
       await manager.save(insertedProgramTimeable);
+
+      const insertedAttend = new Attend();
+      insertedAttend.member = insertedMember;
+      insertedAttend.startedAt = new Date();
+      await manager.save(insertedAttend);
 
       // TODO: add more relations
 
