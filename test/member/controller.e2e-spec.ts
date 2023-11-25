@@ -82,6 +82,7 @@ import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
 import { ProgramPackage } from '~/entity/ProgramPackage';
 import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { Practice } from '~/entity/Practice';
+import { ProgramTimetable } from '~/entity/ProgramTimetable';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -152,6 +153,7 @@ describe('MemberController (e2e)', () => {
   let programPackageProgramRepo: Repository<ProgramPackageProgram>;
   let programTempoDeliveryRepo: Repository<ProgramTempoDelivery>;
   let practiceRepo: Repository<Practice>;
+  let programTimeableRepo: Repository<ProgramTimetable>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -228,6 +230,7 @@ describe('MemberController (e2e)', () => {
     postRepo = manager.getRepository(Post);
     postRoleRepo = manager.getRepository(PostRole);
     practiceRepo = manager.getRepository(Practice);
+    programTimeableRepo = manager.getRepository(ProgramTimetable);
 
     await practiceRepo.delete({});
     await postRoleRepo.delete({});
@@ -252,6 +255,7 @@ describe('MemberController (e2e)', () => {
     await voucherPlanRepo.delete({});
     await podcastProgramProgressRepo.delete({});
     await podcastProgramRepo.delete({});
+    await programTimeableRepo.delete({});
     await programTempoDeliveryRepo.delete({});
     await programPackageProgramRepo.delete({});
     await programPackageRepo.delete({});
@@ -326,6 +330,7 @@ describe('MemberController (e2e)', () => {
     await voucherPlanRepo.delete({});
     await podcastProgramProgressRepo.delete({});
     await podcastProgramRepo.delete({});
+    await programTimeableRepo.delete({});
     await programTempoDeliveryRepo.delete({});
     await programPackageProgramRepo.delete({});
     await programPackageRepo.delete({});
@@ -2269,6 +2274,13 @@ describe('MemberController (e2e)', () => {
       insertedPratice.title = 'AAAAAA';
       insertedPratice.description = 'AAAAAAAA';
       await manager.save(insertedPratice);
+
+      const insertedProgramTimeable = new ProgramTimetable();
+      insertedProgramTimeable.member = insertedMember;
+      insertedProgramTimeable.position = 1;
+      insertedProgramTimeable.program = insertedProgram;
+      insertedProgramTimeable.time = new Date();
+      await manager.save(insertedProgramTimeable);
 
       // TODO: add more relations
 
