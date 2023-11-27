@@ -68,10 +68,10 @@ export class StorageController {
       authorId,
       attachmentId,
     } = body;
-    const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);
     await this.mediaService.insertAttachment(appId, authorId, attachmentId, name, type, size, {
-      source: `s3://${this.awsS3BucketStorage}/${Key}`,
+      source: { s3: `s3://${this.awsS3BucketStorage}/${Key}` },
     });
+    const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);
     return { location: result.Location };
   }
 }
