@@ -211,11 +211,16 @@ export class AuthController {
       };
     }
   }
-  @Post('/sign-cloudfront-cookies') signCookie(@Res() res: Response, @Body() body: { url: string }) {
-    const cookies = this.authService.signCloudfrontCookies(body.url);
-    res.cookie('CloudFront-Expires', cookies['CloudFront-Expires']);
-    res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id']);
-    res.cookie('CloudFront-Signature', cookies['CloudFront-Signature']);
-    res.send('success set cookie');
+  @Post('/sign-cloudfront-cookies')
+  async signCookie(@Res() res: Response, @Body() body: { url: string }) {
+    const cookies = await this.authService.signCloudfrontCookie(body.url);
+    res.cookie('CloudFront-Expires', cookies['CloudFront-Expires'], { domain: '.kolable.com' });
+    res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id'], { domain: '.kolable.com' });
+    res.cookie('CloudFront-Signature', cookies['CloudFront-Signature'], { domain: '.kolable.com' });
+    res.send({
+      code: 'SUCCESS',
+      message: 'success set cookie',
+      result: cookies,
+    });
   }
 }
