@@ -24,10 +24,11 @@ const corsOptionDelegate: CorsOptionsDelegate<any> = (
     `${originParseResult.icann.domain}.${originParseResult.icann.topLevelDomains.join('.')}`;
 
   if (
-    new URL(origin).hostname === 'localhost' ||
-    new URL(origin).hostname.includes('ngrok') ||
+    origin.includes('localhost') ||
+    origin.includes('ngrok') ||
     host.startsWith('localhost') ||
-    hostDomain === originDomain
+    hostDomain === originDomain ||
+    hostDomain.includes('kolable.com')
   ) {
     callback(null, { credentials: true, origin: true });
     return;

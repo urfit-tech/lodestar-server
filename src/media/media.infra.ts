@@ -17,6 +17,7 @@ export class MediaInfrastructure {
     name: string,
     type: string,
     size: number,
+    status: string,
     options: any,
   ) {
     const attachmentRepo = manager.getRepository(Attachment);
@@ -28,6 +29,7 @@ export class MediaInfrastructure {
       filename: name,
       contentType: type,
       size: size,
+      status,
       options: options,
     });
   }

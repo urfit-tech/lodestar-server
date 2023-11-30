@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
 
 import { StorageService } from './storage.service';
 import {
@@ -68,10 +68,43 @@ export class StorageController {
       authorId,
       attachmentId,
     } = body;
-    await this.mediaService.insertAttachment(appId, authorId, attachmentId, name, type, size, {
+    const status = 'QUEUED';
+    await this.mediaService.insertAttachment(appId, authorId, attachmentId, name, type, size, status, {
       source: { s3: `s3://${this.awsS3BucketStorage}/${Key}` },
     });
     const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);
     return { location: result.Location };
+  }
+
+  @Get('*.m3u8')
+  async getM3u8WithSignUrl(@Req() request: Request) {
+    const [key, signature] = decodeURI(request.url).split('storage/')[1].split('?');
+    const output = await this.storageService.getFileFromBucketStorage({
+      Key: key,
+    });
+    const host = 'https://media-dev.kolable.com';
+    const path = key.split('/');
+    path.pop();
+    const final = path.join('/');
+    const res = (await output.Body.transformToString()).split('\n');
+    const signedRes = res
+      .map((row) => {
+        if (row.includes('.m3u8')) {
+          if (row.includes('URI=')) {
+            return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}"`;
+          }
+          return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
+        } else if (row.includes('.mpd')) {
+          return `${row.split('?')[0]}?${signature}`;
+        } else if (row.includes('.ts') || row.includes('.vtt')) {
+          return `${host}/${final}/${row.split('?')[0]}?${signature}`;
+        } else {
+          return row;
+        }
+      })
+      .join('\n');
+
+    console.log(signedRes);
+    return signedRes;
   }
 }

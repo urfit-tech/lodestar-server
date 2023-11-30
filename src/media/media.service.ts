@@ -17,6 +17,7 @@ export class MediaService {
     name: string,
     type: string,
     size: number,
+    status: string,
     options: any,
   ) {
     return await this.mediaInfra.insertAttachment(
@@ -27,6 +28,7 @@ export class MediaService {
       name,
       type,
       size,
+      status,
       options,
     );
   }

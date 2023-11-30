@@ -20,11 +20,10 @@ import { UtilityService } from '~/utility/utility.service';
 import { CacheService } from '~/utility/cache/cache.service';
 import { APIException } from '~/api.excetion';
 import { AppCache } from '~/app/app.type';
-
 import { AuthAuditLog } from './entity/auth_audit_log.entity';
 import { JwtDTO } from './auth.dto';
 import { CrossServerTokenDTO, LoginStatus, RefreshStatus } from './auth.type';
-import { getSignedCookies } from '@aws-sdk/cloudfront-signer';
+import { getSignedCookies, getSignedUrl } from 'aws-cloudfront-sign';
 import { AuthInfrastructure } from './auth.infra';
 import DeviceService from './device/device.service';
 
@@ -338,12 +337,17 @@ export class AuthService {
   }
 
   public async signCloudfrontCookie(url: string) {
-    const cookies = await getSignedCookies({
-      url,
-      keyPairId: this.awsCloudfrontKeyPairId,
-      privateKey: this.awsCloudfrontPrivateKey,
-      dateLessThan: dayjs().add(1, 'day').format('YYYY-MM-DD'),
-    });
-    return { cookies };
+    const options = { keypairId: this.awsCloudfrontKeyPairId, privateKeyString: this.awsCloudfrontPrivateKey };
+    const cookies = getSignedCookies(url, options);
+    return cookies;
+  }
+
+  public async signCloudfrontUrl(url: string) {
+    const options = {
+      keypairId: this.awsCloudfrontKeyPairId,
+      privateKeyString: this.awsCloudfrontPrivateKey,
+    };
+    const signedUrl = getSignedUrl(url, options);
+    return signedUrl;
   }
 }

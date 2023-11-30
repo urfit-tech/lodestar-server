@@ -214,13 +214,31 @@ export class AuthController {
   @Post('/sign-cloudfront-cookies')
   async signCookie(@Res() res: Response, @Body() body: { url: string }) {
     const cookies = await this.authService.signCloudfrontCookie(body.url);
-    res.cookie('CloudFront-Expires', cookies['CloudFront-Expires'], { domain: '.kolable.com' });
-    res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id'], { domain: '.kolable.com' });
-    res.cookie('CloudFront-Signature', cookies['CloudFront-Signature'], { domain: '.kolable.com' });
+    res.cookie('CloudFront-Policy', cookies['CloudFront-Policy'], {
+      sameSite: 'none',
+      secure: true,
+    });
+    res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id'], {
+      sameSite: 'none',
+      secure: true,
+    });
+    res.cookie('CloudFront-Signature', cookies['CloudFront-Signature'], {
+      sameSite: 'none',
+      secure: true,
+    });
     res.send({
       code: 'SUCCESS',
       message: 'success set cookie',
       result: cookies,
+    });
+  }
+  @Post('/sign-cloudfront-url')
+  async signUrl(@Res() res: Response, @Body() body: { url: string }) {
+    const signedUrl = await this.authService.signCloudfrontUrl(body.url);
+    res.send({
+      code: 'SUCCESS',
+      message: 'success set signedUrl',
+      result: signedUrl,
     });
   }
 }
