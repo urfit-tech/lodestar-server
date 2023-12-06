@@ -1,4 +1,3 @@
-// swagger-config.service.ts
 import { Injectable } from '@nestjs/common';
 import { DocumentBuilder, OpenAPIObject, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
@@ -16,9 +15,9 @@ export class SwaggerConfigService {
       options.addBearerAuth();
     }
 
-    const documentOptions = options.build();
+    const swaggerOptions = options.build();
 
-    const document = SwaggerModule.createDocument(app, documentOptions, config.documentOptions);
+    const document = SwaggerModule.createDocument(app, swaggerOptions, config.documentOptions);
     if (config.routeFilter) {
       this.filterRoutes(document, config.routeFilter);
     }
