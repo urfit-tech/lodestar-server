@@ -41,7 +41,7 @@ export class Review {
   @Column('text', { name: 'app_id' })
   appId: string;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @ManyToOne(() => Member, (member) => member.reviews, {

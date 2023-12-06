@@ -33,7 +33,7 @@ export class Issue {
   @Column('boolean', { name: 'is_public', default: () => false })
   isPublic: boolean;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @ManyToOne(() => App, (app) => app.issues, {

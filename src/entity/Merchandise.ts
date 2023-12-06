@@ -86,7 +86,7 @@ export class Merchandise {
   @Column('text', { name: 'currency_id', default: () => "'TWD'" })
   currencyId: string;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @ManyToOne(() => App, (app) => app.merchandises, {

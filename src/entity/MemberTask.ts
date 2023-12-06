@@ -11,7 +11,7 @@ export class MemberTask {
   @Column('text', { name: 'title' })
   title: string;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @Column('text', { name: 'priority', default: () => "'high'" })

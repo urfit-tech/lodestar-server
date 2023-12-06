@@ -14,7 +14,7 @@ export class IssueReplyReaction {
   })
   createdAt: Date;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @ManyToOne(() => IssueReply, (issueReply) => issueReply.issueReplyReactions, {

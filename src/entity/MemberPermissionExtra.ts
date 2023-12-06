@@ -9,7 +9,7 @@ export class MemberPermissionExtra {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @Column('timestamp with time zone', {

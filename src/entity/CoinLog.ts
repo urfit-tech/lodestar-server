@@ -31,7 +31,7 @@ export class CoinLog {
   @Column('timestamp with time zone', { name: 'ended_at', nullable: true })
   endedAt: Date | null;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @ManyToOne(() => Member, (member) => member.coinLogs, {

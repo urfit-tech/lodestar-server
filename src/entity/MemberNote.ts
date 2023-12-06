@@ -14,7 +14,7 @@ export class MemberNote {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @Column('text', { name: 'author_id' })
