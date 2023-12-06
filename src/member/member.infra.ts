@@ -44,7 +44,6 @@ import { Review } from '~/entity/Review';
 import { ReviewReaction } from '~/entity/ReviewReaction';
 import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { OrderContact } from '~/entity/OrderContact';
-import { Merchandise } from '~/entity/Merchandise';
 import { CoinLog } from '~/entity/CoinLog';
 import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
 import { PostRole } from '~/entity/PostRole';
@@ -52,6 +51,7 @@ import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
+import { ReviewReply } from '~/entity/ReviewReply';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -410,7 +410,6 @@ export class MemberInfrastructure {
       const reviewReactionRepo = manager.getRepository(ReviewReaction);
       const orderExecutorRepo = manager.getRepository(OrderExecutor);
       const orderContractRepo = manager.getRepository(OrderContact);
-      const merchandiseRepo = manager.getRepository(Merchandise);
       const coinLogRepo = manager.getRepository(CoinLog);
       const podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
       const postRoleRepo = manager.getRepository(PostRole);
@@ -418,6 +417,7 @@ export class MemberInfrastructure {
       const practiceRepo = manager.getRepository(Practice);
       const programTimeableRepo = manager.getRepository(ProgramTimetable);
       const attendRepo = manager.getRepository(Attend);
+      const reviewReplyRepo = manager.getRepository(ReviewReply);
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
@@ -466,7 +466,6 @@ export class MemberInfrastructure {
 
       await attendRepo.delete({ memberId: member.id });
       await practiceRepo.delete({ memberId: member.id });
-      await merchandiseRepo.delete({ memberId: member.id });
       await voucherRepo.delete({ memberId: member.id });
       await exerciseRepo.delete({ memberId: member.id });
       await issueReplyReactionRepo.delete({ memberId: member.id });
@@ -486,6 +485,7 @@ export class MemberInfrastructure {
       await programContentProgressRepo.delete({ memberId: member.id });
       await couponRepo.delete({ memberId: member.id });
       await reviewReactionRepo.delete({ memberId: member.id });
+      await reviewReplyRepo.delete({ memberId: member.id });
       await reviewRepo.delete({ memberId: member.id });
       await memberContractRepo.delete({ memberId: member.id });
       await memberCardRepo.delete({ memberId: member.id });

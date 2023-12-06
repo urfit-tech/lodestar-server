@@ -72,7 +72,6 @@ import { Review } from '~/entity/Review';
 import { ReviewReaction } from '~/entity/ReviewReaction';
 import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { OrderContact } from '~/entity/OrderContact';
-import { Merchandise } from '~/entity/Merchandise';
 import { CoinLog } from '~/entity/CoinLog';
 import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
 import { PodcastProgram } from '~/entity/PodcastProgram';
@@ -84,6 +83,7 @@ import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
+import { ReviewReply } from '~/entity/ReviewReply';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -142,9 +142,9 @@ describe('MemberController (e2e)', () => {
   let memberContractRepo: Repository<MemberContract>;
   let reviewRepo: Repository<Review>;
   let reviewReactionRepo: Repository<ReviewReaction>;
+  let reviewReplyRepo: Repository<ReviewReply>;
   let orderExecutorRepo: Repository<OrderExecutor>;
   let orderContractRepo: Repository<OrderContact>;
-  let merchandiseRepo: Repository<Merchandise>;
   let coinLogRepo: Repository<CoinLog>;
   let podcastProgramProgressRepo: Repository<PodcastProgramProgress>;
   let podcastProgramRepo: Repository<PodcastProgram>;
@@ -223,9 +223,9 @@ describe('MemberController (e2e)', () => {
     commentRepo = manager.getRepository(Comment);
     memberCardRepo = manager.getRepository(MemberCard);
     reviewRepo = manager.getRepository(Review);
+    reviewReplyRepo = manager.getRepository(ReviewReply);
     reviewReactionRepo = manager.getRepository(ReviewReaction);
     orderExecutorRepo = manager.getRepository(OrderExecutor);
-    merchandiseRepo = manager.getRepository(Merchandise);
     coinLogRepo = manager.getRepository(CoinLog);
     podcastProgramRepo = manager.getRepository(PodcastProgram);
     podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
@@ -240,10 +240,10 @@ describe('MemberController (e2e)', () => {
     await postRoleRepo.delete({});
     await postRepo.delete({});
     await coinLogRepo.delete({});
-    await merchandiseRepo.delete({});
     await orderContractRepo.delete({});
     await orderExecutorRepo.delete({});
     await reviewReactionRepo.delete({});
+    await reviewReplyRepo.delete({});
     await reviewRepo.delete({});
     await commentReplyReactionRepo.delete({});
     await commentReplyRepo.delete({});
@@ -316,10 +316,10 @@ describe('MemberController (e2e)', () => {
     await postRoleRepo.delete({});
     await postRepo.delete({});
     await coinLogRepo.delete({});
-    await merchandiseRepo.delete({});
     await orderContractRepo.delete({});
     await orderExecutorRepo.delete({});
     await reviewReactionRepo.delete({});
+    await reviewReplyRepo.delete({});
     await reviewRepo.delete({});
     await commentReplyReactionRepo.delete({});
     await commentReplyRepo.delete({});
@@ -2210,6 +2210,12 @@ describe('MemberController (e2e)', () => {
       insertedReviewReaction.member = insertedMember;
       await manager.save(insertedReviewReaction);
 
+      const insertReviewReply = new ReviewReply();
+      insertReviewReply.content = 'AAAAA';
+      insertReviewReply.memberId = insertedMember.id;
+      insertReviewReply.review = insertedReview;
+      await manager.save(insertReviewReply);
+
       const insertedOrderExecutor = new OrderExecutor();
       insertedOrderExecutor.member = insertedMember;
       insertedOrderExecutor.order = insertedOrderLog;
@@ -2222,15 +2228,6 @@ describe('MemberController (e2e)', () => {
       insertedOrderContract.message = 'AAA';
       insertedOrderContract.message = 'AAAA';
       await manager.save(insertedOrderContract);
-
-      const insertedMerchandise = new Merchandise();
-      insertedMerchandise.app = app;
-      insertedMerchandise.position = 0;
-      insertedMerchandise.member = insertedMember;
-      insertedMerchandise.currencyId = 'TWD';
-      insertedMerchandise.listPrice = 100;
-      insertedMerchandise.title = 'AAAA';
-      await manager.save(insertedMerchandise);
 
       const insertedCoinLog = new CoinLog();
       insertedCoinLog.member = insertedMember;
