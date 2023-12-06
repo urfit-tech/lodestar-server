@@ -18,6 +18,7 @@ import { AppModule } from './app/app.module';
 import { ProgramPackageModule } from './program-package/program-package.module';
 import { ProgramModule } from './program/program.module';
 import { PodcastModule } from './podcast/podcast.module';
+import { SwaggerConfigModule } from './swagger-config/swagger-config.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -79,6 +80,7 @@ import { PodcastModule } from './podcast/podcast.module';
     ProgramPackageModule,
     ProgramModule,
     PodcastModule,
+    SwaggerConfigModule,
   ],
 })
 export class ApplicationModule {

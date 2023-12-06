@@ -10,7 +10,10 @@ import { RefreshTokenDTO } from './auth.dto';
 import { CrossServerTokenDTO, GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus, RefreshStatus } from './auth.type';
 import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
+import { ApiTags, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import CrossServerTokenDTOProperty from './api_property/cross_server_token_dto';
 
+@ApiTags('Auth')
 @Controller({
   path: 'auth',
   version: ['1', '2'],
@@ -23,6 +26,7 @@ export class AuthController {
   ) {}
 
   @Post('general-login')
+  @ApiExcludeEndpoint()
   async generalLogin(
     @Req() request: Request,
     @Local('appCache') appCache: AppCache,
@@ -38,12 +42,15 @@ export class AuthController {
     const { appId, account, password } = body;
     const { modules: appModules } = appCache;
     const isBusinessModuleEnable = appModules.includes('business_member');
-    const loggedInMembers: Array<PublicMember> = session[appId] && session[appId].members || [];
-    
+    const loggedInMembers: Array<PublicMember> = (session[appId] && session[appId].members) || [];
+
     try {
-      const { status, authToken, member } = await this.authService.generalLogin(
-        appCache, { appId, account, password, loggedInMembers },
-      );
+      const { status, authToken, member } = await this.authService.generalLogin(appCache, {
+        appId,
+        account,
+        password,
+        loggedInMembers,
+      });
 
       switch (status) {
         case LoginStatus.E_NO_MEMBER:
@@ -59,17 +66,16 @@ export class AuthController {
       }
 
       const { fingerPrintId, geoLocation } = cookies;
-      const deviceStatus: LoginDeviceStatus = fingerPrintId ? await this.deviceService.checkAndBindDevices(
-        appCache,
-        {
-          appId,
-          memberId: member.id,
-          memberRole: member.role,
-          userAgent: userAgent || '',
-          geoLocation,
-          fingerPrintId,
-        },
-      ) : LoginDeviceStatus.UNSUPPORTED;
+      const deviceStatus: LoginDeviceStatus = fingerPrintId
+        ? await this.deviceService.checkAndBindDevices(appCache, {
+            appId,
+            memberId: member.id,
+            memberRole: member.role,
+            userAgent: userAgent || '',
+            geoLocation,
+            fingerPrintId,
+          })
+        : LoginDeviceStatus.UNSUPPORTED;
 
       switch (deviceStatus) {
         case LoginDeviceStatus.BIND_LIMIT_EXCEED:
@@ -115,6 +121,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @ApiExcludeEndpoint()
   async refreshToken(
     @Local('appCache') appCache: AppCache,
     @Headers('user-agent') userAgents: string,
@@ -126,11 +133,12 @@ export class AuthController {
     const { cookies } = request;
     const { appId, fingerPrintId: bodyFingerPrint, geoLocation } = body;
     const { fingerPrintId: cookieFingerPrint } = cookies;
-    const fingerPrintId = bodyFingerPrint && !cookieFingerPrint
+    const fingerPrintId =
+      bodyFingerPrint && !cookieFingerPrint
         ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgents)
         : cookieFingerPrint;
     const sessionMemberId = session[appId] && session[appId].currentMemberId;
-    const loggedInMembers: Array<PublicMember> = session[appId] && session[appId].members || [];
+    const loggedInMembers: Array<PublicMember> = (session[appId] && session[appId].members) || [];
 
     response.cookie('fingerPrintId', fingerPrintId, { maxAge: 86400 * 1000 });
     geoLocation && response.cookie('geoLocation', geoLocation, { maxAge: 86400 * 1000 });
@@ -142,10 +150,12 @@ export class AuthController {
       return { code: 'E_SESSION', message: 'cannot get session' };
     }
 
-    try {      
-      const { status, refreshedToken } = await this.authService.refreshToken(
-        appCache, { fingerPrintId, sessionMemberId, loggedInMembers },
-      );
+    try {
+      const { status, refreshedToken } = await this.authService.refreshToken(appCache, {
+        fingerPrintId,
+        sessionMemberId,
+        loggedInMembers,
+      });
 
       switch (status) {
         case RefreshStatus.E_NO_MEMBER:
@@ -168,10 +178,10 @@ export class AuthController {
   }
 
   @Post('token')
-  async generateCrossServerToken(
-    @Local('appCache') appCache: AppCache,
-    @Body() body: CrossServerTokenDTO,
-  ) {
+  @ApiOperation({ summary: 'Generate Cross Server Token' })
+  @ApiResponse({ status: 201, description: 'Token generated successfully.' })
+  @ApiBody({ type: CrossServerTokenDTOProperty })
+  async generateCrossServerToken(@Local('appCache') appCache: AppCache, @Body() body: CrossServerTokenDTO) {
     const authToken = await this.authService.generateCrossServerToken(appCache, body);
     return {
       code: 'SUCCESS',
@@ -181,6 +191,7 @@ export class AuthController {
   }
 
   @Post('password/temporary')
+  @ApiExcludeEndpoint()
   async generateTmpPassword(@Body() body: GenerateTmpPasswordDTO) {
     try {
       const { appId, applicant, email, purpose } = body;

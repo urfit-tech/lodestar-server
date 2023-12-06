@@ -20,6 +20,9 @@ import { ApplicationModule } from './application.module';
 import { ShutdownService } from './utility/shutdown/shutdown.service';
 import { CacheService } from './utility/cache/cache.service';
 import corsOptionDelegate from './cors';
+import { MemberModule } from './member/member.module';
+import { AuthModule } from './auth/auth.module';
+import { SwaggerConfigService } from './swagger-config/swagger-config.service';
 
 dayjs.extend(utc);
 
@@ -61,10 +64,12 @@ async function bootstrap() {
     });
     app.set('trust proxy', 1);
 
-    const configService = app.get(ConfigService<{
-      NODE_ENV: string;
-      SESSION_SECRET: string;
-    }>);
+    const configService = app.get(
+      ConfigService<{
+        NODE_ENV: string;
+        SESSION_SECRET: string;
+      }>,
+    );
     const cacheService = app.get(CacheService);
     const nodeEnv = configService.getOrThrow('NODE_ENV');
     const sessionSecret = configService.getOrThrow('SESSION_SECRET');
@@ -94,9 +99,15 @@ async function bootstrap() {
       )
       .use(cookieParser());
 
-    const swaggerConfig = new DocumentBuilder().build();
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('lodestar/docs', app, document);
+    SwaggerConfigService.setupSwagger(app, {
+      title: 'Member API',
+      version: '2',
+      tags: ['Auth', 'Member'],
+      bearerAuth: true,
+      endpoint: 'lodestar/docs/member',
+      documentOptions: { include: [MemberModule, AuthModule] },
+      routeFilter: (path) => path.includes('/v2/'),
+    });
   }
 
   app = app.enableShutdownHooks();

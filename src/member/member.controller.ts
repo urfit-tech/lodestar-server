@@ -19,6 +19,7 @@ import { JwtMember } from '~/auth/auth.dto';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
 import { Local } from '~/decorator';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiHideProperty, ApiTags } from '@nestjs/swagger';
 
 import {
   MemberDeleteResultDTO,
@@ -31,6 +32,8 @@ import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
 
 @UseGuards(AuthGuard)
+@ApiTags('Member')
+@ApiBearerAuth()
 @Controller({
   path: 'members',
   version: '2',
@@ -52,6 +55,7 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
+  @ApiExcludeEndpoint()
   public async getMembersByPost(
     @Local('member') member: JwtMember,
     @Body() dto: MemberGetDTO,
@@ -95,10 +99,8 @@ export class MemberController {
   }
 
   @Get()
-  public async getMembers(
-    @Local('member') member: JwtMember,
-    @Body() dto: MemberGetDTO,
-  ): Promise<MemberGetResultDTO> {
+  @ApiExcludeEndpoint()
+  public async getMembers(@Local('member') member: JwtMember, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
     if (option && option.nextToken && option.prevToken) {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
@@ -138,10 +140,8 @@ export class MemberController {
   }
 
   @Post('import')
-  public async importMembers(
-    @Local('member') member: JwtMember,
-    @Body() metadata: MemberImportDTO,
-  ): Promise<void> {
+  @ApiExcludeEndpoint()
+  public async importMembers(@Local('member') member: JwtMember, @Body() metadata: MemberImportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
 
     const { appId, fileInfos } = metadata;
@@ -158,10 +158,8 @@ export class MemberController {
   }
 
   @Post('export')
-  public async exportMembers(
-    @Local('member') member: JwtMember,
-    @Body() metadata: MemberExportDTO,
-  ): Promise<void> {
+  @ApiExcludeEndpoint()
+  public async exportMembers(@Local('member') member: JwtMember, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
 
     const { appId, memberIds, exportMime } = metadata;
