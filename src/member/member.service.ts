@@ -9,6 +9,7 @@ import { DefinitionInfrastructure } from '~/definition/definition.infra';
 import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { Tag } from '~/definition/entity/tag.entity';
+import { MemberTask } from '~/entity/MemberTask';
 import { isNullString } from '~/utils';
 
 import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
@@ -348,4 +349,10 @@ export class MemberService {
     return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager);
   }
 
+  async getMemberTasks(memberId: string): Promise<Array<MemberTask>> {
+    const tasks = this.entityManager.getRepository(MemberTask).find({
+      where: { member: { id: memberId } },
+    });
+    return tasks;
+  }
 }
