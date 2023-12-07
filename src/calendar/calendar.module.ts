@@ -8,6 +8,7 @@ import { OrderInfrastructure } from '~/order/order.infra';
 import { OrderService } from '~/order/order.service';
 import { ProductInfrastructure } from '~/product/product.infra';
 import { SharingCodeInfrastructure } from '~/sharingCode/sharingCode.infra';
+import { CacheService } from '~/utility/cache/cache.service';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
 
 import { CalendarController } from './calendar.controller';
@@ -17,6 +18,7 @@ import { CalendarService } from './calendar.service';
   controllers: [CalendarController],
   imports: [],
   providers: [
+    CacheService,
     CalendarService,
     CouponInfrastructure,
     DefinitionInfrastructure,

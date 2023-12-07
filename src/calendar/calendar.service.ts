@@ -1,14 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { EventAttributes } from 'ics';
 
+import { CacheService } from '~/utility/cache/cache.service';
 import { MemberService } from '~/member/member.service';
 import { OrderService } from '~/order/order.service';
 
 @Injectable()
 export class CalendarService {
-  constructor(private readonly memberService: MemberService, private readonly orderService: OrderService) {}
+  private readonly cacheKeyPrefix = 'calendar_';
+  constructor(
+    private readonly cacheService: CacheService,
+    private readonly memberService: MemberService,
+    private readonly orderService: OrderService,
+  ) {}
 
   async getCalendarEventsByMemberId(memberId: string): Promise<EventAttributes[]> {
+    const redisCli = this.cacheService.getClient();
+    const cachedEvents = await redisCli.get(`${this.cacheKeyPrefix}${memberId}`).then((result) => {
+      return JSON.parse(result);
+    });
+    if (cachedEvents) {
+      return cachedEvents;
+    }
+
     const tasks = await this.memberService.getMemberTasks(memberId);
     const taskEvents: EventAttributes[] = tasks.map((task) => {
       return {
@@ -30,6 +44,7 @@ export class CalendarService {
     });
 
     const events: EventAttributes[] = taskEvents.concat(orderProductEvents);
+    redisCli.set(`${this.cacheKeyPrefix}${memberId}`, JSON.stringify(events), 'EX', 3600); // Cache expire in 60 mins.
     return events;
   }
 
