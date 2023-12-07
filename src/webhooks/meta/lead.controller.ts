@@ -1,12 +1,17 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APIException } from '~/api.excetion';
+import { LeadWebhookBody } from './lead.dto';
+import { LeadService } from './lead.service';
 
 @Controller({
   path: 'webhooks/meta/lead',
 })
 export class LeadController {
-  constructor(private readonly configService: ConfigService<{ META_VERIFY_TOKEN: string }>) {}
+  constructor(
+    private readonly configService: ConfigService<{ META_VERIFY_TOKEN: string }>,
+    private readonly leadService: LeadService,
+  ) {}
 
   @Get()
   async verify(
@@ -19,11 +24,7 @@ export class LeadController {
         {
           code: 'E_META_VERIFY',
           message: 'invalid verify token',
-          result: {
-            mode,
-            challenge,
-            verifyToken,
-          },
+          result: { mode, challenge, verifyToken },
         },
         400,
       );
@@ -32,8 +33,8 @@ export class LeadController {
     return challenge;
   }
 
-  @Post()
-  async webhook(@Body() body) {
-    return 'pong';
+  @Post(':appId')
+  async webhook(@Param('appId') appId: string, @Body() body: LeadWebhookBody) {
+    this.leadService.storeLead(appId, body);
   }
 }
