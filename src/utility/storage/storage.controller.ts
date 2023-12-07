@@ -9,6 +9,7 @@ import {
 } from './storage.dto';
 import { MediaService } from '~/media/media.service';
 import { ConfigService } from '@nestjs/config';
+import { Attachment } from '~/media/attachment.entity';
 
 @Controller({
   path: 'storage',
@@ -70,9 +71,17 @@ export class StorageController {
       duration,
     } = body;
     const status = 'QUEUED';
-    await this.mediaService.insertAttachment(appId, authorId, attachmentId, name, type, size, status, duration, {
-      source: { s3: `s3://${this.awsS3BucketStorage}/${Key}` },
-    });
+    const attachment = new Attachment();
+    attachment.appId = appId;
+    attachment.authorId = authorId;
+    attachment.name = name;
+    attachment.filename = name;
+    attachment.size = size;
+    attachment.contentType = type;
+    attachment.status = status;
+    attachment.duration = duration;
+    attachment.id = attachmentId;
+    await this.mediaService.upsertMediaAttachment(attachment, this.awsS3BucketStorage, Key);
     const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);
     return { location: result.Location };
   }

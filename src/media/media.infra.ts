@@ -9,30 +9,8 @@ export class MediaInfrastructure {
     const attachmentRepo = manager.getRepository(Attachment);
     return attachmentRepo.findOneBy({ id });
   }
-  async insertAttachment(
-    manager: EntityManager,
-    appId: string,
-    authorId: string,
-    attachmentId: string,
-    name: string,
-    type: string,
-    size: number,
-    status: string,
-    duration: number,
-    options: any,
-  ) {
+  async upsertAttachment(attachment: Attachment, manager: EntityManager) {
     const attachmentRepo = manager.getRepository(Attachment);
-    return await attachmentRepo.save({
-      id: attachmentId,
-      appId,
-      author: { id: authorId },
-      name: name,
-      filename: name,
-      contentType: type,
-      size: size,
-      status,
-      duration,
-      options: options,
-    });
+    return await attachmentRepo.save(attachment);
   }
 }
