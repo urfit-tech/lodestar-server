@@ -67,9 +67,10 @@ export class StorageController {
       appId,
       authorId,
       attachmentId,
+      duration,
     } = body;
     const status = 'QUEUED';
-    await this.mediaService.insertAttachment(appId, authorId, attachmentId, name, type, size, status, {
+    await this.mediaService.insertAttachment(appId, authorId, attachmentId, name, type, size, status, duration, {
       source: { s3: `s3://${this.awsS3BucketStorage}/${Key}` },
     });
     const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);

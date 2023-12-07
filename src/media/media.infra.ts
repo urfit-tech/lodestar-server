@@ -18,10 +18,11 @@ export class MediaInfrastructure {
     type: string,
     size: number,
     status: string,
+    duration: number,
     options: any,
   ) {
     const attachmentRepo = manager.getRepository(Attachment);
-    return await attachmentRepo.insert({
+    return await attachmentRepo.save({
       id: attachmentId,
       appId,
       author: { id: authorId },
@@ -30,6 +31,7 @@ export class MediaInfrastructure {
       contentType: type,
       size: size,
       status,
+      duration,
       options: options,
     });
   }
