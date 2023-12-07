@@ -473,4 +473,13 @@ export class MemberService {
   private mapMemberContract({ mc_member_id, mc_agreed_at, mc_revoked_at, mc_values }) {
     return { memberId: mc_member_id, agreed_at: mc_agreed_at, revoked_at: mc_revoked_at, values: mc_values };
   }
+  async upsertMemberByEmail(
+    appId: string,
+    email: string,
+    name: string,
+    username: string,
+    role: string,
+  ): Promise<Member> {
+    return this.memberInfra.upsertMemberByEmail(appId, email, name, username, role, this.entityManager);
+  }
 }
