@@ -28,8 +28,62 @@ import { Category } from '~/definition/entity/category.entity';
 import { MemberCategory } from '~/member/entity/member_category.entity';
 import { PermissionGroup } from '~/entity/PermissionGroup';
 import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
+import { MemberDevice } from '~/member/entity/member_device.entity';
 
-import { app, appHost, appPlan, memberProperty } from '../data';
+import { app, appHost, appPlan, memberProperty, programPackage, programPackageProgram } from '../data';
+import { MemberOauth } from '~/member/entity/member_oauth.entity';
+import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
+import { Permission } from '~/permission/entity/permission.entity';
+import { MemberNote } from '~/entity/MemberNote';
+import { MemberTask } from '~/entity/MemberTask';
+import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
+import { ProgramContentLog } from '~/entity/ProgramContentLog';
+import { Coupon } from '~/coupon/entity/coupon.entity';
+import { PaymentLog } from '~/payment/payment_log.entity';
+import { Invoice } from '~/invoice/invoice.entity';
+import { OrderDiscount } from '~/order/entity/order_discount.entity';
+import { OrderLog } from '~/order/entity/order_log.entity';
+import { OrderProduct } from '~/order/entity/order_product.entity';
+import { Notification } from '~/entity/Notification';
+import { ProgramContent } from '~/program/entity/program_content.entity';
+import { ProgramContentBody } from '~/entity/ProgramContentBody';
+import { ProgramContentSection } from '~/entity/ProgramContentSection';
+import { Program } from '~/entity/Program';
+import { CouponCode } from '~/entity/CouponCode';
+import { CouponPlan } from '~/entity/CouponPlan';
+import { Product } from '~/entity/Product';
+import { Currency } from '~/entity/Currency';
+import { Voucher } from '~/voucher/entity/voucher.entity';
+import { VoucherCode } from '~/entity/VoucherCode';
+import { VoucherPlan } from '~/entity/VoucherPlan';
+import { Exercise } from '~/entity/Exercise';
+import { Issue } from '~/entity/Issue';
+import { IssueReaction } from '~/entity/IssueReaction';
+import { IssueReply } from '~/entity/IssueReply';
+import { IssueReplyReaction } from '~/entity/IssueReplyReaction';
+import { CommentReaction } from '~/entity/CommentReaction';
+import { CommentReply } from '~/entity/CommentReply';
+import { CommentReplyReaction } from '~/entity/CommentReplyReaction';
+import { Comment } from '~/entity/Comment';
+import { MemberCard } from '~/entity/MemberCard';
+import { Contract } from '~/entity/Contract';
+import { MemberContract } from '~/entity/MemberContract';
+import { Review } from '~/entity/Review';
+import { ReviewReaction } from '~/entity/ReviewReaction';
+import { OrderExecutor } from '~/order/entity/order_executor.entity';
+import { OrderContact } from '~/entity/OrderContact';
+import { CoinLog } from '~/entity/CoinLog';
+import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
+import { PodcastProgram } from '~/entity/PodcastProgram';
+import { Post } from '~/entity/Post';
+import { PostRole } from '~/entity/PostRole';
+import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
+import { ProgramPackage } from '~/entity/ProgramPackage';
+import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
+import { Practice } from '~/entity/Practice';
+import { ProgramTimetable } from '~/entity/ProgramTimetable';
+import { Attend } from '~/entity/Attend';
+import { ReviewReply } from '~/entity/ReviewReply';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -47,7 +101,61 @@ describe('MemberController (e2e)', () => {
   let memberPropertyRepo: Repository<MemberProperty>;
   let memberTagRepo: Repository<MemberTag>;
   let memberPhoneRepo: Repository<MemberPhone>;
+  let memberDeviceRepo: Repository<MemberDevice>;
   let memberPermissionGroupRepo: Repository<MemberPermissionGroup>;
+  let memberOauthRepo: Repository<MemberOauth>;
+  let permissionRepo: Repository<Permission>;
+  let memberPermissionExtraRepo: Repository<MemberPermissionExtra>;
+  let memberNoteRepo: Repository<MemberNote>;
+  let memberTaskRepo: Repository<MemberTask>;
+  let programContentProgressRepo: Repository<ProgramContentProgress>;
+  let programContentLogRepo: Repository<ProgramContentLog>;
+  let notificationRepo: Repository<Notification>;
+  let couponRepo: Repository<Coupon>;
+  let paymentLogRepo: Repository<PaymentLog>;
+  let invoiceRepo: Repository<Invoice>;
+  let orderProductRepo: Repository<OrderProduct>;
+  let orderDiscountRepo: Repository<OrderDiscount>;
+  let orderLogRepo: Repository<OrderLog>;
+  let programContentRepo: Repository<ProgramContent>;
+  let programContentBodyRepo: Repository<ProgramContentBody>;
+  let programRepo: Repository<Program>;
+  let programContentSectionRepo: Repository<ProgramContentSection>;
+  let couponCodeRepo: Repository<CouponCode>;
+  let couponPlanRepo: Repository<CouponPlan>;
+  let productRepo: Repository<Product>;
+  let currencyRepo: Repository<Currency>;
+  let voucherRepo: Repository<Voucher>;
+  let voucherCodeRepo: Repository<VoucherCode>;
+  let voucherPlanRepo: Repository<VoucherPlan>;
+  let exerciseRepo: Repository<Exercise>;
+  let issueReactionRepo: Repository<IssueReaction>;
+  let issueRepo: Repository<Issue>;
+  let issueReplyRepo: Repository<IssueReply>;
+  let issueReplyReactionRepo: Repository<IssueReplyReaction>;
+  let commentRepo: Repository<Comment>;
+  let commentReactionRepo: Repository<CommentReaction>;
+  let commentReplyRepo: Repository<CommentReply>;
+  let commentReplyReactionRepo: Repository<CommentReplyReaction>;
+  let memberCardRepo: Repository<MemberCard>;
+  let contractRepo: Repository<Contract>;
+  let memberContractRepo: Repository<MemberContract>;
+  let reviewRepo: Repository<Review>;
+  let reviewReactionRepo: Repository<ReviewReaction>;
+  let reviewReplyRepo: Repository<ReviewReply>;
+  let orderExecutorRepo: Repository<OrderExecutor>;
+  let orderContractRepo: Repository<OrderContact>;
+  let coinLogRepo: Repository<CoinLog>;
+  let podcastProgramProgressRepo: Repository<PodcastProgramProgress>;
+  let podcastProgramRepo: Repository<PodcastProgram>;
+  let postRepo: Repository<Post>;
+  let postRoleRepo: Repository<PostRole>;
+  let programPackageRepo: Repository<ProgramPackage>;
+  let programPackageProgramRepo: Repository<ProgramPackageProgram>;
+  let programTempoDeliveryRepo: Repository<ProgramTempoDelivery>;
+  let practiceRepo: Repository<Practice>;
+  let programTimeableRepo: Repository<ProgramTimetable>;
+  let attendRepo: Repository<Attend>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -67,12 +175,120 @@ describe('MemberController (e2e)', () => {
     tagRepo = manager.getRepository(Tag);
     categoryRepo = manager.getRepository(Category);
     permissionGroupRepo = manager.getRepository(PermissionGroup);
+    memberContractRepo = manager.getRepository(MemberContract);
+    contractRepo = manager.getRepository(Contract);
     memberPropertyRepo = manager.getRepository(MemberProperty);
     memberTagRepo = manager.getRepository(MemberTag);
     memberPhoneRepo = manager.getRepository(MemberPhone);
+    memberDeviceRepo = manager.getRepository(MemberDevice);
     memberCategoryRepo = manager.getRepository(MemberCategory);
     memberPermissionGroupRepo = manager.getRepository(MemberPermissionGroup);
+    memberOauthRepo = manager.getRepository(MemberOauth);
+    permissionRepo = manager.getRepository(Permission);
+    memberPermissionExtraRepo = manager.getRepository(MemberPermissionExtra);
+    memberNoteRepo = manager.getRepository(MemberNote);
+    memberTaskRepo = manager.getRepository(MemberTask);
+    orderLogRepo = manager.getRepository(OrderLog);
+    orderProductRepo = manager.getRepository(OrderProduct);
+    orderDiscountRepo = manager.getRepository(OrderDiscount);
+    orderContractRepo = manager.getRepository(OrderContact);
+    invoiceRepo = manager.getRepository(Invoice);
+    paymentLogRepo = manager.getRepository(PaymentLog);
+    notificationRepo = manager.getRepository(Notification);
+    couponRepo = manager.getRepository(Coupon);
+    programPackageRepo = manager.getRepository(ProgramPackage);
+    programPackageProgramRepo = manager.getRepository(ProgramPackageProgram);
+    programTempoDeliveryRepo = manager.getRepository(ProgramTempoDelivery);
+    programContentProgressRepo = manager.getRepository(ProgramContentProgress);
+    programContentLogRepo = manager.getRepository(ProgramContentLog);
+    programContentRepo = manager.getRepository(ProgramContent);
+    programContentBodyRepo = manager.getRepository(ProgramContentBody);
+    programRepo = manager.getRepository(Program);
+    programContentSectionRepo = manager.getRepository(ProgramContentSection);
+    couponCodeRepo = manager.getRepository(CouponCode);
+    couponPlanRepo = manager.getRepository(CouponPlan);
+    productRepo = manager.getRepository(Product);
+    currencyRepo = manager.getRepository(Currency);
+    voucherPlanRepo = manager.getRepository(VoucherPlan);
+    voucherCodeRepo = manager.getRepository(VoucherCode);
+    voucherRepo = manager.getRepository(Voucher);
+    exerciseRepo = manager.getRepository(Exercise);
+    issueReplyRepo = manager.getRepository(IssueReply);
+    issueRepo = manager.getRepository(Issue);
+    issueReactionRepo = manager.getRepository(IssueReaction);
+    issueReplyReactionRepo = manager.getRepository(IssueReplyReaction);
+    commentReplyReactionRepo = manager.getRepository(CommentReplyReaction);
+    commentReplyRepo = manager.getRepository(CommentReply);
+    commentReactionRepo = manager.getRepository(CommentReaction);
+    commentRepo = manager.getRepository(Comment);
+    memberCardRepo = manager.getRepository(MemberCard);
+    reviewRepo = manager.getRepository(Review);
+    reviewReplyRepo = manager.getRepository(ReviewReply);
+    reviewReactionRepo = manager.getRepository(ReviewReaction);
+    orderExecutorRepo = manager.getRepository(OrderExecutor);
+    coinLogRepo = manager.getRepository(CoinLog);
+    podcastProgramRepo = manager.getRepository(PodcastProgram);
+    podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
+    postRepo = manager.getRepository(Post);
+    postRoleRepo = manager.getRepository(PostRole);
+    practiceRepo = manager.getRepository(Practice);
+    programTimeableRepo = manager.getRepository(ProgramTimetable);
+    attendRepo = manager.getRepository(Attend);
 
+    await attendRepo.delete({});
+    await practiceRepo.delete({});
+    await postRoleRepo.delete({});
+    await postRepo.delete({});
+    await coinLogRepo.delete({});
+    await orderContractRepo.delete({});
+    await orderExecutorRepo.delete({});
+    await reviewReactionRepo.delete({});
+    await reviewReplyRepo.delete({});
+    await reviewRepo.delete({});
+    await commentReplyReactionRepo.delete({});
+    await commentReplyRepo.delete({});
+    await commentReactionRepo.delete({});
+    await commentRepo.delete({});
+    await issueReplyReactionRepo.delete({});
+    await issueReactionRepo.delete({});
+    await issueReplyRepo.delete({});
+    await issueRepo.delete({});
+    await exerciseRepo.delete({});
+    await voucherRepo.delete({});
+    await voucherCodeRepo.delete({});
+    await voucherPlanRepo.delete({});
+    await podcastProgramProgressRepo.delete({});
+    await podcastProgramRepo.delete({});
+    await programTimeableRepo.delete({});
+    await programTempoDeliveryRepo.delete({});
+    await programPackageProgramRepo.delete({});
+    await programPackageRepo.delete({});
+    await programContentLogRepo.delete({});
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentBodyRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programRepo.delete({});
+    await paymentLogRepo.delete({});
+    await couponRepo.delete({});
+    await couponCodeRepo.delete({});
+    await couponPlanRepo.delete({});
+    await notificationRepo.delete({});
+    await invoiceRepo.delete({});
+    await orderProductRepo.delete({});
+    await productRepo.delete({});
+    await orderDiscountRepo.delete({});
+    await orderLogRepo.delete({});
+    await currencyRepo.delete({});
+    await memberContractRepo.delete({});
+    await contractRepo.delete({});
+    await memberTaskRepo.delete({});
+    await memberNoteRepo.delete({});
+    await memberPermissionExtraRepo.delete({});
+    await permissionRepo.delete({});
+    await memberCardRepo.delete({});
+    await memberOauthRepo.delete({});
+    await memberDeviceRepo.delete({});
     await memberPermissionGroupRepo.delete({});
     await memberPhoneRepo.delete({});
     await memberTagRepo.delete({});
@@ -95,6 +311,60 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await attendRepo.delete({});
+    await practiceRepo.delete({});
+    await postRoleRepo.delete({});
+    await postRepo.delete({});
+    await coinLogRepo.delete({});
+    await orderContractRepo.delete({});
+    await orderExecutorRepo.delete({});
+    await reviewReactionRepo.delete({});
+    await reviewReplyRepo.delete({});
+    await reviewRepo.delete({});
+    await commentReplyReactionRepo.delete({});
+    await commentReplyRepo.delete({});
+    await commentReactionRepo.delete({});
+    await commentRepo.delete({});
+    await issueReplyReactionRepo.delete({});
+    await issueReactionRepo.delete({});
+    await issueReplyRepo.delete({});
+    await issueRepo.delete({});
+    await exerciseRepo.delete({});
+    await voucherRepo.delete({});
+    await voucherCodeRepo.delete({});
+    await voucherPlanRepo.delete({});
+    await podcastProgramProgressRepo.delete({});
+    await podcastProgramRepo.delete({});
+    await programTimeableRepo.delete({});
+    await programTempoDeliveryRepo.delete({});
+    await programPackageProgramRepo.delete({});
+    await programPackageRepo.delete({});
+    await programContentLogRepo.delete({});
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentBodyRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programRepo.delete({});
+    await paymentLogRepo.delete({});
+    await couponRepo.delete({});
+    await couponCodeRepo.delete({});
+    await couponPlanRepo.delete({});
+    await notificationRepo.delete({});
+    await invoiceRepo.delete({});
+    await orderProductRepo.delete({});
+    await productRepo.delete({});
+    await orderDiscountRepo.delete({});
+    await orderLogRepo.delete({});
+    await currencyRepo.delete({});
+    await memberContractRepo.delete({});
+    await contractRepo.delete({});
+    await memberTaskRepo.delete({});
+    await memberNoteRepo.delete({});
+    await memberPermissionExtraRepo.delete({});
+    await permissionRepo.delete({});
+    await memberCardRepo.delete({});
+    await memberOauthRepo.delete({});
+    await memberDeviceRepo.delete({});
     await memberPermissionGroupRepo.delete({});
     await memberPhoneRepo.delete({});
     await memberPropertyRepo.delete({});
@@ -1502,6 +1772,545 @@ describe('MemberController (e2e)', () => {
       expect(data.invokerMemberId).toBe('invoker_member_id');
       expect(data.category).toBe('member');
       expect(data.memberIds).toStrictEqual([]);
+    });
+  });
+
+  describe('/members/email/:email (DELETE)', () => {
+    const route = '/members/email';
+
+    it('Should raise unauthorized exception', async () => {
+      const testAuthToken = 'TestTokenWithNoRealCredentials';
+
+      await request(application.getHttpServer())
+        .delete(`${route}/no@mail.com`)
+        .set('Authorization', `Bearer ${testAuthToken}`)
+        .set('host', appHost.host)
+        .expect(401);
+    });
+
+    it('Should raise no permission to delete member exception', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .delete(`${route}/no@mail.com`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .expect(401);
+
+      expect(res.body).toHaveProperty('message');
+    });
+
+    it('Should raise no member to delete exception', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+          role: 'app-owner',
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .delete(`${route}/no@mail.com`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .expect(400);
+
+      expect(res.body).toHaveProperty('code', 'ERROR');
+      expect(res.body).toHaveProperty('message');
+    });
+
+    it('Should delete member successfully', async () => {
+      const memberId = v4();
+      const insertedMember = new Member();
+      insertedMember.appId = app.id;
+      insertedMember.id = memberId;
+      insertedMember.name = `name`;
+      insertedMember.username = `username`;
+      insertedMember.email = `delete@example.com`;
+      insertedMember.role = 'general-member';
+      insertedMember.star = 0;
+      insertedMember.createdAt = new Date();
+      insertedMember.loginedAt = new Date();
+      await manager.save(insertedMember);
+
+      const insertedMember2 = new Member();
+      insertedMember2.appId = app.id;
+      insertedMember2.id = v4();
+      insertedMember2.name = `name2`;
+      insertedMember2.username = `username2`;
+      insertedMember2.email = `delete2@example.com`;
+      insertedMember2.role = 'general-member';
+      insertedMember2.star = 0;
+      insertedMember2.createdAt = new Date();
+      insertedMember2.loginedAt = new Date();
+      await manager.save(insertedMember2);
+
+      const insertedTag = new Tag();
+      insertedTag.name = `tag`;
+      insertedTag.type = 'member';
+      await manager.save(insertedTag);
+
+      const insertedMemberTag = new MemberTag();
+      insertedMemberTag.id = v4();
+      insertedMemberTag.member = insertedMember;
+      insertedMemberTag.tagName = insertedTag.name;
+      await manager.save(insertedMemberTag);
+
+      const insertedCategory = new Category();
+      insertedCategory.name = `category`;
+      insertedCategory.class = 'member';
+      insertedCategory.position = 0;
+      insertedCategory.appId = app.id;
+      const { id: categoryId } = await manager.save(insertedCategory);
+
+      const insertedMemberCategory = new MemberCategory();
+      insertedMemberCategory.id = v4();
+      insertedMemberCategory.member = insertedMember;
+      insertedMemberCategory.categoryId = categoryId;
+      insertedMemberCategory.position = 0;
+      await manager.save(insertedMemberCategory);
+
+      const { id: propertyId } = await manager.save(memberProperty);
+      const insertedMemberProperty = new MemberProperty();
+      insertedMemberProperty.id = v4();
+      insertedMemberProperty.member = insertedMember;
+      insertedMemberProperty.propertyId = propertyId;
+      insertedMemberProperty.value = `test member property value`;
+      await manager.save(insertedMemberProperty);
+
+      const insertedMemberPhone = new MemberPhone();
+      insertedMemberPhone.id = v4();
+      insertedMemberPhone.member = insertedMember;
+      insertedMemberPhone.phone = `09000000000`;
+      await manager.save(insertedMemberPhone);
+
+      const insertedMemberDevice = new MemberDevice();
+      insertedMemberDevice.id = v4();
+      insertedMemberDevice.member = insertedMember;
+      insertedMemberDevice.fingerprintId = 'test';
+      await manager.save(insertedMemberDevice);
+
+      const insertedMemberOauth = new MemberOauth();
+      insertedMemberOauth.id = v4();
+      insertedMemberOauth.member = insertedMember;
+      insertedMemberOauth.provider = 'cw';
+      insertedMemberOauth.providerUserId = 'some_provider_id';
+      await manager.save(insertedMemberOauth);
+
+      const insertedPermission = new Permission();
+      insertedPermission.id = 'default';
+      insertedPermission.description = 'default';
+      insertedPermission.group = 'activity';
+      await manager.save(insertedPermission);
+
+      const insertedMemberPermissionExtra = new MemberPermissionExtra();
+      insertedMemberPermissionExtra.id = v4();
+      insertedMemberPermissionExtra.member = insertedMember;
+      insertedMemberPermissionExtra.permission = insertedPermission;
+      await manager.save(insertedMemberPermissionExtra);
+
+      const insertedMemberNote = new MemberNote();
+      insertedMemberNote.member = insertedMember;
+      insertedMemberNote.authorId = memberId;
+      insertedMemberNote.type = 'outbound';
+      insertedMemberNote.status = 'missed';
+      await manager.save(insertedMemberNote);
+
+      const insertedMemberTask = new MemberTask();
+      insertedMemberTask.member = insertedMember;
+      insertedMemberTask.title = 'title';
+      insertedMemberTask.priority = 'high';
+      insertedMemberTask.status = 'done';
+      await manager.save(insertedMemberTask);
+
+      const insertProgramContentBody = new ProgramContentBody();
+      insertProgramContentBody.id = v4();
+      await manager.save(insertProgramContentBody);
+
+      const insertedProgram = new Program();
+      insertedProgram.id = v4();
+      insertedProgram.title = 'AAA';
+      insertedProgram.appId = 'demo';
+      insertedProgram.inAdvance = false;
+      insertedProgram.isDeleted = false;
+      insertedProgram.appId = app.id;
+      await manager.save(insertedProgram);
+
+      const insertProgramContentSection = new ProgramContentSection();
+      insertProgramContentSection.id = v4();
+      insertProgramContentSection.program = insertedProgram;
+      insertProgramContentSection.title = 'QQQ';
+      insertProgramContentSection.position = 1;
+      await manager.save(insertProgramContentSection);
+
+      const insertedProgramContent = new ProgramContent();
+      insertedProgramContent.id = v4();
+      insertedProgramContent.title = 'default';
+      insertedProgramContent.position = 1;
+      insertedProgramContent.contentSectionId = v4();
+      insertedProgramContent.displayMode = 'payToWatch';
+      insertedProgramContent.contentBody = insertProgramContentBody;
+      insertedProgramContent.contentSection = insertProgramContentSection;
+      await manager.save(insertedProgramContent);
+
+      const insertedProgramContentProgress = new ProgramContentProgress();
+      insertedProgramContentProgress.programContent = insertedProgramContent;
+      insertedProgramContentProgress.id = v4();
+      insertedProgramContentProgress.member = insertedMember;
+      await manager.save(insertedProgramContentProgress);
+
+      const insertedProgramPackage = new ProgramPackage();
+      insertedProgramPackage.app = app;
+      insertedProgramPackage.isPrivate = false;
+      insertedProgramPackage.title = 'AAAA';
+      await manager.save(insertedProgramPackage);
+
+      const insertedProgramPackageProgram = new ProgramPackageProgram();
+      insertedProgramPackageProgram.program = insertedProgram;
+      insertedProgramPackageProgram.position = 1;
+      insertedProgramPackageProgram.programPackage = insertedProgramPackage;
+      await manager.save(insertedProgramPackageProgram);
+
+      const insertedProgramTempoDelivery = new ProgramTempoDelivery();
+      insertedProgramTempoDelivery.member = insertedMember;
+      insertedProgramTempoDelivery.programPackageProgram = insertedProgramPackageProgram;
+      insertedProgramTempoDelivery.deliveredAt = new Date(11111111);
+      await manager.save(insertedProgramTempoDelivery);
+
+      const insertedNotification = new Notification();
+      insertedNotification.id = v4();
+      insertedNotification.description = 'default';
+      insertedNotification.sourceMember = insertedMember;
+      insertedNotification.targetMember = insertedMember;
+      await manager.save(insertedNotification);
+
+      const insertCouponPlan = new CouponPlan();
+      insertCouponPlan.title = 'default';
+      insertCouponPlan.amount = 100;
+      await manager.save(insertCouponPlan);
+
+      const insertCouponCode = new CouponCode();
+      insertCouponCode.appId = app.id;
+      insertCouponCode.code = 'default';
+      insertCouponCode.count = 1;
+      insertCouponCode.couponPlan = insertCouponPlan;
+      insertCouponCode.remaining = 100;
+      await manager.save(insertCouponCode);
+
+      const insertedCoupon = new Coupon();
+      insertedCoupon.id = v4();
+      insertedCoupon.member = insertedMember;
+      insertedCoupon.couponCode = insertCouponCode;
+      await manager.save(insertedCoupon);
+
+      const insertedParentOrderLog = new OrderLog();
+      insertedParentOrderLog.id = v4();
+      insertedParentOrderLog.appId = app.id;
+      insertedParentOrderLog.member = insertedMember;
+      insertedParentOrderLog.invoiceOptions = {
+        name: 'cc',
+        email: 'cc@qraft.app',
+        phone: '1111111111',
+      };
+      insertedParentOrderLog.status = 'SUCCESS';
+      await manager.save(insertedParentOrderLog);
+
+      const insertedOrderLog = new OrderLog();
+      insertedOrderLog.appId = app.id;
+      insertedOrderLog.member = insertedMember;
+      insertedOrderLog.parentOrder = insertedParentOrderLog;
+      insertedOrderLog.invoiceOptions = {
+        name: 'cc',
+        email: 'cc@qraft.app',
+        phone: '1111111111',
+      };
+      insertedOrderLog.status = 'SUCCESS';
+      await manager.save(insertedOrderLog);
+
+      const insertedOrderDiscount = new OrderDiscount();
+      insertedOrderDiscount.id = v4();
+      insertedOrderDiscount.name = 'default';
+      insertedOrderDiscount.target = v4();
+      insertedOrderDiscount.price = 100;
+      insertedOrderDiscount.type = 'Coupon';
+      insertedOrderDiscount.order = insertedOrderLog;
+      await manager.save(insertedOrderDiscount);
+
+      const insertedProduct = new Product();
+      insertedProduct.id = v4();
+      insertedProduct.type = 'ActivityTicket';
+      insertedProduct.target = v4();
+      await manager.save(insertedProduct);
+
+      const insertedCurrency = new Currency();
+      insertedCurrency.id = 'TWD';
+      insertedCurrency.minorUnits = 2;
+      insertedCurrency.label = 'default';
+      insertedCurrency.unit = 'default';
+      insertedCurrency.name = 'default';
+      await manager.save(insertedCurrency);
+
+      const insertedOrderProduct = new OrderProduct();
+      insertedOrderProduct.id = v4();
+      insertedOrderProduct.product = insertedProduct;
+      insertedOrderProduct.order = insertedOrderLog;
+      insertedOrderProduct.name = 'default';
+      insertedOrderProduct.price = 1000;
+      insertedOrderProduct.currency = insertedCurrency;
+      await manager.save(insertedOrderProduct);
+
+      const insertedInvoice = new Invoice();
+      insertedInvoice.order = insertedOrderLog;
+      insertedInvoice.price = 1000;
+      insertedInvoice.no = 'AA00000001';
+      await manager.save(insertedInvoice);
+
+      const insertedPaymentLog = new PaymentLog();
+      insertedPaymentLog.order = insertedOrderLog;
+      insertedPaymentLog.no = '1555336487636';
+      insertedPaymentLog.status = 'SUCCESS';
+      insertedPaymentLog.price = 1000;
+      await manager.save(insertedPaymentLog);
+
+      const insertedVoucherPlan = new VoucherPlan();
+      insertedVoucherPlan.app = app;
+      insertedVoucherPlan.title = 'AAA';
+      insertedVoucherPlan.description = 'AAA';
+      await manager.save(insertedVoucherPlan);
+
+      const insertedVoucherCode = new VoucherCode();
+      insertedVoucherCode.voucherPlan = insertedVoucherPlan;
+      insertedVoucherCode.count = 1;
+      insertedVoucherCode.remaining = 1;
+      insertedVoucherCode.code = 'BREVGZJP61EA32E8';
+
+      await manager.save(insertedVoucherCode);
+
+      const insertedVoucher = new Voucher();
+      insertedVoucher.member = insertedMember;
+      insertedVoucher.voucherCode = insertedVoucherCode;
+      await manager.save(insertedVoucher);
+
+      const insertedExercise = new Exercise();
+      insertedExercise.member = insertedMember;
+      insertedExercise.programContent = insertedProgramContent;
+      await manager.save(insertedExercise);
+
+      const insertedIssue = new Issue();
+      insertedIssue.member = insertedMember;
+      insertedIssue.app = app;
+      insertedIssue.threadId = 'SSSSSSSS';
+      insertedIssue.title = 'AAA';
+      insertedIssue.description = 'AAAA';
+      await manager.save(insertedIssue);
+
+      const insertedIssueReaction = new IssueReaction();
+      insertedIssueReaction.member = insertedMember;
+      insertedIssueReaction.issue = insertedIssue;
+      await manager.save(insertedIssueReaction);
+
+      const insertedIssueReply = new IssueReply();
+      insertedIssueReply.content = 'aAAa';
+      insertedIssueReply.issue = insertedIssue;
+      insertedIssueReply.member = insertedMember;
+      await manager.save(insertedIssueReply);
+
+      const insertedIssueReplyReaction = new IssueReplyReaction();
+      insertedIssueReplyReaction.issueReply = insertedIssueReply;
+      insertedIssueReplyReaction.member = insertedMember;
+      await manager.save(insertedIssueReplyReaction);
+
+      const insertedComment = new Comment();
+      insertedComment.app = app;
+      insertedComment.threadId = 'AAAAA';
+      insertedComment.member = insertedMember;
+      insertedComment.content = 'AAA';
+      await manager.save(insertedComment);
+
+      const insertedCommentReply = new CommentReply();
+      insertedCommentReply.comment = insertedComment;
+      insertedCommentReply.member = insertedMember;
+      insertedCommentReply.content = 'AAAA';
+      await manager.save(insertedCommentReply);
+
+      const insertedCommentReplyReaction = new CommentReplyReaction();
+      insertedCommentReplyReaction.commentReply = insertedCommentReply;
+      insertedCommentReplyReaction.member = insertedMember;
+      await manager.save(insertedCommentReplyReaction);
+
+      const insertedCommentReaction = new CommentReaction();
+      insertedCommentReaction.comment = insertedComment;
+      insertedCommentReaction.member = insertedMember;
+      await manager.save(insertedCommentReaction);
+
+      const insertedMemberCard = new MemberCard();
+      insertedMemberCard.member = insertedMember;
+      insertedMemberCard.cardIdentifier = 'AAAAAAAAAA';
+      insertedMemberCard.cardInfo = {
+        type: 1,
+        level: '',
+        issuer: '',
+        bank_id: '',
+        country: 'UNITED KINGDOM',
+        funding: 0,
+        bin_code: '424242',
+        last_four: '4242',
+        expiry_date: '202301',
+        country_code: 'GB',
+        issuer_zh_tw: '',
+      };
+      insertedMemberCard.cardSecret = {
+        card_key: 'AAAAAAAAAA',
+        card_token: 'AAAAAAAAAA',
+      };
+      insertedMemberCard.priority = 0;
+      insertedMemberCard.cardHolder = {
+        name: 'AAAAAAAAAA',
+        email: 'AAAAAAAAAA',
+        memberId: 'AAAAAAAAAA',
+        phoneNumber: '0999999999',
+      };
+      await manager.save(insertedMemberCard);
+
+      const insertedContract = new Contract();
+      insertedContract.appId = app.id;
+      insertedContract.name = '私塾課合約2020';
+      insertedContract.description = '私塾課合約2020';
+      insertedContract.template = '<div> 1 </div>';
+      await manager.save(insertedContract);
+
+      const insertedMemberContract = new MemberContract();
+      insertedMemberContract.member = insertedMember;
+      insertedMemberContract.contract = insertedContract;
+      await manager.save(insertedMemberContract);
+
+      const insertedReview = new Review();
+      insertedReview.member = insertedMember;
+      insertedReview.appId = app.id;
+      insertedReview.score = 100;
+      insertedReview.title = 'AAAA';
+      insertedReview.path = '/programs/AAAAA';
+      await manager.save(insertedReview);
+
+      const insertedReviewReaction = new ReviewReaction();
+      insertedReviewReaction.review = insertedReview;
+      insertedReviewReaction.member = insertedMember;
+      await manager.save(insertedReviewReaction);
+
+      const insertReviewReply = new ReviewReply();
+      insertReviewReply.content = 'AAAAA';
+      insertReviewReply.memberId = insertedMember.id;
+      insertReviewReply.review = insertedReview;
+      await manager.save(insertReviewReply);
+
+      const insertedOrderExecutor = new OrderExecutor();
+      insertedOrderExecutor.member = insertedMember;
+      insertedOrderExecutor.order = insertedOrderLog;
+      insertedOrderExecutor.ratio = 1;
+      await manager.save(insertedOrderExecutor);
+
+      const insertedOrderContract = new OrderContact();
+      insertedOrderContract.member = insertedMember;
+      insertedOrderContract.order = insertedOrderLog;
+      insertedOrderContract.message = 'AAA';
+      insertedOrderContract.message = 'AAAA';
+      await manager.save(insertedOrderContract);
+
+      const insertedCoinLog = new CoinLog();
+      insertedCoinLog.member = insertedMember;
+      insertedCoinLog.title = 'AAAAAA';
+      insertedCoinLog.amount = 111;
+      insertedCoinLog.description = 'AAAAA';
+      await manager.save(insertedCoinLog);
+
+      const insertedPodcastProgram = new PodcastProgram();
+      insertedPodcastProgram.title = 'AAAA';
+      insertedPodcastProgram.contentType = 'mp3';
+      insertedPodcastProgram.creator = insertedMember2;
+      insertedPodcastProgram.duration = 1;
+      insertedPodcastProgram.durationSecond = 2;
+      await manager.save(insertedPodcastProgram);
+
+      const insertedPodcastProgramProgress = new PodcastProgramProgress();
+      insertedPodcastProgramProgress.member = insertedMember;
+      insertedPodcastProgramProgress.lastProgress = 1.22;
+      insertedPodcastProgramProgress.progress = 1.22;
+      insertedPodcastProgramProgress.podcastProgram = insertedPodcastProgram;
+      await manager.save(insertedPodcastProgramProgress);
+
+      const insertedPost = new Post();
+      insertedPost.title = 'AAAA';
+      insertedPost.coverUrl = 'AAAA';
+      insertedPost.views = 2;
+      insertedPost.position = 1;
+      insertedPost.isDeleted = false;
+      insertedPost.app = app;
+      await manager.save(insertedPost);
+
+      const insertedPostRole = new PostRole();
+      insertedPostRole.member = insertedMember;
+      insertedPostRole.name = 'AAAA';
+      insertedPostRole.position = 1;
+      insertedPostRole.post = insertedPost;
+      await manager.save(insertedPostRole);
+
+      const insertedPratice = new Practice();
+      insertedPratice.member = insertedMember;
+      insertedPratice.coverUrl = 'AAAAAA';
+      insertedPratice.isDeleted = false;
+      insertedPratice.programContent = insertedProgramContent;
+      insertedPratice.reviewedAt = new Date();
+      insertedPratice.title = 'AAAAAA';
+      insertedPratice.description = 'AAAAAAAA';
+      await manager.save(insertedPratice);
+
+      const insertedProgramTimeable = new ProgramTimetable();
+      insertedProgramTimeable.member = insertedMember;
+      insertedProgramTimeable.position = 1;
+      insertedProgramTimeable.program = insertedProgram;
+      insertedProgramTimeable.time = new Date();
+      await manager.save(insertedProgramTimeable);
+
+      const insertedAttend = new Attend();
+      insertedAttend.member = insertedMember;
+      insertedAttend.startedAt = new Date();
+      await manager.save(insertedAttend);
+
+      // TODO: add more relations
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+          role: 'app-owner',
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .delete(`${route}/delete@example.com`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .expect(200);
+
+      expect(res.body).toHaveProperty('code', 'SUCCESS');
+      expect(res.body).toHaveProperty('message');
     });
   });
 });
