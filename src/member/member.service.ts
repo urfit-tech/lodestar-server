@@ -340,7 +340,6 @@ export class MemberService {
       .map((each) => each.serializeToCsvRawRow(headerInfos));
   }
 
-
   async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
     await this.memberInfra.updateMemberLoginDate(memberId, loginedAt, entityManager);
   }
@@ -351,5 +350,15 @@ export class MemberService {
 
   async getMemberTasks(memberId: string): Promise<Array<MemberTask>> {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
+  }
+
+  async upsertMemberByEmail(
+    appId: string,
+    email: string,
+    name: string,
+    username: string,
+    role: string,
+  ): Promise<Member> {
+    return this.memberInfra.upsertMemberByEmail(appId, email, name, username, role, this.entityManager);
   }
 }

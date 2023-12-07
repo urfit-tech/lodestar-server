@@ -2,6 +2,7 @@ import { EntityManager, FindOptionsWhere, OrderByCondition, In, DeleteResult, Eq
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 import { first, keys, omit, pick, values } from 'lodash';
+import * as uuid from 'uuid';
 
 import { Member } from './entity/member.entity';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
@@ -311,6 +312,32 @@ export class MemberInfrastructure {
     } catch (error) {
       console.error(`Error updating login date for memberId: ${memberId}`, error);
     }
+  }
+
+  async upsertMemberByEmail(
+    appId: string,
+    email: string,
+    name: string,
+    username: string,
+    role: string,
+    manager: EntityManager,
+  ): Promise<Member> {
+    const memberRepo = manager.getRepository(Member);
+    const existsMember = await memberRepo.findOneBy({ email, appId });
+    if (existsMember) {
+      existsMember.role = role;
+      existsMember.username = username;
+      return memberRepo.save(existsMember);
+    }
+    const member = memberRepo.create({
+      id: uuid.v4(),
+      appId,
+      email,
+      name,
+      username,
+      role,
+    });
+    return memberRepo.save(member);
   }
 
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {
