@@ -18,6 +18,9 @@ export class CommentReply {
   })
   createdAt: Date;
 
+  @Column('text', { name: 'member_id' })
+  memberId: string;
+
   @ManyToOne(() => Comment, (comment) => comment.commentReplies, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
