@@ -11,6 +11,9 @@ export class Property {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('text', { name: 'app_id' })
+  appId: string;
+
   @Column('text', { name: 'type' })
   type: string;
 

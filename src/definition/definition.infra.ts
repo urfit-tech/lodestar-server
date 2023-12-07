@@ -1,4 +1,4 @@
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 import { Category } from './entity/category.entity';
@@ -24,5 +24,32 @@ export class DefinitionInfrastructure {
   async getTags(entityManager: EntityManager): Promise<Array<Tag>> {
     const tagRepo = entityManager.getRepository(Tag);
     return tagRepo.find();
+  }
+
+  async upsertProperties(
+    appId: string,
+    propertyNames: Array<string>,
+    entityManager: EntityManager,
+  ): Promise<Array<Property>> {
+    const propertyRepo = entityManager.getRepository(Property);
+    const existingProperties = await propertyRepo.find({
+      where: { appId, name: In(propertyNames) },
+    });
+    const existingPropertyNames = existingProperties.map((property) => property.name);
+    const newPropertyNames = propertyNames.filter((propertyName) => !existingPropertyNames.includes(propertyName));
+    if (newPropertyNames.length === 0) {
+      return existingProperties;
+    }
+    const count = await propertyRepo.count({ where: { appId } });
+    const newProperties = newPropertyNames.map((propertyName, index) => {
+      const property = new Property();
+      property.name = propertyName;
+      property.type = 'member';
+      property.position = count + index + 1;
+      property.appId = appId;
+      return property;
+    });
+    const savedProperties = await propertyRepo.save(newProperties);
+    return [...existingProperties, ...savedProperties];
   }
 }
