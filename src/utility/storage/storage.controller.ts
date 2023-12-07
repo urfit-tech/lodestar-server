@@ -29,8 +29,8 @@ export class StorageController {
 
   @Post('storage/upload')
   uploadFileToStorageBucket(@Body() body: UploadDTO) {
-    const { appId, fileName } = body;
-    return this.storageService.getSignedUrlForUploadStorage(appId, fileName, 60);
+    const { appId, fileName, type } = body;
+    return this.storageService.getSignedUrlForUploadStorage(appId, fileName, type, 60);
   }
 
   @Post('/multipart/create')

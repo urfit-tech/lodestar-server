@@ -7,6 +7,9 @@ export class UploadDTO {
 
   @IsString()
   fileName: string;
+
+  @IsString()
+  type: string;
 }
 
 export interface CreateMultipartUploadDTO {

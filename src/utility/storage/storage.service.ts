@@ -38,9 +38,9 @@ export class StorageService {
     return new S3Client({ region });
   }
 
-  getSignedUrlForUploadStorage(appId: string, key: string, expiresIn: number): Promise<string> {
+  getSignedUrlForUploadStorage(appId: string, key: string, type: string, expiresIn: number): Promise<string> {
     const command = new PutObjectCommand({
-      Key: `${appId}/${key}`,
+      Key: `${type}/${appId}/${key}`,
       Bucket: this.awsS3BucketStorage,
     });
     return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
