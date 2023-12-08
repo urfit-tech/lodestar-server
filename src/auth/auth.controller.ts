@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Body, Controller, Headers, Logger, Post, Req, Res, Session } from '@nestjs/common';
+import { Body, Controller, Headers, Logger, Post, Req, Res, Session, UseGuards } from '@nestjs/common';
 
 import { PublicMember } from '~/member/member.type';
 import { AppCache } from '~/app/app.type';
@@ -12,6 +12,7 @@ import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
 import { ApiTags, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import CrossServerTokenDTOProperty from './api_property/cross_server_token_dto';
+import { AuthGuard } from './auth.guard';
 
 @ApiTags('Auth')
 @Controller({
@@ -212,6 +213,7 @@ export class AuthController {
     }
   }
   @Post('/sign-cloudfront-cookies')
+  @UseGuards(AuthGuard)
   async signCookie(@Res() res: Response, @Body() body: { url: string }) {
     const cookies = await this.authService.signCloudfrontCookie(body.url);
     res.cookie('CloudFront-Policy', cookies['CloudFront-Policy'], {
@@ -233,6 +235,7 @@ export class AuthController {
     });
   }
   @Post('/sign-cloudfront-url')
+  @UseGuards(AuthGuard)
   async signUrl(@Res() res: Response, @Body() body: { url: string }) {
     const signedUrl = await this.authService.signCloudfrontUrl(body.url);
     res.send({

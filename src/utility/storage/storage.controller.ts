@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 
 import { StorageService } from './storage.service';
 import {
@@ -32,8 +32,8 @@ export class StorageController {
 
   @Post('storage/upload')
   uploadFileToStorageBucket(@Body() body: UploadDTO) {
-    const { appId, fileName, type } = body;
-    return this.storageService.getSignedUrlForUploadStorage(appId, fileName, type, 60);
+    const { appId, fileName, prefix } = body;
+    return this.storageService.getSignedUrlForUploadStorage(appId, fileName, prefix, 60);
   }
 
   @Post('/multipart/create')
@@ -84,11 +84,7 @@ export class StorageController {
     attachment.status = status;
     attachment.duration = duration;
     attachment.id = attachmentId;
-    await this.mediaService.upsertMediaVideoAttachment(
-      attachment,
-      this.configService.get('AWS_S3_BUCKET_STORAGE'),
-      Key,
-    );
+    await this.mediaService.upsertMediaVideoAttachment(attachment, this.awsS3BucketStorage, Key);
     const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);
     return { location: result.Location };
   }
