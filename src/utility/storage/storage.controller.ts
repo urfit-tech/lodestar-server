@@ -17,14 +17,17 @@ import { Attachment } from '~/media/attachment.entity';
 })
 export class StorageController {
   private readonly awsS3BucketStorage: string;
+  private readonly awsStorageCloudFrontUrl: string;
   constructor(
     private readonly configService: ConfigService<{
       AWS_S3_BUCKET_STORAGE: string;
+      AWS_STORAGE_CLOUDFRONT_URL: string;
     }>,
     private readonly storageService: StorageService,
     private readonly mediaService: MediaService,
   ) {
     this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
+    this.awsStorageCloudFrontUrl = configService.getOrThrow('AWS_STORAGE_CLOUDFRONT_URL');
   }
 
   @Post('storage/upload')
@@ -81,7 +84,11 @@ export class StorageController {
     attachment.status = status;
     attachment.duration = duration;
     attachment.id = attachmentId;
-    await this.mediaService.upsertMediaAttachment(attachment, this.awsS3BucketStorage, Key);
+    await this.mediaService.upsertMediaVideoAttachment(
+      attachment,
+      this.configService.get('AWS_S3_BUCKET_STORAGE'),
+      Key,
+    );
     const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);
     return { location: result.Location };
   }
@@ -92,10 +99,10 @@ export class StorageController {
     const output = await this.storageService.getFileFromBucketStorage({
       Key: key,
     });
-    const host = 'https://media-dev.kolable.com';
-    const path = key.split('/');
-    path.pop();
-    const final = path.join('/');
+    const host = this.awsStorageCloudFrontUrl;
+    const keyArray = key.split('/');
+    keyArray.pop();
+    const path = keyArray.join('/');
     const res = (await output.Body.transformToString()).split('\n');
     const signedRes = res
       .map((row) => {
@@ -104,10 +111,10 @@ export class StorageController {
             return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}"`;
           }
           return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
-        } else if (row.includes('.mpd')) {
-          return `${row.split('?')[0]}?${signature}`;
+        } else if (row.includes('.mp4')) {
+          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
         } else if (row.includes('.ts') || row.includes('.vtt')) {
-          return `${host}/${final}/${row.split('?')[0]}?${signature}`;
+          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
         } else {
           return row;
         }

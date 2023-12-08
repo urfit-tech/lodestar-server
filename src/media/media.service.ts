@@ -11,19 +11,41 @@ export class MediaService {
     private readonly mediaInfra: MediaInfrastructure,
   ) {}
 
-  async upsertMediaAttachment(attachment: Attachment, s3Bucket?: string, key?: string) {
+  async upsertMediaVideoAttachment(attachment: Attachment, s3Bucket?: string, key?: string) {
     const existAttachment = await this.mediaInfra.getById(attachment.id, this.entityManager);
-    const options = existAttachment?.options
-      ? {
-          ...existAttachment.options,
-          source: {
-            ...existAttachment.options.source,
-            s3: { ...existAttachment.options.source.s3, video: `s3://${s3Bucket}/${key}` },
-          },
-        }
-      : { source: { s3: { video: `s3://${s3Bucket}/${key}` } } };
 
-    if (s3Bucket && key) attachment.options = options;
+    if (existAttachment?.options?.source?.s3?.video) {
+      existAttachment.options.source.s3.video = `s3://${s3Bucket}/${key}`;
+      attachment.options = existAttachment.options;
+    } else {
+      attachment.options = {
+        ...existAttachment?.options,
+        source: {
+          ...existAttachment?.options?.source,
+          s3: { ...existAttachment?.options?.source?.s3, video: `s3://${s3Bucket}/${key}` },
+        },
+      };
+    }
+
+    return await this.mediaInfra.upsertAttachment(attachment, this.entityManager);
+  }
+  async upsertMediaCaptionsAttachment(attachment: Attachment, s3Bucket?: string, key?: string) {
+    const existAttachment = await this.mediaInfra.getById(attachment.id, this.entityManager);
+
+    if (existAttachment?.options?.source?.s3?.captions) {
+      existAttachment.options.source.s3.captions.push(`s3://${s3Bucket}/${key}`);
+      existAttachment.options.source.s3.captions = [...new Set(existAttachment?.options?.source?.s3?.captions)];
+      attachment.options = existAttachment.options;
+    } else {
+      attachment.options = {
+        ...existAttachment?.options,
+        source: {
+          ...existAttachment?.options?.source,
+          s3: { ...existAttachment?.options?.source?.s3, captions: [`s3://${s3Bucket}/${key}`] },
+        },
+      };
+    }
+
     return await this.mediaInfra.upsertAttachment(attachment, this.entityManager);
   }
 }
