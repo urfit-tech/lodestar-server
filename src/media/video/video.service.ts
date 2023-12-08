@@ -11,16 +11,20 @@ import { UtilityService } from '~/utility/utility.service';
 import { MediaInfrastructure } from '../media.infra';
 import { CfVideoStreamOptions } from './video.type';
 import { AuthService } from '~/auth/auth.service';
+import { Attachment } from '../attachment.entity';
 
 @Injectable()
 export class VideoService {
   private readonly cfStreamingKeyId: string;
   private readonly cfStreamingJwk: string;
-
+  private readonly awsS3BucketStorage: string;
+  private readonly awsStorageCloudFrontUrl: string;
   constructor(
     private readonly configService: ConfigService<{
       CF_STREAMING_KEY_ID: string;
       CF_STREAMING_JWK: string;
+      AWS_S3_BUCKET_STORAGE: string;
+      AWS_STORAGE_CLOUDFRONT_URL: string;
     }>,
     private readonly mediaInfra: MediaInfrastructure,
     private readonly authService: AuthService,
@@ -30,6 +34,8 @@ export class VideoService {
   ) {
     this.cfStreamingKeyId = configService.getOrThrow('CF_STREAMING_KEY_ID');
     this.cfStreamingJwk = configService.getOrThrow('CF_STREAMING_JWK');
+    this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
+    this.awsStorageCloudFrontUrl = configService.getOrThrow('AWS_STORAGE_CLOUDFRONT_URL');
   }
 
   async generateCfVideoToken(videoId: string, authToken?: string) {
@@ -123,5 +129,22 @@ export class VideoService {
     const signedToken = `${token}.${this.utilityService.arrayBufferToBase64Url(signature)}`;
 
     return signedToken;
+  }
+
+  public async updateAttachmentOptionsAfterCaptionUploaded(attachmentId: string, key: string): Promise<Attachment> {
+    const existAttachment = await this.mediaInfra.getById(attachmentId, this.entityManager);
+    if (existAttachment?.options?.source?.s3?.captions) {
+      existAttachment.options.source.s3.captions.push(`s3://${this.awsS3BucketStorage}/${key}`);
+      existAttachment.options.source.s3.captions = [...new Set(existAttachment?.options?.source?.s3?.captions)];
+    } else {
+      existAttachment.options = {
+        ...existAttachment?.options,
+        source: {
+          ...existAttachment?.options?.source,
+          s3: { ...existAttachment?.options?.source?.s3, captions: [`s3://${this.awsS3BucketStorage}/${key}`] },
+        },
+      };
+    }
+    return await this.mediaInfra.upsertAttachment(existAttachment, this.entityManager);
   }
 }

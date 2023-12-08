@@ -1,7 +1,10 @@
-import { Controller, Headers, Logger, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Logger, Param, Post, Put, UseGuards } from '@nestjs/common';
 
 import { VideoService } from './video.service';
-import { VideoTokenDTO } from './video.dto';
+import { VideoCaptionDTO, VideoTokenDTO } from './video.dto';
+import { Local } from '~/decorator';
+import { JwtMember } from '~/auth/auth.dto';
+import { AuthGuard } from '~/auth/auth.guard';
 
 @Controller({
   path: 'videos',
@@ -23,6 +26,24 @@ export class VideoController {
         code: 'SUCCESS',
         message: 'successfully sign the url',
         result: { token: videoToken, cloudflareOptions: cfOptions },
+      };
+    } catch (err) {
+      this.logger.error(err);
+    }
+  }
+  @UseGuards(AuthGuard)
+  @Post(':videoId/captions')
+  async updateCaptions(
+    @Param('videoId') videoId: string,
+    @Body() body: VideoCaptionDTO,
+  ): Promise<{ code: string; message: string; result: [] }> {
+    try {
+      const { key } = body;
+      await this.videoService.updateAttachmentOptionsAfterCaptionUploaded(videoId, key);
+      return {
+        code: 'SUCCESS',
+        message: 'successfully update attachment options s3 captions',
+        result: null,
       };
     } catch (err) {
       this.logger.error(err);
