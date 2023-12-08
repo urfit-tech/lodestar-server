@@ -9,7 +9,7 @@ export class UploadDTO {
   fileName: string;
 
   @IsString()
-  type: string;
+  prefix: string;
 }
 
 export interface CreateMultipartUploadDTO {
