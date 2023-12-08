@@ -54,7 +54,7 @@ export class StorageService {
     return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
   }
 
-  saveFilesInBucketStorage(data: Omit<PutObjectCommandInput, 'Bucket'>) {
+  saveFileInBucketStorage(data: Omit<PutObjectCommandInput, 'Bucket'>) {
     return this.saveFileToBucket(this.awsS3RegionStorage, {
       ...data,
       Bucket: this.awsS3BucketStorage,

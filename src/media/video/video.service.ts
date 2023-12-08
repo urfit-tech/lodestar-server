@@ -12,6 +12,8 @@ import { MediaInfrastructure } from '../media.infra';
 import { CfVideoStreamOptions } from './video.type';
 import { AuthService } from '~/auth/auth.service';
 import { Attachment } from '../attachment.entity';
+import { StorageService } from '~/utility/storage/storage.service';
+import { last, isEmpty } from 'lodash';
 
 @Injectable()
 export class VideoService {
@@ -30,6 +32,7 @@ export class VideoService {
     private readonly authService: AuthService,
     private readonly programService: ProgramService,
     private readonly utilityService: UtilityService,
+    private readonly storageService: StorageService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     this.cfStreamingKeyId = configService.getOrThrow('CF_STREAMING_KEY_ID');
@@ -131,7 +134,7 @@ export class VideoService {
     return signedToken;
   }
 
-  public async updateAttachmentOptionsAfterCaptionUploaded(attachmentId: string, key: string): Promise<Attachment> {
+  public async uploadCaption(attachmentId: string, key: string, buffer: Buffer): Promise<Attachment> {
     const existAttachment = await this.mediaInfra.getById(attachmentId, this.entityManager);
     if (existAttachment?.options?.source?.s3?.captions) {
       existAttachment.options.source.s3.captions.push(`s3://${this.awsS3BucketStorage}/${key}`);
@@ -145,6 +148,38 @@ export class VideoService {
         },
       };
     }
+    await this.storageService.saveFileInBucketStorage({ Body: buffer, Key: key });
     return await this.mediaInfra.upsertAttachment(existAttachment, this.entityManager);
+  }
+
+  public async getCaptions(attachmentId: string): Promise<any> {
+    const existAttachment = await this.mediaInfra.getById(attachmentId, this.entityManager);
+    let foldername;
+    const keys = [];
+    // get caption keys captions for new video upload to S3
+    if (!isEmpty(existAttachment?.options?.source?.s3?.captions)) {
+      const url = new URL(existAttachment?.options?.source?.s3?.captions[0]);
+      foldername = url.pathname.split('/').slice(0, -1).join('/');
+    }
+
+    // get caption keys for old cloudfront video migrate to S3
+    if (!isEmpty(existAttachment?.options?.cloudfront?.path)) {
+      const url = new URL(existAttachment?.options?.cloudfront?.path);
+      foldername = url.pathname.split('/').slice(0, -2).join('/') + '/text';
+    }
+
+    if (foldername) {
+      const list = await this.storageService.listFilesInBucketStorage({
+        Prefix: foldername.substring(1),
+      });
+      if (list['Contents']) {
+        for (let index = 0; index < list['Contents'].length; index++) {
+          const keyWithCloudfrontHost = `${this.awsStorageCloudFrontUrl}/${list['Contents'][index]['Key']}`;
+          keys.push(keyWithCloudfrontHost);
+        }
+      }
+    }
+
+    return keys.filter((key) => key.includes('.vtt') || key.includes('.srt'));
   }
 }
