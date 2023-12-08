@@ -550,6 +550,26 @@ export class MemberInfrastructure {
     return memberRepo.save(member);
   }
 
+  async upsertMemberBy(
+    manager: EntityManager,
+    data: DeepPartial<Member>,
+    by: FindOptionsWhere<Member>,
+  ): Promise<Member> {
+    const memberRepo = manager.getRepository(Member);
+    const existsMember = await memberRepo.findOneBy(by);
+    if (existsMember) {
+      return memberRepo.save({
+        ...existsMember,
+        ...data,
+      });
+    }
+    const member = memberRepo.create({
+      id: uuid.v4(),
+      ...data,
+    });
+    return memberRepo.save(member);
+  }
+
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {
     const memberPropertyConditions = pick(conditions, ['memberProperties'])
       .memberProperties as MemberPropertiesCondition[];
