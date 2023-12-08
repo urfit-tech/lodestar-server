@@ -44,12 +44,18 @@ export class LeadService {
         Object.keys(propertyNameToField),
         entityManager,
       );
-      const member = await this.memberService.upsertMemberByEmail(
-        appId,
-        body.email,
-        body.full_name,
-        body.email,
-        'general-member',
+      const member = await this.memberService.upsertMemberBy(
+        {
+          appId: app.id,
+          email: body.email,
+          name: body.full_name,
+          username: body.email,
+          role: 'general-member',
+        },
+        {
+          appId: app.id,
+          email: body.email,
+        },
       );
       const memberPropertyRepo = entityManager.getRepository(MemberProperty);
       const newProperties = properties.map((property) => {

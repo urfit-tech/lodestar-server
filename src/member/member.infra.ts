@@ -1,4 +1,4 @@
-import { EntityManager, FindOptionsWhere, OrderByCondition, In, DeleteResult, Equal } from 'typeorm';
+import { EntityManager, FindOptionsWhere, OrderByCondition, In, DeleteResult, Equal, DeepPartial } from 'typeorm';
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 import { first, keys, omit, pick, values } from 'lodash';
@@ -314,28 +314,22 @@ export class MemberInfrastructure {
     }
   }
 
-  async upsertMemberByEmail(
-    appId: string,
-    email: string,
-    name: string,
-    username: string,
-    role: string,
+  async upsertMemberBy(
     manager: EntityManager,
+    data: DeepPartial<Member>,
+    by: FindOptionsWhere<Member>,
   ): Promise<Member> {
     const memberRepo = manager.getRepository(Member);
-    const existsMember = await memberRepo.findOneBy({ email, appId });
+    const existsMember = await memberRepo.findOneBy(by);
     if (existsMember) {
-      existsMember.role = role;
-      existsMember.username = username;
-      return memberRepo.save(existsMember);
+      return memberRepo.save({
+        ...existsMember,
+        ...data,
+      });
     }
     const member = memberRepo.create({
       id: uuid.v4(),
-      appId,
-      email,
-      name,
-      username,
-      role,
+      ...data,
     });
     return memberRepo.save(member);
   }

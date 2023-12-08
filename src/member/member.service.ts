@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { chunk, flatten, isNull } from 'lodash';
-import { EntityManager, Equal, FindOptionsWhere, ILike, In, DeleteResult } from 'typeorm';
+import { EntityManager, Equal, FindOptionsWhere, ILike, In, DeleteResult, DeepPartial } from 'typeorm';
 import { ValidationError, isDateString, isEmpty } from 'class-validator';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -352,13 +352,7 @@ export class MemberService {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
   }
 
-  async upsertMemberByEmail(
-    appId: string,
-    email: string,
-    name: string,
-    username: string,
-    role: string,
-  ): Promise<Member> {
-    return this.memberInfra.upsertMemberByEmail(appId, email, name, username, role, this.entityManager);
+  async upsertMemberBy(data: DeepPartial<Member>, by: FindOptionsWhere<Member>): Promise<Member> {
+    return this.memberInfra.upsertMemberBy(this.entityManager, data, by);
   }
 }
