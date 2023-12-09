@@ -346,6 +346,7 @@ export class AuthService {
     const options = {
       keypairId: this.awsCloudfrontKeyPairId,
       privateKeyString: this.awsCloudfrontPrivateKey,
+      expireTime: new Date().getTime() + 6400000,
     };
     const signedUrl = getSignedUrl(url, options);
     return signedUrl;

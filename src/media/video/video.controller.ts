@@ -1,12 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   Logger,
   Param,
   Post,
-  Put,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -14,8 +15,6 @@ import {
 
 import { VideoService } from './video.service';
 import { VideoCaptionDTO, VideoTokenDTO } from './video.dto';
-import { Local } from '~/decorator';
-import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { StorageService } from '~/utility/storage/storage.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -56,27 +55,29 @@ export class VideoController {
     @UploadedFile() file: Express.Multer.File,
     @Param('videoId') videoId: string,
     @Body() body: VideoCaptionDTO,
-  ): Promise<{ code: string; message: string; result: [] }> {
+  ): Promise<{ code: string; message: string; result: string }> {
     const { buffer } = file;
     try {
-      await this.videoService.uploadCaption(videoId, body.key, buffer);
+      const key = await this.videoService.uploadCaption(videoId, body.key, buffer);
       return {
         code: 'SUCCESS',
         message: 'successfully update attachment options s3 captions',
-        result: null,
+        result: key,
       };
     } catch (err) {
       return {
         code: 'ERROR',
-        message: 'error update attachment options s3 captions',
-        result: err,
+        message: err.message,
+        result: '',
       };
     }
   }
 
   @UseGuards(AuthGuard)
   @Get(':videoId/captions')
-  async getCaptions(@Param('videoId') videoId: string): Promise<{ code: string; message: string; result: [] }> {
+  async getCaptions(
+    @Param('videoId') videoId: string,
+  ): Promise<{ code: string; message: string; result: Array<string> }> {
     try {
       const keys = await this.videoService.getCaptions(videoId);
       return {
@@ -85,7 +86,47 @@ export class VideoController {
         result: keys,
       };
     } catch (err) {
-      this.logger.error(err);
+      return {
+        code: 'ERROR',
+        message: err.message,
+        result: [],
+      };
     }
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete(':videoId/captions/:filename')
+  async deleteCaptions(
+    @Param('filename') filename: string,
+    @Param('videoId') videoId: string,
+  ): Promise<{ code: string; message: string; result: Array<string> }> {
+    try {
+      const keys = await this.videoService.deleteCaptions(videoId, filename);
+      return {
+        code: 'SUCCESS',
+        message: 'successfully delete s3 captions',
+        result: keys,
+      };
+    } catch (err) {
+      return {
+        code: 'ERROR',
+        message: err.message,
+        result: [],
+      };
+    }
+  }
+
+  @Get(['*.m3u8', '*.mpd'])
+  async getManifestWithSignUrl(@Req() request: Request) {
+    const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
+    const manifest = await this.storageService.getFileFromBucketStorage({
+      Key: key,
+    });
+    const signedManifest = await this.videoService.parseManifestWithSignUrl(
+      await manifest.Body.transformToString(),
+      key,
+      signature,
+    );
+    return signedManifest;
   }
 }

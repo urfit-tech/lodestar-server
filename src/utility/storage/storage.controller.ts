@@ -88,36 +88,4 @@ export class StorageController {
     const result = await this.storageService.completeMultipartUpload(Key, UploadId, MultipartUpload);
     return { location: result.Location };
   }
-
-  @Get('*.m3u8')
-  async getM3u8WithSignUrl(@Req() request: Request) {
-    const [key, signature] = decodeURI(request.url).split('storage/')[1].split('?');
-    const output = await this.storageService.getFileFromBucketStorage({
-      Key: key,
-    });
-    const host = this.awsStorageCloudFrontUrl;
-    const keyArray = key.split('/');
-    keyArray.pop();
-    const path = keyArray.join('/');
-    const res = (await output.Body.transformToString()).split('\n');
-    const signedRes = res
-      .map((row) => {
-        if (row.includes('.m3u8')) {
-          if (row.includes('URI=')) {
-            return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}"`;
-          }
-          return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
-        } else if (row.includes('.mp4')) {
-          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
-        } else if (row.includes('.ts') || row.includes('.vtt')) {
-          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
-        } else {
-          return row;
-        }
-      })
-      .join('\n');
-
-    console.log(signedRes);
-    return signedRes;
-  }
 }

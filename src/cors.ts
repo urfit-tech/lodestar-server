@@ -27,8 +27,7 @@ const corsOptionDelegate: CorsOptionsDelegate<any> = (
     origin.includes('localhost') ||
     origin.includes('ngrok') ||
     host.startsWith('localhost') ||
-    hostDomain === originDomain ||
-    hostDomain.includes('kolable.com')
+    hostDomain === originDomain
   ) {
     callback(null, { credentials: true, origin: true });
     return;

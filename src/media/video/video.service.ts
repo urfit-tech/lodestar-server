@@ -54,7 +54,7 @@ export class VideoService {
     if (cfOptions === null) {
       throw new APIException({
         code: 'E_ATTACHMENT',
-        message: `cannot get the attachment: no cloudflare options or no suck attachment`,
+        message: `cannot get the attachment: no cloudflare options or no attachment`,
       });
     }
     const { uid: cfUid } = cfOptions;
@@ -134,52 +134,88 @@ export class VideoService {
     return signedToken;
   }
 
-  public async uploadCaption(attachmentId: string, key: string, buffer: Buffer): Promise<Attachment> {
-    const existAttachment = await this.mediaInfra.getById(attachmentId, this.entityManager);
-    if (existAttachment?.options?.source?.s3?.captions) {
-      existAttachment.options.source.s3.captions.push(`s3://${this.awsS3BucketStorage}/${key}`);
-      existAttachment.options.source.s3.captions = [...new Set(existAttachment?.options?.source?.s3?.captions)];
+  public async uploadCaption(attachmentId: string, key: string, buffer: Buffer): Promise<string> {
+    const attachment = await this.mediaInfra.getById(attachmentId, this.entityManager);
+    if (attachment) {
+      await this.storageService.saveFileInBucketStorage({ Body: buffer, Key: key });
     } else {
-      existAttachment.options = {
-        ...existAttachment?.options,
-        source: {
-          ...existAttachment?.options?.source,
-          s3: { ...existAttachment?.options?.source?.s3, captions: [`s3://${this.awsS3BucketStorage}/${key}`] },
-        },
-      };
+      throw new APIException({
+        code: 'E_ATTACHMENT',
+        message: `cannot get the attachment`,
+      });
     }
-    await this.storageService.saveFileInBucketStorage({ Body: buffer, Key: key });
-    return await this.mediaInfra.upsertAttachment(existAttachment, this.entityManager);
+    return key;
   }
 
-  public async getCaptions(attachmentId: string): Promise<any> {
-    const existAttachment = await this.mediaInfra.getById(attachmentId, this.entityManager);
-    let foldername;
-    const keys = [];
-    // get caption keys captions for new video upload to S3
-    if (!isEmpty(existAttachment?.options?.source?.s3?.captions)) {
-      const url = new URL(existAttachment?.options?.source?.s3?.captions[0]);
-      foldername = url.pathname.split('/').slice(0, -1).join('/');
-    }
+  private isVideoSourceFromMediaConvert(videoOptions: any): boolean {
+    const isCreatedByMediaConvert = videoOptions?.cloudfront?.playPaths?.hls ? true : false;
+    return isCreatedByMediaConvert;
+  }
 
-    // get caption keys for old cloudfront video migrate to S3
-    if (!isEmpty(existAttachment?.options?.cloudfront?.path)) {
-      const url = new URL(existAttachment?.options?.cloudfront?.path);
-      foldername = url.pathname.split('/').slice(0, -2).join('/') + '/text';
-    }
-
-    if (foldername) {
-      const list = await this.storageService.listFilesInBucketStorage({
-        Prefix: foldername.substring(1),
+  public async getCaptions(attachmentId: string): Promise<Array<string>> {
+    const attachment = await this.mediaInfra.getById(attachmentId, this.entityManager);
+    if (!attachment) {
+      throw new APIException({
+        code: 'E_ATTACHMENT',
+        message: `cannot get the attachment`,
       });
-      if (list['Contents']) {
-        for (let index = 0; index < list['Contents'].length; index++) {
-          const keyWithCloudfrontHost = `${this.awsStorageCloudFrontUrl}/${list['Contents'][index]['Key']}`;
-          keys.push(keyWithCloudfrontHost);
-        }
+    }
+    const { options } = attachment;
+    const captionKeys = [];
+    const isCreatedByMediaConvert = this.isVideoSourceFromMediaConvert(options);
+    const pathname = isCreatedByMediaConvert
+      ? new URL(options?.cloudfront?.playPaths?.hls).pathname
+      : new URL(options?.cloudfront?.path).pathname;
+    const prefix = isCreatedByMediaConvert
+      ? pathname.split('/').slice(0, -3).join('/') + '/captions'
+      : pathname.split('/').slice(0, -2).join('/') + '/text';
+
+    const list = await this.storageService.listFilesInBucketStorage({
+      Prefix: prefix.substring(1),
+    });
+    if (list?.Contents) {
+      for (let index = 0; index < list.Contents.length; index++) {
+        const keyWithCloudfrontHost = `${this.awsStorageCloudFrontUrl}/${list.Contents[index].Key}`;
+        captionKeys.push(keyWithCloudfrontHost);
       }
     }
+    return captionKeys.filter((key) => key.includes('.vtt'));
+  }
 
-    return keys.filter((key) => key.includes('.vtt') || key.includes('.srt'));
+  public async deleteCaptions(attachmentId: string, filename: string): Promise<Array<string>> {
+    const keys = await this.getCaptions(attachmentId);
+
+    const keysNeedToDelete = keys.filter((key) => key.includes(filename));
+    for (const key of keysNeedToDelete) {
+      await this.storageService.deleteFileAtBucketStorage({ Key: new URL(key).pathname.substring(1) });
+    }
+    return keys;
+  }
+
+  public async parseManifestWithSignUrl(manifest: string, key: string, signature: string): Promise<string> {
+    const host = this.awsStorageCloudFrontUrl;
+    const keyArray = key.split('/');
+    keyArray.pop();
+    const path = keyArray.join('/');
+    const res = manifest.split('\n');
+    const signedManifest = res
+      .filter((row) => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
+      .map((row) => {
+        if (row.includes('.m3u8')) {
+          if (row.includes('URI=')) {
+            return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}"`;
+          }
+          return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
+        } else if (row.includes('.mp4')) {
+          // for mpd
+          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
+        } else if (row.includes('.ts') || row.includes('.vtt')) {
+          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
+        } else {
+          return row;
+        }
+      })
+      .join('\n');
+    return signedManifest;
   }
 }
