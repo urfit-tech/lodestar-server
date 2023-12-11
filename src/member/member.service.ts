@@ -351,8 +351,4 @@ export class MemberService {
   async getMemberTasks(memberId: string): Promise<Array<MemberTask>> {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
   }
-
-  async upsertMemberBy(data: DeepPartial<Member>, by: FindOptionsWhere<Member>): Promise<Member> {
-    return this.memberInfra.upsertMemberBy(this.entityManager, data, by);
-  }
 }
