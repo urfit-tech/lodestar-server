@@ -26,6 +26,7 @@ export class MediaService {
         },
       };
     }
+    attachment.updatedAt = new Date();
 
     return await this.mediaInfra.upsertAttachment(attachment, this.entityManager);
   }
