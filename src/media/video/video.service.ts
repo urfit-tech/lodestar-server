@@ -179,7 +179,19 @@ export class VideoService {
         captionKeys.push(keyWithCloudfrontHost);
       }
     }
-    return captionKeys.filter((key) => key.includes('.vtt'));
+
+    const result = captionKeys
+      .filter((key) => key.includes('.vtt'))
+      .sort((a, b) => {
+        if (a.includes('zh.vtt')) {
+          return -1;
+        } else if (b.includes('zh.vtt')) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
+    return result;
   }
 
   public async deleteCaptions(attachmentId: string, filename: string): Promise<Array<string>> {
@@ -215,6 +227,7 @@ export class VideoService {
           return row;
         }
       })
+      .map((row) => row.replace(',SUBTITLES="group_subtitle"', ''))
       .join('\n');
     return signedManifest;
   }
