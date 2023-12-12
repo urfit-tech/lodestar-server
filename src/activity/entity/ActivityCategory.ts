@@ -11,6 +11,12 @@ export class ActivityCategory {
   @Column('integer', { name: 'position' })
   position: number;
 
+  @Column('text', { name: 'activity_id' })
+  activityId: string;
+
+  @Column('text', { name: 'category_id' })
+  categoryId: string;
+
   @ManyToOne(() => Activity, (activity) => activity.activityCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

@@ -1,7 +1,7 @@
 import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
 
 import { MemberTag } from '~/member/entity/member_tag.entity';
-import { ActivityTag } from '~/entity/ActivityTag';
+import { ActivityTag } from '~/activity/entity/ActivityTag';
 import { MemberSpeciality } from '~/entity/MemberSpeciality';
 import { MerchandiseTag } from '~/entity/MerchandiseTag';
 import { PodcastProgramTag } from '~/entity/PodcastProgramTag';

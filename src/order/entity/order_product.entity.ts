@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
-import { ActivityAttendance } from '~/entity/ActivityAttendance';
+import { ActivityAttendance } from '~/activity/entity/ActivityAttendance';
 import { Currency } from '~/entity/Currency';
 import { OrderProductFile } from '~/entity/OrderProductFile';
 import { Product } from '~/entity/Product';

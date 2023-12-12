@@ -33,6 +33,9 @@ export class ActivitySession {
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
+  @Column('text', { name: 'activity_id' })
+  activityId: string;
+
   @OneToMany(() => ActivityAttendance, (activityAttendance) => activityAttendance.activitySession)
   activityAttendances: ActivityAttendance[];
 

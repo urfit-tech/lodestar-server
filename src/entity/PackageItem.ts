@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Activity } from './Activity';
+import { Activity } from '../activity/entity/Activity';
 import { PackageItemGroup } from './PackageItemGroup';
 import { Program } from './Program';
 

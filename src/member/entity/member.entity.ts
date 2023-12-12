@@ -3,7 +3,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm
 import { Attachment } from '~/media/attachment.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { App } from '~/app/entity/app.entity';
-import { Activity } from '~/entity/Activity';
+import { Activity } from '~/activity/entity/Activity';
 import { AppointmentPlan } from '~/entity/AppointmentPlan';
 import { AppPage } from '~/entity/AppPage';
 import { AppPageTemplate } from '~/entity/AppPageTemplate';
