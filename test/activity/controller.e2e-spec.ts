@@ -23,6 +23,15 @@ import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { Product } from '~/entity/Product';
 import { Currency } from '~/entity/Currency';
+import { createTestActivitySessionTicket } from '../factory/activitySessionTicket.factory';
+import { createTestActivityTicket } from '../factory/activityTicket.factory';
+import { createTestOrderLog } from '../factory/oderLog.factory';
+import { createTestProduct } from '../factory/product.factory';
+import { createTestCurrency } from '../factory/currency.factory';
+import { createTestOrderProduct } from '../factory/orderProduct.factory';
+import { createTestActivitySession } from '../factory/activitySession.factory';
+import { createTestActivity } from '../factory/activity.factory';
+import { createTestMember } from '../factory/member.factory';
 
 interface RepositoryMap {
   [key: string]: Repository<any>;
@@ -126,113 +135,78 @@ describe('ActivityController (e2e)', () => {
         appId: app.id,
       };
 
-      const memberId = v4();
-      const insertedMember = new Member();
-      insertedMember.appId = app.id;
-      insertedMember.id = memberId;
-      insertedMember.name = 'someName';
-      insertedMember.username = 'username';
-      insertedMember.email = 'example.com';
-      insertedMember.role = 'app-owner';
-      insertedMember.star = 0;
-      insertedMember.createdAt = new Date();
-      insertedMember.loginedAt = new Date();
-      await manager.save(insertedMember);
+      const insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
 
-      const insertedActivity = new Activity();
-      insertedActivity.app = app;
-      insertedActivity.organizer = insertedMember;
-      insertedActivity.title = 'AAAAA';
-      insertedActivity.description = 'BBBBBB';
-      insertedActivity.isPrivate = false;
-      await manager.save(insertedActivity);
+      const insertedActivity = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+      });
 
-      const insertedActivitySession = new ActivitySession();
-      insertedActivitySession.activity = insertedActivity;
-      insertedActivitySession.startedAt = new Date('2020-01-01T00:00:00Z');
-      insertedActivitySession.endedAt = new Date('2020-01-02T00:00:00Z');
-      insertedActivitySession.title = '第一場｜Lesson 1';
-      insertedActivitySession.location = '台北市中正區南陽街 13 號';
-      await manager.save(insertedActivitySession);
+      const insertedActivitySession1 = await createTestActivitySession(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-01T00:00:00Z'),
+        endedAt: new Date('2020-01-02T00:00:00Z'),
+      });
 
-      const insertedActivitySession2 = new ActivitySession();
-      insertedActivitySession2.activity = insertedActivity;
-      insertedActivitySession2.startedAt = new Date('2020-01-03T00:00:00Z');
-      insertedActivitySession2.endedAt = new Date('2020-01-04T00:00:00Z');
-      insertedActivitySession2.title = '第一場｜Lesson 2';
-      insertedActivitySession2.location = '台北市中正區南陽街 13 號';
-      await manager.save(insertedActivitySession2);
+      const insertedActivitySession2 = await createTestActivitySession(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-03T00:00:00Z'),
+        endedAt: new Date('2020-01-04T00:00:00Z'),
+      });
 
-      const insertedActivityTicket = new ActivityTicket();
-      insertedActivityTicket.activity = insertedActivity;
-      insertedActivityTicket.count = 100;
-      insertedActivityTicket.title = '早鳥票';
-      insertedActivityTicket.price = 2000;
-      insertedActivityTicket.isPublished = true;
-      insertedActivityTicket.startedAt = new Date('2020-01-01T00:00:00Z');
-      insertedActivityTicket.endedAt = new Date('2020-01-02T00:00:00Z');
-      await manager.save(insertedActivityTicket);
+      const insertedActivityTicket1 = await createTestActivityTicket(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-01T00:00:00Z'),
+        endedAt: new Date('2020-01-02T00:00:00Z'),
+      });
 
-      const insertedActivityTicket2 = new ActivityTicket();
-      insertedActivityTicket2.activity = insertedActivity;
-      insertedActivityTicket2.count = 100;
-      insertedActivityTicket2.title = '一般票';
-      insertedActivityTicket2.price = 2000;
-      insertedActivityTicket2.isPublished = true;
-      insertedActivityTicket2.startedAt = new Date('2020-01-01T00:00:00Z');
-      insertedActivityTicket2.endedAt = new Date('2020-01-02T00:00:00Z');
-      await manager.save(insertedActivityTicket2);
+      const insertedActivityTicket2 = await createTestActivityTicket(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-03T00:00:00Z'),
+        endedAt: new Date('2020-01-04T00:00:00Z'),
+      });
 
-      const insertedActivitySessionTicket = new ActivitySessionTicket();
-      insertedActivitySessionTicket.activitySession = insertedActivitySession;
-      insertedActivitySessionTicket.activitySessionType = 'offline';
-      insertedActivitySessionTicket.activityTicket = insertedActivityTicket;
-      await manager.save(insertedActivitySessionTicket);
+      const insertedActivitySessionTicket1 = await createTestActivitySessionTicket(manager, {
+        activitySession: insertedActivitySession1,
+        activityTicket: insertedActivityTicket1,
+        activitySessionType: 'offline',
+      });
 
-      const insertedActivitySessionTicket2 = new ActivitySessionTicket();
-      insertedActivitySessionTicket2.activitySession = insertedActivitySession;
-      insertedActivitySessionTicket2.activitySessionType = 'online';
-      insertedActivitySessionTicket2.activityTicket = insertedActivityTicket2;
-      await manager.save(insertedActivitySessionTicket2);
+      const insertedActivitySessionTicket2 = await createTestActivitySessionTicket(manager, {
+        activitySession: insertedActivitySession2,
+        activityTicket: insertedActivityTicket2,
+        activitySessionType: 'online',
+      });
 
-      const insertedOrderLog = new OrderLog();
-      insertedOrderLog.appId = app.id;
-      insertedOrderLog.member = insertedMember;
-      insertedOrderLog.invoiceOptions = {
-        name: 'XXX',
-        email: 'XXXX@gmail.com',
-        phone: '0934567890',
-        donationCode: '5380',
-      };
-      await manager.save(insertedOrderLog);
+      const insertedOrderLog = await createTestOrderLog(manager, {
+        member: insertedMember,
+        appId: app.id,
+      });
 
-      const insertedProduct = new Product();
-      insertedProduct.id = `ActivityTicket_${insertedActivityTicket.id}`;
-      insertedProduct.type = 'ActivityTicket';
-      insertedProduct.target = insertedActivityTicket.id;
-      await manager.save(insertedProduct);
+      const insertedProduct = await createTestProduct(manager, {
+        id: `ActivityTicket_${insertedActivityTicket1.id}`,
+        type: 'ActivityTicket',
+        target: insertedActivityTicket1.id,
+      });
 
-      const insertedCurrency = new Currency();
-      insertedCurrency.id = 'TWD';
-      insertedCurrency.minorUnits = 2;
-      insertedCurrency.label = 'default';
-      insertedCurrency.unit = 'default';
-      insertedCurrency.name = 'default';
-      await manager.save(insertedCurrency);
+      const insertedCurrency = await createTestCurrency(manager, {
+        id: 'TWD',
+      });
 
-      const insertedOrderProduct = new OrderProduct();
-      insertedOrderProduct.name = 'XXXX';
-      insertedOrderProduct.price = 2000;
-      insertedOrderProduct.order = insertedOrderLog;
-      insertedOrderProduct.deliveredAt = new Date('2020-01-01T00:00:00Z');
-      insertedOrderProduct.options = {
-        from: `/activities/${insertedActivity.id}`,
-        currencyId: 'TWD',
-        currencyPrice: 2000,
-      };
-      insertedOrderProduct.product = insertedProduct;
-      insertedOrderProduct.currency = insertedCurrency;
-      await manager.save(insertedOrderProduct);
+      const insertedOrderProduct = await createTestOrderProduct(manager, {
+        order: insertedOrderLog,
+        product: insertedProduct,
+        currency: insertedCurrency,
+        productId: insertedActivity.id,
+        options: {
+          from: `/activities/${insertedActivity.id}`,
+          currencyId: insertedCurrency.id,
+          currencyPrice: 2000,
+        },
+      });
 
       const response = await request(application.getHttpServer())
         .get(ACTIVITY_ROUTE)
@@ -251,16 +225,16 @@ describe('ActivityController (e2e)', () => {
             id: insertedActivity.id,
             coverUrl: insertedActivity.coverUrl,
             title: insertedActivity.title,
-            publishedAt: insertedActivity.publishedAt,
+            publishedAt: insertedActivity.publishedAt.toISOString(),
             includeSessionTypes: [
-              insertedActivitySessionTicket.activitySessionType,
+              insertedActivitySessionTicket1.activitySessionType,
               insertedActivitySessionTicket2.activitySessionType,
             ],
             participantsCount: {
               online: '0',
               offline: '1',
             },
-            startedAt: insertedActivitySession.startedAt.toISOString(),
+            startedAt: insertedActivitySession1.startedAt.toISOString(),
             endedAt: insertedActivitySession2.endedAt.toISOString(),
             isPrivate: insertedActivity.isPrivate,
           },
