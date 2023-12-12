@@ -9,11 +9,12 @@ import { ProgramService } from '~/program/program.service';
 import { UtilityService } from '~/utility/utility.service';
 
 import { MediaInfrastructure } from '../media.infra';
-import { CfVideoStreamOptions } from './video.type';
+import { CfVideoStreamOptions, CloudfrontVideoOptions } from './video.type';
 import { AuthService } from '~/auth/auth.service';
 import { Attachment } from '../attachment.entity';
 import { StorageService } from '~/utility/storage/storage.service';
 import { last, isEmpty } from 'lodash';
+import { getSignedUrl } from 'aws-cloudfront-sign';
 
 @Injectable()
 export class VideoService {
@@ -21,12 +22,16 @@ export class VideoService {
   private readonly cfStreamingJwk: string;
   private readonly awsS3BucketStorage: string;
   private readonly awsStorageCloudFrontUrl: string;
+  private readonly awsCloudfrontKeyPairId: string;
+  private readonly awsCloudfrontPrivateKey: string;
   constructor(
     private readonly configService: ConfigService<{
       CF_STREAMING_KEY_ID: string;
       CF_STREAMING_JWK: string;
       AWS_S3_BUCKET_STORAGE: string;
       AWS_STORAGE_CLOUDFRONT_URL: string;
+      AWS_CLOUDFRONT_KEY_PAIR_ID: string;
+      AWS_CLOUDFRONT_PRIVATE_KEY: string;
     }>,
     private readonly mediaInfra: MediaInfrastructure,
     private readonly authService: AuthService,
@@ -39,6 +44,8 @@ export class VideoService {
     this.cfStreamingJwk = configService.getOrThrow('CF_STREAMING_JWK');
     this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
     this.awsStorageCloudFrontUrl = configService.getOrThrow('AWS_STORAGE_CLOUDFRONT_URL');
+    this.awsCloudfrontKeyPairId = configService.getOrThrow('AWS_CLOUDFRONT_KEY_PAIR_ID');
+    this.awsCloudfrontPrivateKey = configService.getOrThrow('AWS_CLOUDFRONT_PRIVATE_KEY');
   }
 
   async generateCfVideoToken(videoId: string, authToken?: string) {
@@ -211,7 +218,7 @@ export class VideoService {
     const path = keyArray.join('/');
     const res = manifest.split('\n');
     const signedManifest = res
-      .filter((row) => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
+      // .filter((row) => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
       .map((row) => {
         if (row.includes('.m3u8')) {
           if (row.includes('URI=')) {
@@ -227,8 +234,65 @@ export class VideoService {
           return row;
         }
       })
-      .map((row) => row.replace(',SUBTITLES="group_subtitle"', ''))
+      // .map((row) => row.replace(',SUBTITLES="group_subtitle"', ''))
       .join('\n');
     return signedManifest;
+  }
+
+  private async getCloudfrontOptions(id: string): Promise<CloudfrontVideoOptions | null> {
+    try {
+      const attachment = await this.mediaInfra.getById(id, this.entityManager);
+      return attachment.options.cloudfront as CloudfrontVideoOptions;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  }
+
+  public async generateCloudfrontSignedUrl(videoId: string, authToken?: string) {
+    const isAbleToGenerate = await this.isAbleToGenerate(videoId, authToken);
+    console.log(isAbleToGenerate);
+    if (!isAbleToGenerate) {
+      throw new APIException({
+        code: 'E_SIGN_URL',
+        message: `the content is not for trial`,
+      });
+    }
+
+    const cloudfrontOptions = await this.getCloudfrontOptions(videoId);
+    if (cloudfrontOptions === null) {
+      throw new APIException({
+        code: 'E_ATTACHMENT',
+        message: `cannot get the attachment: no cloudfront options or no attachment`,
+      });
+    }
+    const { path, playPaths } = cloudfrontOptions;
+
+    if (path && playPaths) {
+      throw new APIException({
+        code: 'E_ATTACHMENT',
+        message: `cannot get the attachment: no path in cloudfront option`,
+      });
+    }
+
+    const videoUrl = playPaths?.hls ? `${playPaths.hls.split('hls')[0]}*` : `${path.split('manifest')[0]}*`;
+    const captionUrl = playPaths?.hls
+      ? `${playPaths.hls.split('output')[0]}captions/*`
+      : `${path.split('manifest')[0]}*`;
+    const signedVideoUrl = this.signCloudfrontUrl(videoUrl);
+    const signedCaptionUrl = this.signCloudfrontUrl(captionUrl);
+    const captionPaths = await this.getCaptions(videoId);
+
+    return { signedVideoUrl, signedCaptionUrl, cloudfrontOptions, captionPaths };
+  }
+
+  private signCloudfrontUrl(url: string) {
+    const options = {
+      keypairId: this.awsCloudfrontKeyPairId,
+      privateKeyString: this.awsCloudfrontPrivateKey,
+      expireTime: new Date().getTime() + 6400000,
+    };
+    const signedUrl = getSignedUrl(url, options);
+    return signedUrl;
   }
 }

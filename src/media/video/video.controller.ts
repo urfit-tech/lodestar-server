@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -128,5 +129,16 @@ export class VideoController {
       signature,
     );
     return signedManifest;
+  }
+
+  @Get(':videoId/sign')
+  async signUrl(@Headers('Authorization') authorization: string, @Param('videoId') videoId: string) {
+    const [_, token] = authorization ? authorization.split(' ') : [undefined, undefined];
+    const signedData = await this.videoService.generateCloudfrontSignedUrl(videoId, token);
+    return {
+      code: 'SUCCESS',
+      message: 'success set signedUrl',
+      result: signedData,
+    };
   }
 }

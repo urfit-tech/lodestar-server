@@ -12,3 +12,12 @@ export type CfVideoStreamOptions = {
   modified: string;
   created: string;
 };
+
+export type CloudfrontVideoOptions = {
+  path?: string;
+  playPaths?: {
+    hls: string;
+    dash: string;
+  };
+  status?: string;
+};
