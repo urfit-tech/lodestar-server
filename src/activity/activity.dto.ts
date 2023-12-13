@@ -37,6 +37,9 @@ export class ActivityDto {
   @ApiProperty()
   isPrivate: boolean;
 
+  @ApiProperty({ type: String, nullable: true, example: '2023-07-21T12:36:52.248Z' })
+  createdAt: Date | null;
+
   constructor(data?: Partial<ActivityDto>) {
     if (data) {
       Object.assign(this, data);

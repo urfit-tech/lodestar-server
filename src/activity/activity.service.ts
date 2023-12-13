@@ -13,40 +13,62 @@ export class ActivityService {
 
   async getActivityCollection(activityCollectionDto: ActivityCollectionDTO) {
     const response = new FetchActivitiesResponseDto();
-    const activities = await this.activityInfra.getByApp(
+    const [activities, totalCount] = await this.activityInfra.getByApp(
       this.entityManager,
       activityCollectionDto.basicCondition.appId,
+      activityCollectionDto.limit,
+      activityCollectionDto.offset,
+      activityCollectionDto.categoryId,
+      activityCollectionDto.basicCondition.activityEndedAfterNow,
+      activityCollectionDto.basicCondition.publishedAtNotNull,
+      activityCollectionDto.basicCondition.isPrivate,
     );
-
-    console.log('getActivityCollection getByApp', activities);
 
     const activityDtos = await Promise.all(
       activities.map(async (activity) => {
-        const [activityDuration, sessionType, sessionTicketEnrollmentCount] = await Promise.all([
-          this.activityInfra.getActivityDurationByActivityId(this.entityManager, activity.id),
-          this.activityInfra.getActivitySessionTypeByActivityId(this.entityManager, activity.id),
-          this.activityInfra.getActivityParticipantsByActivityId(this.entityManager, activity.id),
-        ]);
+        console.time(`Activity Duration - ${activity.id}`);
+        const activityDuration = await this.activityInfra.getActivityDurationByActivityId(
+          this.entityManager,
+          activity.id,
+        );
+        console.timeEnd(`Activity Duration - ${activity.id}`);
+
+        console.time(`Session Type - ${activity.id}`);
+        const sessionType = await this.activityInfra.getActivitySessionTypeByActivityId(
+          this.entityManager,
+          activity.id,
+        );
+        console.timeEnd(`Session Type - ${activity.id}`);
+
+        console.time(`Participants Count - ${activity.id}`);
+        const sessionTicketEnrollmentCount = await this.activityInfra.getActivityParticipantsByActivityId(
+          this.entityManager,
+          activity.id,
+        );
+        console.timeEnd(`Participants Count - ${activity.id}`);
 
         return new ActivityDto({
           id: activity.id,
-          startedAt: activityDuration.startedAt,
-          endedAt: activityDuration.endedAt,
+          startedAt: activityDuration?.startedAt,
+          endedAt: activityDuration?.endedAt,
           coverUrl: activity.coverUrl,
           isPrivate: activity.isPrivate,
           includeSessionTypes: sessionType,
           publishedAt: activity.publishedAt,
           title: activity.title,
+          createdAt: activity.createdAt,
           participantsCount: {
-            online: sessionTicketEnrollmentCount.activityOnlineSessionTicketCount,
-            offline: sessionTicketEnrollmentCount.activityOfflineSessionTicketCount,
+            online: sessionTicketEnrollmentCount ? sessionTicketEnrollmentCount.activityOnlineSessionTicketCount : 0,
+            offline: sessionTicketEnrollmentCount ? sessionTicketEnrollmentCount.activityOfflineSessionTicketCount : 0,
           },
         });
       }),
     );
 
     response.activities = activityDtos;
-    response.totalCount = activities.length;
+    response.totalCount = totalCount;
+
+    console.log('totalCount', totalCount);
 
     return response;
   }

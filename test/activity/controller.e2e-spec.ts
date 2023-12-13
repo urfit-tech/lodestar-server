@@ -32,6 +32,10 @@ import { createTestOrderProduct } from '../factory/orderProduct.factory';
 import { createTestActivitySession } from '../factory/activitySession.factory';
 import { createTestActivity } from '../factory/activity.factory';
 import { createTestMember } from '../factory/member.factory';
+import { createTestCategory } from '../factory/category.factory';
+import { createTestActivityCategory } from '../factory/activityCategory.factory';
+import { ActivityCategory } from '~/activity/entity/ActivityCategory';
+import { Category } from '~/definition/entity/category.entity';
 
 interface RepositoryMap {
   [key: string]: Repository<any>;
@@ -47,6 +51,8 @@ describe('ActivityController (e2e)', () => {
 
   async function initializeRepositories(manager: EntityManager) {
     return {
+      activityCategoryRepo: manager.getRepository(ActivityCategory),
+      categoryRepo: manager.getRepository(Category),
       orderProductRepo: manager.getRepository(OrderProduct),
       productRepo: manager.getRepository(Product),
       orderLogRepo: manager.getRepository(OrderLog),
@@ -243,6 +249,164 @@ describe('ActivityController (e2e)', () => {
       });
 
       expect(response.body.totalCount).toBe(1);
+    });
+
+    it('should get correct category response', async () => {
+      const { requestHeader } = await fetchToken();
+
+      const basicCondition = {
+        organizerId: null,
+        isPrivate: false,
+        publishedAtNotNull: true,
+        activityEndedAfterNow: false,
+        appId: app.id,
+      };
+
+      const insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
+
+      const insertedActivity = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+      });
+
+      const insertedActivity2 = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+      });
+
+      const insertedActivity3 = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+      });
+
+      const insertedActivitySession1 = await createTestActivitySession(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-01T00:00:00Z'),
+        endedAt: new Date('2020-01-02T00:00:00Z'),
+      });
+
+      const insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
+      const insertedActivityCategory = await createTestActivityCategory(manager, {
+        activity: insertedActivity,
+        category: insertedCategory,
+      });
+
+      const insertedActivityCategory2 = await createTestActivityCategory(manager, {
+        activity: insertedActivity2,
+        category: insertedCategory,
+      });
+
+      const response = await request(application.getHttpServer())
+        .get(ACTIVITY_ROUTE)
+        .set(requestHeader)
+        .send({
+          basicCondition,
+          categoryId: insertedCategory.id,
+          limit: 20,
+          offset: 0,
+        })
+        .expect(200);
+
+      expect(response.body.activities.map((v) => v.id).includes(insertedActivity.id)).toBe(true);
+
+      expect(response.body.totalCount).toBe(2);
+    });
+
+    it('should get correct offset and limit top 10', async () => {
+      const { requestHeader } = await fetchToken();
+
+      const basicCondition = {
+        organizerId: null,
+        isPrivate: false,
+        publishedAtNotNull: true,
+        activityEndedAfterNow: false,
+        appId: app.id,
+      };
+
+      const insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
+
+      const numberOfActivities = 50;
+      const activities = [];
+
+      for (let i = 0; i < numberOfActivities; i++) {
+        const insertedActivity = await createTestActivity(manager, {
+          app: app,
+          organizer: insertedMember,
+        });
+
+        activities.push(insertedActivity);
+      }
+
+      const response = await request(application.getHttpServer())
+        .get(ACTIVITY_ROUTE)
+        .set(requestHeader)
+        .send({
+          basicCondition,
+          categoryId: null,
+          limit: 10,
+          offset: 0,
+        })
+        .expect(200);
+
+      expect(response.body.activities.length).toBe(10);
+
+      const expectedActivityIds = activities.slice(40, 50).map((activity) => activity.id);
+      expect(response.body.activities.map((v) => v.id)).toEqual(expect.arrayContaining(expectedActivityIds));
+    });
+
+    it('should get correct activity , offset 2 limit 8', async () => {
+      const { requestHeader } = await fetchToken();
+
+      const basicCondition = {
+        organizerId: null,
+        isPrivate: false,
+        publishedAtNotNull: true,
+        activityEndedAfterNow: false,
+        appId: app.id,
+      };
+
+      const insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
+
+      const numberOfActivities = 50;
+      const activities = [];
+
+      for (let i = 0; i < numberOfActivities; i++) {
+        const insertedActivity = await createTestActivity(manager, {
+          app: app,
+          organizer: insertedMember,
+        });
+
+        activities.push(insertedActivity);
+      }
+
+      const response = await request(application.getHttpServer())
+        .get(ACTIVITY_ROUTE)
+        .set(requestHeader)
+        .send({
+          basicCondition,
+          categoryId: null,
+          limit: 8,
+          offset: 2,
+        })
+        .expect(200);
+
+      expect(response.body.activities.length).toBe(8);
+
+      const expectedActivityIds = activities.slice(40, 48).map((activity) => activity.id);
+      expect(response.body.activities.map((v) => v.id)).toEqual(expect.arrayContaining(expectedActivityIds));
     });
   });
 });
