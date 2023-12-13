@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { MemberService } from '~/member/member.service';
 import { APIException } from '~/api.excetion';
 import { ProgramInfrastructure } from './program.infra';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 
 @Injectable()
 export class ProgramService {
@@ -103,5 +104,17 @@ export class ProgramService {
         (a: { createdAt: string }, b: { createdAt: string }) =>
           dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
       );
+  }
+
+  public async findProgramContentById(id: string, entityManager: EntityManager): Promise<ProgramContent | null> {
+    const programContentRepo = entityManager.getRepository(ProgramContent);
+    return programContentRepo.findOneBy({ id });
+  }
+
+  public async saveProgramContentLogs(
+    programContentLogs: ProgramContentLog[],
+    entityManager: EntityManager,
+  ): Promise<void> {
+    await entityManager.save(ProgramContentLog, programContentLogs);
   }
 }

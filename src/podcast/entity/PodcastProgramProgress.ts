@@ -16,6 +16,9 @@ export class PodcastProgramProgress {
   @Column('uuid', { name: 'podcast_program_id', unique: true })
   podcastProgramId: string;
 
+  @Column('uuid', { name: 'podcast_album_id', unique: true })
+  podcastAlbumId: string;
+
   @Column('numeric', { name: 'progress', default: () => 0 })
   progress: number;
 

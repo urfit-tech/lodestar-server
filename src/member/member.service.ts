@@ -339,7 +339,13 @@ export class MemberService {
       .map((each) => each.serializeToCsvRawRow(headerInfos));
   }
 
+
+  async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
+    await this.memberInfra.updateMemberLoginDate(memberId, loginedAt, entityManager);
+  }
+
   async deleteMemberByEmail(appId: string, email: string): Promise<DeleteResult> {
     return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager);
   }
+
 }

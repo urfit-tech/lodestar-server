@@ -3,6 +3,8 @@ import { EntityManager } from 'typeorm';
 import { Program } from '~/entity/Program';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { UtilityService } from '~/utility/utility.service';
+import { ProgramContent } from './entity/program_content.entity';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 
 @Injectable()
 export class ProgramInfrastructure {
@@ -190,5 +192,14 @@ export class ProgramInfrastructure {
       .getRawMany();
 
     return this.utilityService.convertObjectKeysToCamelCase(programs);
+  }
+
+  async findProgramContentById(id: string, entityManager: EntityManager): Promise<ProgramContent | null> {
+    const programContentRepo = entityManager.getRepository(ProgramContent);
+    return programContentRepo.findOneBy({ id });
+  }
+
+  async saveProgramContentLogs(programContentLogs: ProgramContentLog[], entityManager: EntityManager): Promise<void> {
+    await entityManager.save(ProgramContentLog, programContentLogs);
   }
 }
