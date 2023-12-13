@@ -1,30 +1,50 @@
-import { EntityManager } from 'typeorm';
+import { EntityManager, SelectQueryBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Activity } from './entity/Activity';
-import { ActivityDuringPeriod } from './view_entity/ActivityDuringPeriod';
 import { ActivitySessionTicket } from './entity/ActivitySessionTicket';
 import { ActivitySessionTicketEnrollmentCount } from './view_entity/ActivitySessionTicketEnrollmentCount';
 
+interface ActivityDuration {
+  startedAt: Date;
+  endedAt: Date;
+}
+
 @Injectable()
 export class ActivityInfrastructure {
+  createActivityPeriodSubQuery(manager: EntityManager, appId: string): SelectQueryBuilder<Activity> {
+    return manager
+      .getRepository(Activity)
+      .createQueryBuilder('activity')
+      .select('activity.id', 'unique_activity_id')
+      .leftJoin('activity.activitySessions', 'as')
+      .addSelect('MIN(as.started_at)', 'started_at')
+      .addSelect('MAX(as.ended_at)', 'ended_at')
+      .where('activity.deleted_at IS NULL')
+      .andWhere('activity.app_id = :appId', { appId })
+      .groupBy('activity.id');
+  }
+
   async getByApp(
     manager: EntityManager,
     appId: string,
     limit = 10,
     offset = 0,
     categoryId?: string,
-    activityEndedAfterNow?: boolean,
-    publishedAtNotNull = true,
-    isPrivate = false,
+    scenario?: 'holding' | 'finished' | 'draft' | 'privateHolding',
   ): Promise<[Activity[], number]> {
+    console.log('get by app scenario', scenario);
     const activityRepo = manager.getRepository(Activity);
+
+    const activityPeriodSubQuery = this.createActivityPeriodSubQuery(manager, appId);
 
     const queryBuilder = activityRepo
       .createQueryBuilder('activity')
-      .leftJoinAndSelect('activity_during_period', 'adp', 'adp.activity_id = activity.id')
-      .leftJoinAndSelect('activity_session_ticket_enrollment_count', 'astec', 'astec.activity_id = activity.id')
-      .leftJoinAndSelect('activity.activityCategories', 'ac', 'ac.activity_id = activity.id')
-      .where('activity.appId = :appId', { appId });
+      .leftJoin(`(${activityPeriodSubQuery.getQuery()})`, 'adp', 'adp.unique_activity_id = activity.id')
+      .leftJoin('activity.activityCategories', 'ac', 'ac.activity_id = activity.id')
+      .where('activity.appId = :appId', { appId })
+      .setParameters({
+        ...activityPeriodSubQuery.getParameters(),
+      });
 
     if (categoryId) {
       console.log('categoryId', categoryId);
@@ -33,61 +53,109 @@ export class ActivityInfrastructure {
         .andWhere('activityCategory.categoryId = :categoryId', { categoryId });
     }
 
-    if (typeof activityEndedAfterNow !== 'undefined') {
-      if (activityEndedAfterNow) {
-        queryBuilder.andWhere('adp.ended_at is not null').andWhere('adp.ended_at > now()');
-      } else {
-        queryBuilder.andWhere('adp.ended_at < now()').orWhere('adp.ended_at is null');
-      }
+    switch (scenario) {
+      case 'holding':
+        queryBuilder
+          .andWhere('activity.is_private = false')
+          .andWhere('activity.published_at IS NOT NULL')
+          .andWhere('adp.ended_at > CURRENT_TIMESTAMP');
+        break;
+      case 'finished':
+        queryBuilder.andWhere('activity.published_at IS NOT NULL').andWhere('adp.ended_at < CURRENT_TIMESTAMP');
+        break;
+      case 'draft':
+        queryBuilder.andWhere('activity.published_at IS NULL');
+        break;
+      case 'privateHolding':
+        queryBuilder.andWhere('activity.is_private = true').andWhere('adp.ended_at > CURRENT_TIMESTAMP');
+        break;
     }
-
-    if (!publishedAtNotNull) {
-      queryBuilder.andWhere('activity.published_at is null');
-    } else {
-      queryBuilder.andWhere('activity.published_at is not null');
-    }
-
-    if (isPrivate) {
-      queryBuilder.andWhere('activity.is_private = true');
-    }
-
+    console.log(queryBuilder.getSql());
     queryBuilder.orderBy('activity.createdAt', 'DESC', 'NULLS LAST');
 
     return queryBuilder.take(limit).skip(offset).getManyAndCount();
   }
 
-  async getActivityDurationByActivityId(manager: EntityManager, activityId: string): Promise<ActivityDuringPeriod> {
-    const activityDuringPeriodRepo = manager.getRepository(ActivityDuringPeriod);
+  async getActivityDurationsByActivityIds(
+    manager: EntityManager,
+    appId: string,
+    activityIds: string[],
+  ): Promise<Map<string, ActivityDuration>> {
+    const query = manager
+      .getRepository(Activity)
+      .createQueryBuilder('activity')
+      .select('activity.id', 'activity_id')
+      .leftJoin('activity.activitySessions', 'as')
+      .addSelect('MIN(as.started_at)', 'started_at')
+      .addSelect('MAX(as.ended_at)', 'ended_at')
+      .where('activity.deleted_at IS NULL')
+      .andWhere('activity.app_id = :appId', { appId })
+      .andWhere('activity.id IN (:...activityIds)', { activityIds })
+      .groupBy('activity.id');
+    console.log(activityIds);
+    console.log('raw', query.getSql());
 
-    return activityDuringPeriodRepo.findOne({
-      where: { activityId: activityId },
+    const results = await query.getRawMany();
+
+    const durations = new Map<string, ActivityDuration>();
+    results.forEach((result) => {
+      durations.set(result.activity_id, {
+        startedAt: new Date(result.started_at),
+        endedAt: new Date(result.ended_at),
+      });
     });
+
+    return durations;
   }
 
-  async getActivitySessionTypeByActivityId(
+  async getActivitySessionTypesByActivityIds(
     manager: EntityManager,
-    activityId: string,
-  ): Promise<('offline' | 'online')[]> {
+    activityIds: string[],
+  ): Promise<Map<string, ('offline' | 'online')[]>> {
     const activitySessionTickets = await manager
       .getRepository(ActivitySessionTicket)
       .createQueryBuilder('activitySessionTicket')
-      .leftJoinAndSelect('activitySessionTicket.activityTicket', 'activityTicket')
-      .leftJoinAndSelect('activityTicket.activity', 'activity')
-      .where('activity.id = :activityId', { activityId })
-      .getMany();
+      .addSelect('activity.id', 'activity_id')
+      .leftJoin('activitySessionTicket.activityTicket', 'activityTicket')
+      .leftJoin('activityTicket.activity', 'activity')
+      .where('activity.id IN (:...activityIds)', { activityIds })
+      .getRawMany();
+    const sessionTypesMap = new Map<string, Set<'offline' | 'online'>>();
 
-    const sessionTypes = new Set(activitySessionTickets.map((v) => v.activitySessionType as 'offline' | 'online'));
+    for (const ticket of activitySessionTickets) {
+      const activityId = ticket.activity_id;
+      if (activityId) {
+        let typesSet = sessionTypesMap.get(activityId);
+        if (!typesSet) {
+          typesSet = new Set<'offline' | 'online'>();
+          sessionTypesMap.set(activityId, typesSet);
+        }
+        typesSet.add(ticket.activitySessionTicket_activity_session_type as 'offline' | 'online');
+      }
+    }
 
-    return Array.from(sessionTypes);
+    const sessionTypesMapAsArray = new Map<string, ('offline' | 'online')[]>();
+    sessionTypesMap.forEach((typesSet, activityId) => {
+      sessionTypesMapAsArray.set(activityId, Array.from(typesSet));
+    });
+    return sessionTypesMapAsArray;
   }
 
-  async getActivityParticipantsByActivityId(
+  async getActivityParticipantsByActivityIds(
     manager: EntityManager,
-    activityId: string,
-  ): Promise<ActivitySessionTicketEnrollmentCount> {
-    const sessionTicketEnrollmentCount = await manager.getRepository(ActivitySessionTicketEnrollmentCount).findOne({
-      where: { activityId: activityId },
+    activityIds: string[],
+  ): Promise<Map<string, ActivitySessionTicketEnrollmentCount>> {
+    const sessionTicketEnrollmentCounts = await manager
+      .getRepository(ActivitySessionTicketEnrollmentCount)
+      .createQueryBuilder('enrollmentCount')
+      .where('enrollmentCount.activityId IN (:...activityIds)', { activityIds })
+      .getMany();
+
+    const enrollmentCountMap = new Map<string, ActivitySessionTicketEnrollmentCount>();
+    sessionTicketEnrollmentCounts.forEach((count) => {
+      enrollmentCountMap.set(count.activityId, count);
     });
-    return sessionTicketEnrollmentCount;
+
+    return enrollmentCountMap;
   }
 }

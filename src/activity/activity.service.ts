@@ -12,58 +12,63 @@ export class ActivityService {
   ) {}
 
   async getActivityCollection(activityCollectionDto: ActivityCollectionDTO) {
+    console.log('activityCollectionDto', activityCollectionDto.basicCondition);
     const response = new FetchActivitiesResponseDto();
+
+    console.time('Get Activities By App');
     const [activities, totalCount] = await this.activityInfra.getByApp(
       this.entityManager,
       activityCollectionDto.basicCondition.appId,
       activityCollectionDto.limit,
       activityCollectionDto.offset,
       activityCollectionDto.categoryId,
-      activityCollectionDto.basicCondition.activityEndedAfterNow,
-      activityCollectionDto.basicCondition.publishedAtNotNull,
-      activityCollectionDto.basicCondition.isPrivate,
+      activityCollectionDto.basicCondition.scenario,
     );
+    console.timeEnd('Get Activities By App');
 
-    const activityDtos = await Promise.all(
-      activities.map(async (activity) => {
-        console.time(`Activity Duration - ${activity.id}`);
-        const activityDuration = await this.activityInfra.getActivityDurationByActivityId(
-          this.entityManager,
-          activity.id,
-        );
-        console.timeEnd(`Activity Duration - ${activity.id}`);
+    const activityIds = activities.map((activity) => activity.id);
 
-        console.time(`Session Type - ${activity.id}`);
-        const sessionType = await this.activityInfra.getActivitySessionTypeByActivityId(
-          this.entityManager,
-          activity.id,
-        );
-        console.timeEnd(`Session Type - ${activity.id}`);
-
-        console.time(`Participants Count - ${activity.id}`);
-        const sessionTicketEnrollmentCount = await this.activityInfra.getActivityParticipantsByActivityId(
-          this.entityManager,
-          activity.id,
-        );
-        console.timeEnd(`Participants Count - ${activity.id}`);
-
-        return new ActivityDto({
-          id: activity.id,
-          startedAt: activityDuration?.startedAt,
-          endedAt: activityDuration?.endedAt,
-          coverUrl: activity.coverUrl,
-          isPrivate: activity.isPrivate,
-          includeSessionTypes: sessionType,
-          publishedAt: activity.publishedAt,
-          title: activity.title,
-          createdAt: activity.createdAt,
-          participantsCount: {
-            online: sessionTicketEnrollmentCount ? sessionTicketEnrollmentCount.activityOnlineSessionTicketCount : 0,
-            offline: sessionTicketEnrollmentCount ? sessionTicketEnrollmentCount.activityOfflineSessionTicketCount : 0,
-          },
-        });
-      }),
+    console.time('Get Activity Durations');
+    const activityDurations = await this.activityInfra.getActivityDurationsByActivityIds(
+      this.entityManager,
+      activityCollectionDto.basicCondition.appId,
+      activityIds,
     );
+    console.timeEnd('Get Activity Durations');
+
+    console.time('Get Session Types');
+    const sessionTypes = await this.activityInfra.getActivitySessionTypesByActivityIds(this.entityManager, activityIds);
+    console.timeEnd('Get Session Types');
+
+    console.time('Get Participants Counts');
+    const participantsCounts = await this.activityInfra.getActivityParticipantsByActivityIds(
+      this.entityManager,
+      activityIds,
+    );
+    console.timeEnd('Get Participants Counts');
+
+    // 创建活动 DTOs
+    const activityDtos = activities.map((activity) => {
+      const activityDuration = activityDurations.get(activity.id);
+      const sessionType = sessionTypes.get(activity.id);
+      const sessionTicketEnrollmentCount = participantsCounts.get(activity.id);
+
+      return new ActivityDto({
+        id: activity.id,
+        startedAt: activityDuration?.startedAt,
+        endedAt: activityDuration?.endedAt,
+        coverUrl: activity.coverUrl,
+        isPrivate: activity.isPrivate,
+        includeSessionTypes: sessionType || [],
+        publishedAt: activity.publishedAt,
+        title: activity.title,
+        createdAt: activity.createdAt,
+        participantsCount: {
+          online: sessionTicketEnrollmentCount ? sessionTicketEnrollmentCount.activityOnlineSessionTicketCount : 0,
+          offline: sessionTicketEnrollmentCount ? sessionTicketEnrollmentCount.activityOfflineSessionTicketCount : 0,
+        },
+      });
+    });
 
     response.activities = activityDtos;
     response.totalCount = totalCount;
