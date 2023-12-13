@@ -10,3 +10,12 @@ export class VideoCaptionDTO {
   @IsString()
   key: string;
 }
+
+export class VideoSignResponseDTO {
+  videoSignedPaths: {
+    hlsPath: string;
+    dashPath: string;
+    cloudfrontMigratedHlsPath: string;
+  };
+  captionSignedPaths: Array<string>;
+}

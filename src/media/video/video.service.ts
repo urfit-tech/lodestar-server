@@ -11,9 +11,7 @@ import { UtilityService } from '~/utility/utility.service';
 import { MediaInfrastructure } from '../media.infra';
 import { CfVideoStreamOptions, CloudfrontVideoOptions } from './video.type';
 import { AuthService } from '~/auth/auth.service';
-import { Attachment } from '../attachment.entity';
 import { StorageService } from '~/utility/storage/storage.service';
-import { last, isEmpty } from 'lodash';
 import { getSignedUrl } from 'aws-cloudfront-sign';
 
 @Injectable()
@@ -218,7 +216,7 @@ export class VideoService {
     const path = keyArray.join('/');
     const res = manifest.split('\n');
     const signedManifest = res
-      // .filter((row) => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
+      .filter((row) => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
       .map((row) => {
         if (row.includes('.m3u8')) {
           if (row.includes('URI=')) {
@@ -234,7 +232,7 @@ export class VideoService {
           return row;
         }
       })
-      // .map((row) => row.replace(',SUBTITLES="group_subtitle"', ''))
+      .map((row) => row.replace(',SUBTITLES="group_subtitle"', ''))
       .join('\n');
     return signedManifest;
   }
@@ -251,7 +249,6 @@ export class VideoService {
 
   public async generateCloudfrontSignedUrl(videoId: string, authToken?: string) {
     const isAbleToGenerate = await this.isAbleToGenerate(videoId, authToken);
-    console.log(isAbleToGenerate);
     if (!isAbleToGenerate) {
       throw new APIException({
         code: 'E_SIGN_URL',
@@ -279,11 +276,33 @@ export class VideoService {
     const captionUrl = playPaths?.hls
       ? `${playPaths.hls.split('output')[0]}captions/*`
       : `${path.split('manifest')[0]}*`;
-    const signedVideoUrl = this.signCloudfrontUrl(videoUrl);
-    const signedCaptionUrl = this.signCloudfrontUrl(captionUrl);
-    const captionPaths = await this.getCaptions(videoId);
+    const videoUrlSignature = this.signCloudfrontUrl(videoUrl);
 
-    return { signedVideoUrl, signedCaptionUrl, cloudfrontOptions, captionPaths };
+    // TODO: remove return caption after m3u8 features are done.
+    const captionUrlSignature = this.signCloudfrontUrl(captionUrl);
+    const captionPaths = await this.getCaptions(videoId);
+    const captionSignedPaths = captionPaths.map(
+      (captionUrl) => `${new URL(captionUrl).pathname}${captionUrlSignature}`,
+    );
+
+    const hlsPath = cloudfrontOptions?.playPaths
+      ? `${new URL(cloudfrontOptions.playPaths.hls).pathname}${videoUrlSignature}`
+      : null;
+    const dashPath = cloudfrontOptions?.playPaths
+      ? `${new URL(cloudfrontOptions.playPaths.dash).pathname}${videoUrlSignature}`
+      : null;
+    const cloudfrontMigratedHlsPath = cloudfrontOptions?.path
+      ? `${new URL(cloudfrontOptions.path).pathname}${videoUrlSignature}`
+      : null;
+
+    return {
+      videoSignedPaths: {
+        hlsPath,
+        dashPath,
+        cloudfrontMigratedHlsPath,
+      },
+      captionSignedPaths,
+    };
   }
 
   private signCloudfrontUrl(url: string) {
@@ -293,6 +312,7 @@ export class VideoService {
       expireTime: new Date().getTime() + 6400000,
     };
     const signedUrl = getSignedUrl(url, options);
-    return signedUrl;
+    const signature = new URL(signedUrl).search;
+    return signature;
   }
 }

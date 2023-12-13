@@ -8,14 +8,13 @@ import {
   Param,
   Post,
   Req,
-  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 
 import { VideoService } from './video.service';
-import { VideoCaptionDTO, VideoTokenDTO } from './video.dto';
+import { VideoCaptionDTO, VideoSignResponseDTO, VideoTokenDTO } from './video.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { StorageService } from '~/utility/storage/storage.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -132,7 +131,10 @@ export class VideoController {
   }
 
   @Get(':videoId/sign')
-  async signUrl(@Headers('Authorization') authorization: string, @Param('videoId') videoId: string) {
+  async signUrl(
+    @Headers('Authorization') authorization: string,
+    @Param('videoId') videoId: string,
+  ): Promise<{ message: string; code: string; result: VideoSignResponseDTO }> {
     const [_, token] = authorization ? authorization.split(' ') : [undefined, undefined];
     const signedData = await this.videoService.generateCloudfrontSignedUrl(videoId, token);
     return {
