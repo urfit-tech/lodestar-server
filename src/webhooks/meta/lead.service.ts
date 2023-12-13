@@ -79,10 +79,10 @@ export class LeadService {
       email: data.email,
     });
     if (member) {
-      const metadata = member.metadata as { is_assigned?: boolean; from_lead_webhook_at: string };
+      const metadata = member.metadata as { is_distributed?: boolean; from_lead_webhook_at: string };
       member.metadata = {
         ...metadata,
-        is_assigned: metadata.is_assigned ?? false,
+        is_distributed: metadata.is_distributed ?? false,
         from_lead_webhook_at: metadata.from_lead_webhook_at ?? new Date().toISOString(),
       };
     } else {
@@ -95,7 +95,7 @@ export class LeadService {
         username: data.username,
         role: data.role,
         metadata: {
-          is_assigned: false,
+          is_distributed: false,
           from_lead_webhook_at: new Date().toISOString(),
         },
       });
