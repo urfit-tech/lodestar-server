@@ -228,7 +228,7 @@ export class MemberService {
         member.id = v4();
         member.name = eachRow.name;
         member.username = eachRow.username || eachRow.id;
-        member.email = eachRow.email;
+        member.email = eachRow.email.toLowerCase();
         member.role = eachRow.role || 'general-member';
         member.star = parseInt(eachRow.star, 10);
         member.createdAt = (isDateString(eachRow.createdAt) && new Date(eachRow.createdAt)) || null;

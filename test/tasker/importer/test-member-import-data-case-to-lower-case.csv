@@ -1,0 +1,3 @@
+流水號,姓名,帳號,信箱,星等,身份,承辦人信箱,電話1,電話2,電話3,標籤1,標籤2,標籤3,分類1,分類2,分類3,test-property,建立日期,上次登入日期
+id,name,username,email,star,role,manager.email,phones.1,phones.2,phones.3,tags.1,tags.2,tags.3,categories.1,categories.2,categories.3,properties.1,createdAt,loginedAt
+,AA,tolowercase@example.com,TOLOWERCASE@example.com,999,,,987654321,900000000,,,工程,,測試分類,前端工程,,Somet-test-value,,
