@@ -67,18 +67,19 @@ export class StorageController {
   ) {
     const {
       params: { Key, UploadId, MultipartUpload },
-      file: { name, type, size },
+      file: { name: fileName, type, size },
       appId,
       authorId,
       attachmentId,
+      attachmentName,
       duration,
     } = body;
     const status = 'QUEUED';
     const attachment = new Attachment();
     attachment.appId = appId;
     attachment.authorId = authorId;
-    attachment.name = name;
-    attachment.filename = name;
+    attachment.name = attachmentName;
+    attachment.filename = fileName;
     attachment.size = size;
     attachment.contentType = type;
     attachment.status = status;

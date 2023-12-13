@@ -32,6 +32,7 @@ export interface CompleteMultipartUploadDTO {
   appId: string;
   authorId: string;
   attachmentId: string;
+  attachmentName: string;
   duration: number;
 }
 export interface MultipartUploadSignUrlDTO {
