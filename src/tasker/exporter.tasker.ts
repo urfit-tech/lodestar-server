@@ -121,7 +121,9 @@ export class ExporterTasker extends Tasker {
         admins = await this.memberInfra.getMembersByConditions(appId, { role: 'app-owner' }, this.entityManager);
       }
 
-      const fileKey = `${appId}/${category}_export_${dayjs.tz(dayjs.utc()).format('YYYY-MM-DDTHH:mm:ss')}.${ext}`;
+      const fileKey = `export/${appId}/${category}/${category}_export_${dayjs
+        .tz(dayjs.utc())
+        .format('YYYY-MM-DDTHH:mm:ss')}.${ext}`;
       const { ETag } = await this.storageService.saveFilesInBucketStorage({
         Key: fileKey,
         Body: raw,
@@ -151,6 +153,7 @@ export class ExporterTasker extends Tasker {
       const partial = { url: signedDownloadUrl, title: subject };
       await this.putEmailQueue(appId, partial, subject, [...invokers, ...admins], this.entityManager);
 
+      await job.moveToCompleted(undefined, undefined, true);
       this.logger.log(`Export task: ${id} completed.`);
     } catch (error) {
       this.logger.error('Export task error:');

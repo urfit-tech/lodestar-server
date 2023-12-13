@@ -25,6 +25,9 @@ export class ProgramTimetable {
   })
   updatedAt: Date;
 
+  @Column('text', { name: 'member_id' })
+  memberId: string;
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

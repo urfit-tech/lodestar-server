@@ -8,6 +8,8 @@ import {
   UnauthorizedException,
   BadRequestException,
   UseGuards,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
@@ -17,11 +19,21 @@ import { JwtMember } from '~/auth/auth.dto';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
 import { Local } from '~/decorator';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiHideProperty, ApiTags } from '@nestjs/swagger';
 
-import { MemberExportDTO, MemberGetDTO, MemberGetResultDTO, MemberImportDTO } from './member.dto';
+import {
+  MemberDeleteResultDTO,
+  MemberExportDTO,
+  MemberGetDTO,
+  MemberGetResultDTO,
+  MemberImportDTO,
+} from './member.dto';
 import { MemberService } from './member.service';
+import { APIException } from '~/api.excetion';
 
 @UseGuards(AuthGuard)
+@ApiTags('Member')
+@ApiBearerAuth()
 @Controller({
   path: 'members',
   version: '2',
@@ -43,6 +55,7 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
+  @ApiExcludeEndpoint()
   public async getMembersByPost(
     @Local('member') member: JwtMember,
     @Body() dto: MemberGetDTO,
@@ -86,10 +99,8 @@ export class MemberController {
   }
 
   @Get()
-  public async getMembers(
-    @Local('member') member: JwtMember,
-    @Body() dto: MemberGetDTO,
-  ): Promise<MemberGetResultDTO> {
+  @ApiExcludeEndpoint()
+  public async getMembers(@Local('member') member: JwtMember, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
     if (option && option.nextToken && option.prevToken) {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
@@ -129,10 +140,8 @@ export class MemberController {
   }
 
   @Post('import')
-  public async importMembers(
-    @Local('member') member: JwtMember,
-    @Body() metadata: MemberImportDTO,
-  ): Promise<void> {
+  @ApiExcludeEndpoint()
+  public async importMembers(@Local('member') member: JwtMember, @Body() metadata: MemberImportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
 
     const { appId, fileInfos } = metadata;
@@ -145,14 +154,12 @@ export class MemberController {
         fileName: key,
       })),
     };
-    await this.importerQueue.add(importJob);
+    await this.importerQueue.add(importJob, { removeOnComplete: true, removeOnFail: true });
   }
 
   @Post('export')
-  public async exportMembers(
-    @Local('member') member: JwtMember,
-    @Body() metadata: MemberExportDTO,
-  ): Promise<void> {
+  @ApiExcludeEndpoint()
+  public async exportMembers(@Local('member') member: JwtMember, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
 
     const { appId, memberIds, exportMime } = metadata;
@@ -163,6 +170,26 @@ export class MemberController {
       memberIds,
       exportMime,
     };
-    await this.exportQueue.add(exportJob);
+    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
+  }
+
+  @Delete('email/:email')
+  public async deleteMember(
+    @Local('member') member: JwtMember,
+    @Param('email') email: string,
+  ): Promise<MemberDeleteResultDTO> {
+    const { appId, role } = member;
+    if (role !== 'app-owner') {
+      throw new UnauthorizedException(
+        { message: 'no permission to delete member' },
+        'User permission is not met required permissions.',
+      );
+    }
+    try {
+      const deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
+      return { code: 'SUCCESS', message: deleteResult };
+    } catch (error) {
+      throw new APIException({ code: 'ERROR', message: error.message });
+    }
   }
 }

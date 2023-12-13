@@ -115,7 +115,7 @@ GROUP BY
       .createQueryBuilder('podcast_album')
       .select(['podcast_album_podcast_program.podcast_program_id::text AS podcast_program_id'])
       .where(`podcast_album.app_id = '${appId}'`)
-      .andWhere('podcast_album.is_public = true')
+      .andWhere('podcast_album.published_at IS NOT NULL')
       .innerJoin(
         'podcast_album_podcast_program',
         'podcast_album_podcast_program',

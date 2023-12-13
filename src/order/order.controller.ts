@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Param, Post, Put, UseGuards, Request } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
-import { Request as ExRequest } from 'express';
 import { AuthGuard } from '~/auth/auth.guard';
 import { AuthService } from '~/auth/auth.service';
 import { APIException } from '~/api.excetion';
@@ -69,7 +68,7 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob);
+    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
   }
 
   @Post('export/products')
@@ -86,7 +85,7 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob);
+    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
   }
 
   @Post('export/discounts')
@@ -103,6 +102,6 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob);
+    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
   }
 }

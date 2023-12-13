@@ -36,6 +36,9 @@ export class Practice {
   @Column('boolean', { name: 'is_deleted', default: () => false })
   isDeleted: boolean;
 
+  @Column('text', { name: 'member_id' })
+  memberId: string;
+
   @ManyToOne(() => Member, (member) => member.practices, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

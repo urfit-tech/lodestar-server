@@ -22,16 +22,21 @@ import { TaskerModule } from '~/tasker/tasker.module';
 import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
 import { Tasker } from '~/tasker/tasker';
 import { StorageService } from '~/utility/storage/storage.service';
+import { CacheService } from '~/utility/cache/cache.service';
 
 import { app, appPlan, category, memberTag, memberProperty } from '../../data';
 
 describe('ImporterTasker', () => {
   let application: INestApplication;
-  let mockStorageService = {
+  let cacheService: CacheService;
+  const mockStorageService = {
     getFileFromBucketStorage: jest.fn(),
     deleteFileAtBucketStorage: jest.fn(),
   };
- 
+  const mockJobFunction = {
+    moveToCompleted: jest.fn(),
+  };
+
   let manager: EntityManager;
   let memberPhoneRepo: Repository<MemberPhone>;
   let memberCategoryRepo: Repository<MemberCategory>;
@@ -55,10 +60,12 @@ describe('ImporterTasker', () => {
         }),
       ],
     })
-      .overrideProvider(StorageService).useValue(mockStorageService)
+      .overrideProvider(StorageService)
+      .useValue(mockStorageService)
       .compile();
 
     application = moduleFixture.createNestApplication();
+    cacheService = application.get(CacheService);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     memberPhoneRepo = manager.getRepository(MemberPhone);
@@ -90,6 +97,7 @@ describe('ImporterTasker', () => {
     await categoryRepo.save(category);
     await propertyRepo.save(memberProperty);
     await tagRepo.save(memberTag);
+    await cacheService.getClient().flushall();
 
     await application.init();
   });
@@ -106,6 +114,7 @@ describe('ImporterTasker', () => {
     await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
+    await cacheService.getClient().flushall();
 
     await application.close();
   });
@@ -142,15 +151,18 @@ describe('ImporterTasker', () => {
             appId: app.id,
             invokerMemberId: invoker.id,
             category: 'member',
-            fileInfos: [{
-              fileName: 'test-data.csv',
-              checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-            }],
+            fileInfos: [
+              {
+                fileName: 'test-data.csv',
+                checksumETag: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+              },
+            ],
           },
-        }  as Job<ImportJob>);
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
+        } as Job<ImportJob>);
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },
-          relations:{
+          relations: {
             memberPhones: true,
             memberCategories: true,
             memberProperties: true,
@@ -161,9 +173,9 @@ describe('ImporterTasker', () => {
         const kkMember = members.find(({ name }) => name === 'KK');
         const zzMember = members.find(({ name }) => name === 'ZZ');
         const cases = {
-          'name': ['KK', 'ZZ'],
-          'email': ['kk@example.com', 'zz@example.com'],
-          'star': ['999', '0'],
+          name: ['KK', 'ZZ'],
+          email: ['kk@example.com', 'zz@example.com'],
+          star: ['999', '0'],
         };
         for (const key in cases) {
           expect(kkMember[key]).toBe(cases[key][0]);
@@ -220,15 +232,18 @@ describe('ImporterTasker', () => {
             appId: app.id,
             invokerMemberId: invoker.id,
             category: 'member',
-            fileInfos: [{
-              fileName: 'test-data.xlsx',
-              checksumETag: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-            }],
+            fileInfos: [
+              {
+                fileName: 'test-data.xlsx',
+                checksumETag: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+              },
+            ],
           },
-        }  as Job<ImportJob>);
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
+        } as Job<ImportJob>);
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },
-          relations:{
+          relations: {
             memberPhones: true,
             memberCategories: true,
             memberProperties: true,
@@ -239,9 +254,9 @@ describe('ImporterTasker', () => {
         const kkMember = members.find(({ name }) => name === 'KK');
         const zzMember = members.find(({ name }) => name === 'ZZ');
         const cases = {
-          'name': ['KK', 'ZZ'],
-          'email': ['kk@example.com', 'zz@example.com'],
-          'star': ['999', '0'],
+          name: ['KK', 'ZZ'],
+          email: ['kk@example.com', 'zz@example.com'],
+          star: ['999', '0'],
         };
         for (const key in cases) {
           expect(kkMember[key]).toBe(cases[key][0]);
@@ -264,6 +279,149 @@ describe('ImporterTasker', () => {
         expect(auditLog.memberId).toBe(invoker.id);
         expect(auditLog.target).toBe('test-data.xlsx');
         expect(auditLog.action).toBe('upload');
+      });
+    });
+
+    describe('LowerCase', () => {
+      it('should successfully import new members with emails in lowercase, when provided CSV contains emails in uppercase', async () => {
+        const importerTasker = application.get<ImporterTasker>(Tasker);
+
+        mockStorageService.getFileFromBucketStorage.mockImplementationOnce(() => {
+          const testDataFile = readFileSync(join(__dirname, 'test-member-import-data-case-to-lower-case.csv'));
+          return {
+            ContentType: 'text/csv',
+            Body: {
+              transformToByteArray: () => testDataFile,
+            },
+            ETag: '"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"',
+          };
+        });
+
+        const invoker = new Member();
+        invoker.id = v4();
+        invoker.app = app;
+        invoker.name = 'invoker';
+        invoker.username = 'invoker_account';
+        invoker.email = 'invoker_email@example.com';
+        invoker.role = 'general-member';
+        invoker.loginedAt = new Date();
+
+        await manager.save(invoker);
+
+        await importerTasker.process({
+          data: {
+            appId: app.id,
+            invokerMemberId: invoker.id,
+            category: 'member',
+            fileInfos: [
+              {
+                fileName: 'test-data.csv',
+                checksumETag: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+              },
+            ],
+          },
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
+        } as Job<ImportJob>);
+        const members = await memberRepo.find({
+          where: { username: Not(Equal(invoker.username)) },
+          relations: {
+            memberPhones: true,
+            memberCategories: true,
+            memberProperties: true,
+            memberTags: true,
+          },
+        });
+        expect(members.length).toBe(1);
+        const AAMember = members.find(({ name }) => name === 'AA');
+        const cases = {
+          name: ['AA'],
+          email: ['tolowercase@example.com'],
+          star: ['999'],
+        };
+        for (const key in cases) {
+          expect(AAMember[key]).toBe(cases[key][0]);
+        }
+        expect(['987654321', '900000000']).toContain(AAMember.memberPhones[0].phone);
+        expect(['987654321', '900000000']).toContain(AAMember.memberPhones[1].phone);
+
+        expect(AAMember.memberCategories[0].categoryId).toBe(category.id);
+
+        expect(AAMember.memberProperties[0].propertyId).toBe(memberProperty.id);
+        expect(AAMember.memberProperties[0].value).toBe('Somet-test-value');
+
+        expect(AAMember.memberTags.length).toBe(0);
+
+        const auditLogs = await memberAuditLogRepo.find({});
+        expect(auditLogs.length).toBe(1);
+        const [auditLog] = auditLogs;
+        expect(auditLog.memberId).toBe(invoker.id);
+        expect(auditLog.target).toBe('test-data.csv');
+        expect(auditLog.action).toBe('upload');
+      });
+
+      it('should fail to import new members when the CSV contains uppercase emails that, after conversion to lowercase, match existing member emails', async () => {
+        const importerTasker = application.get<ImporterTasker>(Tasker);
+
+        mockStorageService.getFileFromBucketStorage.mockImplementationOnce(() => {
+          const testDataFile = readFileSync(join(__dirname, 'test-member-import-data-case-to-lower-case.csv'));
+          return {
+            ContentType: 'text/csv',
+            Body: {
+              transformToByteArray: () => testDataFile,
+            },
+            ETag: '"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"',
+          };
+        });
+
+        const existLowerCaseEmailMember = new Member();
+        existLowerCaseEmailMember.id = v4();
+        existLowerCaseEmailMember.app = app;
+        existLowerCaseEmailMember.name = 'EXIST';
+        existLowerCaseEmailMember.username = 'existLowerCaseEmailMember';
+        existLowerCaseEmailMember.email = 'tolowercase@example.com';
+        existLowerCaseEmailMember.role = 'general-member';
+        existLowerCaseEmailMember.loginedAt = new Date();
+
+        await manager.save(existLowerCaseEmailMember);
+
+        const invoker = new Member();
+        invoker.id = v4();
+        invoker.app = app;
+        invoker.name = 'invoker';
+        invoker.username = 'invoker_account';
+        invoker.email = 'invoker_email@example.com';
+        invoker.role = 'general-member';
+        invoker.loginedAt = new Date();
+
+        await manager.save(invoker);
+
+        await importerTasker.process({
+          data: {
+            appId: app.id,
+            invokerMemberId: invoker.id,
+            category: 'member',
+            fileInfos: [
+              {
+                fileName: 'test-data.csv',
+                checksumETag: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+              },
+            ],
+          },
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
+        } as Job<ImportJob>);
+        const members = await memberRepo.find({
+          where: { username: Not(Equal(invoker.username)) },
+          relations: {
+            memberPhones: true,
+            memberCategories: true,
+            memberProperties: true,
+            memberTags: true,
+          },
+        });
+        expect(members.length).toBe(1);
+
+        const importedMember = members.find((member) => member.name === 'tolowercase@example.com');
+        expect(importedMember).toBeUndefined();
       });
     });
   });
