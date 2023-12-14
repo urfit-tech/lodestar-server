@@ -77,7 +77,7 @@ export class ImporterTasker extends Tasker {
         try {
           const insertResult = await this.processFiles(appId, fileName, checksumETag, category);
           await this.storageService.deleteFileAtBucketStorage({
-            Key: `${appId}/${fileName}`,
+            Key: `import/${appId}/${fileName}`,
           });
           processResult[fileName] = insertResult;
         } catch (err) {
@@ -115,7 +115,7 @@ export class ImporterTasker extends Tasker {
     category: ImportCategory,
   ): Promise<MemberImportResultDTO> {
     const { ContentType, Body, ETag } = await this.storageService.getFileFromBucketStorage({
-      Key: `${appId}/${fileName}`,
+      Key: `import/${appId}/${fileName}`,
     });
 
     if (`"${checksumETag}"` !== ETag) {
