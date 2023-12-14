@@ -20,31 +20,33 @@ export class LeadService {
   ) {}
 
   async storeLead(appId: string, body: LeadWebhookBody) {
-    this.entityManager.transaction(async (entityManager) => {
-      const app = await this.appService.getAppInfo(appId);
-      if (!app) {
-        throw new APIException(
-          {
-            code: 'E_APP_NOT_FOUND',
-            message: 'app not found',
-            result: { appId },
-          },
-          404,
-        );
-      }
-      const propertyNameToField = {
-        填單日期: 'created_time',
-        廣告素材: 'adset_name',
-        廣告組合: 'ad_name',
-        行銷活動: 'campaign_name',
-        觸及平台: 'platform',
-        縣市: 'city',
-      };
-      const properties = await this.definitionInfra.upsertProperties(
-        appId,
-        Object.keys(propertyNameToField),
-        entityManager,
+    const app = await this.appService.getAppInfo(appId);
+    if (!app) {
+      throw new APIException(
+        {
+          code: 'E_APP_NOT_FOUND',
+          message: 'app not found',
+          result: { appId },
+        },
+        404,
       );
+    }
+
+    const propertyNameToField = {
+      填單日期: 'created_time',
+      廣告素材: 'adset_name',
+      廣告組合: 'ad_name',
+      行銷活動: 'campaign_name',
+      觸及平台: 'platform',
+      縣市: 'city',
+    };
+    const properties = await this.definitionInfra.upsertProperties(
+      appId,
+      Object.keys(propertyNameToField),
+      this.entityManager,
+    );
+
+    this.entityManager.transaction(async (entityManager) => {
       const member = await this.upsertMember(appId, {
         email: body.email,
         name: body.full_name,
