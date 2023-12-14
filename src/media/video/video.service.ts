@@ -209,7 +209,22 @@ export class VideoService {
     return keys;
   }
 
-  public async parseManifestWithSignUrl(manifest: string, key: string, signature: string): Promise<string> {
+  public async parseManifestWithSignUrl(
+    manifest: string,
+    key: string,
+    signature: string,
+    signatureWithToken: string,
+    videoId: string,
+  ): Promise<string> {
+    const authToken = signatureWithToken.split('&token=')[1];
+    const isAbleToGenerate = await this.isAbleToGenerate(videoId, authToken);
+    if (!isAbleToGenerate) {
+      throw new APIException({
+        code: 'E_SIGN_URL',
+        message: `the content is not for trial`,
+      });
+    }
+
     const host = this.awsStorageCloudFrontUrl;
     const keyArray = key.split('/');
     keyArray.pop();
@@ -220,9 +235,9 @@ export class VideoService {
       .map((row) => {
         if (row.includes('.m3u8')) {
           if (row.includes('URI=')) {
-            return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}"`;
+            return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signatureWithToken}"`;
           }
-          return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
+          return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signatureWithToken}`;
         } else if (row.includes('.mp4')) {
           // for mpd
           return `${host}/${path}/${row.split('?')[0]}?${signature}`;
@@ -277,13 +292,9 @@ export class VideoService {
       ? `${playPaths.hls.split('output')[0]}captions/*`
       : `${path.split('manifest')[0]}*`;
     const videoUrlSignature = this.signCloudfrontUrl(videoUrl);
-
-    // TODO: remove return caption after m3u8 features are done.
     const captionUrlSignature = this.signCloudfrontUrl(captionUrl);
     const captionPaths = await this.getCaptions(videoId);
-    const captionSignedPaths = captionPaths.map(
-      (captionUrl) => `${new URL(captionUrl).pathname}${captionUrlSignature}`,
-    );
+    const captionSignedUrls = captionPaths.map((captionUrl) => `${new URL(captionUrl)}${captionUrlSignature}`);
 
     const hlsPath = cloudfrontOptions?.playPaths
       ? `${new URL(cloudfrontOptions.playPaths.hls).pathname}${videoUrlSignature}`
@@ -301,7 +312,7 @@ export class VideoService {
         dashPath,
         cloudfrontMigratedHlsPath,
       },
-      captionSignedPaths,
+      captionSignedUrls,
     };
   }
 

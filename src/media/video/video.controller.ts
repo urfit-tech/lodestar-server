@@ -116,9 +116,14 @@ export class VideoController {
     }
   }
 
-  @Get(['*.m3u8', '*.mpd'])
-  async getManifestWithSignUrl(@Req() request: Request) {
-    const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
+  @Get([
+    'vod/:appId/:videoIdSlice/:videoId/output/hls/*.m3u8',
+    'vod/:appId/:videoIdSlice/:videoId/output/dash/*.mpd',
+    'vod-cf/:appId/:videoIdSlice/:videoId/:cfUid/manifest/*.m3u8',
+  ])
+  async getManifestWithSignUrl(@Req() request: Request, @Param('videoId') videoId: string) {
+    const [key, signatureWithToken] = decodeURI(request.url).split('videos/')[1].split('?');
+    const [signature] = signatureWithToken.split('&token=');
     const manifest = await this.storageService.getFileFromBucketStorage({
       Key: key,
     });
@@ -126,6 +131,8 @@ export class VideoController {
       await manifest.Body.transformToString(),
       key,
       signature,
+      signatureWithToken,
+      videoId,
     );
     return signedManifest;
   }

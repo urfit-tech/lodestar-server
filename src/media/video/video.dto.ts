@@ -17,5 +17,5 @@ export class VideoSignResponseDTO {
     dashPath: string;
     cloudfrontMigratedHlsPath: string;
   };
-  captionSignedPaths: Array<string>;
+  captionSignedUrls: Array<string>;
 }
