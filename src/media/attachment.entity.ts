@@ -64,6 +64,9 @@ export class Attachment {
   @Column('text', { name: 'family', nullable: true })
   family: string | null;
 
+  @Column('text', { name: 'author_id' })
+  authorId: string;
+
   @ManyToOne(() => Member, (member) => member.attachments, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
