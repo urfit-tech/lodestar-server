@@ -11,10 +11,11 @@ import { ShutdownService } from './shutdown/shutdown.service';
 import { UtilityService } from './utility.service';
 
 import { StorageController } from './storage/storage.controller';
+import { MediaModule } from '~/media/media.module';
 
 @Module({
   controllers: [StorageController],
-  imports: [FeedModule, MailerModule, CallerModule, SocialModule],
+  imports: [FeedModule, MailerModule, CallerModule, SocialModule, MediaModule],
   providers: [UtilityService, ApolloService, QueueService, CacheService, StorageService, ShutdownService],
   exports: [UtilityService, CacheService, ShutdownService],
 })

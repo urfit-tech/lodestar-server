@@ -9,4 +9,8 @@ export class MediaInfrastructure {
     const attachmentRepo = manager.getRepository(Attachment);
     return attachmentRepo.findOneBy({ id });
   }
+  async upsertAttachment(attachment: Attachment, manager: EntityManager) {
+    const attachmentRepo = manager.getRepository(Attachment);
+    return await attachmentRepo.save(attachment);
+  }
 }
