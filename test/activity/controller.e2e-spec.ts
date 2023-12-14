@@ -132,13 +132,12 @@ describe('ActivityController (e2e)', () => {
   describe('Response', () => {
     it('should get correct response', async () => {
       const { requestHeader } = await fetchToken();
+      const currentDate = new Date();
 
       const basicCondition = {
         organizerId: null,
-        isPrivate: false,
-        publishedAtNotNull: true,
-        activityEndedAfterNow: false,
         appId: app.id,
+        scenario: 'holding',
       };
 
       const insertedMember = await createTestMember(manager, {
@@ -149,7 +148,11 @@ describe('ActivityController (e2e)', () => {
       const insertedActivity = await createTestActivity(manager, {
         app: app,
         organizer: insertedMember,
+        isPrivate: false, // scenario: 'holding' condition
+        publishedAt: new Date(), // scenario: 'holding' condition
       });
+
+      console.log('insertedActivity', insertedActivity);
 
       const insertedActivitySession1 = await createTestActivitySession(manager, {
         activity: insertedActivity,
@@ -160,7 +163,7 @@ describe('ActivityController (e2e)', () => {
       const insertedActivitySession2 = await createTestActivitySession(manager, {
         activity: insertedActivity,
         startedAt: new Date('2020-01-03T00:00:00Z'),
-        endedAt: new Date('2020-01-04T00:00:00Z'),
+        endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // scenario: 'holding' condition
       });
 
       const insertedActivityTicket1 = await createTestActivityTicket(manager, {
@@ -215,14 +218,11 @@ describe('ActivityController (e2e)', () => {
       });
 
       const response = await request(application.getHttpServer())
-        .get(ACTIVITY_ROUTE)
+        .get(
+          ACTIVITY_ROUTE +
+            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=20&offset=0&categoryId=`,
+        )
         .set(requestHeader)
-        .send({
-          basicCondition,
-          categoryId: null,
-          limit: 20,
-          offset: 0,
-        })
         .expect(200);
 
       expect(response.body).toEqual({
@@ -232,6 +232,7 @@ describe('ActivityController (e2e)', () => {
             coverUrl: insertedActivity.coverUrl,
             title: insertedActivity.title,
             publishedAt: insertedActivity.publishedAt.toISOString(),
+            createdAt: insertedActivity.createdAt.toISOString(),
             includeSessionTypes: [
               insertedActivitySessionTicket1.activitySessionType,
               insertedActivitySessionTicket2.activitySessionType,
@@ -253,13 +254,12 @@ describe('ActivityController (e2e)', () => {
 
     it('should get correct category response', async () => {
       const { requestHeader } = await fetchToken();
+      const currentDate = new Date();
 
       const basicCondition = {
         organizerId: null,
-        isPrivate: false,
-        publishedAtNotNull: true,
-        activityEndedAfterNow: false,
         appId: app.id,
+        scenario: 'holding',
       };
 
       const insertedMember = await createTestMember(manager, {
@@ -267,25 +267,21 @@ describe('ActivityController (e2e)', () => {
         role: 'app-owner',
       });
 
-      const insertedActivity = await createTestActivity(manager, {
-        app: app,
-        organizer: insertedMember,
-      });
+      for (let i = 0; i < 3; i++) {
+        const insertedActivity = await createTestActivity(manager, {
+          app: app,
+          organizer: insertedMember,
+          isPrivate: false,
+          publishedAt: new Date(),
+        });
 
-      const insertedActivity2 = await createTestActivity(manager, {
-        app: app,
-        organizer: insertedMember,
-      });
-
-      const insertedActivity3 = await createTestActivity(manager, {
-        app: app,
-        organizer: insertedMember,
-      });
+        insertedActivities.push(insertedActivity);
+      }
 
       const insertedActivitySession1 = await createTestActivitySession(manager, {
         activity: insertedActivity,
         startedAt: new Date('2020-01-01T00:00:00Z'),
-        endedAt: new Date('2020-01-02T00:00:00Z'),
+        endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000),
       });
 
       const insertedCategory = await createTestCategory(manager, {
@@ -304,14 +300,11 @@ describe('ActivityController (e2e)', () => {
       });
 
       const response = await request(application.getHttpServer())
-        .get(ACTIVITY_ROUTE)
+        .get(
+          ACTIVITY_ROUTE +
+            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=${20}&offset=${0}&categoryId=`,
+        )
         .set(requestHeader)
-        .send({
-          basicCondition,
-          categoryId: insertedCategory.id,
-          limit: 20,
-          offset: 0,
-        })
         .expect(200);
 
       expect(response.body.activities.map((v) => v.id).includes(insertedActivity.id)).toBe(true);
@@ -321,13 +314,12 @@ describe('ActivityController (e2e)', () => {
 
     it('should get correct offset and limit top 10', async () => {
       const { requestHeader } = await fetchToken();
+      const currentDate = new Date();
 
       const basicCondition = {
         organizerId: null,
-        isPrivate: false,
-        publishedAtNotNull: true,
-        activityEndedAfterNow: false,
         appId: app.id,
+        scenario: 'holding',
       };
 
       const insertedMember = await createTestMember(manager, {
@@ -342,20 +334,19 @@ describe('ActivityController (e2e)', () => {
         const insertedActivity = await createTestActivity(manager, {
           app: app,
           organizer: insertedMember,
+          isPrivate: false, // scenario: 'holding' condition
+          publishedAt: new Date(), // scenario: 'holding' condition
         });
 
         activities.push(insertedActivity);
       }
 
       const response = await request(application.getHttpServer())
-        .get(ACTIVITY_ROUTE)
+        .get(
+          ACTIVITY_ROUTE +
+            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=${20}&offset=${0}&categoryId=`,
+        )
         .set(requestHeader)
-        .send({
-          basicCondition,
-          categoryId: null,
-          limit: 10,
-          offset: 0,
-        })
         .expect(200);
 
       expect(response.body.activities.length).toBe(10);
@@ -366,13 +357,12 @@ describe('ActivityController (e2e)', () => {
 
     it('should get correct activity , offset 2 limit 8', async () => {
       const { requestHeader } = await fetchToken();
+      const currentDate = new Date();
 
       const basicCondition = {
         organizerId: null,
-        isPrivate: false,
-        publishedAtNotNull: true,
-        activityEndedAfterNow: false,
         appId: app.id,
+        scenario: 'holding',
       };
 
       const insertedMember = await createTestMember(manager, {
@@ -387,20 +377,19 @@ describe('ActivityController (e2e)', () => {
         const insertedActivity = await createTestActivity(manager, {
           app: app,
           organizer: insertedMember,
+          isPrivate: false, // scenario: 'holding' condition
+          publishedAt: new Date(), // scenario: 'holding' condition
         });
 
         activities.push(insertedActivity);
       }
 
       const response = await request(application.getHttpServer())
-        .get(ACTIVITY_ROUTE)
+        .get(
+          ACTIVITY_ROUTE +
+            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=${8}&offset=${2}&categoryId=`,
+        )
         .set(requestHeader)
-        .send({
-          basicCondition,
-          categoryId: null,
-          limit: 8,
-          offset: 2,
-        })
         .expect(200);
 
       expect(response.body.activities.length).toBe(8);
