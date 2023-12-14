@@ -267,7 +267,15 @@ describe('ActivityController (e2e)', () => {
         role: 'app-owner',
       });
 
-      for (let i = 0; i < 3; i++) {
+      const insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
+      const activities = [];
+      const activityCategories = [];
+
+      for (let i = 0; i < 2; i++) {
         const insertedActivity = await createTestActivity(manager, {
           app: app,
           organizer: insertedMember,
@@ -275,39 +283,47 @@ describe('ActivityController (e2e)', () => {
           publishedAt: new Date(),
         });
 
-        insertedActivities.push(insertedActivity);
+        activities.push(insertedActivity);
+
+        const insertedActivityCategory = await createTestActivityCategory(manager, {
+          activity: insertedActivity,
+          category: insertedCategory,
+        });
+
+        activityCategories.push(insertedActivityCategory);
       }
 
-      const insertedActivitySession1 = await createTestActivitySession(manager, {
-        activity: insertedActivity,
-        startedAt: new Date('2020-01-01T00:00:00Z'),
-        endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000),
+      const insertedActivity = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+        isPrivate: false,
+        publishedAt: new Date(),
       });
 
-      const insertedCategory = await createTestCategory(manager, {
-        appId: app.id,
-        class: 'activity',
-      });
+      const activitySessions = [];
 
-      const insertedActivityCategory = await createTestActivityCategory(manager, {
-        activity: insertedActivity,
-        category: insertedCategory,
-      });
+      for (const activity of activities) {
+        const insertedActivitySession = await createTestActivitySession(manager, {
+          activity: activity,
+          startedAt: new Date(),
+          endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from the current date
+        });
 
-      const insertedActivityCategory2 = await createTestActivityCategory(manager, {
-        activity: insertedActivity2,
-        category: insertedCategory,
-      });
+        activitySessions.push(insertedActivitySession);
+      }
 
       const response = await request(application.getHttpServer())
         .get(
           ACTIVITY_ROUTE +
-            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=${20}&offset=${0}&categoryId=`,
+            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=${20}&offset=${0}&categoryId=${
+              insertedCategory.id
+            }`,
         )
         .set(requestHeader)
         .expect(200);
 
-      expect(response.body.activities.map((v) => v.id).includes(insertedActivity.id)).toBe(true);
+      expect(response.body.activities.map((v) => v.id).includes(activities[0].id)).toBe(true);
+      expect(response.body.activities.map((v) => v.id).includes(insertedActivity.id)).toBe(false);
 
       expect(response.body.totalCount).toBe(2);
     });
@@ -327,20 +343,35 @@ describe('ActivityController (e2e)', () => {
         role: 'app-owner',
       });
 
-      const numberOfActivities = 50;
+      const insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
       const activities = [];
 
-      for (let i = 0; i < numberOfActivities; i++) {
+      for (let i = 0; i < 50; i++) {
         const insertedActivity = await createTestActivity(manager, {
           app: app,
           organizer: insertedMember,
-          isPrivate: false, // scenario: 'holding' condition
-          publishedAt: new Date(), // scenario: 'holding' condition
+          isPrivate: false,
+          publishedAt: new Date(),
         });
 
         activities.push(insertedActivity);
       }
 
+      const activitySessions = [];
+
+      for (const activity of activities) {
+        const insertedActivitySession = await createTestActivitySession(manager, {
+          activity: activity,
+          startedAt: new Date(),
+          endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from the current date
+        });
+
+        activitySessions.push(insertedActivitySession);
+      }
       const response = await request(application.getHttpServer())
         .get(
           ACTIVITY_ROUTE +
@@ -349,7 +380,7 @@ describe('ActivityController (e2e)', () => {
         .set(requestHeader)
         .expect(200);
 
-      expect(response.body.activities.length).toBe(10);
+      expect(response.body.activities.length).toBe(20);
 
       const expectedActivityIds = activities.slice(40, 50).map((activity) => activity.id);
       expect(response.body.activities.map((v) => v.id)).toEqual(expect.arrayContaining(expectedActivityIds));
@@ -370,18 +401,34 @@ describe('ActivityController (e2e)', () => {
         role: 'app-owner',
       });
 
-      const numberOfActivities = 50;
+      const insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
       const activities = [];
 
-      for (let i = 0; i < numberOfActivities; i++) {
+      for (let i = 0; i < 50; i++) {
         const insertedActivity = await createTestActivity(manager, {
           app: app,
           organizer: insertedMember,
-          isPrivate: false, // scenario: 'holding' condition
-          publishedAt: new Date(), // scenario: 'holding' condition
+          isPrivate: false,
+          publishedAt: new Date(),
         });
 
         activities.push(insertedActivity);
+      }
+
+      const activitySessions = [];
+
+      for (const activity of activities) {
+        const insertedActivitySession = await createTestActivitySession(manager, {
+          activity: activity,
+          startedAt: new Date(),
+          endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from the current date
+        });
+
+        activitySessions.push(insertedActivitySession);
       }
 
       const response = await request(application.getHttpServer())
@@ -396,6 +443,254 @@ describe('ActivityController (e2e)', () => {
 
       const expectedActivityIds = activities.slice(40, 48).map((activity) => activity.id);
       expect(response.body.activities.map((v) => v.id)).toEqual(expect.arrayContaining(expectedActivityIds));
+    });
+  });
+
+  describe('scenario', () => {
+    it('finished', async () => {
+      const { requestHeader } = await fetchToken();
+      const currentDate = new Date();
+
+      const basicCondition = {
+        organizerId: null,
+        appId: app.id,
+        scenario: 'finished',
+      };
+
+      const insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
+
+      const insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
+      const activities = [];
+      const activityCategories = [];
+
+      for (let i = 0; i < 5; i++) {
+        const insertedActivity = await createTestActivity(manager, {
+          app: app,
+          organizer: insertedMember,
+          isPrivate: false,
+          publishedAt: new Date(),
+        });
+
+        activities.push(insertedActivity);
+
+        const insertedActivityCategory = await createTestActivityCategory(manager, {
+          activity: insertedActivity,
+          category: insertedCategory,
+        });
+
+        activityCategories.push(insertedActivityCategory);
+      }
+
+      const insertedActivityNotFinished = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+        isPrivate: false,
+        publishedAt: new Date(),
+      });
+
+      const activitySessions = [];
+
+      for (const activity of activities) {
+        const insertedActivitySession = await createTestActivitySession(manager, {
+          activity: activity,
+          startedAt: new Date(),
+          endedAt: new Date(currentDate.getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days before the current date
+        });
+
+        activitySessions.push(insertedActivitySession);
+      }
+
+      const insertedActivitySession = await createTestActivitySession(manager, {
+        activity: insertedActivityNotFinished,
+        startedAt: new Date(),
+        endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days after the current date
+      });
+
+      const response = await request(application.getHttpServer())
+        .get(
+          ACTIVITY_ROUTE +
+            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=${20}&offset=${0}&categoryId=${
+              insertedCategory.id
+            }`,
+        )
+        .set(requestHeader)
+        .expect(200);
+
+      expect(response.body.activities.map((v) => v.id).includes(activities[0].id)).toBe(true);
+      expect(response.body.activities.map((v) => v.id).includes(insertedActivityNotFinished.id)).toBe(false);
+
+      expect(response.body.totalCount).toBe(5);
+    });
+
+    it('draft', async () => {
+      const { requestHeader } = await fetchToken();
+      const currentDate = new Date();
+
+      const basicCondition = {
+        organizerId: null,
+        appId: app.id,
+        scenario: 'draft',
+      };
+
+      const insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
+
+      const insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
+      const activities = [];
+      const activityCategories = [];
+
+      for (let i = 0; i < 5; i++) {
+        const insertedActivity = await createTestActivity(manager, {
+          app: app,
+          organizer: insertedMember,
+          isPrivate: false,
+          publishedAt: new Date(),
+        });
+
+        activities.push(insertedActivity);
+
+        const insertedActivityCategory = await createTestActivityCategory(manager, {
+          activity: insertedActivity,
+          category: insertedCategory,
+        });
+
+        activityCategories.push(insertedActivityCategory);
+      }
+
+      const insertedActivityNotPublished = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+        isPrivate: false,
+        publishedAt: null,
+      });
+
+      const activitySessions = [];
+
+      for (const activity of activities) {
+        const insertedActivitySession = await createTestActivitySession(manager, {
+          activity: activity,
+          startedAt: new Date(),
+          endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days after the current date
+        });
+
+        activitySessions.push(insertedActivitySession);
+      }
+
+      const insertedActivitySession = await createTestActivitySession(manager, {
+        activity: insertedActivityNotPublished,
+        startedAt: new Date(),
+        endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days after the current date
+      });
+
+      const response = await request(application.getHttpServer())
+        .get(
+          ACTIVITY_ROUTE +
+            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=${20}&offset=${0}&categoryId=`,
+        )
+        .set(requestHeader)
+        .expect(200);
+
+      console.log('QEWDEDEWD@Q', response.body.activities);
+
+      expect(response.body.activities.map((v) => v.id).includes(insertedActivityNotPublished.id)).toBe(true);
+      expect(response.body.activities.map((v) => v.id).includes(activities[0].id)).toBe(false);
+
+      expect(response.body.totalCount).toBe(1);
+    });
+
+    it('privateHolding', async () => {
+      const { requestHeader } = await fetchToken();
+      const currentDate = new Date();
+
+      const basicCondition = {
+        organizerId: null,
+        appId: app.id,
+        scenario: 'privateHolding',
+      };
+
+      const insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
+
+      const insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
+      const activities = [];
+      const activityCategories = [];
+
+      for (let i = 0; i < 5; i++) {
+        const insertedActivity = await createTestActivity(manager, {
+          app: app,
+          organizer: insertedMember,
+          isPrivate: false,
+          publishedAt: new Date(),
+        });
+
+        activities.push(insertedActivity);
+
+        const insertedActivityCategory = await createTestActivityCategory(manager, {
+          activity: insertedActivity,
+          category: insertedCategory,
+        });
+
+        activityCategories.push(insertedActivityCategory);
+      }
+
+      const insertedActivityPrivateHoding = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+        isPrivate: true,
+        publishedAt: new Date(),
+      });
+
+      const activitySessions = [];
+
+      for (const activity of activities) {
+        const insertedActivitySession = await createTestActivitySession(manager, {
+          activity: activity,
+          startedAt: new Date(),
+          endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days after the current date
+        });
+
+        activitySessions.push(insertedActivitySession);
+      }
+
+      const insertedActivitySession = await createTestActivitySession(manager, {
+        activity: insertedActivityPrivateHoding,
+        startedAt: new Date(),
+        endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days after the current date
+      });
+
+      const response = await request(application.getHttpServer())
+        .get(
+          ACTIVITY_ROUTE +
+            `?basicCondition=${encodeURIComponent(JSON.stringify(basicCondition))}&limit=${20}&offset=${0}&categoryId=`,
+        )
+        .set(requestHeader)
+        .expect(200);
+
+      console.log('QEWDEDEWD@Q', response.body.activities);
+
+      expect(response.body.activities.map((v) => v.id).includes(insertedActivityPrivateHoding.id)).toBe(true);
+      expect(response.body.activities.map((v) => v.id).includes(activities[0].id)).toBe(false);
+
+      expect(response.body.totalCount).toBe(1);
     });
   });
 });

@@ -20,7 +20,7 @@ export const createTestActivity = async (
   activity.isPrivate = overrides.isPrivate !== undefined ? overrides.isPrivate : false;
   activity.app = overrides.app;
   activity.description = faker.lorem.sentence();
-  activity.publishedAt = new Date();
+  activity.publishedAt = overrides.publishedAt === null ? null : new Date();
   activity.organizer = overrides.organizer;
 
   await entityManager.save(activity);
