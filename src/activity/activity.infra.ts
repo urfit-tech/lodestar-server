@@ -32,7 +32,6 @@ export class ActivityInfrastructure {
     categoryId?: string,
     scenario?: 'holding' | 'finished' | 'draft' | 'privateHolding',
   ): Promise<[Activity[], number]> {
-    console.log('get by app scenario', scenario);
     const activityRepo = manager.getRepository(Activity);
 
     const activityPeriodSubQuery = this.createActivityPeriodSubQuery(manager, appId);
@@ -47,7 +46,6 @@ export class ActivityInfrastructure {
       });
 
     if (categoryId) {
-      console.log('categoryId', categoryId);
       queryBuilder
         .innerJoin('activity.activityCategories', 'activityCategory')
         .andWhere('activityCategory.categoryId = :categoryId', { categoryId });
@@ -70,7 +68,6 @@ export class ActivityInfrastructure {
         queryBuilder.andWhere('activity.is_private = true').andWhere('adp.ended_at > CURRENT_TIMESTAMP');
         break;
     }
-    console.log(queryBuilder.getSql());
     queryBuilder.orderBy('activity.createdAt', 'DESC', 'NULLS LAST');
 
     return queryBuilder.take(limit).skip(offset).getManyAndCount();
@@ -81,6 +78,10 @@ export class ActivityInfrastructure {
     appId: string,
     activityIds: string[],
   ): Promise<Map<string, ActivityDuration>> {
+    if (activityIds.length === 0) {
+      return new Map();
+    }
+
     const query = manager
       .getRepository(Activity)
       .createQueryBuilder('activity')
@@ -92,8 +93,6 @@ export class ActivityInfrastructure {
       .andWhere('activity.app_id = :appId', { appId })
       .andWhere('activity.id IN (:...activityIds)', { activityIds })
       .groupBy('activity.id');
-    console.log(activityIds);
-    console.log('raw', query.getSql());
 
     const results = await query.getRawMany();
 
@@ -112,6 +111,10 @@ export class ActivityInfrastructure {
     manager: EntityManager,
     activityIds: string[],
   ): Promise<Map<string, ('offline' | 'online')[]>> {
+    if (activityIds.length === 0) {
+      return new Map();
+    }
+
     const activitySessionTickets = await manager
       .getRepository(ActivitySessionTicket)
       .createQueryBuilder('activitySessionTicket')
@@ -145,6 +148,10 @@ export class ActivityInfrastructure {
     manager: EntityManager,
     activityIds: string[],
   ): Promise<Map<string, ActivitySessionTicketEnrollmentCount>> {
+    if (activityIds.length === 0) {
+      return new Map();
+    }
+
     const sessionTicketEnrollmentCounts = await manager
       .getRepository(ActivitySessionTicketEnrollmentCount)
       .createQueryBuilder('enrollmentCount')
