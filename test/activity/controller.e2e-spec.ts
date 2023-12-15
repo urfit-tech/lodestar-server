@@ -1,7 +1,7 @@
 import { EntityManager, Repository } from 'typeorm';
 import request from 'supertest';
 import { v4 } from 'uuid';
-import { INestApplication, Logger } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
@@ -36,6 +36,7 @@ import { createTestCategory } from '../factory/category.factory';
 import { createTestActivityCategory } from '../factory/activityCategory.factory';
 import { ActivityCategory } from '~/activity/entity/ActivityCategory';
 import { Category } from '~/definition/entity/category.entity';
+import { ApiExceptionFilter } from '~/api.filter';
 
 interface RepositoryMap {
   [key: string]: Repository<any>;
@@ -102,12 +103,15 @@ describe('ActivityController (e2e)', () => {
   }
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ApplicationModule],
-      providers: [Logger],
     }).compile();
 
-    application = module.createNestApplication();
+    application = moduleFixture.createNestApplication();
+
+    application.useGlobalPipes(new ValidationPipe()).useGlobalFilters(new ApiExceptionFilter());
+
+    application = moduleFixture.createNestApplication();
 
     manager = application.get<EntityManager>(getEntityManagerToken());
 
