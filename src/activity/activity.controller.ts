@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Logger, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { FetchActivitiesResponseDto, ActivityDto, ParticipantsCountDto, ActivityCollectionDTO } from './activity.dto';
-import { Activity } from './entity/Activity';
+import { FetchActivitiesResponseDto, ActivityCollectionDTO } from './activity.dto';
 import { ActivityService } from './activity.service';
 
 @ApiTags('Activity')
@@ -19,8 +18,10 @@ export class ActivityController {
     @Query('offset', ParseIntPipe) offset: number,
     @Query('categoryId') categoryId?: string,
   ): Promise<FetchActivitiesResponseDto> {
+    this.logger.log(`Fetching activity collection. Limit: ${limit}, Offset: ${offset}, CategoryId: ${categoryId}`);
+    this.logger.log(`basicCondition: ${basicConditionString}`);
+
     const basicCondition = JSON.parse(basicConditionString);
-    console.log(limit, offset, categoryId);
     const activityCollectionDto: ActivityCollectionDTO = {
       basicCondition,
       limit,
@@ -28,8 +29,13 @@ export class ActivityController {
       categoryId,
     };
 
-    const response = await this.activityService.getActivityCollection(activityCollectionDto);
-
-    return response;
+    try {
+      const response = await this.activityService.getActivityCollection(activityCollectionDto);
+      this.logger.log(`Successfully fetched activity collection.`);
+      return response;
+    } catch (error) {
+      this.logger.error(`Error fetching activity collection: ${error.message}`);
+      throw error;
+    }
   }
 }

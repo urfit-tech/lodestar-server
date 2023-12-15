@@ -152,8 +152,6 @@ describe('ActivityController (e2e)', () => {
         publishedAt: new Date(), // scenario: 'holding' condition
       });
 
-      console.log('insertedActivity', insertedActivity);
-
       const insertedActivitySession1 = await createTestActivitySession(manager, {
         activity: insertedActivity,
         startedAt: new Date('2020-01-01T00:00:00Z'),
@@ -603,8 +601,6 @@ describe('ActivityController (e2e)', () => {
         .set(requestHeader)
         .expect(200);
 
-      console.log('QEWDEDEWD@Q', response.body.activities);
-
       expect(response.body.activities.map((v) => v.id).includes(insertedActivityNotPublished.id)).toBe(true);
       expect(response.body.activities.map((v) => v.id).includes(activities[0].id)).toBe(false);
 
@@ -684,8 +680,6 @@ describe('ActivityController (e2e)', () => {
         )
         .set(requestHeader)
         .expect(200);
-
-      console.log('QEWDEDEWD@Q', response.body.activities);
 
       expect(response.body.activities.map((v) => v.id).includes(insertedActivityPrivateHoding.id)).toBe(true);
       expect(response.body.activities.map((v) => v.id).includes(activities[0].id)).toBe(false);
