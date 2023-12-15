@@ -1,7 +1,7 @@
 import { EntityManager, Repository } from 'typeorm';
 import request from 'supertest';
 import { v4 } from 'uuid';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
@@ -104,6 +104,7 @@ describe('ActivityController (e2e)', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ApplicationModule],
+      providers: [Logger],
     }).compile();
 
     application = module.createNestApplication();
