@@ -3,10 +3,8 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import * as uuid from 'uuid';
 
-import { AppService } from '~/app/app.service';
 import { DefinitionInfrastructure } from '~/definition/definition.infra';
 import { LeadWebhookBody } from './lead.dto';
-import { APIException } from '~/api.excetion';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { Member } from '~/member/entity/member.entity';
 import { AppCache } from '~/app/app.type';
@@ -34,8 +32,8 @@ export class LeadService {
       this.entityManager,
     );
 
-    this.entityManager.transaction(async (entityManager) => {
-      const member = await this.upsertMember(app.id, {
+    await this.entityManager.transaction(async (entityManager) => {
+      const member = await this.upsertMember(entityManager, app.id, {
         email: body.email,
         name: body.full_name,
         username: body.email,
@@ -44,18 +42,19 @@ export class LeadService {
       await Promise.all(
         properties.map((property) => {
           return this.memberInfra.upsertMemberProperty(
-            this.entityManager,
+            entityManager,
             member.id,
             property.id,
             body[propertyNameToField[property.name]],
           );
         }),
       );
-      await this.memberInfra.upsertMemberPhone(this.entityManager, member.id, body.phone_number);
+      await this.memberInfra.upsertMemberPhone(entityManager, member.id, body.phone_number);
     });
   }
 
   private async upsertMember(
+    entityManager: EntityManager,
     appId: string,
     data: {
       email: string;
@@ -64,7 +63,7 @@ export class LeadService {
       role: string;
     },
   ) {
-    let member = await this.memberInfra.firstMemberByCondition(this.entityManager, {
+    let member = await this.memberInfra.firstMemberByCondition(entityManager, {
       appId,
       email: data.email,
     });
@@ -76,7 +75,7 @@ export class LeadService {
         from_lead_webhook_at: metadata.from_lead_webhook_at ?? new Date().toISOString(),
       };
     } else {
-      const memberRepo = this.entityManager.getRepository(Member);
+      const memberRepo = entityManager.getRepository(Member);
       member = memberRepo.create({
         id: uuid.v4(),
         appId,
@@ -90,6 +89,6 @@ export class LeadService {
         },
       });
     }
-    return this.memberInfra.saveMember(this.entityManager, member);
+    return this.memberInfra.saveMember(entityManager, member);
   }
 }
