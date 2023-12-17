@@ -13,7 +13,7 @@ export class LeadController {
     private readonly leadService: LeadService,
   ) {}
 
-  @Get()
+  @Get(':appId')
   async verify(
     @Query('hub.mode') mode: string,
     @Query('hub.challenge') challenge: string,
