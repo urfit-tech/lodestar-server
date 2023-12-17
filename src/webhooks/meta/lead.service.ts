@@ -9,29 +9,17 @@ import { LeadWebhookBody } from './lead.dto';
 import { APIException } from '~/api.excetion';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { Member } from '~/member/entity/member.entity';
+import { AppCache } from '~/app/app.type';
 
 @Injectable()
 export class LeadService {
   constructor(
-    private readonly appService: AppService,
     private readonly memberInfra: MemberInfrastructure,
     private readonly definitionInfra: DefinitionInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
-  async storeLead(appId: string, body: LeadWebhookBody) {
-    const app = await this.appService.getAppInfo(appId);
-    if (!app) {
-      throw new APIException(
-        {
-          code: 'E_APP_NOT_FOUND',
-          message: 'app not found',
-          result: { appId },
-        },
-        404,
-      );
-    }
-
+  async storeLead(app: AppCache, body: LeadWebhookBody) {
     const propertyNameToField = {
       填單日期: 'created_time',
       廣告素材: 'adset_name',
@@ -41,13 +29,13 @@ export class LeadService {
       縣市: 'city',
     };
     const properties = await this.definitionInfra.upsertProperties(
-      appId,
+      app.id,
       Object.keys(propertyNameToField),
       this.entityManager,
     );
 
     this.entityManager.transaction(async (entityManager) => {
-      const member = await this.upsertMember(appId, {
+      const member = await this.upsertMember(app.id, {
         email: body.email,
         name: body.full_name,
         username: body.email,
