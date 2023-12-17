@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APIException } from '~/api.excetion';
 import { LeadWebhookBody } from './lead.dto';
 import { LeadService } from './lead.service';
+import { AppService } from '~/app/app.service';
+import { AppCache } from '~/app/app.type';
 
 @Controller({
   path: 'webhooks/meta/lead',
@@ -11,6 +13,7 @@ export class LeadController {
   constructor(
     private readonly configService: ConfigService<{ META_VERIFY_TOKEN: string }>,
     private readonly leadService: LeadService,
+    private readonly appService: AppService,
   ) {}
 
   @Get(':appId')
@@ -34,7 +37,22 @@ export class LeadController {
   }
 
   @Post(':appId')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async webhook(@Param('appId') appId: string, @Body() body: LeadWebhookBody) {
-    this.leadService.storeLead(appId, body);
+    let app: AppCache;
+    try {
+      app = await this.appService.getAppInfo(appId);
+    } catch (error) {
+      throw new APIException(
+        {
+          code: 'E_APP_NOT_FOUND',
+          message: 'app not found',
+          result: { appId },
+        },
+        404,
+      );
+    }
+
+    await this.leadService.storeLead(app, body);
   }
 }
