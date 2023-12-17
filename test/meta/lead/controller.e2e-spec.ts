@@ -17,6 +17,10 @@ import { CacheService } from '~/utility/cache/cache.service';
 import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { LeadWebhookBody } from '~/webhooks/meta/lead.dto';
+import { Property } from '~/definition/entity/property.entity';
+import { MemberProperty } from '~/member/entity/member_property.entity';
+import { MemberPhone } from '~/member/entity/member_phone.entity';
 
 describe('LeadController (e2e)', () => {
   let application: INestApplication;
@@ -24,6 +28,9 @@ describe('LeadController (e2e)', () => {
   let roleRepo: Repository<Role>;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
+  let propertyRepo: Repository<Property>;
+  let memberPropertyRepo: Repository<MemberProperty>;
+  let memberPhoneRepo: Repository<MemberPhone>;
   let appHostRepo: Repository<AppHost>;
   let memberRepo: Repository<Member>;
   let cacheService: CacheService;
@@ -64,7 +71,13 @@ describe('LeadController (e2e)', () => {
     appHostRepo = manager.getRepository(AppHost);
     roleRepo = manager.getRepository(Role);
     memberRepo = manager.getRepository(Member);
+    propertyRepo = manager.getRepository(Property);
+    memberPropertyRepo = manager.getRepository(MemberProperty);
+    memberPhoneRepo = manager.getRepository(MemberPhone);
 
+    await memberPhoneRepo.delete({});
+    await memberPropertyRepo.delete({});
+    await propertyRepo.delete({});
     await memberRepo.delete({});
     await appHostRepo.delete({});
     await appRepo.delete({});
@@ -81,11 +94,13 @@ describe('LeadController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await memberPhoneRepo.delete({});
+    await memberPropertyRepo.delete({});
+    await propertyRepo.delete({});
     await memberRepo.delete({});
     await appHostRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
-    await roleRepo.delete({});
 
     await application.close();
   });
@@ -129,6 +144,75 @@ describe('LeadController (e2e)', () => {
         code: 'E_META_VERIFY',
         message: 'invalid verify token',
         result: { mode, challenge, verifyToken },
+      });
+    });
+  });
+
+  describe('/webhooks/meta/lead/:appId (POST)', () => {
+    const appId = member.appId;
+    const route = `/webhooks/meta/lead/${appId}`;
+
+    it('Should store lead to database', async () => {
+      const header = { host: appHost.host };
+      const body: LeadWebhookBody = {
+        id: 1,
+        created_time: '2021-01-01',
+        ad_id: 1,
+        ad_name: 'ad_name',
+        adset_id: 1,
+        adset_name: 'adset_name',
+        campaign_id: 1,
+        campaign_name: 'campaign_name',
+        form_id: 1,
+        form_name: 'form_name',
+        is_organic: false,
+        platform: 'platform',
+        email: 'email',
+        full_name: 'full_name',
+        phone_number: 'phone_number',
+        city: 'city',
+      };
+
+      const { noContent } = await request(application.getHttpServer())
+        .post(`${route}`)
+        .set(header)
+        .send(body)
+        .expect(204);
+      expect(noContent).toBe(true);
+    });
+
+    it('Should throw error if app not found', async () => {
+      const header = { host: appHost.host };
+      const appId = 'wrong_app_id';
+      const payload: LeadWebhookBody = {
+        id: 1,
+        created_time: '2021-01-01',
+        ad_id: 1,
+        ad_name: 'ad_name',
+        adset_id: 1,
+        adset_name: 'adset_name',
+        campaign_id: 1,
+        campaign_name: 'campaign_name',
+        form_id: 1,
+        form_name: 'form_name',
+        is_organic: false,
+        platform: 'platform',
+        email: 'email',
+        full_name: 'full_name',
+        phone_number: 'phone_number',
+        city: 'city',
+      };
+
+      const route = `/webhooks/meta/lead/${appId}`;
+      const { body } = await request(application.getHttpServer())
+        .post(`${route}`)
+        .set(header)
+        .send(payload)
+        .expect(404);
+      expect(body).toStrictEqual({
+        code: 'E_APP_NOT_FOUND',
+        message: 'app not found',
+        result: { appId },
       });
     });
   });
