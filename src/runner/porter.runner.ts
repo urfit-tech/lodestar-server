@@ -34,33 +34,36 @@ export class PorterRunner extends Runner {
     super(PorterRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
   }
 
-  async portLastLoggedIn(manager: EntityManager): Promise<void> {
+  async portLastLoggedIn(manager: EntityManager, batchSize = 1000): Promise<void> {
     console.log('portLastLoggedIn');
 
-    const lastLoggedInMemberKeys: string[] | null = await this.cacheService.getClient().keys('last-logged-in:*');
+    let cursor = '0';
+    do {
+      const reply = await this.cacheService.getClient().scan(cursor, 'MATCH', 'last-logged-in:*', 'COUNT', batchSize);
+      cursor = reply[0];
+      const keys = reply[1];
 
-    if (!lastLoggedInMemberKeys) {
-      console.warn('No last logged in member keys found');
-      return;
-    }
-
-    const memberLastLoggedInTimestamps: (string | null)[] =
-      lastLoggedInMemberKeys.length > 0 ? await this.cacheService.getClient().mget(lastLoggedInMemberKeys) : [];
-
-    for (let index = 0; index < lastLoggedInMemberKeys.length; index++) {
-      const key: string = lastLoggedInMemberKeys[index];
-      const [, memberId]: string[] = key.split(':');
-
-      const loginedAt: string | null = memberLastLoggedInTimestamps[index];
-
-      try {
-        await this.memberService.updateMemberLoginDate(memberId, new Date(loginedAt), this.entityManager);
-
-        await this.cacheService.getClient().del(key);
-      } catch (error) {
-        console.error(`porting ${key} failed:`, error);
+      if (keys.length === 0) {
+        console.warn('No last logged in member keys found');
+        break;
       }
-    }
+
+      const timestamps = await this.cacheService.getClient().mget(keys);
+
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const [, memberId] = key.split(':');
+        const loginedAt = timestamps[i];
+
+        try {
+          await this.memberService.updateMemberLoginDate(memberId, new Date(loginedAt), manager);
+          await this.cacheService.getClient().del(key);
+        } catch (error) {
+          console.error(`porting ${key} failed:`, error);
+          await this.cacheService.getClient().del(key);
+        }
+      }
+    } while (cursor !== '0');
   }
 
   async portPlayerEvent(manager: EntityManager, batchSize = 1000): Promise<void> {

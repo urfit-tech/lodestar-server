@@ -296,7 +296,15 @@ export class MemberInfrastructure {
 
   async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
     const memberRepo = entityManager.getRepository(Member);
-    await memberRepo.update(memberId, { loginedAt });
+    try {
+      const updateResult = await memberRepo.update(memberId, { loginedAt });
+
+      if (updateResult?.affected === 0) {
+        console.error(`No records updated for memberId: ${memberId}. Member might not exist.`);
+      }
+    } catch (error) {
+      console.error(`Error updating login date for memberId: ${memberId}`, error);
+    }
   }
 
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {
