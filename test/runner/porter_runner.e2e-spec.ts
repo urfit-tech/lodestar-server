@@ -207,20 +207,145 @@ describe('PorterRunner (e2e)', () => {
     });
   });
   describe('last-logged-in', () => {
-    it('should update member after executing porterRunner', async () => {
-      await cacheService.getClient().set(`last-logged-in:${member.id}`, new Date().toISOString(), 'EX', 7 * 86400);
+    describe('Success scenarios', () => {
+      it('should update member after executing porterRunner', async () => {
+        await cacheService.getClient().set(`last-logged-in:${member.id}`, new Date().toISOString(), 'EX', 7 * 86400);
 
-      await memberRepo.update({ id: member.id }, { loginedAt: null });
+        await memberRepo.update({ id: member.id }, { loginedAt: null });
 
-      let updatedMember = await memberRepo.findOne({ where: { id: member.id } });
-      expect(updatedMember.loginedAt).toBeNull();
+        let updatedMember = await memberRepo.findOne({ where: { id: member.id } });
+        expect(updatedMember.loginedAt).toBeNull();
 
-      const porterRunner = application.get<PorterRunner>(Runner);
-      await porterRunner.execute(manager);
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.execute(manager);
 
-      updatedMember = await memberRepo.findOne({ where: { id: member.id } });
+        updatedMember = await memberRepo.findOne({ where: { id: member.id } });
 
-      expect(updatedMember.loginedAt).not.toBeNull();
+        expect(updatedMember.loginedAt).not.toBeNull();
+      });
+
+      it('should update member after executing porterRunner, with large data in redis', async () => {
+        const members = [];
+
+        for (let i = 0; i < 50; i++) {
+          const insertedMemberId = v4();
+          const insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = insertedMemberId;
+          insertedMember.name = `name-${i}`;
+          insertedMember.username = `username-${i}`;
+          insertedMember.email = `${i}email@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = null;
+          await manager.save(insertedMember);
+
+          await cacheService
+            .getClient()
+            .set(`last-logged-in:${insertedMemberId}`, new Date().toISOString(), 'EX', 7 * 86400);
+
+          members.push(insertedMemberId);
+        }
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        for (const memberId of members) {
+          const updatedMember = await memberRepo.findOne({ where: { id: memberId } });
+          expect(updatedMember.loginedAt).not.toBeNull();
+        }
+      });
+
+      it('should update member loginedAt to the last login time among multiple records', async () => {
+        const memberId = v4();
+        const member = new Member();
+        member.appId = app.id;
+        member.id = memberId;
+        member.name = `name`;
+        member.username = `username`;
+        member.email = `email@example.com`;
+        member.role = 'general-member';
+        member.star = 0;
+        member.createdAt = new Date();
+        member.loginedAt = null;
+        await manager.save(member);
+
+        const now = new Date();
+        for (let i = 0; i < 3; i++) {
+          const loginTime = new Date(now.getTime() + i * 1000);
+          await cacheService.getClient().set(`last-logged-in:${memberId}`, loginTime.toISOString(), 'EX', 7 * 86400);
+        }
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        const updatedMember = await memberRepo.findOne({ where: { id: memberId } });
+        expect(updatedMember.loginedAt).toEqual(new Date(now.getTime() + 2 * 1000));
+      });
+      it('should clear Redis keys after updating member login date', async () => {
+        const key = `last-logged-in:${member.id}`;
+        await cacheService.getClient().set(key, new Date().toISOString(), 'EX', 7 * 86400);
+
+        let keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(1);
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(0);
+      });
+    });
+
+    describe('Failure scenarios', () => {
+      it('should clear Redis key even if the member does not exist and should have console error', async () => {
+        const nonExistentMemberId = v4();
+
+        const key = `last-logged-in:${nonExistentMemberId}`;
+        await cacheService.getClient().set(key, new Date().toISOString(), 'EX', 7 * 86400);
+
+        let keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(1);
+
+        const consoleSpy = jest.spyOn(console, 'error');
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        expect(consoleSpy).toHaveBeenCalledWith(
+          expect.stringContaining(`No records updated for memberId: ${nonExistentMemberId}. Member might not exist.`),
+        );
+
+        consoleSpy.mockRestore();
+
+        keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(0);
+      });
+      it('should not update last login time if it cannot be converted to a date', async () => {
+        const invalidDate = 'not-a-date';
+        const key = `last-logged-in:${member.id}`;
+
+        await memberRepo.update({ id: member.id }, { loginedAt: null });
+
+        await cacheService.getClient().set(key, invalidDate, 'EX', 7 * 86400);
+
+        const consoleSpy = jest.spyOn(console, 'error');
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        expect(consoleSpy).toHaveBeenCalled();
+
+        consoleSpy.mockRestore();
+
+        const updatedMember = await memberRepo.findOne({ where: { id: member.id } });
+
+        expect(updatedMember.loginedAt).toBeNull();
+
+        const keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(0);
+      });
     });
   });
 
@@ -307,6 +432,7 @@ describe('PorterRunner (e2e)', () => {
         const remainingKeys = await cacheService.getClient().keys('program-content-event:*');
         console.log(remainingKeys);
         expect(remainingKeys.length).toEqual(0);
+        consoleSpy.mockRestore();
       });
       it('should process and save 79 out of 80 records and delete all Redis keys, when startAt format error', async () => {
         await programContentLogRepo.delete({});
@@ -464,6 +590,7 @@ describe('PorterRunner (e2e)', () => {
         const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
         const remainingKeysCount = scanResult.length;
         expect(remainingKeysCount).toEqual(0);
+        consoleSpy.mockRestore();
       });
     });
 
@@ -544,6 +671,7 @@ describe('PorterRunner (e2e)', () => {
         const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
         const remainingKeysCount = scanResult.length;
         expect(remainingKeysCount).toEqual(0);
+        consoleSpy.mockRestore();
       });
     });
   });
