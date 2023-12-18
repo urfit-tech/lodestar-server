@@ -578,14 +578,6 @@ export class OrderService {
   }
 
   public async getOrderProductsByMemberId(memberId: string, productType?: string): Promise<OrderProduct[]> {
-    const orderProducts = await this.entityManager.getRepository(OrderProduct).find({
-      where: {
-        order: {
-          memberId: memberId,
-        },
-        ...(productType && { product: { type: productType } }),
-      },
-    });
-    return orderProducts;
+    return this.orderInfra.getOrderProductsByMemberId(memberId, this.entityManager, productType);
   }
 }

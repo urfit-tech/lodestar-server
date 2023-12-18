@@ -350,9 +350,6 @@ export class MemberService {
   }
 
   async getMemberTasks(memberId: string): Promise<Array<MemberTask>> {
-    const tasks = this.entityManager.getRepository(MemberTask).find({
-      where: { member: { id: memberId } },
-    });
-    return tasks;
+    return this.memberInfra.getMemberTasks(memberId, this.entityManager);
   }
 }

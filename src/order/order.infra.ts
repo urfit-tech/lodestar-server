@@ -94,4 +94,21 @@ export class OrderInfrastructure {
     });
     return orderDiscounts;
   }
+
+  async getOrderProductsByMemberId(
+    memberId: string,
+    manager: EntityManager,
+    productType?: string,
+  ): Promise<Array<OrderProduct>> {
+    const orderProductRepo = manager.getRepository(OrderProduct);
+    const orderProducts = await orderProductRepo.find({
+      where: {
+        order: {
+          memberId: memberId,
+        },
+        ...(productType && { product: { type: productType } }),
+      },
+    });
+    return orderProducts;
+  }
 }
