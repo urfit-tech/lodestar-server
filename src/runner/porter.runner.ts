@@ -120,9 +120,9 @@ export class PorterRunner extends Runner {
           key,
           memberId,
           podcastProgramId,
-          progress: value.progress,
-          lastProgress: value.lastProgress,
-          podcastAlbumId: value.podcastAlbumId,
+          progress: value?.progress,
+          lastProgress: value?.lastProgress,
+          podcastAlbumId: value?.podcastAlbumId,
           created_at: createdAtDate,
         });
       }

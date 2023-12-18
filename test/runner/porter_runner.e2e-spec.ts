@@ -373,6 +373,9 @@ describe('PorterRunner (e2e)', () => {
         expect(latesProgress.podcastProgramId).toEqual(podcastProgram.id);
         expect(latesProgress.progress).toEqual('190.2503679064795');
         expect(latesProgress.podcastAlbumId).toEqual(podcastAlbum.id);
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
       });
 
       it('when 3 record are same member and podcastProgram , should only have one record in db', async () => {
@@ -398,6 +401,10 @@ describe('PorterRunner (e2e)', () => {
 
         const record = progressRecords.find((record) => record.memberId === member.id);
         expect(record.progress).toEqual('13');
+
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
       });
 
       it('when batch size is 20, 80 records in Redis, 2 member podcast programs, 1 member has an error', async () => {
@@ -453,6 +460,10 @@ describe('PorterRunner (e2e)', () => {
         expect(record.lastProgress).not.toEqual(`${5 + 79}`);
         expect(insertedMemberRecord.lastProgress).toEqual(`${5 + 70}`);
         expect(consoleSpy).toHaveBeenCalled();
+
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
       });
     });
 
@@ -467,6 +478,10 @@ describe('PorterRunner (e2e)', () => {
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(0);
+
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
       });
 
       it('should process and save 2 out of 30 records, when one memberId does not exist', async () => {
@@ -525,6 +540,10 @@ describe('PorterRunner (e2e)', () => {
         const nonExistentRecord = progressRecords.find((record) => record.memberId === nonExistentMemberId);
         expect(nonExistentRecord).toBeUndefined();
         expect(consoleSpy).toHaveBeenCalled();
+
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
       });
     });
   });
