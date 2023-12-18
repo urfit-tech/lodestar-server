@@ -242,7 +242,7 @@ describe('PorterRunner (e2e)', () => {
     });
 
     describe('portPlayerEvent with batchSize 20', () => {
-      it('should correctly process and save all 80 records', async () => {
+      it('Assess the handling and accurate processing of 80 program content log records in batches', async () => {
         await programContentLogRepo.delete({});
         await cacheService.getClient().flushall();
 
@@ -343,7 +343,7 @@ describe('PorterRunner (e2e)', () => {
     });
 
     describe('portPlayerEvent with no Redis data', () => {
-      it('should not save any data and not throw errors', async () => {
+      it('Ensure proper handling and no errors when no Redis data is available for processing player events', async () => {
         await programContentLogRepo.delete({});
         await cacheService.getClient().flushall();
 
@@ -359,7 +359,7 @@ describe('PorterRunner (e2e)', () => {
 
   describe('portPodcastProgram', () => {
     describe('Success scenarios', () => {
-      it('should correctly save podcast program progress', async () => {
+      it('Check if podcast program progress is correctly saved and processed.', async () => {
         const porterRunner = application.get<PorterRunner>(Runner);
 
         await porterRunner.execute(manager);
@@ -378,7 +378,7 @@ describe('PorterRunner (e2e)', () => {
         expect(remainingKeysCount).toEqual(0);
       });
 
-      it('when 3 record are same member and podcastProgram , should only have one record in db', async () => {
+      it('Verify deduplication, ensuring only one record is saved in the database for duplicate entries , and should save the last create record', async () => {
         await podcastProgramProgressRepo.delete({});
         await cacheService.getClient().flushall();
 
@@ -468,7 +468,7 @@ describe('PorterRunner (e2e)', () => {
     });
 
     describe('Failure scenarios', () => {
-      it('should not save any data and not throw errors', async () => {
+      it('when redis is empty , should not save any data and not throw errors', async () => {
         await podcastProgramProgressRepo.delete({});
         await cacheService.getClient().flushall();
 
@@ -484,7 +484,7 @@ describe('PorterRunner (e2e)', () => {
         expect(remainingKeysCount).toEqual(0);
       });
 
-      it('should process and save 2 out of 30 records, when one memberId does not exist', async () => {
+      it('Evaluate error handling when processing podcast progress records with a non-existent member ID', async () => {
         await podcastProgramProgressRepo.delete({});
         await cacheService.getClient().flushall();
 
