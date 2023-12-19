@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EventAttributes } from 'ics';
+import { EventAttributes, convertTimestampToArray } from 'ics';
 
 import { CacheService } from '~/utility/cache/cache.service';
 import { MemberService } from '~/member/member.service';
@@ -27,7 +27,7 @@ export class CalendarService {
     const taskEvents: EventAttributes[] = tasks.map((task) => {
       return {
         uid: task.id,
-        start: this.dateToIcsDateArray(task.dueAt),
+        start: convertTimestampToArray(task.dueAt.getTime(), 'local'),
         title: task.title,
         description: task.description || '',
         duration: { minutes: 0 },
@@ -38,8 +38,8 @@ export class CalendarService {
     const orderProductEvents: EventAttributes[] = orderProducts.map((orderProduct) => {
       return {
         uid: orderProduct.id,
-        start: this.dateToIcsDateArray(orderProduct.startedAt),
-        end: this.dateToIcsDateArray(orderProduct.endedAt),
+        start: convertTimestampToArray(orderProduct.startedAt.getTime(), 'local'),
+        end: convertTimestampToArray(orderProduct.endedAt.getTime(), 'local'),
         title: orderProduct.name,
         description: orderProduct.description || '',
       };
@@ -48,9 +48,5 @@ export class CalendarService {
     const events: EventAttributes[] = taskEvents.concat(orderProductEvents);
     redisCli.set(`${this.cacheKeyPrefix}${memberId}`, JSON.stringify(events), 'EX', 3600); // Cache expire in 60 mins.
     return events;
-  }
-
-  private dateToIcsDateArray(date: Date): [number, number, number, number, number] {
-    return [date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes()];
   }
 }
