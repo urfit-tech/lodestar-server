@@ -26,6 +26,7 @@ export class CalendarService {
     const tasks = await this.memberService.getMemberTasks(memberId);
     const taskEvents: EventAttributes[] = tasks.map((task) => {
       return {
+        uid: task.id,
         start: this.dateToIcsDateArray(task.dueAt),
         title: task.title,
         description: task.description || '',
@@ -36,6 +37,7 @@ export class CalendarService {
     const orderProducts = await this.orderService.getOrderProductsByMemberId(memberId, 'AppointmentPlan');
     const orderProductEvents: EventAttributes[] = orderProducts.map((orderProduct) => {
       return {
+        uid: orderProduct.id,
         start: this.dateToIcsDateArray(orderProduct.startedAt),
         end: this.dateToIcsDateArray(orderProduct.endedAt),
         title: orderProduct.name,

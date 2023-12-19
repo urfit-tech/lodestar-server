@@ -129,6 +129,7 @@ describe('CanlendarController (e2e)', () => {
     member.name = 'calendar user';
 
     const memberTask = new MemberTask();
+    memberTask.id = v4();
     memberTask.memberId = member.id;
     memberTask.title = 'Mock member task';
     memberTask.priority = 'high';
@@ -158,6 +159,7 @@ describe('CanlendarController (e2e)', () => {
     appointmentPlanProduct.target = appointmentPlan.id;
 
     const orderProduct = new OrderProduct();
+    orderProduct.id = v4();
     orderProduct.order = orderLog;
     orderProduct.product = appointmentPlanProduct;
     orderProduct.name = 'appointment product';
@@ -180,6 +182,7 @@ describe('CanlendarController (e2e)', () => {
       expect(response.headers['content-disposition']).toEqual(`attachment; filename=\"${member.id}.ics\"`);
 
       const memberCalendar = createEvent({
+        uid: memberTask.id,
         start: [2023, 12, 1, 0, 0],
         title: memberTask.title,
         description: memberTask.description,
@@ -188,9 +191,7 @@ describe('CanlendarController (e2e)', () => {
       const responseText = response.text.split('\r\n');
 
       for (let i = 0; i < responseText.length; i++) {
-        if (!responseText[i].startsWith('UID:')) {
-          expect(responseText[i]).toEqual(memberCalendar[i]);
-        }
+        expect(responseText[i]).toEqual(memberCalendar[i]);
       }
     });
 
@@ -210,6 +211,7 @@ describe('CanlendarController (e2e)', () => {
       expect(response.headers['content-disposition']).toEqual(`attachment; filename=\"${member.id}.ics\"`);
 
       const memberCalendar = createEvent({
+        uid: orderProduct.id,
         start: [2023, 12, 2, 1, 0],
         end: [2023, 12, 2, 2, 0],
         title: orderProduct.name,
@@ -218,9 +220,7 @@ describe('CanlendarController (e2e)', () => {
       const responseText = response.text.split('\r\n');
 
       for (let i = 0; i < responseText.length; i++) {
-        if (!responseText[i].startsWith('UID:')) {
-          expect(responseText[i]).toEqual(memberCalendar[i]);
-        }
+        expect(responseText[i]).toEqual(memberCalendar[i]);
       }
     });
   });
