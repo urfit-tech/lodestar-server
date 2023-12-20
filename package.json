@@ -48,6 +48,7 @@
     "dayjs": "^1.11.7",
     "dotenv": "^16.0.3",
     "express-session": "^1.17.3",
+    "ics": "^3.5.0",
     "ioredis": "^5.3.1",
     "jsonwebtoken": "^9.0.0",
     "mustache": "^4.2.0",

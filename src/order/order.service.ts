@@ -576,4 +576,8 @@ export class OrderService {
     }
     return isEmpty(targets) ? null : targets;
   }
+
+  public async getOrderProductsByMemberId(memberId: string, productType?: string): Promise<OrderProduct[]> {
+    return this.orderInfra.getOrderProductsByMemberId(memberId, this.entityManager, productType);
+  }
 }

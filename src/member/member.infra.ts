@@ -181,6 +181,12 @@ export class MemberInfrastructure {
     return founds;
   }
 
+  async getMemberTasks(memberId: string, manager: EntityManager): Promise<Array<MemberTask>> {
+    const memberTaskRepo = manager.getRepository(MemberTask);
+    const tasks = await memberTaskRepo.findBy({ memberId });
+    return tasks;
+  }
+
   async getLoginMemberMetadata(memberId: string, manager: EntityManager): Promise<Array<LoginMemberMetadata>> {
     const builder = manager
       .createQueryBuilder()
