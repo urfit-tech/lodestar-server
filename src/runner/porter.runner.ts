@@ -160,7 +160,6 @@ export class PorterRunner extends Runner {
       axios.get(heartbeatUrl);
       return;
     }
-    await axios.get(heartbeatUrl);
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
