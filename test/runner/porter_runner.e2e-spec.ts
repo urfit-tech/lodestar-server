@@ -43,6 +43,7 @@ import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
 import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
+import { v4 } from 'uuid';
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -206,20 +207,145 @@ describe('PorterRunner (e2e)', () => {
     });
   });
   describe('last-logged-in', () => {
-    it('should update member after executing porterRunner', async () => {
-      await cacheService.getClient().set(`last-logged-in:${member.id}`, new Date().toISOString(), 'EX', 7 * 86400);
+    describe('Success scenarios', () => {
+      it('should update member after executing porterRunner', async () => {
+        await cacheService.getClient().set(`last-logged-in:${member.id}`, new Date().toISOString(), 'EX', 7 * 86400);
 
-      await memberRepo.update({ id: member.id }, { loginedAt: null });
+        await memberRepo.update({ id: member.id }, { loginedAt: null });
 
-      let updatedMember = await memberRepo.findOne({ where: { id: member.id } });
-      expect(updatedMember.loginedAt).toBeNull();
+        let updatedMember = await memberRepo.findOne({ where: { id: member.id } });
+        expect(updatedMember.loginedAt).toBeNull();
 
-      const porterRunner = application.get<PorterRunner>(Runner);
-      await porterRunner.execute(manager);
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.execute(manager);
 
-      updatedMember = await memberRepo.findOne({ where: { id: member.id } });
+        updatedMember = await memberRepo.findOne({ where: { id: member.id } });
 
-      expect(updatedMember.loginedAt).not.toBeNull();
+        expect(updatedMember.loginedAt).not.toBeNull();
+      });
+
+      it('should update member after executing porterRunner, with large data in redis', async () => {
+        const members = [];
+
+        for (let i = 0; i < 50; i++) {
+          const insertedMemberId = v4();
+          const insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = insertedMemberId;
+          insertedMember.name = `name-${i}`;
+          insertedMember.username = `username-${i}`;
+          insertedMember.email = `${i}email@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = null;
+          await manager.save(insertedMember);
+
+          await cacheService
+            .getClient()
+            .set(`last-logged-in:${insertedMemberId}`, new Date().toISOString(), 'EX', 7 * 86400);
+
+          members.push(insertedMemberId);
+        }
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        for (const memberId of members) {
+          const updatedMember = await memberRepo.findOne({ where: { id: memberId } });
+          expect(updatedMember.loginedAt).not.toBeNull();
+        }
+      });
+
+      it('should update member loginedAt to the last login time among multiple records', async () => {
+        const memberId = v4();
+        const member = new Member();
+        member.appId = app.id;
+        member.id = memberId;
+        member.name = `name`;
+        member.username = `username`;
+        member.email = `email@example.com`;
+        member.role = 'general-member';
+        member.star = 0;
+        member.createdAt = new Date();
+        member.loginedAt = null;
+        await manager.save(member);
+
+        const now = new Date();
+        for (let i = 0; i < 3; i++) {
+          const loginTime = new Date(now.getTime() + i * 1000);
+          await cacheService.getClient().set(`last-logged-in:${memberId}`, loginTime.toISOString(), 'EX', 7 * 86400);
+        }
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        const updatedMember = await memberRepo.findOne({ where: { id: memberId } });
+        expect(updatedMember.loginedAt).toEqual(new Date(now.getTime() + 2 * 1000));
+      });
+      it('should clear Redis keys after updating member login date', async () => {
+        const key = `last-logged-in:${member.id}`;
+        await cacheService.getClient().set(key, new Date().toISOString(), 'EX', 7 * 86400);
+
+        let keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(1);
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(0);
+      });
+    });
+
+    describe('Failure scenarios', () => {
+      it('should clear Redis key even if the member does not exist and should have console error', async () => {
+        const nonExistentMemberId = v4();
+
+        const key = `last-logged-in:${nonExistentMemberId}`;
+        await cacheService.getClient().set(key, new Date().toISOString(), 'EX', 7 * 86400);
+
+        let keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(1);
+
+        const consoleSpy = jest.spyOn(console, 'error');
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        expect(consoleSpy).toHaveBeenCalledWith(
+          expect.stringContaining(`No records updated for memberId: ${nonExistentMemberId}. Member might not exist.`),
+        );
+
+        consoleSpy.mockRestore();
+
+        keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(0);
+      });
+      it('should not update last login time if it cannot be converted to a date', async () => {
+        const invalidDate = 'not-a-date';
+        const key = `last-logged-in:${member.id}`;
+
+        await memberRepo.update({ id: member.id }, { loginedAt: null });
+
+        await cacheService.getClient().set(key, invalidDate, 'EX', 7 * 86400);
+
+        const consoleSpy = jest.spyOn(console, 'error');
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portLastLoggedIn(manager, 20);
+
+        expect(consoleSpy).toHaveBeenCalled();
+
+        consoleSpy.mockRestore();
+
+        const updatedMember = await memberRepo.findOne({ where: { id: member.id } });
+
+        expect(updatedMember.loginedAt).toBeNull();
+
+        const keyExists = await cacheService.getClient().exists(key);
+        expect(keyExists).toBe(0);
+      });
     });
   });
 
@@ -227,7 +353,7 @@ describe('PorterRunner (e2e)', () => {
     it('should correctly save program content log', async () => {
       const porterRunner = application.get<PorterRunner>(Runner);
 
-      await porterRunner.execute(manager);
+      await porterRunner.portPlayerEvent(manager, 30);
 
       const [latestLog] = await programContentLogRepo.find({
         order: { createdAt: 'DESC' },
@@ -239,23 +365,314 @@ describe('PorterRunner (e2e)', () => {
       expect(latestLog.endedAt).toEqual('502.26019');
       expect(latestLog.memberId).toEqual(member.id);
     });
+
+    describe('portPlayerEvent with batchSize 20', () => {
+      it('Assess the handling and accurate processing of 80 program content log records in batches', async () => {
+        await programContentLogRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        for (let i = 0; i < 80; i++) {
+          await cacheService
+            .getClient()
+            .set(
+              `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now() + i}`,
+              JSON.stringify({ playbackRate: 1.25, startedAt: 500 + i, endedAt: 600 + i }),
+              'EX',
+              7 * 86400,
+            );
+        }
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portPlayerEvent(manager, 20);
+
+        const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
+        expect(logs.length).toEqual(80);
+        logs.forEach((log, index) => {
+          expect(log.playbackRate).toEqual('1.25');
+          expect(log.startedAt).toEqual(`${500 + index}`);
+          expect(log.endedAt).toEqual(`${600 + index}`);
+          expect(log.memberId).toEqual(member.id);
+        });
+      });
+      it('should process and save 79 out of 80 records and delete all Redis keys , when memberId did not exist', async () => {
+        await programContentLogRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        const nonExistentMemberId = 'non-existent-member-id';
+        for (let i = 0; i < 80; i++) {
+          const memberId = i === 50 ? nonExistentMemberId : member.id;
+          await cacheService
+            .getClient()
+            .set(
+              `program-content-event:${memberId}:program-content:${programContent.id}:${Date.now() + i}`,
+              JSON.stringify({ playbackRate: 1.25, startedAt: 500 + i, endedAt: 600 + i }),
+              'EX',
+              7 * 86400,
+            );
+        }
+        const consoleSpy = jest.spyOn(console, 'error');
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portPlayerEvent(manager, 20);
+
+        const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
+        expect(logs.length).toEqual(79);
+        expect(consoleSpy).toHaveBeenCalledWith(
+          expect.stringContaining(
+            'Saving log failed: QueryFailedError: insert or update on table "program_content_log" violates foreign key constraint "program_content_log_member_id_fkey"',
+          ),
+        );
+
+        logs.forEach((log, index) => {
+          expect(log.playbackRate).toEqual('1.25');
+          expect(log.startedAt).not.toEqual(`${500 + 50}`);
+          expect(log.endedAt).not.toEqual(`${600 + 50}`);
+          expect(log.memberId).not.toEqual(nonExistentMemberId);
+        });
+
+        const remainingKeys = await cacheService.getClient().keys('program-content-event:*');
+        console.log(remainingKeys);
+        expect(remainingKeys.length).toEqual(0);
+        consoleSpy.mockRestore();
+      });
+      it('should process and save 79 out of 80 records and delete all Redis keys, when startAt format error', async () => {
+        await programContentLogRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        for (let i = 0; i < 80; i++) {
+          const programContentId = i === 50 ? 'nonExistProgramContentId' : programContent.id; // Introduce error in one record
+          await cacheService
+            .getClient()
+            .set(
+              `program-content-event:${member.id}:program-content:${programContentId}:${Date.now() + i}`,
+              JSON.stringify({ playbackRate: 1.25, startedAt: 500 + i, endedAt: 600 + i }),
+              'EX',
+              7 * 86400,
+            );
+        }
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portPlayerEvent(manager, 20);
+
+        const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
+        expect(logs.length).toEqual(79);
+
+        logs.forEach((log, index) => {
+          expect(log.playbackRate).toEqual('1.25');
+          expect(log.startedAt).not.toEqual(`${500 + 50}`);
+          expect(log.endedAt).not.toEqual(`${600 + 50}`);
+          expect(log.programContentId).not.toEqual('nonExistProgramContentId');
+        });
+
+        const remainingKeys = await cacheService.getClient().keys('program-content-event:*');
+        expect(remainingKeys.length).toEqual(0);
+      });
+    });
+
+    describe('portPlayerEvent with no Redis data', () => {
+      it('Ensure proper handling and no errors when no Redis data is available for processing player events', async () => {
+        await programContentLogRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+
+        await expect(porterRunner.portPlayerEvent(manager)).resolves.not.toThrow();
+
+        const logs = await programContentLogRepo.find();
+        expect(logs.length).toEqual(0);
+      });
+    });
   });
 
   describe('portPodcastProgram', () => {
-    it('should correctly save podcast program progress', async () => {
-      const porterRunner = application.get<PorterRunner>(Runner);
+    describe('Success scenarios', () => {
+      it('Check if podcast program progress is correctly saved and processed.', async () => {
+        const porterRunner = application.get<PorterRunner>(Runner);
 
-      await porterRunner.execute(manager);
+        await porterRunner.execute(manager);
 
-      const [latesProgress] = await podcastProgramProgressRepo.find({
-        order: { createdAt: 'DESC' },
-        take: 1,
+        const [latesProgress] = await podcastProgramProgressRepo.find({
+          order: { createdAt: 'DESC' },
+          take: 1,
+        });
+
+        expect(latesProgress.memberId).toEqual(member.id);
+        expect(latesProgress.podcastProgramId).toEqual(podcastProgram.id);
+        expect(latesProgress.progress).toEqual('190.2503679064795');
+        expect(latesProgress.podcastAlbumId).toEqual(podcastAlbum.id);
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
       });
 
-      expect(latesProgress.memberId).toEqual(member.id);
-      expect(latesProgress.podcastProgramId).toEqual(podcastProgram.id);
-      expect(latesProgress.progress).toEqual('190.2503679064795');
-      expect(latesProgress.podcastAlbumId).toEqual(podcastAlbum.id);
+      it('Verify deduplication, ensuring only one record is saved in the database for duplicate entries , and should save the last create record', async () => {
+        await podcastProgramProgressRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        for (let i = 0; i < 4; i++) {
+          await cacheService
+            .getClient()
+            .set(
+              `podcast-program-event:${member.id}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+              JSON.stringify({ progress: `${10.0 + i}`, lastProgress: `${5 + i}`, podcastAlbumId: podcastAlbum.id }),
+              'EX',
+              7 * 86400,
+            );
+        }
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portPodcastProgram(manager);
+
+        const progressRecords = await podcastProgramProgressRepo.find();
+        expect(progressRecords.length).toEqual(1);
+
+        const record = progressRecords.find((record) => record.memberId === member.id);
+        expect(record.progress).toEqual('13');
+
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
+      });
+
+      it('when batch size is 20, 80 records in Redis, 2 member podcast programs, 1 member has an error', async () => {
+        await podcastProgramProgressRepo.delete({});
+        await cacheService.getClient().flushall();
+        const nonExistentMemberId = 'nonExistMemberId';
+
+        const insertedMemberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = insertedMemberId;
+        insertedMember.name = `name`;
+        insertedMember.username = `username`;
+        insertedMember.email = `email@example.com`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        for (let i = 0; i < 80; i++) {
+          const currentMemberId = i === 79 ? nonExistentMemberId : member.id;
+          await cacheService
+            .getClient()
+            .set(
+              `podcast-program-event:${currentMemberId}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+              JSON.stringify({ progress: `${10.0 + i}`, lastProgress: `${5 + i}`, podcastAlbumId: podcastAlbum.id }),
+              'EX',
+              7 * 86400,
+            );
+
+          if (i % 10 === 0) {
+            await cacheService
+              .getClient()
+              .set(
+                `podcast-program-event:${insertedMemberId}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+                JSON.stringify({ progress: `${10.0 + i}`, lastProgress: `${5 + i}`, podcastAlbumId: podcastAlbum.id }),
+                'EX',
+                7 * 86400,
+              );
+          }
+        }
+        const consoleSpy = jest.spyOn(console, 'error');
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portPodcastProgram(manager);
+
+        const progressRecords = await podcastProgramProgressRepo.find();
+        expect(progressRecords.length).toEqual(2);
+
+        const record = progressRecords.find((record) => record.memberId === member.id);
+        const insertedMemberRecord = progressRecords.find((record) => record.memberId === insertedMemberId);
+        expect(record.progress).toEqual(`${10 + 78}`);
+        expect(record.lastProgress).not.toEqual(`${5 + 79}`);
+        expect(insertedMemberRecord.lastProgress).toEqual(`${5 + 70}`);
+        expect(consoleSpy).toHaveBeenCalled();
+
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
+        consoleSpy.mockRestore();
+      });
+    });
+
+    describe('Failure scenarios', () => {
+      it('when redis is empty , should not save any data and not throw errors', async () => {
+        await podcastProgramProgressRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+
+        await expect(porterRunner.portPodcastProgram(manager)).resolves.not.toThrow();
+
+        const progressRecords = await podcastProgramProgressRepo.find();
+        expect(progressRecords.length).toEqual(0);
+
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
+      });
+
+      it('Evaluate error handling when processing podcast progress records with a non-existent member ID', async () => {
+        await podcastProgramProgressRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        const memberId = v4();
+        const insertedMember = new Member();
+        insertedMember.appId = app.id;
+        insertedMember.id = memberId;
+        insertedMember.name = `name`;
+        insertedMember.username = `username`;
+        insertedMember.email = `delete@example.com`;
+        insertedMember.role = 'general-member';
+        insertedMember.star = 0;
+        insertedMember.createdAt = new Date();
+        insertedMember.loginedAt = new Date();
+        await manager.save(insertedMember);
+
+        const nonExistentMemberId = 'non-existent-member-id';
+
+        await cacheService
+          .getClient()
+          .set(
+            `podcast-program-event:${member.id}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+            JSON.stringify({ progress: '10.0', lastProgress: '5.0', podcastAlbumId: podcastAlbum.id }),
+            'EX',
+            7 * 86400,
+          );
+
+        await cacheService
+          .getClient()
+          .set(
+            `podcast-program-event:${insertedMember.id}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+            JSON.stringify({ progress: '10.0', lastProgress: '5.0', podcastAlbumId: podcastAlbum.id }),
+            'EX',
+            7 * 86400,
+          );
+
+        await cacheService
+          .getClient()
+          .set(
+            `podcast-program-event:${nonExistentMemberId}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+            JSON.stringify({ progress: '10.0', lastProgress: '5.0', podcastAlbumId: podcastAlbum.id }),
+            'EX',
+            7 * 86400,
+          );
+
+        const consoleSpy = jest.spyOn(console, 'error');
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portPodcastProgram(manager);
+
+        const progressRecords = await podcastProgramProgressRepo.find();
+        expect(progressRecords.length).toEqual(2);
+
+        const nonExistentRecord = progressRecords.find((record) => record.memberId === nonExistentMemberId);
+        expect(nonExistentRecord).toBeUndefined();
+        expect(consoleSpy).toHaveBeenCalled();
+
+        const scanResult = await cacheService.getClient().keys('podcast-program-event:*:podcast-program:*:*');
+        const remainingKeysCount = scanResult.length;
+        expect(remainingKeysCount).toEqual(0);
+        consoleSpy.mockRestore();
+      });
     });
   });
 });

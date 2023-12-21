@@ -40,28 +40,34 @@ export class PodcastService {
   }
 
   public async processPodcastProgramProgress(
-    progressMap: Map<string, PodcastProgressInfo>,
+    progressInfoList: PodcastProgressInfo[],
     entityManager: EntityManager,
   ): Promise<PodcastProgramProgress[]> {
-    const podcastProgramProgresssToSave: PodcastProgramProgress[] = [];
+    const uniqueMap = new Map<string, PodcastProgramProgress>();
 
-    for (const [, info] of progressMap) {
-      let podcastProgramProgress = await this.podcastInfra.findPodcastProgramProgress(info, entityManager);
+    for (const info of progressInfoList) {
+      const uniqueKey = `${info.memberId}_${info.podcastProgramId}`;
+      let podcastProgramProgress = uniqueMap.get(uniqueKey);
 
       if (!podcastProgramProgress) {
-        podcastProgramProgress = entityManager.getRepository(PodcastProgramProgress).create(info);
-        podcastProgramProgress.createdAt = info.created_at;
-      } else {
-        podcastProgramProgress.progress = info.progress;
-        podcastProgramProgress.lastProgress = info.lastProgress;
-        podcastProgramProgress.podcastAlbumId = info.podcastAlbumId;
-        podcastProgramProgress.updatedAt = info.created_at;
+        podcastProgramProgress = await this.podcastInfra.findPodcastProgramProgress(info, entityManager);
+
+        if (!podcastProgramProgress) {
+          podcastProgramProgress = entityManager.getRepository(PodcastProgramProgress).create(info);
+          podcastProgramProgress.createdAt = info.created_at;
+        }
       }
 
-      podcastProgramProgresssToSave.push(podcastProgramProgress);
+      podcastProgramProgress.progress = info.progress;
+      podcastProgramProgress.lastProgress = info.lastProgress;
+      podcastProgramProgress.podcastAlbumId = info.podcastAlbumId;
+      podcastProgramProgress.updatedAt = info.created_at;
+
+      uniqueMap.set(uniqueKey, podcastProgramProgress);
     }
 
-    await this.podcastInfra.savePodcastProgramProgress(podcastProgramProgresssToSave, entityManager);
-    return podcastProgramProgresssToSave;
+    const podcastProgramProgressToSave = Array.from(uniqueMap.values());
+    await this.podcastInfra.savePodcastProgramProgress(podcastProgramProgressToSave, entityManager);
+    return podcastProgramProgressToSave;
   }
 }
