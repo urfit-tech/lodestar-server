@@ -166,7 +166,7 @@ describe('PorterRunner (e2e)', () => {
       'EX',
       7 * 86400,
     );
-
+    jest.resetAllMocks();
     await application.init();
   });
 
@@ -205,7 +205,29 @@ describe('PorterRunner (e2e)', () => {
 
       expect(mockedAxiosGet).toHaveBeenCalledWith(testUrl);
     });
+
+    it('should not call the heartbeat URL if PORTER_HEARTBEAT_URL is not set', async () => {
+      const mockedAxiosGet = axios.get as jest.Mock;
+      delete process.env.PORTER_HEARTBEAT_URL;
+
+      const porterRunner = application.get<PorterRunner>(Runner);
+      await porterRunner.execute(manager);
+
+      expect(mockedAxiosGet).not.toHaveBeenCalled();
+    });
+
+    it('should not call the heartbeat URL if PORTER_HEARTBEAT_URL is not a valid URL', async () => {
+      const mockedAxiosGet = axios.get as jest.Mock;
+      const invalidUrl = 'not-a-valid-url';
+      process.env.PORTER_HEARTBEAT_URL = invalidUrl;
+
+      const porterRunner = application.get<PorterRunner>(Runner);
+      await porterRunner.execute(manager);
+
+      expect(mockedAxiosGet).not.toHaveBeenCalled();
+    });
   });
+
   describe('last-logged-in', () => {
     describe('Success scenarios', () => {
       it('should update member after executing porterRunner', async () => {
