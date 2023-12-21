@@ -20,8 +20,8 @@ export class LeadService {
   async storeLead(app: AppCache, body: LeadWebhookBody) {
     const propertyNameToField = {
       填單日期: 'created_time',
-      廣告素材: 'adset_name',
-      廣告組合: 'ad_name',
+      廣告素材: 'ad_name',
+      廣告組合: 'adset_name',
       行銷活動: 'campaign_name',
       觸及平台: 'platform',
       縣市: 'city',
