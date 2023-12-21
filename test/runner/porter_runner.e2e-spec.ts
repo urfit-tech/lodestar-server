@@ -388,6 +388,32 @@ describe('PorterRunner (e2e)', () => {
       expect(latestLog.memberId).toEqual(member.id);
     });
 
+    it('should default to the current date for invalid timestamp', async () => {
+      await programContentLogRepo.delete({});
+      await cacheService.getClient().flushall();
+
+      const invalidTimestamp = 'invalid-timestamp';
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${invalidTimestamp}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 500, endedAt: 600 }),
+          'EX',
+          7 * 86400,
+        );
+
+      const consoleSpy = jest.spyOn(console, 'error');
+      const porterRunner = application.get<PorterRunner>(Runner);
+      await porterRunner.portPlayerEvent(manager);
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid timestamp'));
+
+      const logs = await programContentLogRepo.find();
+      expect(logs.length).toEqual(1);
+
+      consoleSpy.mockRestore();
+    });
+
     describe('portPlayerEvent with batchSize 20', () => {
       it('Assess the handling and accurate processing of 80 program content log records in batches', async () => {
         await programContentLogRepo.delete({});
@@ -613,6 +639,34 @@ describe('PorterRunner (e2e)', () => {
         const remainingKeysCount = scanResult.length;
         expect(remainingKeysCount).toEqual(0);
         consoleSpy.mockRestore();
+      });
+      it('should assign default values for empty progress and lastProgress, and ignore empty podcastAlbumId', async () => {
+        await podcastProgramProgressRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        await cacheService
+          .getClient()
+          .set(
+            `podcast-program-event:${member.id}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+            JSON.stringify({ progress: '', lastProgress: '', podcastAlbumId: '' }),
+            'EX',
+            7 * 86400,
+          );
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portPodcastProgram(manager);
+
+        const savedRecord = await podcastProgramProgressRepo.findOne({
+          where: {
+            memberId: member.id,
+            podcastProgramId: podcastProgram.id,
+          },
+        });
+
+        expect(savedRecord.progress).toEqual('1');
+        expect(savedRecord.lastProgress).toEqual('1');
+
+        expect(savedRecord.podcastAlbumId).toBeNull();
       });
     });
 
