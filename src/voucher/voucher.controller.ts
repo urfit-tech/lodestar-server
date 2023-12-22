@@ -15,8 +15,12 @@ export class VoucherController {
 
   @Get()
   async getVoucherByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
-    const { memberId } = request.query;
+    const { memberId, includeDeleted } = request.query;
 
-    return this.voucherService.getVoucherByMemberId(member.appId, String(memberId || member.memberId));
+    return this.voucherService.getVoucherByMemberId(
+      member.appId,
+      String(memberId || member.memberId),
+      includeDeleted && String(includeDeleted) === 'true',
+    );
   }
 }

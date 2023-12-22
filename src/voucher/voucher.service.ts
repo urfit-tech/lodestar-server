@@ -19,7 +19,7 @@ export class VoucherService {
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
-  public async getVoucherByMemberId(appId: string, memberId: string) {
+  public async getVoucherByMemberId(appId: string, memberId: string, includeDeleted?: boolean) {
     // Todo: check permission
     // ...
 
@@ -52,18 +52,20 @@ export class VoucherService {
     );
 
     return this.utilityService.convertObjectKeysToCamelCase(
-      voucherEnrollment.map((voucher) => {
-        const startedAt = voucher.started_at;
-        const endedAt = voucher.ended_at;
-        return {
-          ...voucher,
-          status: {
-            outdated:
-              !!(startedAt && dayjs(startedAt).isAfter(dayjs())) || !!(endedAt && dayjs(endedAt).isBefore(dayjs())),
-            used: !!orderDiscountEnrollment.find((od) => od.target === voucher.id),
-          },
-        };
-      }),
+      voucherEnrollment
+        .filter((voucher) => includeDeleted || voucher.voucher_code.deleted_at === null)
+        .map((voucher) => {
+          const startedAt = voucher.started_at;
+          const endedAt = voucher.ended_at;
+          return {
+            ...voucher,
+            status: {
+              outdated:
+                !!(startedAt && dayjs(startedAt).isAfter(dayjs())) || !!(endedAt && dayjs(endedAt).isBefore(dayjs())),
+              used: !!orderDiscountEnrollment.find((od) => od.target === voucher.id),
+            },
+          };
+        }),
     );
   }
 }
