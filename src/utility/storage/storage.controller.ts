@@ -10,14 +10,16 @@ import {
 import { MediaService } from '~/media/media.service';
 import { ConfigService } from '@nestjs/config';
 import { Attachment } from '~/media/attachment.entity';
+import { AuthGuard } from '~/auth/auth.guard';
 
 @Controller({
   path: 'storage',
-  version: ['2'],
+  version: ['1', '2'],
 })
+@UseGuards(AuthGuard)
 export class StorageController {
   private readonly awsS3BucketStorage: string;
-  private readonly awsStorageCloudFrontUrl: string;
+
   constructor(
     private readonly configService: ConfigService<{
       AWS_S3_BUCKET_STORAGE: string;
@@ -27,7 +29,6 @@ export class StorageController {
     private readonly mediaService: MediaService,
   ) {
     this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
-    this.awsStorageCloudFrontUrl = configService.getOrThrow('AWS_STORAGE_CLOUDFRONT_URL');
   }
 
   @Post('storage/upload')
