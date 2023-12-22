@@ -53,10 +53,10 @@ export class VoucherService {
 
     return this.utilityService.convertObjectKeysToCamelCase(
       voucherEnrollment
-        .filter((voucher) => includeDeleted || voucher.voucher_code.deleted_at === null)
+        .filter((voucher) => includeDeleted || voucher.voucherCode.deletedAt === null)
         .map((voucher) => {
-          const startedAt = voucher.started_at;
-          const endedAt = voucher.ended_at;
+          const startedAt = voucher.voucherCode.voucherPlan.startedAt;
+          const endedAt = voucher.voucherCode.voucherPlan.endedAt;
           return {
             ...voucher,
             status: {
