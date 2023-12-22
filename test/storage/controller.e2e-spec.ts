@@ -15,7 +15,6 @@ import { AppHost } from '~/app/entity/app_host.entity';
 import { AppSecret } from '~/app/entity/app_secret.entity';
 import { AppSetting } from '~/app/entity/app_setting.entity';
 import { Member } from '~/member/entity/member.entity';
-import { OrderLog } from '~/order/entity/order_log.entity';
 
 import { role, app, appPlan, appSecret, appSetting, appHost } from '../data';
 import { ApiExceptionFilter } from '~/api.filter';
@@ -26,7 +25,6 @@ import {
   UploadDTO,
 } from '~/utility/storage/storage.dto';
 import { StorageService } from '~/utility/storage/storage.service';
-import { CompletedMultipartUpload } from '@aws-sdk/client-s3';
 import { Attachment } from '~/media/attachment.entity';
 
 describe('StorageController (e2e)', () => {
