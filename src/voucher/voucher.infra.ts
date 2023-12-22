@@ -20,6 +20,10 @@ export class VoucherInfrastructure {
   }
 
   async getVoucherEnrollment(memberId: string, manager: EntityManager) {
+    return this.getVoucherByMemberId(memberId, manager);
+  }
+
+  private getVoucherByMemberId(memberId: string, manager: EntityManager) {
     return manager
       .getRepository(Voucher)
       .createQueryBuilder('voucher')
