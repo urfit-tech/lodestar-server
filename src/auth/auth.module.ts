@@ -1,4 +1,4 @@
-import { Module, Logger, forwardRef } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 
 import { AppModule } from '~/app/app.module';
 import { MemberModule } from '~/member/member.module';
@@ -14,8 +14,8 @@ import { UtilityService } from '~/utility/utility.service';
 
 @Module({
   controllers: [AuthController],
-  imports: [AppModule, forwardRef(() => MemberModule), PermissionModule, MailerModule],
+  imports: [AppModule, MemberModule, PermissionModule, MailerModule],
   providers: [Logger, AuthService, DeviceService, AuthInfrastructure, CacheService, UtilityService],
-  exports: [AuthService],
+  exports: [AuthService, AuthInfrastructure],
 })
 export class AuthModule {}
