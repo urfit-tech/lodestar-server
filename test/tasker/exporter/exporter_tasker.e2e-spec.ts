@@ -33,7 +33,7 @@ describe('ExporterTasker', () => {
   let application: INestApplication;
   let cacheService: CacheService;
   const mockStorageService = {
-    saveFilesInBucketStorage: jest.fn(),
+    saveFileInBucketStorage: jest.fn(),
     getSignedUrlForDownloadStorage: jest.fn(),
   };
   const mockJobFunction = {
@@ -143,7 +143,7 @@ describe('ExporterTasker', () => {
     let savedKey: string;
     let savedFile: string;
 
-    mockStorageService.saveFilesInBucketStorage.mockImplementationOnce(
+    mockStorageService.saveFileInBucketStorage.mockImplementationOnce(
       (awsPayload: { Key: string; Body: string; ContentType: string }) => {
         savedKey = awsPayload.Key;
         savedFile = awsPayload.Body;
@@ -210,7 +210,7 @@ describe('ExporterTasker', () => {
     let savedKey: string;
     let savedFile: string;
 
-    mockStorageService.saveFilesInBucketStorage.mockImplementationOnce(
+    mockStorageService.saveFileInBucketStorage.mockImplementationOnce(
       (awsPayload: { Key: string; Body: string; ContentType: string }) => {
         savedKey = awsPayload.Key;
         savedFile = awsPayload.Body;
