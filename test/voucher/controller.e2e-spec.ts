@@ -78,7 +78,7 @@ describe('ProgramController (e2e)', () => {
       .use(urlencoded({ extended: true, limit: '10mb' }))
       .use(
         session({
-          secret: sessionSecret,
+          secret: 'kolable-test',
           store: new RedisStore({ client: cacheService.getClient() }),
           resave: false,
           saveUninitialized: false,

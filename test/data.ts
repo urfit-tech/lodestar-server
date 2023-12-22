@@ -35,8 +35,6 @@ import { VoucherCode } from '~/entity/VoucherCode';
 import { VoucherPlan } from '~/entity/VoucherPlan';
 import { VoucherPlanProduct } from '~/entity/VoucherPlanProduct';
 
-export const sessionSecret = 'kolable-test';
-
 export const role = new Role();
 role.name = 'app-owner';
 
