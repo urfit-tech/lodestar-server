@@ -30,6 +30,10 @@ import { PodcastPlan } from '~/entity/PodcastPlan';
 import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 import { PodcastAlbumPodcastProgram } from '~/podcast/entity/PodcastAlbumPodcastProgram';
 import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
+import { Voucher } from '~/voucher/entity/voucher.entity';
+import { VoucherCode } from '~/entity/VoucherCode';
+import { VoucherPlan } from '~/entity/VoucherPlan';
+import { VoucherPlanProduct } from '~/entity/VoucherPlanProduct';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -219,3 +223,30 @@ export const orderProduct = new OrderProduct();
 orderProduct.id = v4();
 orderProduct.orderId = orderLog.id;
 orderProduct.deliveredAt = dayjs().subtract(1, 'day').toDate();
+
+export const voucherPlan = new VoucherPlan();
+voucherPlan.id = v4();
+voucherPlan.title = 'test voucher plan title';
+voucherPlan.description = 'test voucher plan description';
+voucherPlan.appId = app.id;
+voucherPlan.startedAt = dayjs().toDate();
+voucherPlan.endedAt = dayjs().add(1, 'day').toDate();
+
+export const voucherCode = new VoucherCode();
+voucherCode.id = v4();
+voucherCode.code = 'test voucher code';
+voucherCode.count = 10;
+voucherCode.remaining = 6;
+voucherCode.deletedAt = null;
+voucherCode.voucherPlanId = voucherPlan.id;
+
+export const voucher = new Voucher();
+voucher.id = v4();
+voucher.memberId = member.id;
+voucher.deletedAt = null;
+voucher.voucherCodeId = voucherCode.id;
+
+export const voucherPlanProduct = new VoucherPlanProduct();
+voucherPlanProduct.id = v4();
+voucherPlanProduct.voucherPlanId = voucherPlan.id;
+voucherPlanProduct.productId = programPlanProduct.id;

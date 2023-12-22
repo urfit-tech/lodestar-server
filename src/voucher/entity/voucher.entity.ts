@@ -13,10 +13,10 @@ export class Voucher {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('uuid', { name: 'voucher_code_id', unique: true })
+  @Column('uuid', { name: 'voucher_code_id' })
   voucherCodeId: string;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @Column('timestamp with time zone', {
