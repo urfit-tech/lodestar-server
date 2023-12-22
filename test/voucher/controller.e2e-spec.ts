@@ -9,6 +9,8 @@ import {
   appSetting,
   currency,
   member,
+  program,
+  programPlan,
   programPlanProduct,
   role,
   sessionSecret,
@@ -39,6 +41,8 @@ import { VoucherCode } from '~/entity/VoucherCode';
 import { VoucherPlan } from '~/entity/VoucherPlan';
 import { VoucherPlanProduct } from '~/entity/VoucherPlanProduct';
 import { Product } from '~/entity/Product';
+import { Program } from '~/entity/Program';
+import { ProgramPlan } from '~/entity/ProgramPlan';
 
 describe('ProgramController (e2e)', () => {
   let application: INestApplication;
@@ -57,6 +61,8 @@ describe('ProgramController (e2e)', () => {
   let voucherPlanRepo: Repository<VoucherPlan>;
   let voucherPlanProductRepo: Repository<VoucherPlanProduct>;
   let productRepo: Repository<Product>;
+  let programRepo: Repository<Program>;
+  let programPlanRepo: Repository<ProgramPlan>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -100,9 +106,13 @@ describe('ProgramController (e2e)', () => {
     voucherPlanRepo = manager.getRepository(VoucherPlan);
     voucherPlanProductRepo = manager.getRepository(VoucherPlanProduct);
     productRepo = manager.getRepository(Product);
+    programRepo = manager.getRepository(Program);
+    programPlanRepo = manager.getRepository(ProgramPlan);
 
     await voucherPlanProductRepo.delete({});
     await productRepo.delete({});
+    await programPlanRepo.delete({});
+    await programRepo.delete({});
     await voucherRepo.delete({});
     await voucherCodeRepo.delete({});
     await voucherPlanRepo.delete({});
@@ -123,11 +133,13 @@ describe('ProgramController (e2e)', () => {
     await appSecretRepo.save(appSecret);
     await appHostRepo.save(appHost);
     await memberRepo.save(member);
+    await programRepo.save(program);
+    await programPlanRepo.save(programPlan);
     await productRepo.save(programPlanProduct);
     await voucherPlanRepo.save(voucherPlan);
     await voucherCodeRepo.save(voucherCode);
     await voucherRepo.save(voucher);
-    // await voucherPlanProductRepo.save(voucherPlanProduct);
+    await voucherPlanProductRepo.save(voucherPlanProduct);
 
     await application.init();
   });
@@ -135,6 +147,8 @@ describe('ProgramController (e2e)', () => {
   afterEach(async () => {
     await voucherPlanProductRepo.delete({});
     await productRepo.delete({});
+    await programPlanRepo.delete({});
+    await programRepo.delete({});
     await voucherRepo.delete({});
     await voucherCodeRepo.delete({});
     await voucherPlanRepo.delete({});
