@@ -161,17 +161,20 @@ export class ImporterTasker extends Tasker {
     subject: string,
     content: string,
   ): Promise<void> {
-    this.mailerQueue.add({
-      appId,
-      to: invokerMember.map(({ email }) => email),
-      subject,
-      cc: [],
-      bcc: [],
-      content: `<html>
+    this.mailerQueue.add(
+      {
+        appId,
+        to: invokerMember.map(({ email }) => email),
+        subject,
+        cc: [],
+        bcc: [],
+        content: `<html>
         <body>
           ${content}
         </body>
       </html>`,
-    } as MailJob, { removeOnComplete: true, removeOnFail: true });
+      } as MailJob,
+      { removeOnComplete: true, removeOnFail: true },
+    );
   }
 }
