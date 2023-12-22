@@ -1,4 +1,4 @@
-import { forwardRef, Logger, Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { AuthModule } from '~/auth/auth.module';
 import { ProgramService } from '~/program/program.service';
@@ -12,15 +12,19 @@ import { MediaInfrastructure } from './media.infra';
 import { MemberModule } from '~/member/member.module';
 import { ProgramInfrastructure } from '~/program/program.infra';
 import { MediaService } from './media.service';
-import { UtilityModule } from '~/utility/utility.module';
 import { StorageService } from '~/utility/storage/storage.service';
+import { AppModule } from '~/app/app.module';
+import { DeviceModule } from '~/auth/device/device.module';
+import { CacheService } from '~/utility/cache/cache.service';
+import { MailerModule } from '~/mailer/mailer.module';
 
 @Module({
   controllers: [VideoController],
-  imports: [AuthModule, forwardRef(() => UtilityModule), MemberModule],
+  imports: [AppModule, AuthModule, DeviceModule, MemberModule, MailerModule],
   providers: [
     Logger,
     AudioService,
+    CacheService,
     ImageService,
     StorageService,
     MediaInfrastructure,
