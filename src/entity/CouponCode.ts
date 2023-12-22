@@ -9,13 +9,16 @@ export class CouponCode {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('text', { name: 'code', unique: true })
+  @Column('uuid', { name: 'coupon_plan_id' })
+  couponPlanId: string;
+
+  @Column('text', { name: 'code' })
   code: string;
 
   @Column('integer', { name: 'count' })
   count: number;
 
-  @Column('text', { name: 'app_id', unique: true })
+  @Column('text', { name: 'app_id' })
   appId: string;
 
   @Column('integer', { name: 'remaining' })
@@ -34,6 +37,13 @@ export class CouponCode {
     default: () => 'now()',
   })
   updatedAt: Date | null;
+
+  @Column('timestamp with time zone', {
+    name: 'deleted_at',
+    nullable: true,
+    default: () => 'now()',
+  })
+  deletedAt: Date | null;
 
   @OneToMany(() => Coupon, (coupon) => coupon.couponCode)
   coupons: Coupon[];

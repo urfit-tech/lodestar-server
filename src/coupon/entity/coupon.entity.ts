@@ -14,7 +14,7 @@ export class Coupon {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @Column('timestamp with time zone', {
@@ -23,7 +23,7 @@ export class Coupon {
   })
   createdAt: Date;
 
-  @Column('uuid', { name: 'coupon_code_id', unique: true })
+  @Column('uuid', { name: 'coupon_code_id' })
   couponCodeId: string;
 
   @ManyToOne(() => CouponCode, (couponCode) => couponCode.coupons, {
