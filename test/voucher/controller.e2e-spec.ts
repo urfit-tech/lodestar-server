@@ -13,7 +13,6 @@ import {
   programPlan,
   programPlanProduct,
   role,
-  sessionSecret,
   voucher,
   voucherCode,
   voucherPlan,
@@ -78,14 +77,14 @@ describe('ProgramController (e2e)', () => {
       .use(urlencoded({ extended: true, limit: '10mb' }))
       .use(
         session({
-          secret: 'kolable-test',
+          secret: process.env.SESSION_SECRET,
           store: new RedisStore({ client: cacheService.getClient() }),
           resave: false,
           saveUninitialized: false,
           cookie: {
             httpOnly: true,
             sameSite: 'strict',
-            secure: false,
+            secure: true,
             maxAge: 30 * 86400 * 1000, // 30 days
           },
         }),
