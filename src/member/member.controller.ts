@@ -27,6 +27,8 @@ import {
   MemberGetDTO,
   MemberGetResultDTO,
   MemberImportDTO,
+  SaleLeadMemberDataResponseDTO,
+  SaleLeadMemberDataResquestDTO,
 } from './member.dto';
 import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
@@ -171,6 +173,17 @@ export class MemberController {
       exportMime,
     };
     await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
+  }
+
+  @Post('saleLeadMemberData')
+  public async getSaleLeadMemberData(
+    @Body() requestDto: SaleLeadMemberDataResquestDTO,
+  ): Promise<SaleLeadMemberDataResponseDTO> {
+    return this.memberService.getSaleLeadMemberData(
+      requestDto.memberIds,
+      requestDto.categoryIds,
+      requestDto.propertyIds,
+    );
   }
 
   @Delete('email/:email')

@@ -21,6 +21,7 @@ import {
   MemberGetQueryOptionsDTO,
   MemberGetResultDTO,
   MemberImportResultDTO,
+  SaleLeadMemberDataResponseDTO,
 } from './member.dto';
 import { Member } from './entity/member.entity';
 import { MemberCategory } from './entity/member_category.entity';
@@ -340,7 +341,6 @@ export class MemberService {
       .map((each) => each.serializeToCsvRawRow(headerInfos));
   }
 
-
   async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
     await this.memberInfra.updateMemberLoginDate(memberId, loginedAt, entityManager);
   }
@@ -351,5 +351,53 @@ export class MemberService {
 
   async getMemberTasks(memberId: string): Promise<Array<MemberTask>> {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
+  }
+
+  async getSaleLeadMemberData(memberIds, categoryIds, propertyIds): Promise<SaleLeadMemberDataResponseDTO> {
+    const [memberProperties, memberTasks, memberPhones, memberNotes, memberCategories, memberContracts] =
+      await Promise.all([
+        this.memberInfra.getMemberPropertiesByIds(memberIds, propertyIds, this.entityManager),
+        this.memberInfra.getMemberTasksWithBulkIds(memberIds, this.entityManager),
+        this.memberInfra.getMemberPhonesWithBulkIds(memberIds, this.entityManager),
+        this.memberInfra.getMemberNotesWithBulkIds(memberIds, this.entityManager),
+        this.memberInfra.getMemberCategoryWithBulkIds(memberIds, categoryIds, this.entityManager),
+        this.memberInfra.getMemberContractWithBulkIds(memberIds, this.entityManager),
+      ]);
+
+    const responseDto = new SaleLeadMemberDataResponseDTO();
+    responseDto.memberProperty = memberProperties.map(this.mapMemberProperty);
+    responseDto.memberTask = memberTasks.map(this.mapMemberTask);
+    responseDto.memberPhone = memberPhones.map(this.mapMemberPhone);
+    responseDto.memberNote = memberNotes.map(this.mapMemberNote);
+    responseDto.memberCategory = memberCategories.map(this.mapMemberCategory);
+    responseDto.activeMemberContract = memberContracts.map(this.mapMemberContract);
+
+    console.log('esponseDt', responseDto);
+
+    return responseDto;
+  }
+
+  private mapMemberProperty({ memberId, propertyId, value }) {
+    return { member_id: memberId, property_id: propertyId, value };
+  }
+
+  private mapMemberTask({ memberId, status }) {
+    return { member_id: memberId, status };
+  }
+
+  private mapMemberPhone({ memberId, phone }) {
+    return { member_id: memberId, phone };
+  }
+
+  private mapMemberNote({ memberId, description }) {
+    return { member_id: memberId, description };
+  }
+
+  private mapMemberCategory({ memberId, categoryId }) {
+    return { member_id: memberId, category_id: categoryId };
+  }
+
+  private mapMemberContract({ memberId, agreedAt, revokedAt, values }) {
+    return { member_id: memberId, agreed_at: agreedAt, revoked_at: revokedAt, values };
   }
 }

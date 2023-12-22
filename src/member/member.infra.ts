@@ -187,6 +187,97 @@ export class MemberInfrastructure {
     return tasks;
   }
 
+  async getMemberTasksWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberTask[]> {
+    const memberTaskRepo = manager.getRepository(MemberTask);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+    console.log('valuesSubQuery', valuesSubQuery);
+
+    const query = memberTaskRepo
+      .createQueryBuilder('mt')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id');
+
+    return await query.getMany();
+  }
+
+  async getMemberPhonesWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberPhone[]> {
+    const memberPhoneRepo = manager.getRepository(MemberPhone);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+    console.log('valuesSubQuery', valuesSubQuery);
+
+    const query = memberPhoneRepo
+      .createQueryBuilder('mt')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id');
+
+    return await query.getMany();
+  }
+
+  async getMemberNotesWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberNote[]> {
+    const memberNoteRepo = manager.getRepository(MemberNote);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+    console.log('valuesSubQuery', valuesSubQuery);
+
+    const query = memberNoteRepo
+      .createQueryBuilder('mt')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id');
+
+    return await query.getMany();
+  }
+
+  async getMemberCategoryWithBulkIds(
+    memberIds: string[],
+    categoryIds: string[],
+    manager: EntityManager,
+  ): Promise<MemberCategory[]> {
+    const memberCategoryRepo = manager.getRepository(MemberCategory);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+    console.log('valuesSubQuery', valuesSubQuery);
+
+    const query = memberCategoryRepo
+      .createQueryBuilder('mt')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id')
+      .andWhere('mc.category_id IN (:...categoryIds)', { categoryIds });
+
+    return await query.getMany();
+  }
+
+  async getMemberContractWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberContract[]> {
+    const memberContractRepo = manager.getRepository(MemberContract);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+    console.log('valuesSubQuery', valuesSubQuery);
+
+    const query = memberContractRepo
+      .createQueryBuilder('mt')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id')
+      .andWhere('mc.agreed_at IS NOT NULL');
+
+    return await query.getMany();
+  }
+
   async getLoginMemberMetadata(memberId: string, manager: EntityManager): Promise<Array<LoginMemberMetadata>> {
     const builder = manager
       .createQueryBuilder()
