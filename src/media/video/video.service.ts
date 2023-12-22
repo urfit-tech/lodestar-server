@@ -264,8 +264,7 @@ export class VideoService {
       });
     }
     const { path, playPaths } = cloudfrontOptions;
-
-    if (path && playPaths) {
+    if (!path && !playPaths) {
       throw new APIException({
         code: 'E_ATTACHMENT',
         message: `cannot get the attachment: no path in cloudfront option`,
@@ -301,7 +300,7 @@ export class VideoService {
     };
   }
 
-  private signCloudfrontUrl(url: string) {
+  private signCloudfrontUrl(url: string): string {
     const options = {
       keypairId: this.awsCloudfrontKeyPairId,
       privateKeyString: this.awsCloudfrontPrivateKey,
