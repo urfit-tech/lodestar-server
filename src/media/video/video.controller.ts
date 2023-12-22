@@ -19,6 +19,7 @@ import { AuthGuard } from '~/auth/auth.guard';
 import { StorageService } from '~/utility/storage/storage.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { APIException } from '~/api.excetion';
+import { validate as isValidUUID } from 'uuid';
 
 @Controller({
   path: 'videos',
@@ -136,6 +137,13 @@ export class VideoController {
     @Headers('Authorization') authorization: string,
     @Param('videoId') videoId: string,
   ): Promise<{ message: string; code: string; result: VideoSignResponseDTO }> {
+    if (!isValidUUID(videoId)) {
+      throw new APIException({
+        code: 'E_SIGN_URL',
+        message: `videoId is undefined`,
+      });
+    }
+
     const [_, token] = authorization ? authorization.split(' ') : [undefined, undefined];
     const signedData = await this.videoService.generateCloudfrontSignedUrl(videoId, token);
     return {
