@@ -206,7 +206,7 @@ export class VideoService {
     for (const key of keysNeedToDelete) {
       await this.storageService.deleteFileAtBucketStorage({ Key: new URL(key).pathname.substring(1) });
     }
-    return keys;
+    return keysNeedToDelete;
   }
 
   public async parseManifestWithSignUrl(manifest: string, key: string, signature: string): Promise<string> {
