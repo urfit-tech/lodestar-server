@@ -52,6 +52,7 @@ import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
 import { ReviewReply } from '~/entity/ReviewReply';
+import { Property } from '~/definition/entity/property.entity';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -195,7 +196,6 @@ export class MemberInfrastructure {
       return [];
     }
     const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
-    console.log('valuesSubQuery', valuesSubQuery);
 
     const query = memberTaskRepo
       .createQueryBuilder('mt')
@@ -212,11 +212,10 @@ export class MemberInfrastructure {
       return [];
     }
     const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
-    console.log('valuesSubQuery', valuesSubQuery);
 
     const query = memberPhoneRepo
-      .createQueryBuilder('mt')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id');
+      .createQueryBuilder('mp')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mp.member_id = vals.member_id');
 
     return await query.getMany();
   }
@@ -229,7 +228,6 @@ export class MemberInfrastructure {
       return [];
     }
     const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
-    console.log('valuesSubQuery', valuesSubQuery);
 
     const query = memberNoteRepo
       .createQueryBuilder('mt')
@@ -250,11 +248,10 @@ export class MemberInfrastructure {
       return [];
     }
     const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
-    console.log('valuesSubQuery', valuesSubQuery);
 
     const query = memberCategoryRepo
-      .createQueryBuilder('mt')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id')
+      .createQueryBuilder('mc')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
       .andWhere('mc.category_id IN (:...categoryIds)', { categoryIds });
 
     return await query.getMany();
@@ -268,12 +265,32 @@ export class MemberInfrastructure {
       return [];
     }
     const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
-    console.log('valuesSubQuery', valuesSubQuery);
 
     const query = memberContractRepo
-      .createQueryBuilder('mt')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id')
+      .createQueryBuilder('mc')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
       .andWhere('mc.agreed_at IS NOT NULL');
+
+    return await query.getMany();
+  }
+
+  async getMemberPropertiyWithBulkIds(
+    memberIds: string[],
+    propertyIds: string[],
+    manager: EntityManager,
+  ): Promise<MemberProperty[]> {
+    const memberPropertyRepo = manager.getRepository(MemberProperty);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+
+    const query = memberPropertyRepo
+      .createQueryBuilder('mp')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mp.member_id = vals.member_id')
+      .andWhere('mp.property_id IN (:...propertyIds)', { propertyIds });
 
     return await query.getMany();
   }

@@ -356,7 +356,7 @@ export class MemberService {
   async getSaleLeadMemberData(memberIds, categoryIds, propertyIds): Promise<SaleLeadMemberDataResponseDTO> {
     const [memberProperties, memberTasks, memberPhones, memberNotes, memberCategories, memberContracts] =
       await Promise.all([
-        this.memberInfra.getMemberPropertiesByIds(memberIds, propertyIds, this.entityManager),
+        this.memberInfra.getMemberPropertiyWithBulkIds(memberIds, propertyIds, this.entityManager),
         this.memberInfra.getMemberTasksWithBulkIds(memberIds, this.entityManager),
         this.memberInfra.getMemberPhonesWithBulkIds(memberIds, this.entityManager),
         this.memberInfra.getMemberNotesWithBulkIds(memberIds, this.entityManager),
