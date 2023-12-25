@@ -373,8 +373,6 @@ export class MemberService {
     responseDto.memberCategory = memberCategories.map(this.mapMemberCategory);
     responseDto.activeMemberContract = memberContracts.map(this.mapMemberContract);
 
-    console.log('esponseDt', responseDto);
-
     return responseDto;
   }
 

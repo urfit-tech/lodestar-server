@@ -255,6 +255,12 @@ export class MemberInfrastructure {
       order: { position: 'asc' },
     });
 
+    const categoryIds = categories.map((c) => c.id);
+
+    if (categoryIds.length === 0) {
+      return [];
+    }
+
     const categoriesMap = new Map(categories.map((cat) => [cat.id, cat]));
 
     const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
@@ -266,7 +272,7 @@ export class MemberInfrastructure {
     const query = memberCategoryRepo
       .createQueryBuilder('mc')
       .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
-      .andWhere('mc.category_id IN (:...categoryIds)', { categoryIds: categories.map((c) => c.id) });
+      .andWhere('mc.category_id IN (:...categoryIds)', { categoryIds });
 
     const memberCategories = await query.getMany();
 
@@ -310,6 +316,11 @@ export class MemberInfrastructure {
       order: { position: 'ASC' },
     });
     const propertyIds = properties.map((v) => v.id);
+
+    if (propertyIds.length === 0) {
+      return [];
+    }
+
     const propertyMap = new Map(properties.map((p) => [p.id, p]));
 
     const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
@@ -321,7 +332,7 @@ export class MemberInfrastructure {
     const query = memberPropertyRepo
       .createQueryBuilder('mp')
       .innerJoin(`(${valuesSubQuery})`, 'vals', 'mp.member_id = vals.member_id')
-      .andWhere('mp.property_id IN (:...propertyIds)', { propertyIds: properties.map((c) => c.id) });
+      .andWhere('mp.property_id IN (:...propertyIds)', { propertyIds });
 
     const memberProperties = await query.getMany();
 

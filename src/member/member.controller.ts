@@ -10,6 +10,8 @@ import {
   UseGuards,
   Delete,
   Param,
+  HttpStatus,
+  HttpException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
@@ -174,12 +176,31 @@ export class MemberController {
     };
     await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
   }
-
   @Post('saleLeadMemberData')
   public async getSaleLeadMemberData(
     @Body() requestDto: SaleLeadMemberDataResquestDTO,
   ): Promise<SaleLeadMemberDataResponseDTO> {
-    return this.memberService.getSaleLeadMemberData(requestDto.memberIds, requestDto.appId);
+    const errors = [];
+
+    if (!requestDto.appId || typeof requestDto.appId !== 'string' || requestDto.appId.trim() === '') {
+      errors.push('appId must be a string and cannot be empty');
+    }
+
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: 'Invalid request parameters',
+        errors: errors,
+        statusCode: HttpStatus.BAD_REQUEST,
+      });
+    }
+
+    try {
+      return await this.memberService.getSaleLeadMemberData(requestDto.memberIds, requestDto.appId);
+    } catch (error) {
+      console.error('Error fetching sale lead member data:', error);
+
+      throw new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Delete('email/:email')
