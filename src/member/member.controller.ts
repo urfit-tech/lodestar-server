@@ -179,11 +179,7 @@ export class MemberController {
   public async getSaleLeadMemberData(
     @Body() requestDto: SaleLeadMemberDataResquestDTO,
   ): Promise<SaleLeadMemberDataResponseDTO> {
-    return this.memberService.getSaleLeadMemberData(
-      requestDto.memberIds,
-      requestDto.categoryIds,
-      requestDto.propertyIds,
-    );
+    return this.memberService.getSaleLeadMemberData(requestDto.memberIds, requestDto.appId);
   }
 
   @Delete('email/:email')

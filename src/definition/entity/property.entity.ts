@@ -41,6 +41,9 @@ export class Property {
   @Column('boolean', { name: 'is_business', default: () => false })
   isBusiness: boolean;
 
+  @Column('text', { name: 'app_id', unique: true })
+  appId: string;
+
   @OneToMany(() => MemberProperty, (memberProperty) => memberProperty.property)
   memberProperties: MemberProperty[];
 

@@ -53,6 +53,7 @@ import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
 import { ReviewReply } from '~/entity/ReviewReply';
 import { Property } from '~/definition/entity/property.entity';
+import { Category } from '~/definition/entity/category.entity';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -238,10 +239,23 @@ export class MemberInfrastructure {
 
   async getMemberCategoryWithBulkIds(
     memberIds: string[],
-    categoryIds: string[],
+    appId,
     manager: EntityManager,
-  ): Promise<MemberCategory[]> {
+  ): Promise<
+    {
+      memberCategory: MemberCategory;
+      category: Category;
+    }[]
+  > {
     const memberCategoryRepo = manager.getRepository(MemberCategory);
+    const categoryRepo = manager.getRepository(Category);
+
+    const categories = await categoryRepo.find({
+      where: { appId: appId, class: 'member' },
+      order: { position: 'asc' },
+    });
+
+    const categoriesMap = new Map(categories.map((cat) => [cat.id, cat]));
 
     const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
     if (valuesList.length < 1) {
@@ -252,9 +266,14 @@ export class MemberInfrastructure {
     const query = memberCategoryRepo
       .createQueryBuilder('mc')
       .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
-      .andWhere('mc.category_id IN (:...categoryIds)', { categoryIds });
+      .andWhere('mc.category_id IN (:...categoryIds)', { categoryIds: categories.map((c) => c.id) });
 
-    return await query.getMany();
+    const memberCategories = await query.getMany();
+
+    return memberCategories.map((mc) => ({
+      memberCategory: mc,
+      category: categoriesMap.get(mc.categoryId),
+    }));
   }
 
   async getMemberContractWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberContract[]> {
@@ -276,10 +295,22 @@ export class MemberInfrastructure {
 
   async getMemberPropertiyWithBulkIds(
     memberIds: string[],
-    propertyIds: string[],
+    appId: string,
     manager: EntityManager,
-  ): Promise<MemberProperty[]> {
+  ): Promise<
+    {
+      memberProperty: MemberProperty;
+      property: Property;
+    }[]
+  > {
     const memberPropertyRepo = manager.getRepository(MemberProperty);
+    const propertyRepo = manager.getRepository(Property);
+    const properties = await propertyRepo.find({
+      where: { appId },
+      order: { position: 'ASC' },
+    });
+    const propertyIds = properties.map((v) => v.id);
+    const propertyMap = new Map(properties.map((p) => [p.id, p]));
 
     const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
     if (valuesList.length < 1) {
@@ -290,9 +321,14 @@ export class MemberInfrastructure {
     const query = memberPropertyRepo
       .createQueryBuilder('mp')
       .innerJoin(`(${valuesSubQuery})`, 'vals', 'mp.member_id = vals.member_id')
-      .andWhere('mp.property_id IN (:...propertyIds)', { propertyIds });
+      .andWhere('mp.property_id IN (:...propertyIds)', { propertyIds: properties.map((c) => c.id) });
 
-    return await query.getMany();
+    const memberProperties = await query.getMany();
+
+    return memberProperties.map((mp) => ({
+      memberProperty: mp,
+      property: propertyMap.get(mp.propertyId),
+    }));
   }
 
   async getLoginMemberMetadata(memberId: string, manager: EntityManager): Promise<Array<LoginMemberMetadata>> {

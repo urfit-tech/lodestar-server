@@ -29,6 +29,7 @@ import { MemberProperty } from './entity/member_property.entity';
 import { MemberPhone } from './entity/member_phone.entity';
 import { MemberTag } from './entity/member_tag.entity';
 import { APIException } from '~/api.excetion';
+import { category } from 'test/data';
 
 @Injectable()
 export class MemberService {
@@ -353,14 +354,14 @@ export class MemberService {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
   }
 
-  async getSaleLeadMemberData(memberIds, categoryIds, propertyIds): Promise<SaleLeadMemberDataResponseDTO> {
+  async getSaleLeadMemberData(memberIds, appId): Promise<SaleLeadMemberDataResponseDTO> {
     const [memberProperties, memberTasks, memberPhones, memberNotes, memberCategories, memberContracts] =
       await Promise.all([
-        this.memberInfra.getMemberPropertiyWithBulkIds(memberIds, propertyIds, this.entityManager),
+        this.memberInfra.getMemberPropertiyWithBulkIds(memberIds, appId, this.entityManager),
         this.memberInfra.getMemberTasksWithBulkIds(memberIds, this.entityManager),
         this.memberInfra.getMemberPhonesWithBulkIds(memberIds, this.entityManager),
         this.memberInfra.getMemberNotesWithBulkIds(memberIds, this.entityManager),
-        this.memberInfra.getMemberCategoryWithBulkIds(memberIds, categoryIds, this.entityManager),
+        this.memberInfra.getMemberCategoryWithBulkIds(memberIds, appId, this.entityManager),
         this.memberInfra.getMemberContractWithBulkIds(memberIds, this.entityManager),
       ]);
 
@@ -377,27 +378,36 @@ export class MemberService {
     return responseDto;
   }
 
-  private mapMemberProperty({ memberId, propertyId, value }) {
-    return { member_id: memberId, property_id: propertyId, value };
+  private mapMemberProperty({ memberProperty, property }) {
+    return {
+      memberId: memberProperty.memberId,
+      propertyId: property.id,
+      value: memberProperty.value,
+      name: property.name,
+    };
   }
 
   private mapMemberTask({ memberId, status }) {
-    return { member_id: memberId, status };
+    return { memberId: memberId, status };
   }
 
   private mapMemberPhone({ memberId, phone }) {
-    return { member_id: memberId, phone };
+    return { memberId: memberId, phone };
   }
 
   private mapMemberNote({ memberId, description }) {
-    return { member_id: memberId, description };
+    return { memberId: memberId, description };
   }
 
-  private mapMemberCategory({ memberId, categoryId }) {
-    return { member_id: memberId, category_id: categoryId };
+  private mapMemberCategory({ memberCategory, category }) {
+    return {
+      memberId: memberCategory.memberId,
+      name: category ? category.name : null,
+      categoryId: memberCategory.categoryId,
+    };
   }
 
   private mapMemberContract({ memberId, agreedAt, revokedAt, values }) {
-    return { member_id: memberId, agreed_at: agreedAt, revoked_at: revokedAt, values };
+    return { memberId: memberId, agreed_at: agreedAt, revoked_at: revokedAt, values };
   }
 }

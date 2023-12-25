@@ -200,7 +200,7 @@ export class MemberGeneralLoginDTO {
 
 export class ActiveMemberContractDTO {
   @IsString()
-  member_id: string;
+  memberId: string;
 
   @IsDate()
   agreed_at: Date;
@@ -214,7 +214,7 @@ export class ActiveMemberContractDTO {
 
 export class MemberTaskDTO {
   @IsString()
-  member_id: string;
+  memberId: string;
 
   @IsString()
   status: string;
@@ -222,18 +222,21 @@ export class MemberTaskDTO {
 
 export class MemberPropertyDTO {
   @IsString()
-  member_id: string;
+  memberId: string;
 
   @IsString()
-  property_id: string;
+  propertyId: string;
 
   @ValidateNested()
   value: any;
+
+  @IsString()
+  name: string;
 }
 
 export class MemberPhoneDTO {
   @IsString()
-  member_id: string;
+  memberId: string;
 
   @IsString()
   phone: string;
@@ -241,7 +244,7 @@ export class MemberPhoneDTO {
 
 export class MemberNoteDTO {
   @IsString()
-  member_id: string;
+  memberId: string;
 
   @IsString()
   description: string;
@@ -249,10 +252,10 @@ export class MemberNoteDTO {
 
 export class MemberCategoryDTO {
   @IsString()
-  member_id: string;
+  memberId: string;
 
   @IsString()
-  category_id: string;
+  categoryId: string;
 }
 
 export class SaleLeadMemberDataResponseDTO {
@@ -294,9 +297,6 @@ export class SaleLeadMemberDataResquestDTO {
   @IsArray()
   memberIds: Array<string>;
 
-  @IsArray()
-  propertyIds: Array<string>;
-
-  @IsArray()
-  categoryIds: Array<string>;
+  @IsString()
+  appId: string;
 }
