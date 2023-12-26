@@ -159,12 +159,6 @@ export class VideoService {
 
   public async getCaptions(attachmentId: string): Promise<Array<string>> {
     const attachment = await this.mediaInfra.getById(attachmentId, this.entityManager);
-    if (!attachment) {
-      throw new APIException({
-        code: 'E_ATTACHMENT',
-        message: `cannot get the attachment`,
-      });
-    }
     const { options } = attachment;
     const captionKeys = [];
     const isCreatedByMediaConvert = this.isVideoSourceFromMediaConvert(options);

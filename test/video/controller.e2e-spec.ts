@@ -28,8 +28,15 @@ import { Program } from '~/entity/Program';
 import { VideoService } from '~/media/video/video.service';
 import * as AWScloudfrontSign from 'aws-cloudfront-sign';
 import { StorageService } from '~/utility/storage/storage.service';
-import { GetObjectCommandInput, GetObjectCommandOutput } from '@aws-sdk/client-s3';
-import { join, last } from 'lodash';
+import {
+  DeleteObjectCommandOutput,
+  GetObjectCommandInput,
+  GetObjectCommandOutput,
+  ListObjectsV2CommandOutput,
+  ListObjectsV2Request,
+  PutObjectAclCommandOutput,
+} from '@aws-sdk/client-s3';
+import { last } from 'lodash';
 import { Readable } from 'stream';
 
 describe('VideoController (e2e)', () => {
@@ -128,21 +135,21 @@ describe('VideoController (e2e)', () => {
       });
     });
 
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
     const attachment = new Attachment();
     attachment.id = v4();
     attachment.appId = 'test';
     attachment.options = {
       cloudfront: {
-        path: `https://test.kolable.com/vod-cf/test/${attachment.id.slice(0, 2)}/${
+        path: `https://test-dev.kolable.com/vod-cf/test/${attachment.id.slice(0, 2)}/${
           attachment.id
         }/mockcfuid/manifest/test.m3u8`,
         playPaths: {
-          hls: `https://test.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/output/hls/test.m3u8`,
-          dash: `https://test.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/output/dash/test.mpd`,
+          hls: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/hls/test.m3u8`,
+          dash: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test.mpd`,
         },
       },
     };
@@ -247,7 +254,7 @@ describe('VideoController (e2e)', () => {
     });
   });
 
-  describe.only('/videos/*m3u8 (GET)', () => {
+  describe('/videos/*m3u8 (GET)', () => {
     beforeEach(() => {
       jest.spyOn(storageService, 'getFileFromBucketStorage').mockImplementation((data: GetObjectCommandInput) => {
         const filename = last(data.Key.split('/'));
@@ -265,12 +272,16 @@ describe('VideoController (e2e)', () => {
     attachment.appId = 'test';
     attachment.options = {
       cloudfront: {
-        path: `https://test.kolable.com/vod-cf/test/${attachment.id.slice(0, 2)}/${
+        path: `https://test-dev.kolable.com/vod-cf/test/${attachment.id.slice(0, 2)}/${
           attachment.id
         }/mockcfuid/manifest/test.m3u8`,
         playPaths: {
-          hls: `https://test.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/output/hls/test.m3u8`,
-          dash: `https://test.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/output/dash/test.mpd`,
+          hls: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/hls/test.m3u8`,
+          dash: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test.mpd`,
         },
       },
     };
@@ -302,6 +313,282 @@ describe('VideoController (e2e)', () => {
     programContentVideo.attachment = attachment;
     programContentVideo.programContent = programContent;
 
+    it('should get m3u8 and remove subtitle tag', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+
+      const res = await request(application.getHttpServer())
+        .get(
+          `/videos/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/hls/test.m3u8?signature=awsCloudfrontSign`,
+        )
+        .set(requestHeader)
+        .send()
+        .expect(200);
+      const ans = readFileSync(`${__dirname}/test_ans.m3u8`);
+      expect(res.text).toEqual(ans.toString());
+    });
+  });
+
+  describe(':videoId/captions (GET)', () => {
+    beforeEach(() => {
+      jest
+        .spyOn(storageService, 'listFilesInBucketStorage')
+        .mockImplementation((data: Omit<ListObjectsV2Request, 'Bucket'>) => {
+          const key = data.Prefix;
+          return Promise.resolve({
+            Contents: [{ Key: `${key}/zh.vtt` }],
+            $metadata: null,
+          } as ListObjectsV2CommandOutput);
+        });
+    });
+
+    const attachment = new Attachment();
+    attachment.id = v4();
+    attachment.appId = 'test';
+    attachment.options = {
+      cloudfront: {
+        path: `https://test-dev.kolable.com/vod-cf/test/${attachment.id.slice(0, 2)}/${
+          attachment.id
+        }/mockcfuid/manifest/test.m3u8`,
+        playPaths: {
+          hls: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/hls/test.m3u8`,
+          dash: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test.mpd`,
+        },
+      },
+    };
+
+    const programContentBody = new ProgramContentBody();
+    programContentBody.id = v4();
+
+    const program = new Program();
+    program.title = 'test video program';
+    program.appId = 'test';
+    program.id = v4();
+
+    const programContentSection = new ProgramContentSection();
+    programContentSection.id = v4();
+    programContentSection.program = program;
+    programContentSection.title = 'test video program content section';
+    programContentSection.position = 0;
+
+    const programContent = new ProgramContent();
+    programContent.id = v4();
+    programContent.displayMode = 'trial';
+    programContent.title = 'test video program';
+    programContent.position = 0;
+    programContent.contentBody = programContentBody;
+    programContent.contentSection = programContentSection;
+
+    const programContentVideo = new ProgramContentVideo();
+    programContentVideo.id = v4();
+    programContentVideo.attachment = attachment;
+    programContentVideo.programContent = programContent;
+
+    it('should AuthToken is invalid', async () => {
+      const requestHeader = {
+        authorization: 'Bearer ' + '',
+        host: 'test.something.com',
+      };
+
+      await request(application.getHttpServer())
+        .get(`/videos/${attachment.id}/captions`)
+        .set(requestHeader)
+        .send()
+        .expect(401);
+    });
+
+    it('should get captions', async () => {
+      await attachmentRepo.save(attachment);
+      await programRepo.save(program);
+      await programContentBodyRepo.save(programContentBody);
+      await programContentSectionRepo.save(programContentSection);
+      await programContentRepo.save(programContent);
+      await programContentVideoRepo.save(programContentVideo);
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+
+      const res = await request(application.getHttpServer())
+        .get(`/videos/${attachment.id}/captions`)
+        .set(requestHeader)
+        .send()
+        .expect(200);
+
+      expect(res.body).toEqual({
+        code: 'SUCCESS',
+        message: 'successfully get s3 captions',
+        result: [`https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/captions/zh.vtt`],
+      });
+    });
+
+    it('should get bad request', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+
+      const res = await request(application.getHttpServer())
+        .get(`/videos/${undefined}/captions`)
+        .set(requestHeader)
+        .send()
+        .expect(400);
+      expect(res.body).toEqual({
+        code: 'E_GET_CAPTIONS',
+        message: 'invalid input syntax for type uuid: "undefined"',
+        result: [],
+      });
+    });
+  });
+
+  describe(':videoId/captions (POST)', () => {
+    beforeEach(() => {
+      jest.spyOn(storageService, 'saveFileInBucketStorage').mockImplementation(() => {
+        return Promise.resolve({} as PutObjectAclCommandOutput);
+      });
+    });
+
+    const attachment = new Attachment();
+    attachment.id = v4();
+    attachment.appId = 'test';
+    attachment.options = {
+      cloudfront: {
+        path: `https://test-dev.kolable.com/vod-cf/test/${attachment.id.slice(0, 2)}/${
+          attachment.id
+        }/mockcfuid/manifest/test.m3u8`,
+        playPaths: {
+          hls: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/hls/test.m3u8`,
+          dash: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test.mpd`,
+        },
+      },
+    };
+
+    const programContentBody = new ProgramContentBody();
+    programContentBody.id = v4();
+
+    const program = new Program();
+    program.title = 'test video program';
+    program.appId = 'test';
+    program.id = v4();
+
+    const programContentSection = new ProgramContentSection();
+    programContentSection.id = v4();
+    programContentSection.program = program;
+    programContentSection.title = 'test video program content section';
+    programContentSection.position = 0;
+
+    const programContent = new ProgramContent();
+    programContent.id = v4();
+    programContent.displayMode = 'trial';
+    programContent.title = 'test video program';
+    programContent.position = 0;
+    programContent.contentBody = programContentBody;
+    programContent.contentSection = programContentSection;
+
+    const programContentVideo = new ProgramContentVideo();
+    programContentVideo.id = v4();
+    programContentVideo.attachment = attachment;
+    programContentVideo.programContent = programContent;
+
+    it('should AuthToken is invalid', async () => {
+      const requestHeader = {
+        authorization: 'Bearer ' + '',
+        host: 'test.something.com',
+      };
+
+      await request(application.getHttpServer())
+        .post(`/videos/${attachment.id}/captions`)
+        .set(requestHeader)
+        .send()
+        .expect(401);
+    });
+
+    it('should upload captions', async () => {
+      await attachmentRepo.save(attachment);
+      await programRepo.save(program);
+      await programContentBodyRepo.save(programContentBody);
+      await programContentSectionRepo.save(programContentSection);
+      await programContentRepo.save(programContent);
+      await programContentVideoRepo.save(programContentVideo);
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+        'Content-Type': 'multipart/form-data',
+      };
+
+      const res = await request(application.getHttpServer())
+        .post(`/videos/${attachment.id}/captions`)
+        .set(requestHeader)
+        .attach('file', `${__dirname}/zh.vtt`)
+        .field({
+          key: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/captions/zh.vtt`,
+        })
+        .expect(201);
+
+      expect(res.body).toEqual({
+        code: 'SUCCESS',
+        message: 'successfully update attachment options s3 captions',
+        result: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/captions/zh.vtt`,
+      });
+    });
+
     it('should get bad request', async () => {
       const jwtSecret = application
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
@@ -320,11 +607,145 @@ describe('VideoController (e2e)', () => {
       };
 
       await request(application.getHttpServer())
-        .get(`/videos/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/output/hls/test.m3u8`)
+        .post(`/videos/${undefined}/captions`)
         .set(requestHeader)
         .send()
-        .expect(200)
-        .catch((err) => console.log(err));
+        .expect(400);
+    });
+  });
+
+  describe(':videoId/captions (DELETE)', () => {
+    beforeEach(() => {
+      jest
+        .spyOn(storageService, 'listFilesInBucketStorage')
+        .mockImplementation((data: Omit<ListObjectsV2Request, 'Bucket'>) => {
+          const key = data.Prefix;
+          return Promise.resolve({
+            Contents: [{ Key: `${key}/zh.vtt` }],
+            $metadata: null,
+          } as ListObjectsV2CommandOutput);
+        });
+      jest.spyOn(storageService, 'deleteFileAtBucketStorage').mockImplementation(() => {
+        return Promise.resolve({ DeleteMarker: true } as DeleteObjectCommandOutput);
+      });
+    });
+
+    const attachment = new Attachment();
+    attachment.id = v4();
+    attachment.appId = 'test';
+    attachment.options = {
+      cloudfront: {
+        path: `https://test-dev.kolable.com/vod-cf/test/${attachment.id.slice(0, 2)}/${
+          attachment.id
+        }/mockcfuid/manifest/test.m3u8`,
+        playPaths: {
+          hls: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/hls/test.m3u8`,
+          dash: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test.mpd`,
+        },
+      },
+    };
+
+    const programContentBody = new ProgramContentBody();
+    programContentBody.id = v4();
+
+    const program = new Program();
+    program.title = 'test video program';
+    program.appId = 'test';
+    program.id = v4();
+
+    const programContentSection = new ProgramContentSection();
+    programContentSection.id = v4();
+    programContentSection.program = program;
+    programContentSection.title = 'test video program content section';
+    programContentSection.position = 0;
+
+    const programContent = new ProgramContent();
+    programContent.id = v4();
+    programContent.displayMode = 'trial';
+    programContent.title = 'test video program';
+    programContent.position = 0;
+    programContent.contentBody = programContentBody;
+    programContent.contentSection = programContentSection;
+
+    const programContentVideo = new ProgramContentVideo();
+    programContentVideo.id = v4();
+    programContentVideo.attachment = attachment;
+    programContentVideo.programContent = programContent;
+
+    it('should AuthToken is invalid', async () => {
+      const requestHeader = {
+        authorization: 'Bearer ' + '',
+        host: 'test.something.com',
+      };
+
+      await request(application.getHttpServer())
+        .delete(`/videos/${attachment.id}/captions/zh`)
+        .set(requestHeader)
+        .send()
+        .expect(401);
+    });
+
+    it('should delete captions', async () => {
+      await attachmentRepo.save(attachment);
+      await programRepo.save(program);
+      await programContentBodyRepo.save(programContentBody);
+      await programContentSectionRepo.save(programContentSection);
+      await programContentRepo.save(programContent);
+      await programContentVideoRepo.save(programContentVideo);
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+
+      const res = await request(application.getHttpServer())
+        .delete(`/videos/${attachment.id}/captions/zh`)
+        .set(requestHeader)
+        .send()
+        .expect(200);
+
+      expect(res.body).toEqual({
+        code: 'SUCCESS',
+        message: 'successfully delete s3 captions',
+        result: [`https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${attachment.id}/captions/zh.vtt`],
+      });
+    });
+
+    it('should get bad request', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+
+      await request(application.getHttpServer())
+        .delete(`/videos/${undefined}/captions/zh`)
+        .set(requestHeader)
+        .expect(400);
     });
   });
 });

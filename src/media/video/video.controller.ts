@@ -12,6 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import sanitizeHtml from 'sanitize-html';
 
 import { VideoService } from './video.service';
 import { VideoCaptionDTO, VideoSignResponseDTO, VideoTokenDTO } from './video.dto';
@@ -129,7 +130,7 @@ export class VideoController {
       key,
       signature,
     );
-    return signedManifest;
+    return sanitizeHtml(signedManifest);
   }
 
   @Get(':videoId/sign')
