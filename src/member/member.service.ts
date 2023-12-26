@@ -356,11 +356,15 @@ export class MemberService {
   }
 
   async timedMemberInfraFunction(name, memberInfraFunction, appId) {
-    const formattedTime = dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
-    const label = `${appId} - ${name} - ${formattedTime}`;
-    console.time(label);
+    const formattedTimestamp = dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
+    const start = performance.now();
+
     const result = await memberInfraFunction();
-    console.timeEnd(label);
+  
+    const end = performance.now();
+    const executionTime = end - start;
+    console.log(`Execution Log - App ID: ${appId} | Function: ${name} | Timestamp: ${formattedTimestamp} | Execution Time: ${executionTime.toFixed(3)} ms`);
+
     return result;
   }
 

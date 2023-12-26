@@ -10,8 +10,6 @@ import {
   UseGuards,
   Delete,
   Param,
-  HttpStatus,
-  HttpException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
@@ -187,11 +185,10 @@ export class MemberController {
     }
 
     if (errors.length > 0) {
-      throw new BadRequestException({
-        message: 'Invalid request parameters',
-        errors: errors,
-        statusCode: HttpStatus.BAD_REQUEST,
-      });
+      throw new APIException(
+        { code: 'SaleLeadMemberData_Error', message: 'Invalid request parameters', result: errors },
+        400,
+      );
     }
 
     try {
@@ -199,7 +196,10 @@ export class MemberController {
     } catch (error) {
       console.error('Error fetching sale lead member data:', error);
 
-      throw new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new APIException(
+        { code: 'SaleLeadMemberData_Error', message: 'Error fetching sale lead member data', result: error },
+        500,
+      );
     }
   }
 

@@ -2650,7 +2650,8 @@ describe('MemberController (e2e)', () => {
           .expect(400);
 
         expect(res.body.message).toEqual('Invalid request parameters');
-        expect(res.body.errors).toEqual(['appId must be a string and cannot be empty']);
+
+        expect(res.body.result).toEqual(['appId must be a string and cannot be empty']);
       });
     });
   });
