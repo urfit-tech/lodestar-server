@@ -26,11 +26,14 @@ import {
 } from '~/utility/storage/storage.dto';
 import { StorageService } from '~/utility/storage/storage.service';
 import { Attachment } from '~/media/attachment.entity';
+import { MediaInfrastructure } from '~/media/media.infra';
 
 describe('StorageController (e2e)', () => {
   let application: INestApplication;
   let configService: ConfigService;
   let storageService: StorageService;
+  let mediaInfra: MediaInfrastructure;
+
   let manager: EntityManager;
   let roleRepo: Repository<Role>;
   let appPlanRepo: Repository<AppPlan>;
@@ -50,6 +53,7 @@ describe('StorageController (e2e)', () => {
     application.useGlobalPipes(new ValidationPipe()).useGlobalFilters(new ApiExceptionFilter());
     configService = application.get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService);
     storageService = application.get<StorageService>(StorageService);
+    mediaInfra = application.get<MediaInfrastructure>(MediaInfrastructure);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     roleRepo = manager.getRepository(Role);
@@ -331,6 +335,92 @@ describe('StorageController (e2e)', () => {
       insertedAuthor.createdAt = new Date();
       insertedAuthor.loginedAt = new Date();
       await manager.save(insertedAuthor);
+
+      const attachmentId = v4();
+      const requestBody: CompleteMultipartUploadDTO = {
+        params: {
+          Key: `vod/demo/${attachmentId.slice(0, 2)}/${attachmentId}/video/test.mp4`,
+          UploadId: 'uploadId from sdk',
+          MultipartUpload: {
+            Parts: [
+              {
+                PartNumber: 1,
+                ETag: '"etag from sdk"',
+              },
+            ],
+          },
+        },
+        file: {
+          name: 'test.mp4',
+          type: 'video/mp4',
+          size: 10000,
+        },
+        appId: 'test',
+        attachmentId: attachmentId,
+        attachmentName: 'test.mp4',
+        authorId: insertedAuthor.id,
+        duration: 100,
+      };
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+      const token = sign(
+        {
+          memberId: insertedAuthor.id,
+        },
+        jwtSecret,
+      );
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+
+      jest.spyOn(storageService, 'completeMultipartUpload').mockImplementation((Key: string) => {
+        return new Promise((resolve) => resolve({ $metadata: null, Location: Key }));
+      });
+
+      const res = await request(application.getHttpServer()).post(api).set(requestHeader).send(requestBody).expect(201);
+
+      const attachment = await attachmentRepo.findOneBy({ id: attachmentId });
+
+      expect(attachment.options).toEqual({
+        source: {
+          s3: {
+            video: `s3://bucket/vod/demo/${attachmentId.slice(0, 2)}/${attachmentId}/video/test.mp4`,
+          },
+        },
+      });
+      expect(res.body).toEqual({
+        location: `vod/demo/${attachmentId.slice(0, 2)}/${attachmentId}/video/test.mp4`,
+      });
+    });
+
+    it('should send completed message to S3 and update attachment', async () => {
+      const insertedAuthor = new Member();
+      insertedAuthor.appId = app.id;
+      insertedAuthor.id = v4();
+      insertedAuthor.name = `author`;
+      insertedAuthor.username = `author`;
+      insertedAuthor.email = `author@example.com`;
+      insertedAuthor.role = 'general-member';
+      insertedAuthor.star = 0;
+      insertedAuthor.createdAt = new Date();
+      insertedAuthor.loginedAt = new Date();
+      await manager.save(insertedAuthor);
+
+      jest.spyOn(mediaInfra, 'getById').mockImplementation((id) => {
+        const attachment = new Attachment();
+        attachment.id = id;
+        attachment.options = {
+          source: {
+            s3: {
+              video: `s3://bucket/vod/demo/${attachmentId.slice(0, 2)}/${attachmentId}/video/old.mp4`,
+            },
+          },
+        };
+        return new Promise((resolve) => resolve(attachment));
+      });
 
       const attachmentId = v4();
       const requestBody: CompleteMultipartUploadDTO = {
