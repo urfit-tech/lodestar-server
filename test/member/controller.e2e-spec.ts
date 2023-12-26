@@ -2384,10 +2384,17 @@ describe('MemberController (e2e)', () => {
           const insertedMemberNote = new MemberNote();
           insertedMemberNote.memberId = memberId;
           insertedMemberNote.authorId = memberId;
-          insertedMemberNote.type = 'outbound';
+          insertedMemberNote.type = null;
           insertedMemberNote.status = 'missed';
           await manager.save(insertedMemberNote);
         });
+
+        const insertedMemberNote = new MemberNote();
+        insertedMemberNote.memberId = memberIds[0];
+        insertedMemberNote.authorId = memberIds[0];
+        insertedMemberNote.type = 'not null value';
+        insertedMemberNote.status = 'missed';
+        await manager.save(insertedMemberNote);
 
         const insertedContract = new Contract();
         insertedContract.appId = app.id;

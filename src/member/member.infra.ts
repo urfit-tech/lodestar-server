@@ -200,7 +200,8 @@ export class MemberInfrastructure {
 
     const query = memberTaskRepo
       .createQueryBuilder('mt')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id');
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id')
+      .orderBy('mt.created_at', 'DESC');
 
     return await query.getMany();
   }
@@ -231,8 +232,10 @@ export class MemberInfrastructure {
     const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
 
     const query = memberNoteRepo
-      .createQueryBuilder('mt')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id');
+      .createQueryBuilder('mn')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mn.member_id = vals.member_id')
+      .andWhere('mn.type IS NULL')
+      .orderBy('mn.created_at', 'DESC');
 
     return await query.getMany();
   }
@@ -248,20 +251,6 @@ export class MemberInfrastructure {
     }[]
   > {
     const memberCategoryRepo = manager.getRepository(MemberCategory);
-    const categoryRepo = manager.getRepository(Category);
-
-    const categories = await categoryRepo.find({
-      where: { appId: appId, class: 'member' },
-      order: { position: 'asc' },
-    });
-
-    const categoryIds = categories.map((c) => c.id);
-
-    if (categoryIds.length === 0) {
-      return [];
-    }
-
-    const categoriesMap = new Map(categories.map((cat) => [cat.id, cat]));
 
     const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
     if (valuesList.length < 1) {
@@ -271,14 +260,15 @@ export class MemberInfrastructure {
 
     const query = memberCategoryRepo
       .createQueryBuilder('mc')
+      .innerJoinAndSelect('mc.category', 'c')
       .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
-      .andWhere('mc.category_id IN (:...categoryIds)', { categoryIds });
+      .where('c.appId = :appId AND c.class = :class', { appId, class: 'member' });
 
     const memberCategories = await query.getMany();
 
     return memberCategories.map((mc) => ({
       memberCategory: mc,
-      category: categoriesMap.get(mc.categoryId),
+      category: mc.category,
     }));
   }
 
@@ -310,35 +300,22 @@ export class MemberInfrastructure {
     }[]
   > {
     const memberPropertyRepo = manager.getRepository(MemberProperty);
-    const propertyRepo = manager.getRepository(Property);
-    const properties = await propertyRepo.find({
-      where: { appId },
-      order: { position: 'ASC' },
-    });
-    const propertyIds = properties.map((v) => v.id);
 
-    if (propertyIds.length === 0) {
+    if (memberIds.length < 1) {
       return [];
     }
-
-    const propertyMap = new Map(properties.map((p) => [p.id, p]));
-
-    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
-    if (valuesList.length < 1) {
-      return [];
-    }
-    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
 
     const query = memberPropertyRepo
       .createQueryBuilder('mp')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mp.member_id = vals.member_id')
-      .andWhere('mp.property_id IN (:...propertyIds)', { propertyIds });
+      .innerJoinAndSelect('mp.property', 'p')
+      .where('p.appId = :appId', { appId })
+      .andWhere('mp.memberId IN (:...memberIds)', { memberIds });
 
     const memberProperties = await query.getMany();
 
     return memberProperties.map((mp) => ({
       memberProperty: mp,
-      property: propertyMap.get(mp.propertyId),
+      property: mp.property,
     }));
   }
 

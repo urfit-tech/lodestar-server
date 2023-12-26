@@ -30,6 +30,7 @@ import { MemberPhone } from './entity/member_phone.entity';
 import { MemberTag } from './entity/member_tag.entity';
 import { APIException } from '~/api.excetion';
 import { category } from 'test/data';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class MemberService {
@@ -354,15 +355,48 @@ export class MemberService {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
   }
 
+  async timedMemberInfraFunction(name, memberInfraFunction, appId) {
+    const formattedTime = dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
+    const label = `${appId} - ${name} - ${formattedTime}`;
+    console.time(label);
+    const result = await memberInfraFunction();
+    console.timeEnd(label);
+    return result;
+  }
+
   async getSaleLeadMemberData(memberIds, appId): Promise<SaleLeadMemberDataResponseDTO> {
     const [memberProperties, memberTasks, memberPhones, memberNotes, memberCategories, memberContracts] =
       await Promise.all([
-        this.memberInfra.getMemberPropertiyWithBulkIds(memberIds, appId, this.entityManager),
-        this.memberInfra.getMemberTasksWithBulkIds(memberIds, this.entityManager),
-        this.memberInfra.getMemberPhonesWithBulkIds(memberIds, this.entityManager),
-        this.memberInfra.getMemberNotesWithBulkIds(memberIds, this.entityManager),
-        this.memberInfra.getMemberCategoryWithBulkIds(memberIds, appId, this.entityManager),
-        this.memberInfra.getMemberContractWithBulkIds(memberIds, this.entityManager),
+        this.timedMemberInfraFunction(
+          'getMemberPropertyWithBulkIds',
+          () => this.memberInfra.getMemberPropertiyWithBulkIds(memberIds, appId, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberTasksWithBulkIds',
+          () => this.memberInfra.getMemberTasksWithBulkIds(memberIds, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberPhonesWithBulkIds',
+          () => this.memberInfra.getMemberPhonesWithBulkIds(memberIds, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberNotesWithBulkIds',
+          () => this.memberInfra.getMemberNotesWithBulkIds(memberIds, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberCategoryWithBulkIds',
+          () => this.memberInfra.getMemberCategoryWithBulkIds(memberIds, appId, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberContractWithBulkIds',
+          () => this.memberInfra.getMemberContractWithBulkIds(memberIds, this.entityManager),
+          appId,
+        ),
       ]);
 
     const responseDto = new SaleLeadMemberDataResponseDTO();
@@ -372,7 +406,6 @@ export class MemberService {
     responseDto.memberNote = memberNotes.map(this.mapMemberNote);
     responseDto.memberCategory = memberCategories.map(this.mapMemberCategory);
     responseDto.activeMemberContract = memberContracts.map(this.mapMemberContract);
-
     return responseDto;
   }
 
