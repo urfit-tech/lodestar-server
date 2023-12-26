@@ -10,9 +10,7 @@ import { AppCache } from './app.type';
 })
 export class AppController {
   @Get()
-  async getInfo(
-    @Local('appCache') appCache: AppCache,
-  ) {
+  async getInfo(@Local('appCache') appCache: AppCache) {
     const { id: appId } = appCache;
     return appId;
   }

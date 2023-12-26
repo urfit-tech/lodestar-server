@@ -1,7 +1,7 @@
 import { EntityManager } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { Activity } from '~/entity/Activity';
-import { ActivityTicket } from '~/entity/ActivityTicket';
+import { Activity } from '~/activity/entity/Activity';
+import { ActivityTicket } from '~/activity/entity/ActivityTicket';
 import { AppointmentPlan } from '~/entity/AppointmentPlan';
 import { Card } from '~/entity/Card';
 import { ProgramRole } from '~/entity/ProgramRole';

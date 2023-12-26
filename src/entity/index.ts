@@ -1,10 +1,10 @@
-import { Activity } from './Activity';
-import { ActivityAttendance } from './ActivityAttendance';
-import { ActivityCategory } from './ActivityCategory';
-import { ActivitySession } from './ActivitySession';
-import { ActivitySessionTicket } from './ActivitySessionTicket';
-import { ActivityTag } from './ActivityTag';
-import { ActivityTicket } from './ActivityTicket';
+import { Activity } from '../activity/entity/Activity';
+import { ActivityAttendance } from '~/activity/entity/ActivityAttendance';
+import { ActivityCategory } from '~/activity/entity/ActivityCategory';
+import { ActivitySession } from '~/activity/entity/ActivitySession';
+import { ActivitySessionTicket } from '~/activity/entity/ActivitySessionTicket';
+import { ActivityTag } from '~/activity/entity/ActivityTag';
+import { ActivityTicket } from '~/activity/entity/ActivityTicket';
 import { AppAdmin } from './AppAdmin';
 import { AppChannel } from './AppChannel';
 import { AppDefaultPermission } from './AppDefaultPermission';
@@ -221,6 +221,11 @@ import { TableLog } from '~/table_log/table_log.entity';
 import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
 import { Report } from '~/report/entity/report.entity';
 import { AuthAuditLog } from '~/auth/entity/auth_audit_log.entity';
+import { ActivityTicketEnrollment } from '../activity/view_entity/ActivityTicketEnrollment';
+import { ActivityTicketEnrollmentCount } from '~/activity/view_entity/ActivityTicketEnrollmentCount';
+import { ActivityDuringPeriod } from '~/activity/view_entity/ActivityDuringPeriod';
+import { ActivityEnrollment } from '~/activity/view_entity/ActivityEnrollment';
+import { ActivitySessionTicketEnrollmentCount } from '~/activity/view_entity/ActivitySessionTicketEnrollmentCount';
 
 export const PostgresEntities = [
   Activity,
@@ -445,4 +450,10 @@ export const PostgresEntities = [
   VoucherPlan,
   VoucherPlanProduct,
   WebhookLog,
+  ActivityTicketEnrollment,
+  ActivityTicketEnrollmentCount,
+  ActivityDuringPeriod,
+  ActivityEnrollment,
+  ActivitySessionTicketEnrollmentCount,
+  ActivityTicketEnrollmentCount,
 ];

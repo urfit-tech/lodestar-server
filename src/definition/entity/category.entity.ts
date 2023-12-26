@@ -1,7 +1,7 @@
 import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { MemberCategory } from '~/member/entity/member_category.entity';
-import { ActivityCategory } from '~/entity/ActivityCategory';
+import { ActivityCategory } from '~/activity/entity/ActivityCategory';
 import { CreatorCategory } from '~/entity/CreatorCategory';
 import { MemberTask } from '~/entity/MemberTask';
 import { MerchandiseCategory } from '~/entity/MerchandiseCategory';
