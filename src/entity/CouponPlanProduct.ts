@@ -1,4 +1,4 @@
-import { Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { CouponPlan } from './CouponPlan';
 import { Product } from './Product';
 
@@ -7,6 +7,12 @@ import { Product } from './Product';
 export class CouponPlanProduct {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column('uuid', { name: 'coupon_plan_id' })
+  couponPlanId: string;
+
+  @Column('text', { name: 'product_id' })
+  productId: string;
 
   @ManyToOne(() => CouponPlan, (couponPlan) => couponPlan.couponPlanProducts, {
     onDelete: 'RESTRICT',

@@ -34,6 +34,10 @@ import { Voucher } from '~/voucher/entity/voucher.entity';
 import { VoucherCode } from '~/entity/VoucherCode';
 import { VoucherPlan } from '~/entity/VoucherPlan';
 import { VoucherPlanProduct } from '~/entity/VoucherPlanProduct';
+import { CouponPlan } from '~/entity/CouponPlan';
+import { CouponCode } from '~/entity/CouponCode';
+import { Coupon } from '~/coupon/entity/coupon.entity';
+import { CouponPlanProduct } from '~/entity/CouponPlanProduct';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -243,10 +247,36 @@ voucherCode.voucherPlanId = voucherPlan.id;
 export const voucher = new Voucher();
 voucher.id = v4();
 voucher.memberId = member.id;
-voucher.deletedAt = null;
 voucher.voucherCodeId = voucherCode.id;
 
 export const voucherPlanProduct = new VoucherPlanProduct();
 voucherPlanProduct.id = v4();
 voucherPlanProduct.voucherPlanId = voucherPlan.id;
 voucherPlanProduct.productId = programPlanProduct.id;
+
+export const couponPlan = new CouponPlan();
+couponPlan.id = v4();
+couponPlan.title = 'test coupon plan title';
+couponPlan.description = 'test coupon plan description';
+couponPlan.startedAt = dayjs().toDate();
+couponPlan.endedAt = dayjs().add(1, 'day').toDate();
+couponPlan.amount = 1;
+
+export const couponCode = new CouponCode();
+couponCode.id = v4();
+couponCode.code = 'test coupon code';
+couponCode.count = 10;
+couponCode.remaining = 6;
+couponCode.deletedAt = null;
+couponCode.couponPlanId = couponPlan.id;
+couponCode.appId = app.id;
+
+export const coupon = new Coupon();
+coupon.id = v4();
+coupon.memberId = member.id;
+coupon.couponCodeId = couponCode.id;
+
+export const couponPlanProduct = new CouponPlanProduct();
+couponPlanProduct.id = v4();
+couponPlanProduct.couponPlanId = couponPlan.id;
+couponPlanProduct.productId = programPlanProduct.id;
