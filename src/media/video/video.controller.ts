@@ -130,7 +130,7 @@ export class VideoController {
       key,
       signature,
     );
-    return sanitizeHtml(signedManifest);
+    return sanitizeHtml(signedManifest).replace(/&amp;/g, '&');
   }
 
   @Get(':videoId/sign')
