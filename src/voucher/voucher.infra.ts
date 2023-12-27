@@ -20,8 +20,10 @@ export class VoucherInfrastructure {
   }
 
   async getVoucherEnrollment(memberId: string, manager: EntityManager) {
-    return manager
-      .getRepository(Voucher)
-      .find({ where: { memberId }, relations: { voucherCode: { voucherPlan: { voucherPlanProducts: true } } } });
+    return manager.getRepository(Voucher).find({
+      where: { memberId },
+      relations: { voucherCode: { voucherPlan: { voucherPlanProducts: true } } },
+      order: { createdAt: 'DESC' },
+    });
   }
 }
