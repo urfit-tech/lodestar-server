@@ -10,6 +10,8 @@ import {
   UseGuards,
   Delete,
   Param,
+  Req,
+  Ip,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
@@ -205,10 +207,11 @@ export class MemberController {
 
   @Delete('email/:email')
   public async deleteMember(
+    @Ip() ip: string,
     @Local('member') member: JwtMember,
     @Param('email') email: string,
   ): Promise<MemberDeleteResultDTO> {
-    const { appId, role } = member;
+    const { appId, role, memberId } = member;
     if (role !== 'app-owner') {
       throw new UnauthorizedException(
         { message: 'no permission to delete member' },
@@ -216,6 +219,15 @@ export class MemberController {
       );
     }
     try {
+      const log = await this.memberService.logMemberDeletionEventInfo(email, appId, memberId, ip, new Date());
+
+      if (log === null) {
+        throw new APIException({
+          code: 'ERROR',
+          message: `[Fail to log deletion]: Executor ID: ${memberId} | Delete member email: ${email} | App ID: ${appId}, IP ${ip}`,
+        });
+      }
+
       const deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
       return { code: 'SUCCESS', message: deleteResult };
     } catch (error) {

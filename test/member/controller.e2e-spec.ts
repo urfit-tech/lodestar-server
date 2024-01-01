@@ -84,6 +84,7 @@ import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
 import { ReviewReply } from '~/entity/ReviewReply';
+import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -156,6 +157,7 @@ describe('MemberController (e2e)', () => {
   let practiceRepo: Repository<Practice>;
   let programTimeableRepo: Repository<ProgramTimetable>;
   let attendRepo: Repository<Attend>;
+  let memberAuditLogRepo: Repository<MemberAuditLog>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -234,7 +236,9 @@ describe('MemberController (e2e)', () => {
     practiceRepo = manager.getRepository(Practice);
     programTimeableRepo = manager.getRepository(ProgramTimetable);
     attendRepo = manager.getRepository(Attend);
+    memberAuditLogRepo = manager.getRepository(MemberAuditLog);
 
+    await memberAuditLogRepo.delete({});
     await attendRepo.delete({});
     await practiceRepo.delete({});
     await postRoleRepo.delete({});
@@ -311,6 +315,7 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await memberAuditLogRepo.delete({});
     await attendRepo.delete({});
     await practiceRepo.delete({});
     await postRoleRepo.delete({});
@@ -1830,6 +1835,60 @@ describe('MemberController (e2e)', () => {
 
       expect(res.body).toHaveProperty('code', 'ERROR');
       expect(res.body).toHaveProperty('message');
+      console.log(res.body);
+    });
+
+    it('should log executor successfully', async () => {
+      const memberId = v4();
+      const insertedMember = new Member();
+      insertedMember.appId = app.id;
+      insertedMember.id = memberId;
+      insertedMember.name = `name`;
+      insertedMember.username = `username`;
+      insertedMember.email = `delete@example.com`;
+      insertedMember.role = 'general-member';
+      insertedMember.star = 0;
+      insertedMember.createdAt = new Date();
+      insertedMember.loginedAt = new Date();
+      await manager.save(insertedMember);
+
+      const executeDeleteMember = new Member();
+      executeDeleteMember.appId = app.id;
+      executeDeleteMember.id = v4();
+      executeDeleteMember.name = `name2`;
+      executeDeleteMember.username = `username2`;
+      executeDeleteMember.email = `delete2@example.com`;
+      executeDeleteMember.role = 'app-owner';
+      executeDeleteMember.star = 0;
+      executeDeleteMember.createdAt = new Date();
+      executeDeleteMember.loginedAt = new Date();
+      await manager.save(executeDeleteMember);
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: executeDeleteMember.id,
+          role: 'app-owner',
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .delete(`${route}/${insertedMember.email}`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .expect(200);
+
+      const memberAudit = await memberAuditLogRepo.findOne({
+        where: { memberId: insertedMember.id },
+      });
+      expect(memberAudit.action).toEqual('delete');
+      expect(JSON.parse(memberAudit.target).executorMemberId).toEqual(executeDeleteMember.id);
+      expect(JSON.parse(memberAudit.target).executorIpAddress).not.toBeNull;
+      expect(JSON.parse(memberAudit.target).executorDateTime).not.toBeNull;
     });
 
     it('Should delete member successfully', async () => {

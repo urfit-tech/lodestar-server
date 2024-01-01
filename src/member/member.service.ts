@@ -31,6 +31,7 @@ import { MemberTag } from './entity/member_tag.entity';
 import { APIException } from '~/api.excetion';
 import { category } from 'test/data';
 import dayjs from 'dayjs';
+import { MemberAuditLog } from './entity/member_audit_log.entity';
 
 @Injectable()
 export class MemberService {
@@ -351,6 +352,25 @@ export class MemberService {
     return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager);
   }
 
+  async logMemberDeletionEventInfo(
+    deleteMemberEmail: string,
+    deleteMemberAppId: string,
+    executorMemberId: string,
+    executorIpAddress: string,
+    executorDateTime: Date,
+  ): Promise<MemberAuditLog | null> {
+    const auditLog = await this.memberInfra.logMemberDeletionEventInfo(
+      deleteMemberEmail,
+      deleteMemberAppId,
+      executorMemberId,
+      executorIpAddress,
+      executorDateTime,
+      this.entityManager,
+    );
+
+    return auditLog;
+  }
+
   async getMemberTasks(memberId: string): Promise<Array<MemberTask>> {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
   }
@@ -360,10 +380,14 @@ export class MemberService {
     const start = performance.now();
 
     const result = await memberInfraFunction();
-  
+
     const end = performance.now();
     const executionTime = end - start;
-    console.log(`Execution Log - App ID: ${appId} | Function: ${name} | Timestamp: ${formattedTimestamp} | Execution Time: ${executionTime.toFixed(3)} ms`);
+    console.log(
+      `Execution Log - App ID: ${appId} | Function: ${name} | Timestamp: ${formattedTimestamp} | Execution Time: ${executionTime.toFixed(
+        3,
+      )} ms`,
+    );
 
     return result;
   }
