@@ -212,14 +212,28 @@ export class MemberController {
     @Param('email') email: string,
   ): Promise<MemberDeleteResultDTO> {
     const { appId, role, memberId } = member;
+    let log;
+
     if (role !== 'app-owner') {
       throw new UnauthorizedException(
         { message: 'no permission to delete member' },
         'User permission is not met required permissions.',
       );
     }
+
     try {
-      const log = await this.memberService.logMemberDeletionEventInfo(email, appId, memberId, ip, new Date());
+      log = await this.memberService.logMemberDeletionEventInfo(
+        email,
+        appId,
+        memberId,
+        ip,
+        new Date(),
+        'create',
+        null,
+        null,
+      );
+
+      console.log(log);
 
       if (log === null) {
         throw new APIException({
@@ -229,9 +243,35 @@ export class MemberController {
       }
 
       const deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
-      return { code: 'SUCCESS', message: deleteResult };
+
+      const response: MemberDeleteResultDTO = { code: 'SUCCESS', message: deleteResult };
+
+      await this.memberService.logMemberDeletionEventInfo(
+        email,
+        appId,
+        memberId,
+        ip,
+        new Date(),
+        'update',
+        log.id,
+        JSON.stringify(response),
+      );
+      return response;
     } catch (error) {
-      throw new APIException({ code: 'ERROR', message: error.message });
+      const errorResponse = { code: 'ERROR', message: error.message };
+      if (log) {
+        await this.memberService.logMemberDeletionEventInfo(
+          email,
+          appId,
+          memberId,
+          ip,
+          new Date(),
+          'update',
+          log.id,
+          JSON.stringify(errorResponse),
+        );
+      }
+      throw new APIException(errorResponse);
     }
   }
 }

@@ -451,6 +451,9 @@ export class MemberInfrastructure {
     executorMemberId: string,
     executorIpAddress: string,
     executorDateTime: Date,
+    action: 'create' | 'update',
+    updateId: string | null,
+    updateInfo: string,
     entityManager: EntityManager,
   ): Promise<MemberAuditLog | null> {
     const memberAuditLogRepo = entityManager.getRepository(MemberAuditLog);
@@ -461,27 +464,41 @@ export class MemberInfrastructure {
         where: { email: deleteMemberEmail, appId: deleteMemberAppId },
       });
 
-      if (!member) {
-        console.error(
-          `[Delete Error] No target member for appId ${deleteMemberAppId} with email ${deleteMemberEmail} found.`,
-        );
-        return null;
+      let memberAuditLog;
+      if (action === 'create') {
+        if (!member) {
+          console.error(
+            `[Error] No target member for appId ${deleteMemberAppId} with email ${deleteMemberEmail} found.`,
+          );
+          return null;
+        }
+
+        memberAuditLog = new MemberAuditLog();
+        memberAuditLog.member = member;
+        memberAuditLog.action = 'delete';
+        memberAuditLog.target = JSON.stringify({
+          executorMemberId,
+          executorIpAddress,
+          executorDateTime,
+        });
+      } else if (action === 'update' && updateId) {
+        memberAuditLog = await memberAuditLogRepo.findOne({ where: { id: updateId } });
+        if (!memberAuditLog) {
+          console.error(`[Update Error] No audit log with ID ${updateId} found.`);
+          return null;
+        }
+
+        const existingTargetData = JSON.parse(memberAuditLog.target || '{}');
+        memberAuditLog.target = JSON.stringify({
+          ...existingTargetData,
+          result: updateInfo,
+        });
       }
 
-      const memberAuditLog = new MemberAuditLog();
-      memberAuditLog.member = member;
-      memberAuditLog.action = 'delete';
-      memberAuditLog.target = JSON.stringify({
-        executorMemberId,
-        executorIpAddress,
-        executorDateTime,
-      });
-
       await memberAuditLogRepo.save(memberAuditLog);
-
       return memberAuditLog;
     } catch (error) {
-      console.error(`Error when trying to log member deletion: ${error}`);
+      console.error(`Error when trying to log member action: ${error}`);
       throw error;
     }
   }

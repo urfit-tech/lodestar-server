@@ -358,6 +358,9 @@ export class MemberService {
     executorMemberId: string,
     executorIpAddress: string,
     executorDateTime: Date,
+    action: 'create' | 'update',
+    updateId: string | null,
+    updateInfo: string,
   ): Promise<MemberAuditLog | null> {
     const auditLog = await this.memberInfra.logMemberDeletionEventInfo(
       deleteMemberEmail,
@@ -365,6 +368,9 @@ export class MemberService {
       executorMemberId,
       executorIpAddress,
       executorDateTime,
+      action,
+      updateId,
+      updateInfo,
       this.entityManager,
     );
 
