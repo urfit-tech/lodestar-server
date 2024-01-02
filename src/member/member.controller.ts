@@ -233,19 +233,19 @@ export class MemberController {
         null,
       );
 
-      console.log(`Log Details:
-      ID: ${log.id}
-      Delete Member ID: ${log.member_id}
-      Action: ${log.action}
-      Delete Log: ${log.target}
-      Created At: ${log.created_at}`);
-
       if (log === null) {
         throw new APIException({
           code: 'ERROR',
           message: `[Fail to log deletion]: Executor ID: ${memberId} | Delete member email: ${email} | App ID: ${appId}, IP ${ip}`,
         });
       }
+
+      console.log(`Log Details:
+        ID: ${log.id}
+        Delete Member ID: ${log.member_id}
+        Action: ${log.action}
+        Delete Log: ${log.target}
+        Created At: ${log.created_at}`);
 
       const deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
 
