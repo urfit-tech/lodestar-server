@@ -27,6 +27,8 @@ import {
   MemberGetDTO,
   MemberGetResultDTO,
   MemberImportDTO,
+  SaleLeadMemberDataResponseDTO,
+  SaleLeadMemberDataResquestDTO,
 } from './member.dto';
 import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
@@ -171,6 +173,34 @@ export class MemberController {
       exportMime,
     };
     await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
+  }
+  @Post('saleLeadMemberData')
+  public async getSaleLeadMemberData(
+    @Body() requestDto: SaleLeadMemberDataResquestDTO,
+  ): Promise<SaleLeadMemberDataResponseDTO> {
+    const errors = [];
+
+    if (!requestDto.appId || typeof requestDto.appId !== 'string' || requestDto.appId.trim() === '') {
+      errors.push('appId must be a string and cannot be empty');
+    }
+
+    if (errors.length > 0) {
+      throw new APIException(
+        { code: 'SaleLeadMemberData_Error', message: 'Invalid request parameters', result: errors },
+        400,
+      );
+    }
+
+    try {
+      return await this.memberService.getSaleLeadMemberData(requestDto.memberIds, requestDto.appId);
+    } catch (error) {
+      console.error('Error fetching sale lead member data:', error);
+
+      throw new APIException(
+        { code: 'SaleLeadMemberData_Error', message: 'Error fetching sale lead member data', result: error },
+        500,
+      );
+    }
   }
 
   @Delete('email/:email')
