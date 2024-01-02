@@ -233,7 +233,12 @@ export class MemberController {
         null,
       );
 
-      console.log(log);
+      console.log(`Log Details:
+      ID: ${log.id}
+      Delete Member ID: ${log.member_id}
+      Action: ${log.action}
+      Delete Log: ${log.target}
+      Created At: ${log.created_at}`);
 
       if (log === null) {
         throw new APIException({
