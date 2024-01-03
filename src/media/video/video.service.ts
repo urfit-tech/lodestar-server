@@ -205,23 +205,27 @@ export class VideoService {
 
   public async parseManifestWithSignUrl(manifest: string, key: string, signature: string): Promise<string> {
     const host = this.awsStorageCloudFrontUrl;
-    const keyArray = key.split('/');
-    keyArray.pop();
-    const path = keyArray.join('/');
-    const res = manifest.split('\n');
-    const signedManifest = res
+    const path = key.split('/').slice(0, -1).join('/');
+
+    const signedManifest = manifest
+      .split('\n')
       .filter((row) => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
       .map((row) => {
         if (row.includes('.m3u8')) {
+          // hls m3u8
           if (row.includes('URI=')) {
             return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}"`;
           }
           return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
+        } else if (row.includes('.ts')) {
+          // hls segments
+          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
         } else if (row.includes('.mp4')) {
-          // for mpd
-          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
-        } else if (row.includes('.ts') || row.includes('.vtt')) {
-          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
+          // dash segments
+          const baseUrlWithSignature = row
+            .replace('<BaseURL>', `<BaseURL>${host}/${path}/`)
+            .replace('</BaseURL>', `?${signature}</BaseURL>`);
+          return baseUrlWithSignature;
         } else {
           return row;
         }
