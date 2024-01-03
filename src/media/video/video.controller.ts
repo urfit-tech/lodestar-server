@@ -121,16 +121,25 @@ export class VideoController {
 
   @Get(['*.m3u8', '*.mpd'])
   async getManifestWithSignUrl(@Req() request: Request) {
-    const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
-    const manifest = await this.storageService.getFileFromBucketStorage({
-      Key: key,
-    });
-    const signedManifest = await this.videoService.parseManifestWithSignUrl(
-      await manifest.Body.transformToString(),
-      key,
-      signature,
-    );
-    return sanitizeHtml(signedManifest).replace(/&amp;/g, '&');
+    try {
+      const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
+      const sanitizeSignature = sanitizeHtml(signature).replace(/&amp;/g, '&');
+      const manifest = await this.storageService.getFileFromBucketStorage({
+        Key: key,
+      });
+      const signedManifest = await this.videoService.parseManifestWithSignUrl(
+        await manifest.Body.transformToString(),
+        key,
+        sanitizeSignature,
+      );
+      return signedManifest;
+    } catch (err) {
+      throw new APIException({
+        code: 'E_GET_M3U8',
+        message: err.message,
+        result: null,
+      });
+    }
   }
 
   @Get(':videoId/sign')
@@ -141,7 +150,7 @@ export class VideoController {
     if (!isValidUUID(videoId)) {
       throw new APIException({
         code: 'E_SIGN_URL',
-        message: `videoId is undefined`,
+        message: `Invalid videoId'`,
       });
     }
 
