@@ -344,6 +344,115 @@ describe('VideoController (e2e)', () => {
     });
   });
 
+  describe.only('/videos/*mpd (GET)', () => {
+    beforeEach(() => {
+      jest.spyOn(storageService, 'getFileFromBucketStorage').mockImplementation((data: GetObjectCommandInput) => {
+        const filename = last(data.Key.split('/'));
+        const manifest = sdkStreamMixin(Readable.from(readFileSync(`${__dirname}/${filename}`)));
+        return Promise.resolve({ Body: manifest, $metadata: null } as GetObjectCommandOutput);
+      });
+
+      jest.spyOn(videoService, 'getCaptions').mockImplementation(() => {
+        return new Promise((resolve) => resolve([]));
+      });
+    });
+
+    const attachment = new Attachment();
+    attachment.id = v4();
+    attachment.appId = 'test';
+    attachment.options = {
+      cloudfront: {
+        path: `https://test-dev.kolable.com/vod-cf/test/${attachment.id.slice(0, 2)}/${
+          attachment.id
+        }/mockcfuid/manifest/test.m3u8`,
+        playPaths: {
+          hls: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/hls/test.m3u8`,
+          dash: `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test.mpd`,
+        },
+      },
+    };
+
+    const programContentBody = new ProgramContentBody();
+    programContentBody.id = v4();
+
+    const program = new Program();
+    program.title = 'test video program';
+    program.appId = 'test';
+    program.id = v4();
+
+    const programContentSection = new ProgramContentSection();
+    programContentSection.id = v4();
+    programContentSection.program = program;
+    programContentSection.title = 'test video program content section';
+    programContentSection.position = 0;
+
+    const programContent = new ProgramContent();
+    programContent.id = v4();
+    programContent.displayMode = 'trial';
+    programContent.title = 'test video program';
+    programContent.position = 0;
+    programContent.contentBody = programContentBody;
+    programContent.contentSection = programContentSection;
+
+    const programContentVideo = new ProgramContentVideo();
+    programContentVideo.id = v4();
+    programContentVideo.attachment = attachment;
+    programContentVideo.programContent = programContent;
+
+    it('should get mpd with signed mp4', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+
+      const res = await request(application.getHttpServer())
+        .get(
+          `/videos/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test.mpd?signature=awsCloudfrontSign`,
+        )
+        .set(requestHeader)
+        .send()
+        .expect(200);
+      const ans = readFileSync(`${__dirname}/test_ans.mpd`)
+        .toString()
+        .replace(
+          'https://test-dev.kolable.com/vod/test/attachmentSlice/attachment/output/dash/test_1080.mp4?signature=awsCloudfrontSign',
+          `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test_1080.mp4?signature=awsCloudfrontSign`,
+        )
+        .replace(
+          'https://test-dev.kolable.com/vod/test/attachmentSlice/attachment/output/dash/test_720.mp4?signature=awsCloudfrontSign',
+          `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test_720.mp4?signature=awsCloudfrontSign`,
+        )
+        .replace(
+          'https://test-dev.kolable.com/vod/test/attachmentSlice/attachment/output/dash/test_480.mp4?signature=awsCloudfrontSign',
+          `https://test-dev.kolable.com/vod/test/${attachment.id.slice(0, 2)}/${
+            attachment.id
+          }/output/dash/test_480.mp4?signature=awsCloudfrontSign`,
+        );
+      expect(res.text).toEqual(ans);
+    });
+  });
+
   describe(':videoId/captions (GET)', () => {
     beforeEach(() => {
       jest
