@@ -344,7 +344,7 @@ describe('VideoController (e2e)', () => {
     });
   });
 
-  describe.only('/videos/*mpd (GET)', () => {
+  describe('/videos/*mpd (GET)', () => {
     beforeEach(() => {
       jest.spyOn(storageService, 'getFileFromBucketStorage').mockImplementation((data: GetObjectCommandInput) => {
         const filename = last(data.Key.split('/'));
