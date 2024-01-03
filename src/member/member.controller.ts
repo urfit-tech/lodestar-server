@@ -10,6 +10,8 @@ import {
   UseGuards,
   Delete,
   Param,
+  Req,
+  Ip,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
@@ -205,21 +207,76 @@ export class MemberController {
 
   @Delete('email/:email')
   public async deleteMember(
+    @Ip() ip: string,
     @Local('member') member: JwtMember,
     @Param('email') email: string,
   ): Promise<MemberDeleteResultDTO> {
-    const { appId, role } = member;
+    const { appId, role, memberId } = member;
+    let log;
+
     if (role !== 'app-owner') {
       throw new UnauthorizedException(
         { message: 'no permission to delete member' },
         'User permission is not met required permissions.',
       );
     }
+
     try {
+      log = await this.memberService.logMemberDeletionEventInfo(
+        email,
+        appId,
+        memberId,
+        ip,
+        new Date(),
+        'create',
+        null,
+        null,
+      );
+
+      if (log === null) {
+        throw new APIException({
+          code: 'ERROR',
+          message: `[Fail to log deletion]: Executor ID: ${memberId} | Delete member email: ${email} | App ID: ${appId}, IP ${ip}`,
+        });
+      }
+
+      console.log(`Log Details:
+        ID: ${log.id}
+        Delete Member ID: ${log.member_id}
+        Action: ${log.action}
+        Delete Log: ${log.target}
+        Created At: ${log.created_at}`);
+
       const deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
-      return { code: 'SUCCESS', message: deleteResult };
+
+      const response: MemberDeleteResultDTO = { code: 'SUCCESS', message: deleteResult };
+
+      await this.memberService.logMemberDeletionEventInfo(
+        email,
+        appId,
+        memberId,
+        ip,
+        new Date(),
+        'update',
+        log.id,
+        JSON.stringify(response),
+      );
+      return response;
     } catch (error) {
-      throw new APIException({ code: 'ERROR', message: error.message });
+      const errorResponse = { code: 'ERROR', message: error.message };
+      if (log) {
+        await this.memberService.logMemberDeletionEventInfo(
+          email,
+          appId,
+          memberId,
+          ip,
+          new Date(),
+          'update',
+          log.id,
+          JSON.stringify(errorResponse),
+        );
+      }
+      throw new APIException(errorResponse);
     }
   }
 }

@@ -11,7 +11,7 @@ export class MemberAuditLog {
   memberId: string;
 
   @Column({ type: 'text' })
-  action: 'upload' | 'download';
+  action: 'upload' | 'download' | 'delete';
 
   @Column({ type: 'text' })
   target: string;
