@@ -32,6 +32,7 @@ import { APIException } from '~/api.excetion';
 import { category } from 'test/data';
 import dayjs from 'dayjs';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
+import { ExecutorInfo, DeleteMemberInfo } from './member.type';
 
 @Injectable()
 export class MemberService {
@@ -353,24 +354,12 @@ export class MemberService {
   }
 
   async logMemberDeletionEventInfo(
-    deleteMemberEmail: string,
-    deleteMemberAppId: string,
-    executorMemberId: string,
-    executorIpAddress: string,
-    executorDateTime: Date,
-    action: 'create' | 'update',
-    updateId: string | null,
-    updateInfo: string,
+    deleteMemberInfo: DeleteMemberInfo,
+    executorMemberInfo: ExecutorInfo,
   ): Promise<MemberAuditLog | null> {
     const auditLog = await this.memberInfra.logMemberDeletionEventInfo(
-      deleteMemberEmail,
-      deleteMemberAppId,
-      executorMemberId,
-      executorIpAddress,
-      executorDateTime,
-      action,
-      updateId,
-      updateInfo,
+      deleteMemberInfo,
+      executorMemberInfo,
       this.entityManager,
     );
 
