@@ -18,4 +18,12 @@ export class CouponInfrastructure {
     });
     return coupons;
   }
+
+  async getCouponEnrollment(memberId: string, manager: EntityManager) {
+    return manager.getRepository(Coupon).find({
+      where: { memberId },
+      relations: { couponCode: { couponPlan: { couponPlanProducts: true } } },
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

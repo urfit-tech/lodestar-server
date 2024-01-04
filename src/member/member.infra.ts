@@ -27,7 +27,7 @@ import { MemberNote } from '~/entity/MemberNote';
 import { MemberTask } from '~/entity/MemberTask';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
-import { ProgramContentLog } from '~/entity/ProgramContentLog';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { Voucher } from '~/voucher/entity/voucher.entity';
 import { Exercise } from '~/entity/Exercise';
 import { IssueReply } from '~/entity/IssueReply';
@@ -45,13 +45,15 @@ import { ReviewReaction } from '~/entity/ReviewReaction';
 import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { OrderContact } from '~/entity/OrderContact';
 import { CoinLog } from '~/entity/CoinLog';
-import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
+import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
 import { PostRole } from '~/entity/PostRole';
 import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
 import { ReviewReply } from '~/entity/ReviewReply';
+import { Property } from '~/definition/entity/property.entity';
+import { Category } from '~/definition/entity/category.entity';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -181,6 +183,142 @@ export class MemberInfrastructure {
     return founds;
   }
 
+  async getMemberTasks(memberId: string, manager: EntityManager): Promise<Array<MemberTask>> {
+    const memberTaskRepo = manager.getRepository(MemberTask);
+    const tasks = await memberTaskRepo.findBy({ memberId });
+    return tasks;
+  }
+
+  async getMemberTasksWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberTask[]> {
+    const memberTaskRepo = manager.getRepository(MemberTask);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+
+    const query = memberTaskRepo
+      .createQueryBuilder('mt')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id')
+      .orderBy('mt.created_at', 'DESC');
+
+    return await query.getMany();
+  }
+
+  async getMemberPhonesWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberPhone[]> {
+    const memberPhoneRepo = manager.getRepository(MemberPhone);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+
+    const query = memberPhoneRepo
+      .createQueryBuilder('mp')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mp.member_id = vals.member_id');
+
+    return await query.getMany();
+  }
+
+  async getMemberNotesWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberNote[]> {
+    const memberNoteRepo = manager.getRepository(MemberNote);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+
+    const query = memberNoteRepo
+      .createQueryBuilder('mn')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mn.member_id = vals.member_id')
+      .andWhere('mn.type IS NULL')
+      .orderBy('mn.created_at', 'DESC');
+
+    return await query.getMany();
+  }
+
+  async getMemberCategoryWithBulkIds(
+    memberIds: string[],
+    appId,
+    manager: EntityManager,
+  ): Promise<
+    {
+      memberCategory: MemberCategory;
+      category: Category;
+    }[]
+  > {
+    const memberCategoryRepo = manager.getRepository(MemberCategory);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+
+    const query = memberCategoryRepo
+      .createQueryBuilder('mc')
+      .innerJoinAndSelect('mc.category', 'c')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
+      .where('c.appId = :appId AND c.class = :class', { appId, class: 'member' });
+
+    const memberCategories = await query.getMany();
+
+    return memberCategories.map((mc) => ({
+      memberCategory: mc,
+      category: mc.category,
+    }));
+  }
+
+  async getMemberContractWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberContract[]> {
+    const memberContractRepo = manager.getRepository(MemberContract);
+
+    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
+    if (valuesList.length < 1) {
+      return [];
+    }
+    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+
+    const query = memberContractRepo
+      .createQueryBuilder('mc')
+      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
+      .andWhere('mc.agreed_at IS NOT NULL');
+
+    return await query.getMany();
+  }
+
+  async getMemberPropertiyWithBulkIds(
+    memberIds: string[],
+    appId: string,
+    manager: EntityManager,
+  ): Promise<
+    {
+      memberProperty: MemberProperty;
+      property: Property;
+    }[]
+  > {
+    const memberPropertyRepo = manager.getRepository(MemberProperty);
+
+    if (memberIds.length < 1) {
+      return [];
+    }
+
+    const query = memberPropertyRepo
+      .createQueryBuilder('mp')
+      .innerJoinAndSelect('mp.property', 'p')
+      .where('p.appId = :appId', { appId })
+      .andWhere('mp.memberId IN (:...memberIds)', { memberIds });
+
+    const memberProperties = await query.getMany();
+
+    return memberProperties.map((mp) => ({
+      memberProperty: mp,
+      property: mp.property,
+    }));
+  }
+
   async getLoginMemberMetadata(memberId: string, manager: EntityManager): Promise<Array<LoginMemberMetadata>> {
     const builder = manager
       .createQueryBuilder()
@@ -292,6 +430,77 @@ export class MemberInfrastructure {
         return memberAuditLogRepo.save(toInsert);
       }),
     );
+  }
+
+  async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
+    const memberRepo = entityManager.getRepository(Member);
+    try {
+      const updateResult = await memberRepo.update(memberId, { loginedAt });
+
+      if (updateResult?.affected === 0) {
+        console.error(`No records updated for memberId: ${memberId}. Member might not exist.`);
+      }
+    } catch (error) {
+      console.error(`Error updating login date for memberId: ${memberId}`, error);
+    }
+  }
+
+  async logMemberDeletionEventInfo(
+    deleteMemberEmail: string,
+    deleteMemberAppId: string,
+    executorMemberId: string,
+    executorIpAddress: string,
+    executorDateTime: Date,
+    action: 'create' | 'update',
+    updateId: string | null,
+    updateInfo: string,
+    entityManager: EntityManager,
+  ): Promise<MemberAuditLog | null> {
+    const memberAuditLogRepo = entityManager.getRepository(MemberAuditLog);
+    const memberRepo = entityManager.getRepository(Member);
+
+    try {
+      const member = await memberRepo.findOne({
+        where: { email: deleteMemberEmail, appId: deleteMemberAppId },
+      });
+
+      let memberAuditLog;
+      if (action === 'create') {
+        if (!member) {
+          console.error(
+            `[Error] No target member for appId ${deleteMemberAppId} with email ${deleteMemberEmail} found.`,
+          );
+          return null;
+        }
+
+        memberAuditLog = new MemberAuditLog();
+        memberAuditLog.member = member;
+        memberAuditLog.action = 'delete';
+        memberAuditLog.target = JSON.stringify({
+          executorMemberId,
+          executorIpAddress,
+          executorDateTime,
+        });
+      } else if (action === 'update' && updateId) {
+        memberAuditLog = await memberAuditLogRepo.findOne({ where: { id: updateId } });
+        if (!memberAuditLog) {
+          console.error(`[Update Error] No audit log with ID ${updateId} found.`);
+          return null;
+        }
+
+        const existingTargetData = JSON.parse(memberAuditLog.target || '{}');
+        memberAuditLog.target = JSON.stringify({
+          ...existingTargetData,
+          result: updateInfo,
+        });
+      }
+
+      await memberAuditLogRepo.save(memberAuditLog);
+      return memberAuditLog;
+    } catch (error) {
+      console.error(`Error when trying to log member action: ${error}`);
+      throw error;
+    }
   }
 
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {

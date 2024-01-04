@@ -11,6 +11,9 @@ export class VoucherPlan {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('text', { name: 'app_id' })
+  appId: string;
+
   @Column('text', { name: 'title' })
   title: string;
 

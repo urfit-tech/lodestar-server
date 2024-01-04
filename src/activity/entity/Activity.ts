@@ -7,7 +7,7 @@ import { ActivityCategory } from './ActivityCategory';
 import { ActivitySession } from './ActivitySession';
 import { ActivityTag } from './ActivityTag';
 import { ActivityTicket } from './ActivityTicket';
-import { PackageItem } from './PackageItem';
+import { PackageItem } from '../../entity/PackageItem';
 
 @Index('activity_pkey', ['id'], { unique: true })
 @Entity('activity', { schema: 'public' })
@@ -58,6 +58,9 @@ export class Activity {
 
   @Column('boolean', { name: 'is_private', default: () => false })
   isPrivate: boolean;
+
+  @Column('text', { name: 'app_id' })
+  appId: string;
 
   @ManyToOne(() => App, (app) => app.activities, {
     onDelete: 'RESTRICT',

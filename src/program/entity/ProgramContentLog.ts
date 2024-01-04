@@ -29,6 +29,9 @@ export class ProgramContentLog {
   @Column('numeric', { name: 'ended_at' })
   endedAt: number;
 
+  @Column('text', { name: 'program_content_id' })
+  programContentId: string;
+
   @ManyToOne(() => Member, (member) => member.programContentLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

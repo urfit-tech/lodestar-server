@@ -24,6 +24,6 @@ import { PodcastPlanInfrastructure } from './podcast-plan/podcast-plan.infra';
     PodcastPlanService,
     PodcastPlanInfrastructure,
   ],
-  exports: [],
+  exports: [PodcastService],
 })
 export class PodcastModule {}

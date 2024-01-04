@@ -37,7 +37,7 @@ import { Permission } from '~/permission/entity/permission.entity';
 import { MemberNote } from '~/entity/MemberNote';
 import { MemberTask } from '~/entity/MemberTask';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
-import { ProgramContentLog } from '~/entity/ProgramContentLog';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { Invoice } from '~/invoice/invoice.entity';
@@ -73,8 +73,8 @@ import { ReviewReaction } from '~/entity/ReviewReaction';
 import { OrderExecutor } from '~/order/entity/order_executor.entity';
 import { OrderContact } from '~/entity/OrderContact';
 import { CoinLog } from '~/entity/CoinLog';
-import { PodcastProgramProgress } from '~/entity/PodcastProgramProgress';
-import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { Post } from '~/entity/Post';
 import { PostRole } from '~/entity/PostRole';
 import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
@@ -84,6 +84,10 @@ import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
 import { ReviewReply } from '~/entity/ReviewReply';
+import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
+import { MemberService } from '~/member/member.service';
+import { MemberPermission } from '~/member/entity/member_permission.entity';
+import { AppPage } from '~/entity/AppPage';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -156,6 +160,9 @@ describe('MemberController (e2e)', () => {
   let practiceRepo: Repository<Practice>;
   let programTimeableRepo: Repository<ProgramTimetable>;
   let attendRepo: Repository<Attend>;
+  let memberAuditLogRepo: Repository<MemberAuditLog>;
+  let appPageRepo: Repository<AppPage>;
+  let memberService: MemberService;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -163,6 +170,7 @@ describe('MemberController (e2e)', () => {
     }).compile();
 
     application = moduleFixture.createNestApplication();
+    memberService = moduleFixture.get<MemberService>(MemberService);
 
     application.useGlobalPipes(new ValidationPipe()).useGlobalFilters(new ApiExceptionFilter());
 
@@ -234,7 +242,11 @@ describe('MemberController (e2e)', () => {
     practiceRepo = manager.getRepository(Practice);
     programTimeableRepo = manager.getRepository(ProgramTimetable);
     attendRepo = manager.getRepository(Attend);
+    memberAuditLogRepo = manager.getRepository(MemberAuditLog);
+    appPageRepo = manager.getRepository(AppPage);
 
+    await appPageRepo.delete({});
+    await memberAuditLogRepo.delete({});
     await attendRepo.delete({});
     await practiceRepo.delete({});
     await postRoleRepo.delete({});
@@ -311,6 +323,8 @@ describe('MemberController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await appPageRepo.delete({});
+    await memberAuditLogRepo.delete({});
     await attendRepo.delete({});
     await practiceRepo.delete({});
     await postRoleRepo.delete({});
@@ -1830,6 +1844,145 @@ describe('MemberController (e2e)', () => {
 
       expect(res.body).toHaveProperty('code', 'ERROR');
       expect(res.body).toHaveProperty('message');
+      console.log(res.body);
+    });
+
+    it('should return an error response when log is null', async () => {
+      jest.spyOn(memberService, 'logMemberDeletionEventInfo').mockResolvedValue(null);
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: 'executor_member_id',
+          role: 'app-owner',
+        },
+        jwtSecret,
+      );
+
+      const response = await request(application.getHttpServer())
+        .delete(`${route}/nonexistent@email.com`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('code', 'ERROR');
+      expect(response.body).toHaveProperty('message');
+      expect(response.body.message).toEqual(expect.stringContaining('[Fail to log deletion]'));
+    });
+
+    it('should log deletion update on error', async () => {
+      const memberId = v4();
+      const insertedMember = new Member();
+      insertedMember.appId = app.id;
+      insertedMember.id = memberId;
+      insertedMember.name = `name`;
+      insertedMember.username = `username`;
+      insertedMember.email = `delete@example.com`;
+      insertedMember.role = 'general-member';
+      insertedMember.star = 0;
+      insertedMember.createdAt = new Date();
+      insertedMember.loginedAt = new Date();
+      await manager.save(insertedMember);
+
+      const executeDeleteMember = new Member();
+      executeDeleteMember.appId = app.id;
+      executeDeleteMember.id = v4();
+      executeDeleteMember.name = `name2`;
+      executeDeleteMember.username = `username2`;
+      executeDeleteMember.email = `delete2@example.com`;
+      executeDeleteMember.role = 'app-owner';
+      executeDeleteMember.star = 0;
+      executeDeleteMember.createdAt = new Date();
+      executeDeleteMember.loginedAt = new Date();
+      await manager.save(executeDeleteMember);
+
+      const insertedAppPage = new AppPage();
+      insertedAppPage.appId = app.id;
+      insertedAppPage.title = 'AAA';
+      insertedAppPage.editor = insertedMember;
+      insertedAppPage.craftData = {};
+      insertedAppPage.isDeleted = false;
+      insertedAppPage.path = '/';
+      await manager.save(insertedAppPage);
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: executeDeleteMember.id,
+          role: 'app-owner',
+        },
+        jwtSecret,
+      );
+
+      await request(application.getHttpServer())
+        .delete(`${route}/${insertedMember.email}`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host);
+
+      const memberAudit = await memberAuditLogRepo.findOne({
+        where: { memberId: insertedMember.id },
+      });
+      console.log('memberAudit', memberAudit);
+      expect(memberAudit.target.includes('ERROR')).toBe(true);
+    });
+
+    it('should log executor successfully', async () => {
+      const memberId = v4();
+      const insertedMember = new Member();
+      insertedMember.appId = app.id;
+      insertedMember.id = memberId;
+      insertedMember.name = `name`;
+      insertedMember.username = `username`;
+      insertedMember.email = `delete@example.com`;
+      insertedMember.role = 'general-member';
+      insertedMember.star = 0;
+      insertedMember.createdAt = new Date();
+      insertedMember.loginedAt = new Date();
+      await manager.save(insertedMember);
+
+      const executeDeleteMember = new Member();
+      executeDeleteMember.appId = app.id;
+      executeDeleteMember.id = v4();
+      executeDeleteMember.name = `name2`;
+      executeDeleteMember.username = `username2`;
+      executeDeleteMember.email = `delete2@example.com`;
+      executeDeleteMember.role = 'app-owner';
+      executeDeleteMember.star = 0;
+      executeDeleteMember.createdAt = new Date();
+      executeDeleteMember.loginedAt = new Date();
+      await manager.save(executeDeleteMember);
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: executeDeleteMember.id,
+          role: 'app-owner',
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .delete(`${route}/${insertedMember.email}`)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .expect(200);
+
+      const memberAudit = await memberAuditLogRepo.findOne({
+        where: { memberId: insertedMember.id },
+      });
+      expect(memberAudit.action).toEqual('delete');
+      expect(JSON.parse(memberAudit.target).executorMemberId).toEqual(executeDeleteMember.id);
+      expect(JSON.parse(memberAudit.target).executorIpAddress).not.toBeNull;
+      expect(JSON.parse(memberAudit.target).executorDateTime).not.toBeNull;
     });
 
     it('Should delete member successfully', async () => {
@@ -2311,6 +2464,348 @@ describe('MemberController (e2e)', () => {
 
       expect(res.body).toHaveProperty('code', 'SUCCESS');
       expect(res.body).toHaveProperty('message');
+    });
+  });
+  describe('members/saleLeadMemberData', () => {
+    const route = '/members/saleLeadMemberData';
+    describe('Success scenarios', () => {
+      it('should return data successfully for a valid request', async () => {
+        const memberIds = [];
+        for (let i = 0; i < 5; i++) {
+          const insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = v4();
+          insertedMember.name = `name${i}`;
+          insertedMember.username = `username${i}`;
+          insertedMember.email = `email${i}@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = new Date();
+          await manager.save(insertedMember);
+          memberIds.push(insertedMember.id);
+        }
+
+        const insertedProperty = new Property();
+        insertedProperty.appId = app.id;
+        insertedProperty.name = 'aaaa';
+        insertedProperty.position = 1;
+        insertedProperty.type = 'member';
+        await manager.save(insertedProperty);
+
+        const insertedCategory = new Category();
+        insertedCategory.appId = app.id;
+        insertedCategory.name = 'bbbb';
+        insertedCategory.class = 'member';
+        insertedCategory.position = 1;
+        await manager.save(insertedCategory);
+
+        memberIds.map(async (memberId) => {
+          const insertedMemberCategory = new MemberCategory();
+          insertedMemberCategory.category = insertedCategory;
+          insertedMemberCategory.memberId = memberId;
+          insertedMemberCategory.position = 1;
+          await manager.save(insertedMemberCategory);
+        });
+
+        memberIds.map(async (memberId) => {
+          const insertedMemberProperty = new MemberProperty();
+          insertedMemberProperty.property = insertedProperty;
+          insertedMemberProperty.memberId = memberId;
+          insertedMemberProperty.value = 'ccccc';
+          await manager.save(insertedMemberProperty);
+        });
+
+        memberIds.map(async (memberId) => {
+          const insertedMemberTask = new MemberTask();
+          insertedMemberTask.memberId = memberId;
+          insertedMemberTask.title = 'title';
+          insertedMemberTask.priority = 'high';
+          insertedMemberTask.status = 'done';
+          await manager.save(insertedMemberTask);
+        });
+
+        memberIds.map(async (memberId, index) => {
+          const insertedMemberPhone = new MemberPhone();
+          insertedMemberPhone.id = v4();
+          insertedMemberPhone.memberId = memberId;
+          insertedMemberPhone.phone = `0900000000${index}`;
+          await manager.save(insertedMemberPhone);
+        });
+
+        memberIds.map(async (memberId) => {
+          const insertedMemberNote = new MemberNote();
+          insertedMemberNote.memberId = memberId;
+          insertedMemberNote.authorId = memberId;
+          insertedMemberNote.type = null;
+          insertedMemberNote.status = 'missed';
+          await manager.save(insertedMemberNote);
+        });
+
+        const insertedMemberNote = new MemberNote();
+        insertedMemberNote.memberId = memberIds[0];
+        insertedMemberNote.authorId = memberIds[0];
+        insertedMemberNote.type = 'not null value';
+        insertedMemberNote.status = 'missed';
+        await manager.save(insertedMemberNote);
+
+        const insertedContract = new Contract();
+        insertedContract.appId = app.id;
+        insertedContract.name = '私塾課合約2020';
+        insertedContract.description = '私塾課合約2020';
+        insertedContract.template = '<div> 1 </div>';
+        await manager.save(insertedContract);
+
+        memberIds.map(async (memberId) => {
+          const insertedMemberContract = new MemberContract();
+          insertedMemberContract.memberId = memberId;
+          insertedMemberContract.contract = insertedContract;
+          insertedMemberContract.agreedAt = new Date();
+          await manager.save(insertedMemberContract);
+        });
+
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            appId: app.id,
+            memberId: 'invoker_member_id',
+            permissions: ['MEMBER_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const res = await request(application.getHttpServer())
+          .post(route)
+          .set('Authorization', `Bearer ${token}`)
+          .set('host', appHost.host)
+          .send({
+            memberIds: memberIds,
+            appId: app.id,
+          })
+          .expect(201);
+
+        expect(res.body).toHaveProperty('memberProperty');
+        expect(res.body.memberProperty).toHaveLength(5);
+        res.body.memberProperty.forEach((property) => {
+          expect(property).toHaveProperty('value');
+          expect(property).toHaveProperty('name');
+          expect(property).toHaveProperty('memberId');
+          expect(property).toHaveProperty('propertyId');
+          expect(property.value).toEqual('ccccc');
+          expect(property.name).toEqual('aaaa');
+        });
+
+        expect(res.body).toHaveProperty('memberTask');
+        expect(res.body.memberTask).toHaveLength(5);
+        res.body.memberTask.forEach((task) => {
+          expect(task).toHaveProperty('memberId');
+          expect(task).toHaveProperty('status');
+          expect(task.status).toEqual('done');
+        });
+
+        expect(res.body).toHaveProperty('memberPhone');
+        expect(res.body.memberPhone).toHaveLength(5);
+        res.body.memberPhone.forEach((phone) => {
+          expect(phone).toHaveProperty('memberId');
+          expect(phone).toHaveProperty('phone');
+          expect(phone.phone).toMatch(/^0900000000\d$/);
+        });
+
+        expect(res.body).toHaveProperty('memberNote');
+        expect(res.body.memberNote).toHaveLength(5);
+        res.body.memberNote.forEach((note) => {
+          expect(note).toHaveProperty('memberId');
+          expect(note).toHaveProperty('description');
+          expect(note.description).toBeNull();
+        });
+
+        expect(res.body).toHaveProperty('memberCategory');
+        expect(res.body.memberCategory).toHaveLength(5);
+        res.body.memberCategory.forEach((category) => {
+          expect(category).toHaveProperty('memberId');
+          expect(category).toHaveProperty('categoryId');
+          expect(category.name).toEqual('bbbb');
+          expect(category.categoryId).toBeTruthy();
+        });
+
+        expect(res.body).toHaveProperty('activeMemberContract');
+        expect(res.body.activeMemberContract).toHaveLength(5);
+        res.body.activeMemberContract.forEach((contract) => {
+          expect(contract).toHaveProperty('memberId');
+          expect(contract).toHaveProperty('agreed_at');
+          expect(contract).toHaveProperty('revoked_at');
+          expect(contract).toHaveProperty('values');
+          expect(contract.agreed_at).toBeTruthy();
+          expect(contract.revoked_at).toBeNull();
+        });
+      });
+      it('should handle an empty member list gracefully', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            appId: app.id,
+            memberId: 'invoker_member_id',
+            permissions: ['MEMBER_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const res = await request(application.getHttpServer())
+          .post(route)
+          .set('Authorization', `Bearer ${token}`)
+          .set('host', appHost.host)
+          .send({
+            memberIds: [],
+            appId: app.id,
+          })
+          .expect(201);
+
+        expect(res.body).toHaveProperty('memberProperty');
+        expect(res.body.memberProperty).toEqual([]);
+
+        expect(res.body).toHaveProperty('memberTask');
+        expect(res.body.memberTask).toEqual([]);
+
+        expect(res.body).toHaveProperty('memberPhone');
+        expect(res.body.memberPhone).toEqual([]);
+
+        expect(res.body).toHaveProperty('memberNote');
+        expect(res.body.memberNote).toEqual([]);
+
+        expect(res.body).toHaveProperty('memberCategory');
+        expect(res.body.memberCategory).toEqual([]);
+
+        expect(res.body).toHaveProperty('activeMemberContract');
+        expect(res.body.activeMemberContract).toEqual([]);
+      });
+      it('should return an empty array for memberProperty and memberCategory when there are no properties and categories', async () => {
+        const memberIds = [];
+        for (let i = 0; i < 5; i++) {
+          const insertedMember = new Member();
+          insertedMember.appId = app.id;
+          insertedMember.id = v4(); // 假设 v4() 是一个 UUID 生成函数
+          insertedMember.name = `name${i}`;
+          insertedMember.username = `username${i}`;
+          insertedMember.email = `email${i}@example.com`;
+          insertedMember.role = 'general-member';
+          insertedMember.star = 0;
+          insertedMember.createdAt = new Date();
+          insertedMember.loginedAt = new Date();
+          await manager.save(insertedMember);
+          memberIds.push(insertedMember.id);
+        }
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            appId: app.id,
+            memberId: 'invoker_member_id',
+            permissions: ['MEMBER_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const res = await request(application.getHttpServer())
+          .post(route)
+          .set('Authorization', `Bearer ${token}`)
+          .set('host', appHost.host)
+          .send({
+            memberIds: memberIds,
+            appId: app.id,
+          })
+          .expect(201);
+
+        expect(res.body).toHaveProperty('memberProperty');
+        expect(res.body.memberProperty).toEqual([]);
+        expect(res.body.memberCategory).toEqual([]);
+      });
+    });
+
+    describe('Fail scenarios', () => {
+      it('should return an error for invalid member IDs type', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            appId: app.id,
+            memberId: 'invoker_member_id',
+            permissions: ['MEMBER_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const res = await request(application.getHttpServer())
+          .post(route)
+          .set('Authorization', `Bearer ${token}`)
+          .set('host', appHost.host)
+          .send({
+            memberIds: '',
+            appId: app.id,
+          })
+          .expect(400);
+
+        expect(res.body.message).toEqual(['memberIds must be an array']);
+      });
+      it('should return an error for missing required fields', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            appId: app.id,
+            memberId: 'invoker_member_id',
+            permissions: ['MEMBER_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const res = await request(application.getHttpServer())
+          .post(route)
+          .set('Authorization', `Bearer ${token}`)
+          .set('host', appHost.host)
+          .expect(400);
+
+        expect(res.body.message).toEqual(['memberIds must be an array', 'appId must be a string']);
+      });
+      it('should return error when appId is empty', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            appId: app.id,
+            memberId: 'invoker_member_id',
+            permissions: ['MEMBER_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const res = await request(application.getHttpServer())
+          .post(route)
+          .set('Authorization', `Bearer ${token}`)
+          .set('host', appHost.host)
+          .send({
+            memberIds: [],
+            appId: '',
+          })
+          .expect(400);
+
+        expect(res.body.message).toEqual('Invalid request parameters');
+
+        expect(res.body.result).toEqual(['appId must be a string and cannot be empty']);
+      });
     });
   });
 });

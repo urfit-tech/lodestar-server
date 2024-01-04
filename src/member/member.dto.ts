@@ -1,9 +1,21 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsEmail, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDate,
+  IsEmail,
+  IsEnum,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { DeleteResult } from 'typeorm';
 import { Cursor } from 'typeorm-cursor-pagination';
 
 import { MemberRole } from './member.type';
+import { isArray } from 'lodash';
 
 class FileInfo {
   @IsString()
@@ -184,4 +196,107 @@ export class MemberGeneralLoginDTO {
 
   @IsBoolean()
   isBusiness: boolean;
+}
+
+export class ActiveMemberContractDTO {
+  @IsString()
+  memberId: string;
+
+  @IsDate()
+  agreed_at: Date;
+
+  @IsDate()
+  revoked_at: Date;
+
+  @ValidateNested()
+  values: any;
+}
+
+export class MemberTaskDTO {
+  @IsString()
+  memberId: string;
+
+  @IsString()
+  status: string;
+}
+
+export class MemberPropertyDTO {
+  @IsString()
+  memberId: string;
+
+  @IsString()
+  propertyId: string;
+
+  @ValidateNested()
+  value: any;
+
+  @IsString()
+  name: string;
+}
+
+export class MemberPhoneDTO {
+  @IsString()
+  memberId: string;
+
+  @IsString()
+  phone: string;
+}
+
+export class MemberNoteDTO {
+  @IsString()
+  memberId: string;
+
+  @IsString()
+  description: string;
+}
+
+export class MemberCategoryDTO {
+  @IsString()
+  memberId: string;
+
+  @IsString()
+  categoryId: string;
+}
+
+export class SaleLeadMemberDataResponseDTO {
+  @IsString()
+  member_id: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ActiveMemberContractDTO)
+  activeMemberContract: ActiveMemberContractDTO[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MemberTaskDTO)
+  memberTask: MemberTaskDTO[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MemberPropertyDTO)
+  memberProperty: MemberPropertyDTO[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MemberPhoneDTO)
+  memberPhone: MemberPhoneDTO[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MemberNoteDTO)
+  memberNote: MemberNoteDTO[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MemberCategoryDTO)
+  memberCategory: MemberCategoryDTO[];
+}
+
+export class SaleLeadMemberDataResquestDTO {
+  @IsArray()
+  memberIds: Array<string>;
+
+  @IsString()
+  appId: string;
 }

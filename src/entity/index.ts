@@ -1,10 +1,10 @@
-import { Activity } from './Activity';
-import { ActivityAttendance } from './ActivityAttendance';
-import { ActivityCategory } from './ActivityCategory';
-import { ActivitySession } from './ActivitySession';
-import { ActivitySessionTicket } from './ActivitySessionTicket';
-import { ActivityTag } from './ActivityTag';
-import { ActivityTicket } from './ActivityTicket';
+import { Activity } from '../activity/entity/Activity';
+import { ActivityAttendance } from '~/activity/entity/ActivityAttendance';
+import { ActivityCategory } from '~/activity/entity/ActivityCategory';
+import { ActivitySession } from '~/activity/entity/ActivitySession';
+import { ActivitySessionTicket } from '~/activity/entity/ActivitySessionTicket';
+import { ActivityTag } from '~/activity/entity/ActivityTag';
+import { ActivityTicket } from '~/activity/entity/ActivityTicket';
 import { AppAdmin } from './AppAdmin';
 import { AppChannel } from './AppChannel';
 import { AppDefaultPermission } from './AppDefaultPermission';
@@ -110,15 +110,15 @@ import { PermissionGroupPermission } from './PermissionGroupPermission';
 import { Playlist } from './Playlist';
 import { PlaylistPodcastProgram } from './PlaylistPodcastProgram';
 import { Podcast } from './Podcast';
-import { PodcastAlbum } from './PodcastAlbum';
+import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 import { PodcastAlbumCategory } from './PodcastAlbumCategory';
-import { PodcastAlbumPodcastProgram } from './PodcastAlbumPodcastProgram';
+import { PodcastAlbumPodcastProgram } from '~/podcast/entity/PodcastAlbumPodcastProgram';
 import { PodcastPlan } from './PodcastPlan';
-import { PodcastProgram } from './PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastProgramAudio } from './PodcastProgramAudio';
 import { PodcastProgramBody } from './PodcastProgramBody';
 import { PodcastProgramCategory } from './PodcastProgramCategory';
-import { PodcastProgramProgress } from './PodcastProgramProgress';
+import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
 import { PodcastProgramRole } from './PodcastProgramRole';
 import { PodcastProgramTag } from './PodcastProgramTag';
 import { PointLog } from './PointLog';
@@ -141,7 +141,7 @@ import { ProgramCategory } from './ProgramCategory';
 import { ProgramContentAudio } from './ProgramContentAudio';
 import { ProgramContentBody } from './ProgramContentBody';
 import { ProgramContentExam } from './ProgramContentExam';
-import { ProgramContentLog } from './ProgramContentLog';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { ProgramContentMaterial } from './ProgramContentMaterial';
 import { ProgramContentPlan } from './ProgramContentPlan';
 import { ProgramContentProgress } from './ProgramContentProgress';
@@ -221,6 +221,11 @@ import { TableLog } from '~/table_log/table_log.entity';
 import { TriggerLog } from '~/trigger/entity/trigger_log.entity';
 import { Report } from '~/report/entity/report.entity';
 import { AuthAuditLog } from '~/auth/entity/auth_audit_log.entity';
+import { ActivityTicketEnrollment } from '../activity/view_entity/ActivityTicketEnrollment';
+import { ActivityTicketEnrollmentCount } from '~/activity/view_entity/ActivityTicketEnrollmentCount';
+import { ActivityDuringPeriod } from '~/activity/view_entity/ActivityDuringPeriod';
+import { ActivityEnrollment } from '~/activity/view_entity/ActivityEnrollment';
+import { ActivitySessionTicketEnrollmentCount } from '~/activity/view_entity/ActivitySessionTicketEnrollmentCount';
 
 export const PostgresEntities = [
   Activity,
@@ -445,4 +450,10 @@ export const PostgresEntities = [
   VoucherPlan,
   VoucherPlanProduct,
   WebhookLog,
+  ActivityTicketEnrollment,
+  ActivityTicketEnrollmentCount,
+  ActivityDuringPeriod,
+  ActivityEnrollment,
+  ActivitySessionTicketEnrollmentCount,
+  ActivityTicketEnrollmentCount,
 ];

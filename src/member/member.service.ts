@@ -9,6 +9,7 @@ import { DefinitionInfrastructure } from '~/definition/definition.infra';
 import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { Tag } from '~/definition/entity/tag.entity';
+import { MemberTask } from '~/entity/MemberTask';
 import { isNullString } from '~/utils';
 
 import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
@@ -20,6 +21,7 @@ import {
   MemberGetQueryOptionsDTO,
   MemberGetResultDTO,
   MemberImportResultDTO,
+  SaleLeadMemberDataResponseDTO,
 } from './member.dto';
 import { Member } from './entity/member.entity';
 import { MemberCategory } from './entity/member_category.entity';
@@ -27,6 +29,9 @@ import { MemberProperty } from './entity/member_property.entity';
 import { MemberPhone } from './entity/member_phone.entity';
 import { MemberTag } from './entity/member_tag.entity';
 import { APIException } from '~/api.excetion';
+import { category } from 'test/data';
+import dayjs from 'dayjs';
+import { MemberAuditLog } from './entity/member_audit_log.entity';
 
 @Injectable()
 export class MemberService {
@@ -228,7 +233,7 @@ export class MemberService {
         member.id = v4();
         member.name = eachRow.name;
         member.username = eachRow.username || eachRow.id;
-        member.email = eachRow.email;
+        member.email = eachRow.email.toLowerCase();
         member.role = eachRow.role || 'general-member';
         member.star = parseInt(eachRow.star, 10);
         member.createdAt = (isDateString(eachRow.createdAt) && new Date(eachRow.createdAt)) || null;
@@ -339,7 +344,135 @@ export class MemberService {
       .map((each) => each.serializeToCsvRawRow(headerInfos));
   }
 
+  async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
+    await this.memberInfra.updateMemberLoginDate(memberId, loginedAt, entityManager);
+  }
+
   async deleteMemberByEmail(appId: string, email: string): Promise<DeleteResult> {
     return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager);
+  }
+
+  async logMemberDeletionEventInfo(
+    deleteMemberEmail: string,
+    deleteMemberAppId: string,
+    executorMemberId: string,
+    executorIpAddress: string,
+    executorDateTime: Date,
+    action: 'create' | 'update',
+    updateId: string | null,
+    updateInfo: string,
+  ): Promise<MemberAuditLog | null> {
+    const auditLog = await this.memberInfra.logMemberDeletionEventInfo(
+      deleteMemberEmail,
+      deleteMemberAppId,
+      executorMemberId,
+      executorIpAddress,
+      executorDateTime,
+      action,
+      updateId,
+      updateInfo,
+      this.entityManager,
+    );
+
+    return auditLog;
+  }
+
+  async getMemberTasks(memberId: string): Promise<Array<MemberTask>> {
+    return this.memberInfra.getMemberTasks(memberId, this.entityManager);
+  }
+
+  async timedMemberInfraFunction(name, memberInfraFunction, appId) {
+    const formattedTimestamp = dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
+    const start = performance.now();
+
+    const result = await memberInfraFunction();
+
+    const end = performance.now();
+    const executionTime = end - start;
+    console.log(
+      `Execution Log - App ID: ${appId} | Function: ${name} | Timestamp: ${formattedTimestamp} | Execution Time: ${executionTime.toFixed(
+        3,
+      )} ms`,
+    );
+
+    return result;
+  }
+
+  async getSaleLeadMemberData(memberIds, appId): Promise<SaleLeadMemberDataResponseDTO> {
+    const [memberProperties, memberTasks, memberPhones, memberNotes, memberCategories, memberContracts] =
+      await Promise.all([
+        this.timedMemberInfraFunction(
+          'getMemberPropertyWithBulkIds',
+          () => this.memberInfra.getMemberPropertiyWithBulkIds(memberIds, appId, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberTasksWithBulkIds',
+          () => this.memberInfra.getMemberTasksWithBulkIds(memberIds, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberPhonesWithBulkIds',
+          () => this.memberInfra.getMemberPhonesWithBulkIds(memberIds, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberNotesWithBulkIds',
+          () => this.memberInfra.getMemberNotesWithBulkIds(memberIds, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberCategoryWithBulkIds',
+          () => this.memberInfra.getMemberCategoryWithBulkIds(memberIds, appId, this.entityManager),
+          appId,
+        ),
+        this.timedMemberInfraFunction(
+          'getMemberContractWithBulkIds',
+          () => this.memberInfra.getMemberContractWithBulkIds(memberIds, this.entityManager),
+          appId,
+        ),
+      ]);
+
+    const responseDto = new SaleLeadMemberDataResponseDTO();
+    responseDto.memberProperty = memberProperties.map(this.mapMemberProperty);
+    responseDto.memberTask = memberTasks.map(this.mapMemberTask);
+    responseDto.memberPhone = memberPhones.map(this.mapMemberPhone);
+    responseDto.memberNote = memberNotes.map(this.mapMemberNote);
+    responseDto.memberCategory = memberCategories.map(this.mapMemberCategory);
+    responseDto.activeMemberContract = memberContracts.map(this.mapMemberContract);
+    return responseDto;
+  }
+
+  private mapMemberProperty({ memberProperty, property }) {
+    return {
+      memberId: memberProperty.memberId,
+      propertyId: property.id,
+      value: memberProperty.value,
+      name: property.name,
+    };
+  }
+
+  private mapMemberTask({ memberId, status }) {
+    return { memberId: memberId, status };
+  }
+
+  private mapMemberPhone({ memberId, phone }) {
+    return { memberId: memberId, phone };
+  }
+
+  private mapMemberNote({ memberId, description }) {
+    return { memberId: memberId, description };
+  }
+
+  private mapMemberCategory({ memberCategory, category }) {
+    return {
+      memberId: memberCategory.memberId,
+      name: category ? category.name : null,
+      categoryId: memberCategory.categoryId,
+    };
+  }
+
+  private mapMemberContract({ memberId, agreedAt, revokedAt, values }) {
+    return { memberId: memberId, agreed_at: agreedAt, revoked_at: revokedAt, values };
   }
 }

@@ -1,4 +1,4 @@
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { ProgramContent } from './entity/program_content.entity';
@@ -6,6 +6,8 @@ import dayjs from 'dayjs';
 import { MemberService } from '~/member/member.service';
 import { APIException } from '~/api.excetion';
 import { ProgramInfrastructure } from './program.infra';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
+import { validate as uuidValidate } from 'uuid';
 
 @Injectable()
 export class ProgramService {

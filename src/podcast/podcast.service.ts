@@ -4,12 +4,15 @@ import { EntityManager } from 'typeorm';
 import { APIException } from '~/api.excetion';
 import { MemberService } from '~/member/member.service';
 import { PodcastInfrastructure } from './podcast.infra';
+import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
+import { PodcastProgressInfo } from './podcast.types';
 
 @Injectable()
 export class PodcastService {
   constructor(
     private readonly podcastInfra: PodcastInfrastructure,
     private readonly memberService: MemberService,
+
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
@@ -34,5 +37,37 @@ export class PodcastService {
       salePrice: podcast.salePrice ? Number(podcast.salePrice) : null,
       listPrice: Number(podcast.listPrice || 0),
     }));
+  }
+
+  public async processPodcastProgramProgress(
+    progressInfoList: PodcastProgressInfo[],
+    entityManager: EntityManager,
+  ): Promise<PodcastProgramProgress[]> {
+    const uniqueMap = new Map<string, PodcastProgramProgress>();
+
+    for (const info of progressInfoList) {
+      const uniqueKey = `${info.memberId}_${info.podcastProgramId}`;
+      let podcastProgramProgress = uniqueMap.get(uniqueKey);
+
+      if (!podcastProgramProgress) {
+        podcastProgramProgress = await this.podcastInfra.findPodcastProgramProgress(info, entityManager);
+
+        if (!podcastProgramProgress) {
+          podcastProgramProgress = entityManager.getRepository(PodcastProgramProgress).create(info);
+          podcastProgramProgress.createdAt = info.created_at;
+        }
+      }
+
+      podcastProgramProgress.progress = info.progress;
+      podcastProgramProgress.lastProgress = info.lastProgress;
+      podcastProgramProgress.podcastAlbumId = info.podcastAlbumId;
+      podcastProgramProgress.updatedAt = info.created_at;
+
+      uniqueMap.set(uniqueKey, podcastProgramProgress);
+    }
+
+    const podcastProgramProgressToSave = Array.from(uniqueMap.values());
+    await this.podcastInfra.savePodcastProgramProgress(podcastProgramProgressToSave, entityManager);
+    return podcastProgramProgressToSave;
   }
 }

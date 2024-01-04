@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { PodcastAlbum } from '~/entity/PodcastAlbum';
+import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
+import { PodcastProgramProgress } from '~/podcast/entity/PodcastProgramProgress';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { UtilityService } from '~/utility/utility.service';
+import { PodcastProgressInfo } from './podcast.types';
 
 @Injectable()
 export class PodcastInfrastructure {
@@ -43,6 +45,26 @@ GROUP BY
     );
 
     return this.utilityService.convertObjectKeysToCamelCase(podcasts);
+  }
+
+  async findPodcastProgramProgress(
+    info: PodcastProgressInfo,
+    entityManager: EntityManager,
+  ): Promise<PodcastProgramProgress | null> {
+    const podcastProgramProgressRepo = entityManager.getRepository(PodcastProgramProgress);
+    return podcastProgramProgressRepo.findOne({
+      where: {
+        memberId: info.memberId,
+        podcastProgramId: info.podcastProgramId,
+      },
+    });
+  }
+
+  async savePodcastProgramProgress(
+    podcastProgramProgresss: PodcastProgramProgress[],
+    entityManager: EntityManager,
+  ): Promise<void> {
+    await entityManager.save(PodcastProgramProgress, podcastProgramProgresss);
   }
 
   private getOwnedPodcastsDirectlyQuery(memberId: string, manager: EntityManager) {

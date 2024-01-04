@@ -1,7 +1,7 @@
 import { EntityManager } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { Activity } from '~/entity/Activity';
-import { ActivityTicket } from '~/entity/ActivityTicket';
+import { Activity } from '~/activity/entity/Activity';
+import { ActivityTicket } from '~/activity/entity/ActivityTicket';
 import { AppointmentPlan } from '~/entity/AppointmentPlan';
 import { Card } from '~/entity/Card';
 import { ProgramRole } from '~/entity/ProgramRole';
@@ -9,7 +9,7 @@ import { ProgramPlan } from '~/entity/ProgramPlan';
 import { ProjectPlan } from '~/entity/ProjectPlan';
 import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
 import { Program } from '~/entity/Program';
-import { PodcastProgram } from '~/entity/PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastPlan } from '~/entity/PodcastPlan';
 import { Merchandise } from '~/entity/Merchandise';
 import { MerchandiseSpec } from '~/entity/MerchandiseSpec';

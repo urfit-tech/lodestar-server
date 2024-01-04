@@ -10,6 +10,10 @@ import {
   ListObjectsV2Command,
   DeleteObjectCommandInput,
   DeleteObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  CompletedMultipartUpload,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
@@ -18,17 +22,14 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class StorageService {
   private readonly awsS3RegionStorage: string;
-  private readonly awsS3BucketStatic: string;
   private readonly awsS3BucketStorage: string;
 
   constructor(
     private readonly configService: ConfigService<{
-      AWS_S3_BUCKET_STATIC: string;
       AWS_S3_REGION_STORAGE: string;
       AWS_S3_BUCKET_STORAGE: string;
     }>,
   ) {
-    this.awsS3BucketStatic = configService.getOrThrow('AWS_S3_BUCKET_STATIC');
     this.awsS3RegionStorage = configService.getOrThrow('AWS_S3_REGION_STORAGE');
     this.awsS3BucketStorage = configService.getOrThrow('AWS_S3_BUCKET_STORAGE');
   }
@@ -37,9 +38,9 @@ export class StorageService {
     return new S3Client({ region });
   }
 
-  getSignedUrlForUploadStorage(appId: string, key: string, expiresIn: number): Promise<string> {
+  getSignedUrlForUploadStorage(appId: string, key: string, prefix: string, expiresIn: number): Promise<string> {
     const command = new PutObjectCommand({
-      Key: `${appId}/${key}`,
+      Key: `${prefix}/${appId}/${key}`,
       Bucket: this.awsS3BucketStorage,
     });
     return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
@@ -53,7 +54,7 @@ export class StorageService {
     return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
   }
 
-  saveFilesInBucketStorage(data: Omit<PutObjectCommandInput, 'Bucket'>) {
+  saveFileInBucketStorage(data: Omit<PutObjectCommandInput, 'Bucket'>) {
     return this.saveFileToBucket(this.awsS3RegionStorage, {
       ...data,
       Bucket: this.awsS3BucketStorage,
@@ -79,6 +80,31 @@ export class StorageService {
       ...data,
       Bucket: this.awsS3BucketStorage,
     });
+  }
+
+  async createMultipartUpload(Key: string, ContentType: string) {
+    const command = new CreateMultipartUploadCommand({ Bucket: this.awsS3BucketStorage, Key, ContentType });
+    return this.s3(this.awsS3RegionStorage).send(command);
+  }
+
+  async completeMultipartUpload(Key: string, UploadId: string, MultipartUpload: CompletedMultipartUpload) {
+    const command = new CompleteMultipartUploadCommand({
+      Bucket: this.awsS3BucketStorage,
+      Key,
+      UploadId,
+      MultipartUpload,
+    });
+    return this.s3(this.awsS3RegionStorage).send(command);
+  }
+
+  getSignedUrlForUploadPartStorage(
+    Key: string,
+    UploadId: string,
+    PartNumber: number,
+    expiresIn: number,
+  ): Promise<string> {
+    const command = new UploadPartCommand({ Bucket: this.awsS3BucketStorage, Key, UploadId, PartNumber });
+    return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
   }
 
   private async getFileFromBucket(region: string, data: GetObjectCommandInput) {

@@ -124,7 +124,7 @@ export class ExporterTasker extends Tasker {
       const fileKey = `export/${appId}/${category}/${category}_export_${dayjs
         .tz(dayjs.utc())
         .format('YYYY-MM-DDTHH:mm:ss')}.${ext}`;
-      const { ETag } = await this.storageService.saveFilesInBucketStorage({
+      const { ETag } = await this.storageService.saveFileInBucketStorage({
         Key: fileKey,
         Body: raw,
         ContentType: exportMime,

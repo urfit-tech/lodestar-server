@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm';
 
-import { Activity } from '~/entity/Activity';
+import { Activity } from '~/activity/entity/Activity';
 import { AppAdmin } from '~/entity/AppAdmin';
 import { AppChannel } from '~/entity/AppChannel';
 import { AppDefaultPermission } from '~/entity/AppDefaultPermission';

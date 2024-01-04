@@ -9,6 +9,9 @@ export class VoucherCode {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('uuid', { name: 'voucher_plan_id' })
+  voucherPlanId: string;
+
   @Column('text', { name: 'code', unique: true })
   code: string;
 
@@ -17,6 +20,9 @@ export class VoucherCode {
 
   @Column('integer', { name: 'remaining' })
   remaining: number;
+
+  @Column('timestamp without time zone', { name: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
 
   @OneToMany(() => Voucher, (voucher) => voucher.voucherCode)
   vouchers: Voucher[];

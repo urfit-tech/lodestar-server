@@ -3609,7 +3609,7 @@ CREATE TABLE public.member_audit_log (
     action text NOT NULL,
     target text NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
-    CONSTRAINT action CHECK ((action = ANY (ARRAY['upload'::text, 'download'::text])))
+    CONSTRAINT action CHECK ((action = ANY (ARRAY['upload'::text, 'download'::text, 'delete'::text])))
 );
 COMMENT ON COLUMN public.member_audit_log.action IS 'upload | download';
 CREATE TABLE public.member_card (

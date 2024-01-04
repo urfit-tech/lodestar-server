@@ -1,5 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { PodcastProgram } from './PodcastProgram';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { Tag } from '~/definition/entity/tag.entity';
 
 @Index('podcast_program_tag_pkey', ['id'], { unique: true })
