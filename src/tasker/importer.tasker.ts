@@ -77,7 +77,7 @@ export class ImporterTasker extends Tasker {
         try {
           const insertResult = await this.processFiles(appId, fileName, checksumETag, category);
           await this.storageService.deleteFileAtBucketStorage({
-            Key: `${appId}/${fileName}`,
+            Key: `import/${appId}/${fileName}`,
           });
           processResult[fileName] = insertResult;
         } catch (err) {
@@ -115,7 +115,7 @@ export class ImporterTasker extends Tasker {
     category: ImportCategory,
   ): Promise<MemberImportResultDTO> {
     const { ContentType, Body, ETag } = await this.storageService.getFileFromBucketStorage({
-      Key: `${appId}/${fileName}`,
+      Key: `import/${appId}/${fileName}`,
     });
 
     if (`"${checksumETag}"` !== ETag) {
@@ -161,17 +161,20 @@ export class ImporterTasker extends Tasker {
     subject: string,
     content: string,
   ): Promise<void> {
-    this.mailerQueue.add({
-      appId,
-      to: invokerMember.map(({ email }) => email),
-      subject,
-      cc: [],
-      bcc: [],
-      content: `<html>
+    this.mailerQueue.add(
+      {
+        appId,
+        to: invokerMember.map(({ email }) => email),
+        subject,
+        cc: [],
+        bcc: [],
+        content: `<html>
         <body>
           ${content}
         </body>
       </html>`,
-    } as MailJob, { removeOnComplete: true, removeOnFail: true });
+      } as MailJob,
+      { removeOnComplete: true, removeOnFail: true },
+    );
   }
 }
