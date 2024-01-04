@@ -166,7 +166,7 @@ describe('PorterRunner (e2e)', () => {
       'EX',
       7 * 86400,
     );
-
+    jest.resetAllMocks();
     await application.init();
   });
 
@@ -205,7 +205,29 @@ describe('PorterRunner (e2e)', () => {
 
       expect(mockedAxiosGet).toHaveBeenCalledWith(testUrl);
     });
+
+    it('should not call the heartbeat URL if PORTER_HEARTBEAT_URL is not set', async () => {
+      const mockedAxiosGet = axios.get as jest.Mock;
+      delete process.env.PORTER_HEARTBEAT_URL;
+
+      const porterRunner = application.get<PorterRunner>(Runner);
+      await porterRunner.execute(manager);
+
+      expect(mockedAxiosGet).not.toHaveBeenCalled();
+    });
+
+    it('should not call the heartbeat URL if PORTER_HEARTBEAT_URL is not a valid URL', async () => {
+      const mockedAxiosGet = axios.get as jest.Mock;
+      const invalidUrl = 'not-a-valid-url';
+      process.env.PORTER_HEARTBEAT_URL = invalidUrl;
+
+      const porterRunner = application.get<PorterRunner>(Runner);
+      await porterRunner.execute(manager);
+
+      expect(mockedAxiosGet).not.toHaveBeenCalled();
+    });
   });
+
   describe('last-logged-in', () => {
     describe('Success scenarios', () => {
       it('should update member after executing porterRunner', async () => {
@@ -364,6 +386,32 @@ describe('PorterRunner (e2e)', () => {
       expect(latestLog.startedAt).toEqual('496.957357');
       expect(latestLog.endedAt).toEqual('502.26019');
       expect(latestLog.memberId).toEqual(member.id);
+    });
+
+    it('should default to the current date for invalid timestamp', async () => {
+      await programContentLogRepo.delete({});
+      await cacheService.getClient().flushall();
+
+      const invalidTimestamp = 'invalid-timestamp';
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${invalidTimestamp}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 500, endedAt: 600 }),
+          'EX',
+          7 * 86400,
+        );
+
+      const consoleSpy = jest.spyOn(console, 'error');
+      const porterRunner = application.get<PorterRunner>(Runner);
+      await porterRunner.portPlayerEvent(manager);
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid timestamp'));
+
+      const logs = await programContentLogRepo.find();
+      expect(logs.length).toEqual(1);
+
+      consoleSpy.mockRestore();
     });
 
     describe('portPlayerEvent with batchSize 20', () => {
@@ -591,6 +639,34 @@ describe('PorterRunner (e2e)', () => {
         const remainingKeysCount = scanResult.length;
         expect(remainingKeysCount).toEqual(0);
         consoleSpy.mockRestore();
+      });
+      it('should assign default values for empty progress and lastProgress, and ignore empty podcastAlbumId', async () => {
+        await podcastProgramProgressRepo.delete({});
+        await cacheService.getClient().flushall();
+
+        await cacheService
+          .getClient()
+          .set(
+            `podcast-program-event:${member.id}:podcast-program:${podcastProgram.id}:${Date.now()}`,
+            JSON.stringify({ progress: '', lastProgress: '', podcastAlbumId: '' }),
+            'EX',
+            7 * 86400,
+          );
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await porterRunner.portPodcastProgram(manager);
+
+        const savedRecord = await podcastProgramProgressRepo.findOne({
+          where: {
+            memberId: member.id,
+            podcastProgramId: podcastProgram.id,
+          },
+        });
+
+        expect(savedRecord.progress).toEqual('1');
+        expect(savedRecord.lastProgress).toEqual('1');
+
+        expect(savedRecord.podcastAlbumId).toBeNull();
       });
     });
 

@@ -12,11 +12,13 @@ export class PorterProgramService {
   async scanCacheForKeys(pattern: string, batchSize: number, cursor: string): Promise<[string, string[]]> {
     const client = this.cacheService.getClient();
     const scanResult = await client.scan(cursor, 'MATCH', pattern, 'COUNT', batchSize);
+    // key format: program-content-event:${member_id}:program-content:${program_content_id}:${date number type}
     return [scanResult[0], scanResult[1]];
   }
 
   async fetchValuesFromCache(keys: string[]): Promise<string[]> {
     const client = this.cacheService.getClient();
+    // value format: {"playbackRate":1.25,"startedAt":575,"endedAt":675}
     return client.mget(keys);
   }
 
@@ -40,7 +42,13 @@ export class PorterProgramService {
     return keyValuePairs
       .map(({ memberId, programContentId, createdAtString, valueString }) => {
         const createdAtTimestamp = parseInt(createdAtString, 10);
-        const createdAtDate = new Date(createdAtTimestamp);
+        let createdAtDate;
+        if (createdAtString.trim() === '' || isNaN(createdAtString) || Number.isNaN(createdAtTimestamp)) {
+          console.error(`Invalid timestamp: ${createdAtString}`);
+          createdAtDate = new Date();
+        } else {
+          createdAtDate = new Date(createdAtTimestamp);
+        }
         const value = JSON.parse(valueString);
         const programContent = programContentsMap.get(programContentId);
 
