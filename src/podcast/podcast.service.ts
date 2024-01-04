@@ -58,10 +58,12 @@ export class PodcastService {
         }
       }
 
-      podcastProgramProgress.progress = info.progress;
-      podcastProgramProgress.lastProgress = info.lastProgress;
-      podcastProgramProgress.podcastAlbumId = info.podcastAlbumId;
+      podcastProgramProgress.progress = info.progress || 1;
+      podcastProgramProgress.lastProgress = info.lastProgress || 1;
       podcastProgramProgress.updatedAt = info.created_at;
+
+      podcastProgramProgress.podcastAlbumId =
+        info.podcastAlbumId && info.podcastAlbumId.trim() !== '' ? info.podcastAlbumId : null;
 
       uniqueMap.set(uniqueKey, podcastProgramProgress);
     }

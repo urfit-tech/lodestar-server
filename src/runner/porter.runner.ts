@@ -15,6 +15,7 @@ import { PodcastService } from '~/podcast/podcast.service';
 import { PodcastProgressInfo } from '~/podcast/podcast.types';
 import { PorterProgramService } from '~/program/porter-program.service';
 import { ProgramInfrastructure } from '~/program/program.infra';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class PorterRunner extends Runner {
@@ -35,8 +36,6 @@ export class PorterRunner extends Runner {
   }
 
   async portLastLoggedIn(manager: EntityManager, batchSize = 1000): Promise<void> {
-    console.log('portLastLoggedIn');
-
     let cursor = '0';
     do {
       const reply = await this.cacheService.getClient().scan(cursor, 'MATCH', 'last-logged-in:*', 'COUNT', batchSize);
@@ -156,28 +155,44 @@ export class PorterRunner extends Runner {
 
   async checkAndCallHeartbeat(): Promise<void> {
     const heartbeatUrl = process.env.PORTER_HEARTBEAT_URL;
-    if (!heartbeatUrl) {
-      axios.get(heartbeatUrl);
-      return;
+
+    const isValidUrl = (url) => {
+      try {
+        new URL(url);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    };
+
+    if (heartbeatUrl && typeof heartbeatUrl === 'string' && isValidUrl(heartbeatUrl)) {
+      console.log('Calling heartbeat URL:', heartbeatUrl);
+      await axios.get(heartbeatUrl);
+    } else {
+      console.log(`Invalid or no heartbeat URL set, skipping call: ${heartbeatUrl}`);
     }
-    await axios.get(heartbeatUrl);
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
-    console.log('start');
+    console.time('Total Execution Time');
+    const currentTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
+    console.log(`start porter runner ${currentTime}`);
     await this.checkAndCallHeartbeat();
 
     const errors: any[] = [];
 
     const handlePorting = async (taskName: string, taskFunction: () => Promise<void>) => {
+      const taskStartTime = currentTime;
+      console.time(`Task Time [${taskStartTime}] - ${taskName}`);
       try {
-        console.log(`porting ${taskName}`);
+        console.log(`porting ${taskName} at ${taskStartTime}`);
         await taskFunction();
         console.log(`finishing porting ${taskName}`);
       } catch (error) {
-        console.error(`port ${taskName} failed:`, error);
+        console.error(`port ${taskName} failed at ${taskStartTime}:`, error);
         errors.push(error);
       }
+      console.timeEnd(`Task Time [${taskStartTime}] - ${taskName}`);
     };
 
     await handlePorting('last logged in', () => this.portLastLoggedIn(this.entityManager));
@@ -187,5 +202,7 @@ export class PorterRunner extends Runner {
     if (errors.length > 0) {
       console.error(errors, 'Porting errors occurred');
     }
+
+    console.timeEnd('Total Execution Time');
   }
 }
