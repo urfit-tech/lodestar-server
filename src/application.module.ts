@@ -21,6 +21,7 @@ import { PodcastModule } from './podcast/podcast.module';
 import { SwaggerConfigModule } from './swagger-config/swagger-config.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ActivityModule } from './activity/activity.module';
+import { AppointmentModule } from './appointment/appointment.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -85,6 +86,7 @@ import { ActivityModule } from './activity/activity.module';
     PodcastModule,
     SwaggerConfigModule,
     ActivityModule,
+    AppointmentModule,
   ],
 })
 export class ApplicationModule {
