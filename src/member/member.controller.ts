@@ -34,6 +34,7 @@ import {
 } from './member.dto';
 import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
+import { ExecutorInfo, DeleteMemberInfo } from './member.type';
 
 @UseGuards(AuthGuard)
 @ApiTags('Member')
@@ -213,6 +214,8 @@ export class MemberController {
   ): Promise<MemberDeleteResultDTO> {
     const { appId, role, memberId } = member;
     let log;
+    let deleteResult;
+    let response;
 
     if (role !== 'app-owner') {
       throw new UnauthorizedException(
@@ -222,61 +225,34 @@ export class MemberController {
     }
 
     try {
-      log = await this.memberService.logMemberDeletionEventInfo(
-        email,
-        appId,
-        memberId,
-        ip,
-        new Date(),
-        'create',
-        null,
-        null,
-      );
+      deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
+      response = { code: 'SUCCESS', message: deleteResult };
+    } catch (error) {
+      response = { code: 'ERROR', message: error.message };
+      throw new APIException(response);
+    } finally {
+      const deleteMemberInfo: DeleteMemberInfo = {
+        email: email,
+        id: deleteResult?.raw[0].member || '',
+        appId: appId,
+      };
+      const executorMemberInfo: ExecutorInfo = {
+        memberId: memberId,
+        ipAddress: ip,
+        dateTime: new Date(),
+        executeResult: JSON.stringify(response),
+      };
 
-      if (log === null) {
-        throw new APIException({
-          code: 'ERROR',
-          message: `[Fail to log deletion]: Executor ID: ${memberId} | Delete member email: ${email} | App ID: ${appId}, IP ${ip}`,
-        });
-      }
+      log = await this.memberService.logMemberDeletionEventInfo(deleteMemberInfo, executorMemberInfo);
 
       console.log(`Log Details:
-        ID: ${log.id}
-        Delete Member ID: ${log.member_id}
-        Action: ${log.action}
-        Delete Log: ${log.target}
-        Created At: ${log.created_at}`);
-
-      const deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
-
-      const response: MemberDeleteResultDTO = { code: 'SUCCESS', message: deleteResult };
-
-      await this.memberService.logMemberDeletionEventInfo(
-        email,
-        appId,
-        memberId,
-        ip,
-        new Date(),
-        'update',
-        log.id,
-        JSON.stringify(response),
-      );
-      return response;
-    } catch (error) {
-      const errorResponse = { code: 'ERROR', message: error.message };
-      if (log) {
-        await this.memberService.logMemberDeletionEventInfo(
-          email,
-          appId,
-          memberId,
-          ip,
-          new Date(),
-          'update',
-          log.id,
-          JSON.stringify(errorResponse),
-        );
-      }
-      throw new APIException(errorResponse);
+        ID: ${log?.id}
+        Delete Member ID: ${log?.member_id}
+        Action: ${log?.action}
+        Delete Log: ${log?.target}
+        Created At: ${log?.created_at}`);
     }
+
+    return response;
   }
 }

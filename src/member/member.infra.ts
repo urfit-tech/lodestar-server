@@ -14,7 +14,7 @@ import { MemberPhone } from './entity/member_phone.entity';
 import { MemberProperty } from './entity/member_property.entity';
 import { MemberTag } from './entity/member_tag.entity';
 import { MemberPropertiesCondition } from './member.dto';
-import { LoginMemberMetadata } from './member.type';
+import { ExecutorInfo, LoginMemberMetadata, DeleteMemberInfo } from './member.type';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { OrderDiscount } from '~/order/entity/order_discount.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
@@ -446,14 +446,8 @@ export class MemberInfrastructure {
   }
 
   async logMemberDeletionEventInfo(
-    deleteMemberEmail: string,
-    deleteMemberAppId: string,
-    executorMemberId: string,
-    executorIpAddress: string,
-    executorDateTime: Date,
-    action: 'create' | 'update',
-    updateId: string | null,
-    updateInfo: string,
+    deleteMemberInfo: DeleteMemberInfo,
+    executorMemberInfo: ExecutorInfo,
     entityManager: EntityManager,
   ): Promise<MemberAuditLog | null> {
     const memberAuditLogRepo = entityManager.getRepository(MemberAuditLog);
@@ -461,39 +455,19 @@ export class MemberInfrastructure {
 
     try {
       const member = await memberRepo.findOne({
-        where: { email: deleteMemberEmail, appId: deleteMemberAppId },
+        where: { email: deleteMemberInfo.email, appId: deleteMemberInfo.appId },
       });
 
-      let memberAuditLog;
-      if (action === 'create') {
-        if (!member) {
-          console.error(
-            `[Error] No target member for appId ${deleteMemberAppId} with email ${deleteMemberEmail} found.`,
-          );
-          return null;
-        }
-
-        memberAuditLog = new MemberAuditLog();
-        memberAuditLog.member = member;
-        memberAuditLog.action = 'delete';
-        memberAuditLog.target = JSON.stringify({
-          executorMemberId,
-          executorIpAddress,
-          executorDateTime,
-        });
-      } else if (action === 'update' && updateId) {
-        memberAuditLog = await memberAuditLogRepo.findOne({ where: { id: updateId } });
-        if (!memberAuditLog) {
-          console.error(`[Update Error] No audit log with ID ${updateId} found.`);
-          return null;
-        }
-
-        const existingTargetData = JSON.parse(memberAuditLog.target || '{}');
-        memberAuditLog.target = JSON.stringify({
-          ...existingTargetData,
-          result: updateInfo,
-        });
-      }
+      const memberAuditLog = new MemberAuditLog();
+      memberAuditLog.memberId = member ? member.id : deleteMemberInfo.id;
+      memberAuditLog.action = 'delete';
+      memberAuditLog.target = JSON.stringify({
+        executorMemberId: executorMemberInfo.memberId,
+        executorIpAddress: executorMemberInfo.ipAddress,
+        executorDateTime: executorMemberInfo.dateTime,
+        deleteMemberEmail: deleteMemberInfo.email,
+        executeResult: executorMemberInfo.executeResult,
+      });
 
       await memberAuditLogRepo.save(memberAuditLog);
       return memberAuditLog;

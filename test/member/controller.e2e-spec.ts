@@ -1842,12 +1842,14 @@ describe('MemberController (e2e)', () => {
         .set('host', appHost.host)
         .expect(400);
 
+      const memberAudit = await memberAuditLogRepo.findOne({ where: { action: 'delete' } });
       expect(res.body).toHaveProperty('code', 'ERROR');
       expect(res.body).toHaveProperty('message');
-      console.log(res.body);
+      expect(memberAudit.memberId).toEqual('');
+      expect(memberAudit.target.includes('no@mail.com')).toEqual(true);
     });
 
-    it('should return an error response when log is null', async () => {
+    it('should log successfully when member did not find', async () => {
       jest.spyOn(memberService, 'logMemberDeletionEventInfo').mockResolvedValue(null);
 
       const jwtSecret = application
@@ -1867,10 +1869,13 @@ describe('MemberController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .set('host', appHost.host);
 
+      const memberAudit = await memberAuditLogRepo.findOne({ where: { action: 'delete' } });
+
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('code', 'ERROR');
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toEqual(expect.stringContaining('[Fail to log deletion]'));
+      expect(response.body.message).toEqual(expect.stringContaining('Could not find any entity'));
+      expect(memberAudit.target.includes('nonexistent@email.com')).toEqual(true);
     });
 
     it('should log deletion update on error', async () => {
