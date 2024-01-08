@@ -189,51 +189,56 @@ export class MemberInfrastructure {
     return tasks;
   }
 
-  async getMemberTasksWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberTask[]> {
+  async getMemberTasksWithBulkIds(managerId: string, appId: string, manager: EntityManager): Promise<MemberTask[]> {
     const memberTaskRepo = manager.getRepository(MemberTask);
 
-    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
-    if (valuesList.length < 1) {
-      return [];
-    }
-    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+    const subQuery = manager
+      .getRepository(Member)
+      .createQueryBuilder('m')
+      .select('m.id')
+      .where('m.manager_id = :managerId', { managerId })
+      .andWhere('m.app_id = :appId', { appId });
 
     const query = memberTaskRepo
       .createQueryBuilder('mt')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mt.member_id = vals.member_id')
-      .orderBy('mt.created_at', 'DESC');
+      .where('mt.member_id IN (' + subQuery.getQuery() + ')')
+      .setParameters(subQuery.getParameters());
 
     return await query.getMany();
   }
 
-  async getMemberPhonesWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberPhone[]> {
+  async getMemberPhonesWithBulkIds(managerId: string, appId: string, manager: EntityManager): Promise<MemberPhone[]> {
     const memberPhoneRepo = manager.getRepository(MemberPhone);
 
-    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
-    if (valuesList.length < 1) {
-      return [];
-    }
-    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+    const subQuery = manager
+      .getRepository(Member)
+      .createQueryBuilder('m')
+      .select('m.id')
+      .where('m.manager_id = :managerId', { managerId })
+      .andWhere('m.app_id = :appId', { appId });
 
     const query = memberPhoneRepo
       .createQueryBuilder('mp')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mp.member_id = vals.member_id');
+      .where('mp.member_id IN (' + subQuery.getQuery() + ')')
+      .setParameters(subQuery.getParameters());
 
     return await query.getMany();
   }
 
-  async getMemberNotesWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberNote[]> {
+  async getMemberNotesWithBulkIds(managerId: string, appId: string, manager: EntityManager): Promise<MemberNote[]> {
     const memberNoteRepo = manager.getRepository(MemberNote);
 
-    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
-    if (valuesList.length < 1) {
-      return [];
-    }
-    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+    const subQuery = manager
+      .getRepository(Member)
+      .createQueryBuilder('m')
+      .select('m.id')
+      .where('m.manager_id = :managerId', { managerId })
+      .andWhere('m.app_id = :appId', { appId });
 
     const query = memberNoteRepo
       .createQueryBuilder('mn')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mn.member_id = vals.member_id')
+      .where('mn.member_id IN (' + subQuery.getQuery() + ')')
+      .setParameters(subQuery.getParameters())
       .andWhere('mn.type IS NULL')
       .orderBy('mn.created_at', 'DESC');
 
@@ -241,8 +246,8 @@ export class MemberInfrastructure {
   }
 
   async getMemberCategoryWithBulkIds(
-    memberIds: string[],
-    appId,
+    managerId: string,
+    appId: string,
     manager: EntityManager,
   ): Promise<
     {
@@ -252,17 +257,23 @@ export class MemberInfrastructure {
   > {
     const memberCategoryRepo = manager.getRepository(MemberCategory);
 
-    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
-    if (valuesList.length < 1) {
+    if (!managerId) {
       return [];
     }
-    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+
+    const subQuery = manager
+      .getRepository(Member)
+      .createQueryBuilder('m')
+      .select('m.id')
+      .where('m.manager_id = :managerId', { managerId })
+      .andWhere('m.app_id = :appId', { appId });
 
     const query = memberCategoryRepo
       .createQueryBuilder('mc')
       .innerJoinAndSelect('mc.category', 'c')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
-      .where('c.appId = :appId AND c.class = :class', { appId, class: 'member' });
+      .where('mc.member_id IN (' + subQuery.getQuery() + ')')
+      .andWhere('c.app_id = :appId', { appId })
+      .setParameters(subQuery.getParameters());
 
     const memberCategories = await query.getMany();
 
@@ -272,25 +283,36 @@ export class MemberInfrastructure {
     }));
   }
 
-  async getMemberContractWithBulkIds(memberIds: string[], manager: EntityManager): Promise<MemberContract[]> {
+  async getMemberContractWithBulkIds(
+    managerId: string,
+    appId: string,
+    manager: EntityManager,
+  ): Promise<MemberContract[]> {
     const memberContractRepo = manager.getRepository(MemberContract);
 
-    const valuesList = memberIds.map((id) => `('${id}')`).join(', ');
-    if (valuesList.length < 1) {
+    if (!managerId) {
       return [];
     }
-    const valuesSubQuery = `SELECT * FROM (VALUES ${valuesList}) AS vals(member_id)`;
+
+    const subQuery = manager
+      .getRepository(Member)
+      .createQueryBuilder('m')
+      .select('m.id')
+      .where('m.manager_id = :managerId', { managerId })
+      .andWhere('m.app_id = :appId', { appId });
 
     const query = memberContractRepo
       .createQueryBuilder('mc')
-      .innerJoin(`(${valuesSubQuery})`, 'vals', 'mc.member_id = vals.member_id')
+      .where('mc.member_id IN (' + subQuery.getQuery() + ')')
+      .andWhere('p.app_id = :appId', { appId })
+      .setParameters(subQuery.getParameters())
       .andWhere('mc.agreed_at IS NOT NULL');
 
     return await query.getMany();
   }
 
-  async getMemberPropertiyWithBulkIds(
-    memberIds: string[],
+  async getMemberPropertyWithBulkIds(
+    managerId: string,
     appId: string,
     manager: EntityManager,
   ): Promise<
@@ -301,15 +323,23 @@ export class MemberInfrastructure {
   > {
     const memberPropertyRepo = manager.getRepository(MemberProperty);
 
-    if (memberIds.length < 1) {
+    if (!managerId) {
       return [];
     }
 
+    const subQuery = manager
+      .getRepository(Member)
+      .createQueryBuilder('m')
+      .select('m.id')
+      .where('m.manager_id = :managerId', { managerId })
+      .andWhere('m.app_id = :appId', { appId });
+
     const query = memberPropertyRepo
       .createQueryBuilder('mp')
-      .innerJoinAndSelect('mp.property', 'p')
-      .where('p.appId = :appId', { appId })
-      .andWhere('mp.memberId IN (:...memberIds)', { memberIds });
+      .innerJoinAndSelect('mp.property', 'p', 'p.id = mp.property_id')
+      .where('mp.member_id IN (' + subQuery.getQuery() + ')')
+      .andWhere('p.app_id = :appId', { appId })
+      .setParameters(subQuery.getParameters());
 
     const memberProperties = await query.getMany();
 

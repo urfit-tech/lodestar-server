@@ -387,37 +387,37 @@ export class MemberService {
     return result;
   }
 
-  async getSaleLeadMemberData(memberIds, appId): Promise<SaleLeadMemberDataResponseDTO> {
+  async getSaleLeadMemberData(managerId, appId): Promise<SaleLeadMemberDataResponseDTO> {
     const [memberProperties, memberTasks, memberPhones, memberNotes, memberCategories, memberContracts] =
       await Promise.all([
         this.timedMemberInfraFunction(
           'getMemberPropertyWithBulkIds',
-          () => this.memberInfra.getMemberPropertiyWithBulkIds(memberIds, appId, this.entityManager),
+          () => this.memberInfra.getMemberPropertyWithBulkIds(managerId, appId, this.entityManager),
           appId,
         ),
         this.timedMemberInfraFunction(
           'getMemberTasksWithBulkIds',
-          () => this.memberInfra.getMemberTasksWithBulkIds(memberIds, this.entityManager),
+          () => this.memberInfra.getMemberTasksWithBulkIds(managerId, appId, this.entityManager),
           appId,
         ),
         this.timedMemberInfraFunction(
           'getMemberPhonesWithBulkIds',
-          () => this.memberInfra.getMemberPhonesWithBulkIds(memberIds, this.entityManager),
+          () => this.memberInfra.getMemberPhonesWithBulkIds(managerId, appId, this.entityManager),
           appId,
         ),
         this.timedMemberInfraFunction(
           'getMemberNotesWithBulkIds',
-          () => this.memberInfra.getMemberNotesWithBulkIds(memberIds, this.entityManager),
+          () => this.memberInfra.getMemberNotesWithBulkIds(managerId, appId, this.entityManager),
           appId,
         ),
         this.timedMemberInfraFunction(
           'getMemberCategoryWithBulkIds',
-          () => this.memberInfra.getMemberCategoryWithBulkIds(memberIds, appId, this.entityManager),
+          () => this.memberInfra.getMemberCategoryWithBulkIds(managerId, appId, this.entityManager),
           appId,
         ),
         this.timedMemberInfraFunction(
           'getMemberContractWithBulkIds',
-          () => this.memberInfra.getMemberContractWithBulkIds(memberIds, this.entityManager),
+          () => this.memberInfra.getMemberContractWithBulkIds(managerId, appId, this.entityManager),
           appId,
         ),
       ]);
