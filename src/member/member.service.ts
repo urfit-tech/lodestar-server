@@ -370,16 +370,20 @@ export class MemberService {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
   }
 
-  async timedMemberInfraFunction(name, memberInfraFunction, appId) {
+  async timedMemberInfraFunction(name, memberInfraFunction, managerId, appId) {
     const formattedTimestamp = dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
     const start = performance.now();
-
-    const result = await memberInfraFunction();
+    let result;
+    try {
+      result = await memberInfraFunction();
+    } catch (error) {
+      console.log(error);
+    }
 
     const end = performance.now();
     const executionTime = end - start;
     console.log(
-      `Execution Log - App ID: ${appId} | Function: ${name} | Timestamp: ${formattedTimestamp} | Execution Time: ${executionTime.toFixed(
+      `Exec Log - App: ${appId}, Manager: ${managerId} | ${name} | ${formattedTimestamp} | Time: ${executionTime.toFixed(
         3,
       )} ms`,
     );
@@ -388,80 +392,89 @@ export class MemberService {
   }
 
   async getSaleLeadMemberData(managerId, appId): Promise<SaleLeadMemberDataResponseDTO> {
-    const [memberProperties, memberTasks, memberPhones, memberNotes, memberCategories, memberContracts] =
-      await Promise.all([
-        this.timedMemberInfraFunction(
-          'getMemberPropertyWithBulkIds',
-          () => this.memberInfra.getMemberPropertyWithBulkIds(managerId, appId, this.entityManager),
-          appId,
-        ),
-        this.timedMemberInfraFunction(
-          'getMemberTasksWithBulkIds',
-          () => this.memberInfra.getMemberTasksWithBulkIds(managerId, appId, this.entityManager),
-          appId,
-        ),
-        this.timedMemberInfraFunction(
-          'getMemberPhonesWithBulkIds',
-          () => this.memberInfra.getMemberPhonesWithBulkIds(managerId, appId, this.entityManager),
-          appId,
-        ),
-        this.timedMemberInfraFunction(
-          'getMemberNotesWithBulkIds',
-          () => this.memberInfra.getMemberNotesWithBulkIds(managerId, appId, this.entityManager),
-          appId,
-        ),
-        this.timedMemberInfraFunction(
-          'getMemberCategoryWithBulkIds',
-          () => this.memberInfra.getMemberCategoryWithBulkIds(managerId, appId, this.entityManager),
-          appId,
-        ),
-        this.timedMemberInfraFunction(
-          'getMemberContractWithBulkIds',
-          () => this.memberInfra.getMemberContractWithBulkIds(managerId, appId, this.entityManager),
-          appId,
-        ),
-      ]);
+    const functions = [
+      {
+        name: 'getMemberPropertyWithBulkIds',
+        dtoName: 'memberProperty',
+        method: this.memberInfra.getMemberPropertyWithBulkIds,
+        mapper: this.mapMemberProperty,
+      },
+      {
+        name: 'getMemberTasksWithBulkIds',
+        dtoName: 'memberTask',
+        method: this.memberInfra.getMemberTasksWithBulkIds,
+        mapper: this.mapMemberTask,
+      },
+      {
+        name: 'getMemberPhonesWithBulkIds',
+        dtoName: 'memberPhone',
+        method: this.memberInfra.getMemberPhonesWithBulkIds,
+        mapper: this.mapMemberPhone,
+      },
+      {
+        name: 'getMemberNotesWithBulkIds',
+        dtoName: 'memberNote',
+        method: this.memberInfra.getMemberNotesWithBulkIds,
+        mapper: this.mapMemberNote,
+      },
+      {
+        name: 'getMemberCategoryWithBulkIds',
+        dtoName: 'memberCategory',
+        method: this.memberInfra.getMemberCategoryWithBulkIds,
+        mapper: this.mapMemberCategory,
+      },
+      {
+        name: 'getMemberContractWithBulkIds',
+        dtoName: 'activeMemberContract',
+        method: this.memberInfra.getMemberContractWithBulkIds,
+        mapper: this.mapMemberContract,
+      },
+    ];
+
+    const results = await Promise.all(
+      functions.map((f) =>
+        this.timedMemberInfraFunction(f.name, () => f.method(managerId, appId, this.entityManager), managerId, appId),
+      ),
+    );
 
     const responseDto = new SaleLeadMemberDataResponseDTO();
-    responseDto.memberProperty = memberProperties.map(this.mapMemberProperty);
-    responseDto.memberTask = memberTasks.map(this.mapMemberTask);
-    responseDto.memberPhone = memberPhones.map(this.mapMemberPhone);
-    responseDto.memberNote = memberNotes.map(this.mapMemberNote);
-    responseDto.memberCategory = memberCategories.map(this.mapMemberCategory);
-    responseDto.activeMemberContract = memberContracts.map(this.mapMemberContract);
+    results.forEach((result, index) => {
+      responseDto[functions[index].dtoName] = result.map(functions[index].mapper);
+    });
+
     return responseDto;
   }
 
-  private mapMemberProperty({ memberProperty, property }) {
+  private mapMemberProperty({ mp_member_id, mp_value, p_id, p_name }) {
     return {
-      memberId: memberProperty.memberId,
-      propertyId: property.id,
-      value: memberProperty.value,
-      name: property.name,
+      memberId: mp_member_id,
+      propertyId: p_id,
+      value: mp_value,
+      name: p_name,
     };
   }
 
-  private mapMemberTask({ memberId, status }) {
-    return { memberId: memberId, status };
+  private mapMemberTask({ mt_member_id, mt_status }) {
+    return { memberId: mt_member_id, status: mt_status };
   }
 
-  private mapMemberPhone({ memberId, phone }) {
-    return { memberId: memberId, phone };
+  private mapMemberPhone({ mp_member_id, mp_phone }) {
+    return { memberId: mp_member_id, phone: mp_phone };
   }
 
-  private mapMemberNote({ memberId, description }) {
-    return { memberId: memberId, description };
+  private mapMemberNote({ mn_member_id, mn_description }) {
+    return { memberId: mn_member_id, description: mn_description };
   }
 
-  private mapMemberCategory({ memberCategory, category }) {
+  private mapMemberCategory({ mc_member_id, c_name, mc_category_id }) {
     return {
-      memberId: memberCategory.memberId,
-      name: category ? category.name : null,
-      categoryId: memberCategory.categoryId,
+      memberId: mc_member_id,
+      name: c_name,
+      categoryId: mc_category_id,
     };
   }
 
-  private mapMemberContract({ memberId, agreedAt, revokedAt, values }) {
-    return { memberId: memberId, agreed_at: agreedAt, revoked_at: revokedAt, values };
+  private mapMemberContract({ mc_member_id, mc_agreed_at, mc_revoked_at, mc_values }) {
+    return { memberId: mc_member_id, agreed_at: mc_agreed_at, revoked_at: mc_revoked_at, values: mc_values };
   }
 }

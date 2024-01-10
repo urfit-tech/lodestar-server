@@ -202,9 +202,10 @@ export class MemberInfrastructure {
     const query = memberTaskRepo
       .createQueryBuilder('mt')
       .where('mt.member_id IN (' + subQuery.getQuery() + ')')
+      .select(['mt.memberId', 'mt.status'])
       .setParameters(subQuery.getParameters());
 
-    return await query.getMany();
+    return await query.getRawMany();
   }
 
   async getMemberPhonesWithBulkIds(managerId: string, appId: string, manager: EntityManager): Promise<MemberPhone[]> {
@@ -220,9 +221,10 @@ export class MemberInfrastructure {
     const query = memberPhoneRepo
       .createQueryBuilder('mp')
       .where('mp.member_id IN (' + subQuery.getQuery() + ')')
+      .select(['mp.memberId', 'mp.phone'])
       .setParameters(subQuery.getParameters());
 
-    return await query.getMany();
+    return await query.getRawMany();
   }
 
   async getMemberNotesWithBulkIds(managerId: string, appId: string, manager: EntityManager): Promise<MemberNote[]> {
@@ -239,10 +241,11 @@ export class MemberInfrastructure {
       .createQueryBuilder('mn')
       .where('mn.member_id IN (' + subQuery.getQuery() + ')')
       .setParameters(subQuery.getParameters())
+      .select(['mn.memberId', 'mn.description'])
       .andWhere('mn.type IS NULL')
       .orderBy('mn.created_at', 'DESC');
 
-    return await query.getMany();
+    return await query.getRawMany();
   }
 
   async getMemberCategoryWithBulkIds(
@@ -272,15 +275,11 @@ export class MemberInfrastructure {
       .createQueryBuilder('mc')
       .innerJoinAndSelect('mc.category', 'c')
       .where('mc.member_id IN (' + subQuery.getQuery() + ')')
+      .select(['mc.memberId', 'c.name', 'mc.categoryId'])
       .andWhere('c.app_id = :appId', { appId })
       .setParameters(subQuery.getParameters());
 
-    const memberCategories = await query.getMany();
-
-    return memberCategories.map((mc) => ({
-      memberCategory: mc,
-      category: mc.category,
-    }));
+    return await query.getRawMany();
   }
 
   async getMemberContractWithBulkIds(
@@ -304,11 +303,11 @@ export class MemberInfrastructure {
     const query = memberContractRepo
       .createQueryBuilder('mc')
       .where('mc.member_id IN (' + subQuery.getQuery() + ')')
-      .andWhere('p.app_id = :appId', { appId })
+      .select(['mc.memberId', 'mc.agreedAt', 'mc.revokedAt', 'mc.values'])
       .setParameters(subQuery.getParameters())
       .andWhere('mc.agreed_at IS NOT NULL');
 
-    return await query.getMany();
+    return await query.getRawMany();
   }
 
   async getMemberPropertyWithBulkIds(
@@ -337,16 +336,11 @@ export class MemberInfrastructure {
     const query = memberPropertyRepo
       .createQueryBuilder('mp')
       .innerJoinAndSelect('mp.property', 'p', 'p.id = mp.property_id')
+      .select(['mp.memberId', 'mp.value', 'p.id', 'p.name'])
       .where('mp.member_id IN (' + subQuery.getQuery() + ')')
-      .andWhere('p.app_id = :appId', { appId })
       .setParameters(subQuery.getParameters());
 
-    const memberProperties = await query.getMany();
-
-    return memberProperties.map((mp) => ({
-      memberProperty: mp,
-      property: mp.property,
-    }));
+    return await query.getRawMany();
   }
 
   async getLoginMemberMetadata(memberId: string, manager: EntityManager): Promise<Array<LoginMemberMetadata>> {
