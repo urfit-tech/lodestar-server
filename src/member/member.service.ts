@@ -373,12 +373,8 @@ export class MemberService {
   async timedMemberInfraFunction(name, memberInfraFunction, managerId, appId) {
     const formattedTimestamp = dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
     const start = performance.now();
-    let result;
-    try {
-      result = await memberInfraFunction();
-    } catch (error) {
-      console.log(error);
-    }
+
+    const result = await memberInfraFunction();
 
     const end = performance.now();
     const executionTime = end - start;
