@@ -147,7 +147,7 @@ export class ActivityInfrastructure {
   async getActivityParticipantsByActivityIds(
     manager: EntityManager,
     activityIds: string[],
-  ): Promise<Map<string, ActivitySessionTicketEnrollmentCount>> {
+  ): Promise<Map<string, ActivitySessionTicketEnrollmentCount[]>> {
     if (activityIds.length === 0) {
       return new Map();
     }
@@ -158,9 +158,14 @@ export class ActivityInfrastructure {
       .where('enrollmentCount.activityId IN (:...activityIds)', { activityIds })
       .getMany();
 
-    const enrollmentCountMap = new Map<string, ActivitySessionTicketEnrollmentCount>();
+    const enrollmentCountMap = new Map<string, ActivitySessionTicketEnrollmentCount[]>();
+
     sessionTicketEnrollmentCounts.forEach((count) => {
-      enrollmentCountMap.set(count.activityId, count);
+      const activityId = count.activityId;
+      if (!enrollmentCountMap.has(activityId)) {
+        enrollmentCountMap.set(activityId, []);
+      }
+      enrollmentCountMap.get(activityId)?.push(count);
     });
 
     return enrollmentCountMap;

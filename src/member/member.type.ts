@@ -42,3 +42,15 @@ export class PublicMember {
   @IsString()
   isBusiness: boolean;
 }
+export interface DeleteMemberInfo {
+  email: string;
+  id: string;
+  appId: string;
+}
+
+export interface ExecutorInfo {
+  memberId: string;
+  ipAddress: string;
+  dateTime: Date;
+  executeResult: string;
+}

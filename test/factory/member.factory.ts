@@ -24,6 +24,7 @@ export const createTestMember = async (
   member.email = overrides.email || faker.internet.email();
   member.role = overrides.role || 'general-member';
   member.star = overrides.star !== undefined ? overrides.star : faker.number.int({ min: 0, max: 5 });
+  member.managerId = null || overrides.managerId;
   member.createdAt = overrides.createdAt || new Date();
   member.loginedAt = overrides.loginedAt || new Date();
 
