@@ -390,39 +390,39 @@ export class MemberService {
   async getSaleLeadMemberData(managerId, appId): Promise<SaleLeadMemberDataResponseDTO> {
     const functions = [
       {
-        name: 'getMemberPropertyWithBulkIds',
+        name: 'getMemberPropertyByManagerId',
         dtoName: 'memberProperty',
-        method: this.memberInfra.getMemberPropertyWithBulkIds,
+        method: this.memberInfra.getMemberPropertyByManagerId,
         mapper: this.mapMemberProperty,
       },
       {
-        name: 'getMemberTasksWithBulkIds',
+        name: 'getMemberTasksByManagerId',
         dtoName: 'memberTask',
-        method: this.memberInfra.getMemberTasksWithBulkIds,
+        method: this.memberInfra.getMemberTasksByManagerId,
         mapper: this.mapMemberTask,
       },
       {
-        name: 'getMemberPhonesWithBulkIds',
+        name: 'getMemberPhonesByManagerId',
         dtoName: 'memberPhone',
-        method: this.memberInfra.getMemberPhonesWithBulkIds,
+        method: this.memberInfra.getMemberPhonesByManagerId,
         mapper: this.mapMemberPhone,
       },
       {
-        name: 'getMemberNotesWithBulkIds',
+        name: 'getMemberNotesByManagerId',
         dtoName: 'memberNote',
-        method: this.memberInfra.getMemberNotesWithBulkIds,
+        method: this.memberInfra.getMemberNotesByManagerId,
         mapper: this.mapMemberNote,
       },
       {
-        name: 'getMemberCategoryWithBulkIds',
+        name: 'getMemberCategoryByManagerId',
         dtoName: 'memberCategory',
-        method: this.memberInfra.getMemberCategoryWithBulkIds,
+        method: this.memberInfra.getMemberCategoryByManagerId,
         mapper: this.mapMemberCategory,
       },
       {
-        name: 'getMemberContractWithBulkIds',
+        name: 'getMemberContractByManagerId',
         dtoName: 'activeMemberContract',
-        method: this.memberInfra.getMemberContractWithBulkIds,
+        method: this.memberInfra.getMemberContractByManagerId,
         mapper: this.mapMemberContract,
       },
     ];
