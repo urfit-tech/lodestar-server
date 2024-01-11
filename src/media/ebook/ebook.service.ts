@@ -15,7 +15,7 @@ export class EbookService {
     return response.Body;
   }
 
-  async encryptEbook(request: Request, fileStream: Readable): Promise<Readable> {
+  async encryptEbook(request: Request, fileStream: Readable, appId: string): Promise<Readable> {
     const authorizationHeader = request.headers.authorization;
     let hashKey: string;
     if (!authorizationHeader) {
@@ -29,6 +29,8 @@ export class EbookService {
         hashKey = parts[2];
       }
     }
+
+    console.log('randomBytes(16)', randomBytes(16));
 
     return this.utilityService.encryptDataStream(hashKey, randomBytes(16), fileStream);
   }

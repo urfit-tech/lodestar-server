@@ -10,7 +10,7 @@ import { EbookService } from './ebook.service';
 import { Request, Response } from 'express';
 import { Readable } from 'node:stream';
 
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 @ApiTags('Ebook')
 @ApiBearerAuth()
 @Controller({
@@ -28,7 +28,8 @@ export class EbookController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<any> {
-    const { appId } = member;
+    // const { appId } = member;
+    const appId = 'demo';
 
     const errors = [];
 
@@ -44,7 +45,7 @@ export class EbookController {
 
     const fileStream = await this.ebookService.getEbookFile(appId, programContentId);
 
-    const encryptedFileStream = await this.ebookService.encryptEbook(req, fileStream as Readable);
+    const encryptedFileStream = await this.ebookService.encryptEbook(req, fileStream as Readable, appId);
 
     res.setHeader('Content-Type', 'application/epub+zip');
     res.setHeader('Content-Disposition', 'attachment; filename="' + programContentId + '.epub"');

@@ -16,14 +16,24 @@ export class UtilityService {
     return encrypted;
   }
 
-  encryptDataStream(hashKey: string, iv: Buffer, dataStream: Readable): Readable {
+  encryptDataStream(hashKey: string, hashiv: Buffer, dataStream: Readable): Readable {
     const key = scryptSync(hashKey, 'salt', 32);
+    const iv = scryptSync(hashiv, 'salt', 16);
     const cipher = createCipheriv('aes-256-cbc', key, iv);
+
+    let encryptedChunks = [];
+    console.log(iv);
+    const ivHex = iv.toString('hex');
+    encryptedChunks = [Buffer.from(ivHex, 'hex')]; // 將IV加到加密數據的開頭
+    console.log('key', key);
+    let totalLength = 0;
+
     const encryptedStream = new Transform({
       transform(chunk, encoding, callback) {
+        totalLength += chunk.length;
         try {
           const encryptedChunk = cipher.update(chunk);
-          this.push(encryptedChunk);
+          encryptedChunks.push(encryptedChunk);
           callback();
         } catch (err) {
           callback(err);
@@ -31,14 +41,17 @@ export class UtilityService {
       },
 
       flush(callback) {
+        console.log('原始數據長度:', totalLength);
         try {
-          this.push(cipher.final());
+          encryptedChunks.push(cipher.final());
+          this.push(Buffer.concat(encryptedChunks));
           callback();
         } catch (err) {
           callback(err);
         }
       },
     });
+
     return dataStream.pipe(encryptedStream);
   }
 
