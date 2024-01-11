@@ -195,7 +195,7 @@ export class MemberController {
     }
 
     try {
-      return await this.memberService.getSaleLeadMemberData(requestDto.memberIds, requestDto.appId);
+      return await this.memberService.getSaleLeadMemberData(requestDto.managerId, requestDto.appId);
     } catch (error) {
       console.error('Error fetching sale lead member data:', error);
 

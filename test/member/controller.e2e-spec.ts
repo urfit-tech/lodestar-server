@@ -88,6 +88,9 @@ import { MemberAuditLog } from '~/member/entity/member_audit_log.entity';
 import { MemberService } from '~/member/member.service';
 import { MemberPermission } from '~/member/entity/member_permission.entity';
 import { AppPage } from '~/entity/AppPage';
+import { createTestMember } from '../factory/member.factory';
+import { createTestProperty } from '../factory/property.factory';
+import { createTestCategory } from '../factory/category.factory';
 
 describe('MemberController (e2e)', () => {
   let application: INestApplication;
@@ -306,6 +309,7 @@ describe('MemberController (e2e)', () => {
     await memberTagRepo.delete({});
     await memberPropertyRepo.delete({});
     await memberCategoryRepo.delete({});
+    await memberRepo.update({}, { managerId: null });
     await memberRepo.delete({});
     await propertyRepo.delete({});
     await tagRepo.delete({});
@@ -384,6 +388,7 @@ describe('MemberController (e2e)', () => {
     await memberPropertyRepo.delete({});
     await memberTagRepo.delete({});
     await memberCategoryRepo.delete({});
+    await memberRepo.update({}, { managerId: null });
     await memberRepo.delete({});
     await propertyRepo.delete({});
     await tagRepo.delete({});
@@ -2475,35 +2480,29 @@ describe('MemberController (e2e)', () => {
     const route = '/members/saleLeadMemberData';
     describe('Success scenarios', () => {
       it('should return data successfully for a valid request', async () => {
+        const insertedManager = await createTestMember(manager, {
+          appId: app.id,
+          role: 'app-owner',
+        });
+
         const memberIds = [];
         for (let i = 0; i < 5; i++) {
-          const insertedMember = new Member();
-          insertedMember.appId = app.id;
-          insertedMember.id = v4();
-          insertedMember.name = `name${i}`;
-          insertedMember.username = `username${i}`;
-          insertedMember.email = `email${i}@example.com`;
-          insertedMember.role = 'general-member';
-          insertedMember.star = 0;
-          insertedMember.createdAt = new Date();
-          insertedMember.loginedAt = new Date();
-          await manager.save(insertedMember);
-          memberIds.push(insertedMember.id);
+          const insertedMember = await createTestMember(manager, {
+            appId: app.id,
+            role: 'general-member',
+            managerId: insertedManager.id,
+          });
+          memberIds.push(insertedMember);
         }
 
-        const insertedProperty = new Property();
-        insertedProperty.appId = app.id;
-        insertedProperty.name = 'aaaa';
-        insertedProperty.position = 1;
-        insertedProperty.type = 'member';
-        await manager.save(insertedProperty);
+        const insertedProperty = await createTestProperty(manager, {
+          appId: app.id,
+        });
 
-        const insertedCategory = new Category();
-        insertedCategory.appId = app.id;
-        insertedCategory.name = 'bbbb';
-        insertedCategory.class = 'member';
-        insertedCategory.position = 1;
-        await manager.save(insertedCategory);
+        const insertedCategory = await createTestCategory(manager, {
+          appId: app.id,
+          class: 'member',
+        });
 
         memberIds.map(async (memberId) => {
           const insertedMemberCategory = new MemberCategory();
@@ -2587,7 +2586,7 @@ describe('MemberController (e2e)', () => {
           .set('Authorization', `Bearer ${token}`)
           .set('host', appHost.host)
           .send({
-            memberIds: memberIds,
+            managerId: insertedManager.id,
             appId: app.id,
           })
           .expect(201);
@@ -2600,7 +2599,7 @@ describe('MemberController (e2e)', () => {
           expect(property).toHaveProperty('memberId');
           expect(property).toHaveProperty('propertyId');
           expect(property.value).toEqual('ccccc');
-          expect(property.name).toEqual('aaaa');
+          expect(property.name).toEqual(insertedProperty.name);
         });
 
         expect(res.body).toHaveProperty('memberTask');
@@ -2632,7 +2631,7 @@ describe('MemberController (e2e)', () => {
         res.body.memberCategory.forEach((category) => {
           expect(category).toHaveProperty('memberId');
           expect(category).toHaveProperty('categoryId');
-          expect(category.name).toEqual('bbbb');
+          expect(category.name).toEqual(insertedCategory.name);
           expect(category.categoryId).toBeTruthy();
         });
 
@@ -2647,7 +2646,7 @@ describe('MemberController (e2e)', () => {
           expect(contract.revoked_at).toBeNull();
         });
       });
-      it('should handle an empty member list gracefully', async () => {
+      it('should handle an empty member list gracefully when managerId is empty', async () => {
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow('HASURA_JWT_SECRET');
@@ -2666,7 +2665,7 @@ describe('MemberController (e2e)', () => {
           .set('Authorization', `Bearer ${token}`)
           .set('host', appHost.host)
           .send({
-            memberIds: [],
+            managerId: '',
             appId: app.id,
           })
           .expect(201);
@@ -2691,20 +2690,20 @@ describe('MemberController (e2e)', () => {
       });
       it('should return an empty array for memberProperty and memberCategory when there are no properties and categories', async () => {
         const memberIds = [];
+        const insertedManager = await createTestMember(manager, {
+          appId: app.id,
+          role: 'app-owner',
+        });
+
         for (let i = 0; i < 5; i++) {
-          const insertedMember = new Member();
-          insertedMember.appId = app.id;
-          insertedMember.id = v4(); // 假设 v4() 是一个 UUID 生成函数
-          insertedMember.name = `name${i}`;
-          insertedMember.username = `username${i}`;
-          insertedMember.email = `email${i}@example.com`;
-          insertedMember.role = 'general-member';
-          insertedMember.star = 0;
-          insertedMember.createdAt = new Date();
-          insertedMember.loginedAt = new Date();
-          await manager.save(insertedMember);
-          memberIds.push(insertedMember.id);
+          const insertedMember = await createTestMember(manager, {
+            appId: app.id,
+            role: 'general-member',
+            managerId: insertedManager.id,
+          });
+          memberIds.push(insertedMember);
         }
+
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow('HASURA_JWT_SECRET');
@@ -2723,7 +2722,7 @@ describe('MemberController (e2e)', () => {
           .set('Authorization', `Bearer ${token}`)
           .set('host', appHost.host)
           .send({
-            memberIds: memberIds,
+            managerId: insertedManager.id,
             appId: app.id,
           })
           .expect(201);
@@ -2735,7 +2734,7 @@ describe('MemberController (e2e)', () => {
     });
 
     describe('Fail scenarios', () => {
-      it('should return an error for invalid member IDs type', async () => {
+      it('should return an error for invalid managerId type', async () => {
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow('HASURA_JWT_SECRET');
@@ -2754,12 +2753,12 @@ describe('MemberController (e2e)', () => {
           .set('Authorization', `Bearer ${token}`)
           .set('host', appHost.host)
           .send({
-            memberIds: '',
+            managerId: [],
             appId: app.id,
           })
           .expect(400);
 
-        expect(res.body.message).toEqual(['memberIds must be an array']);
+        expect(res.body.message).toEqual(['managerId must be a string']);
       });
       it('should return an error for missing required fields', async () => {
         const jwtSecret = application
@@ -2781,7 +2780,7 @@ describe('MemberController (e2e)', () => {
           .set('host', appHost.host)
           .expect(400);
 
-        expect(res.body.message).toEqual(['memberIds must be an array', 'appId must be a string']);
+        expect(res.body.message).toEqual(['managerId must be a string', 'appId must be a string']);
       });
       it('should return error when appId is empty', async () => {
         const jwtSecret = application
@@ -2802,7 +2801,7 @@ describe('MemberController (e2e)', () => {
           .set('Authorization', `Bearer ${token}`)
           .set('host', appHost.host)
           .send({
-            memberIds: [],
+            managerId: '',
             appId: '',
           })
           .expect(400);

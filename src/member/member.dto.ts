@@ -294,8 +294,8 @@ export class SaleLeadMemberDataResponseDTO {
 }
 
 export class SaleLeadMemberDataResquestDTO {
-  @IsArray()
-  memberIds: Array<string>;
+  @IsString()
+  managerId: string;
 
   @IsString()
   appId: string;
