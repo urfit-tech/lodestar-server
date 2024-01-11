@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -21,6 +22,7 @@ import { StorageService } from '~/utility/storage/storage.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { APIException } from '~/api.excetion';
 import { validate as isValidUUID } from 'uuid';
+import { Response } from 'express';
 
 @Controller({
   path: 'videos',
@@ -120,7 +122,7 @@ export class VideoController {
   }
 
   @Get(['*.m3u8', '*.mpd'])
-  async getManifestWithSignUrl(@Req() request: Request) {
+  async getManifestWithSignUrl(@Req() request: Request, @Res() response: Response) {
     try {
       const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
       const sanitizeSignature = sanitizeHtml(signature).replace(/&amp;/g, '&');
@@ -132,7 +134,9 @@ export class VideoController {
         key,
         sanitizeSignature,
       );
-      return signedManifest;
+
+      response.setHeader('Content-Type', 'application/x-mpegUR');
+      return response.send(signedManifest);
     } catch (err) {
       throw new APIException({
         code: 'E_GET_M3U8',
