@@ -150,6 +150,10 @@ describe('ActivityController (e2e)', () => {
         role: 'app-owner',
       });
 
+      const insertedMember2 = await createTestMember(manager, {
+        appId: app.id,
+      });
+
       const insertedActivity = await createTestActivity(manager, {
         app: app,
         organizer: insertedMember,
@@ -198,8 +202,19 @@ describe('ActivityController (e2e)', () => {
         appId: app.id,
       });
 
+      const insertedOrderLog2 = await createTestOrderLog(manager, {
+        member: insertedMember2,
+        appId: app.id,
+      });
+
       const insertedProduct = await createTestProduct(manager, {
         id: `ActivityTicket_${insertedActivityTicket1.id}`,
+        type: 'ActivityTicket',
+        target: insertedActivityTicket1.id,
+      });
+
+      const insertedProduct2 = await createTestProduct(manager, {
+        id: `ActivityTicket_${insertedActivityTicket2.id}`,
         type: 'ActivityTicket',
         target: insertedActivityTicket1.id,
       });
@@ -211,6 +226,18 @@ describe('ActivityController (e2e)', () => {
       const insertedOrderProduct = await createTestOrderProduct(manager, {
         order: insertedOrderLog,
         product: insertedProduct,
+        currency: insertedCurrency,
+        productId: insertedActivity.id,
+        options: {
+          from: `/activities/${insertedActivity.id}`,
+          currencyId: insertedCurrency.id,
+          currencyPrice: 2000,
+        },
+      });
+
+      const insertedOrderProduct2 = await createTestOrderProduct(manager, {
+        order: insertedOrderLog2,
+        product: insertedProduct2,
         currency: insertedCurrency,
         productId: insertedActivity.id,
         options: {
@@ -241,8 +268,8 @@ describe('ActivityController (e2e)', () => {
               insertedActivitySessionTicket2.activitySessionType,
             ],
             participantsCount: {
-              online: '0',
-              offline: '1',
+              online: 1,
+              offline: 1,
             },
             startedAt: insertedActivitySession1.startedAt.toISOString(),
             endedAt: insertedActivitySession2.endedAt.toISOString(),

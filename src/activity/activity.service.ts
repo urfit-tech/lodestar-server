@@ -4,6 +4,7 @@ import { ActivityInfrastructure } from './activity.infra';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Activity } from './entity/Activity';
+import { ActivitySessionTicketEnrollmentCount } from './view_entity/ActivitySessionTicketEnrollmentCount';
 
 @Injectable()
 export class ActivityService {
@@ -70,12 +71,21 @@ export class ActivityService {
     activities: Activity[],
     activityDurations: Map<string, any>,
     sessionTypes: Map<string, any>,
-    participantsCounts: Map<string, any>,
+    participantsCounts: Map<string, ActivitySessionTicketEnrollmentCount[]>,
   ): ActivityDto[] {
     return activities.map((activity) => {
       const activityDuration = activityDurations.get(activity.id);
       const sessionType = sessionTypes.get(activity.id);
-      const sessionTicketEnrollmentCount = participantsCounts.get(activity.id);
+      const sessionTicketEnrollmentCounts = participantsCounts.get(activity.id) || [];
+
+      const { totalOnlineCount, totalOfflineCount } = sessionTicketEnrollmentCounts.reduce(
+        (acc, count) => {
+          acc.totalOnlineCount += Number(count.activityOnlineSessionTicketCount);
+          acc.totalOfflineCount += Number(count.activityOfflineSessionTicketCount);
+          return acc;
+        },
+        { totalOnlineCount: 0, totalOfflineCount: 0 },
+      );
 
       return new ActivityDto({
         id: activity.id,
@@ -88,8 +98,8 @@ export class ActivityService {
         title: activity.title,
         createdAt: activity.createdAt,
         participantsCount: {
-          online: sessionTicketEnrollmentCount ? sessionTicketEnrollmentCount.activityOnlineSessionTicketCount : 0,
-          offline: sessionTicketEnrollmentCount ? sessionTicketEnrollmentCount.activityOfflineSessionTicketCount : 0,
+          online: totalOnlineCount,
+          offline: totalOfflineCount,
         },
       });
     });
