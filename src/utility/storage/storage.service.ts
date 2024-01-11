@@ -47,10 +47,14 @@ export class StorageService {
   }
 
   getSignedUrlForDownloadStorage(key: string, expiresIn: number): Promise<string> {
+    console.log(key);
     const command = new GetObjectCommand({
       Key: key,
       Bucket: this.awsS3BucketStorage,
     });
+    console.log('----------------');
+    console.log(getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn }));
+    console.log('----------------------');
     return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
   }
 
@@ -75,7 +79,16 @@ export class StorageService {
     });
   }
 
-  getFileFromBucketStorage(data: Omit<GetObjectRequest, 'Bucket'>) {
+  async getFileFromBucketStorage(data: Omit<GetObjectRequest, 'Bucket'>) {
+    console.log('service------------------');
+    console.log(
+      await this.getFileFromBucket(this.awsS3RegionStorage, {
+        ...data,
+        Bucket: this.awsS3BucketStorage,
+      }),
+    );
+    console.log('service------------------');
+
     return this.getFileFromBucket(this.awsS3RegionStorage, {
       ...data,
       Bucket: this.awsS3BucketStorage,
