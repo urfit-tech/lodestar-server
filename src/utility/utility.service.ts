@@ -1,6 +1,7 @@
-import { createCipheriv, createHash } from 'crypto';
+import { createCipheriv, createHash, scryptSync } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { camelCase, isArray, isDate, isObject, transform } from 'lodash';
+import { Readable, Transform } from 'node:stream';
 
 @Injectable()
 export class UtilityService {
@@ -13,6 +14,32 @@ export class UtilityService {
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return encrypted;
+  }
+
+  encryptDataStream(hashKey: string, iv: Buffer, dataStream: Readable): Readable {
+    const key = scryptSync(hashKey, 'salt', 32);
+    const cipher = createCipheriv('aes-256-cbc', key, iv);
+    const encryptedStream = new Transform({
+      transform(chunk, encoding, callback) {
+        try {
+          const encryptedChunk = cipher.update(chunk);
+          this.push(encryptedChunk);
+          callback();
+        } catch (err) {
+          callback(err);
+        }
+      },
+
+      flush(callback) {
+        try {
+          this.push(cipher.final());
+          callback();
+        } catch (err) {
+          callback(err);
+        }
+      },
+    });
+    return dataStream.pipe(encryptedStream);
   }
 
   sleep(milliseconds: number) {

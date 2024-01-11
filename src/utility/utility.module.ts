@@ -28,7 +28,6 @@ import { EncryptionService } from './encryption/encryption.service';
     ShutdownService,
     MediaService,
     MediaInfrastructure,
-    EncryptionService,
   ],
   exports: [UtilityService, CacheService, ShutdownService, StorageService],
 })

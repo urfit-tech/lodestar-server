@@ -80,15 +80,6 @@ export class StorageService {
   }
 
   async getFileFromBucketStorage(data: Omit<GetObjectRequest, 'Bucket'>) {
-    console.log('service------------------');
-    console.log(
-      await this.getFileFromBucket(this.awsS3RegionStorage, {
-        ...data,
-        Bucket: this.awsS3BucketStorage,
-      }),
-    );
-    console.log('service------------------');
-
     return this.getFileFromBucket(this.awsS3RegionStorage, {
       ...data,
       Bucket: this.awsS3BucketStorage,
