@@ -1,4 +1,4 @@
-import { createCipheriv, createHash, scryptSync } from 'crypto';
+import { createCipheriv, createHash, scryptSync, pbkdf2Sync } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { camelCase, isArray, isDate, isObject, transform } from 'lodash';
 import { Readable, Transform } from 'node:stream';
@@ -16,17 +16,22 @@ export class UtilityService {
     return encrypted;
   }
 
-  encryptDataStream(hashKey: string, hashiv: Buffer, dataStream: Readable): Readable {
-    const key = scryptSync(hashKey, 'salt', 32);
-    const iv = scryptSync(hashiv, 'salt', 16);
-    const cipher = createCipheriv('aes-256-cbc', key, iv);
+  encryptDataStream(dataStream, key, iv) {
+    let hashKey: string;
+    let hashIv: string;
+    if (key.length < 64) {
+      hashKey = key.padEnd(64, '0');
+    }
 
-    let encryptedChunks = [];
-    console.log(iv);
-    const ivHex = iv.toString('hex');
-    encryptedChunks = [Buffer.from(ivHex, 'hex')]; // 將IV加到加密數據的開頭
-    console.log('key', key);
+    if (iv.length < 32) {
+      hashIv = iv.padEnd(32, '0');
+    }
+
+    const derivedKey = pbkdf2Sync(hashKey, 'salt', 10000, 32, 'sha256');
+    const derivedIv = pbkdf2Sync(hashIv, 'salt', 10000, 16, 'sha256');
+    const cipher = createCipheriv('aes-256-cbc', derivedKey, derivedIv);
     let totalLength = 0;
+    const encryptedChunks = [];
 
     const encryptedStream = new Transform({
       transform(chunk, encoding, callback) {
@@ -39,20 +44,19 @@ export class UtilityService {
           callback(err);
         }
       },
-
       flush(callback) {
-        console.log('原始數據長度:', totalLength);
         try {
           encryptedChunks.push(cipher.final());
           this.push(Buffer.concat(encryptedChunks));
+          console.log(`original length: ${totalLength} `);
           callback();
         } catch (err) {
           callback(err);
         }
       },
     });
-
-    return dataStream.pipe(encryptedStream);
+    dataStream.pipe(encryptedStream);
+    return encryptedStream;
   }
 
   sleep(milliseconds: number) {
