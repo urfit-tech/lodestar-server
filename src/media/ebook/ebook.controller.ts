@@ -1,13 +1,13 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { EbookRequestDTO } from './ebook.dto';
 import { APIException } from '~/api.excetion';
-
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
 import { EbookService } from './ebook.service';
-
+import { Response } from 'express';
+import { Readable } from 'node:stream';
 @UseGuards(AuthGuard)
 @ApiTags('Ebook')
 @ApiBearerAuth()
@@ -23,6 +23,7 @@ export class EbookController {
   public async getEbookByProgramContentId(
     @Param('programContentId') programContentId: string,
     @Local('member') member: JwtMember,
+    @Res() res: Response,
   ): Promise<any> {
     const { appId } = member;
 
@@ -38,6 +39,11 @@ export class EbookController {
       );
     }
 
-    return this.ebookService.getEbookFileSignedUrl(appId, programContentId);
+    const fileStream = await this.ebookService.getEbookFile(appId, programContentId);
+
+    res.setHeader('Content-Type', 'application/epub+zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + programContentId + '.epub"');
+
+    (fileStream as Readable).pipe(res);
   }
 }

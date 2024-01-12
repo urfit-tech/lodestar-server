@@ -5,8 +5,9 @@ import { StorageService } from '~/utility/storage/storage.service';
 export class EbookService {
   constructor(private readonly storageService: StorageService) {}
 
-  async getEbookFileSignedUrl(appId: string, programContentId: string) {
+  async getEbookFile(appId: string, programContentId: string) {
     const key = `ebook/${appId}/${programContentId}`;
-    return await this.storageService.getSignedUrlForDownloadStorage(key, 6400);
+    const response = await this.storageService.getFileFromBucketStorage({ Key: key });
+    return response.Body;
   }
 }
