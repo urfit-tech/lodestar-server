@@ -19,6 +19,9 @@ export class UtilityService {
   encryptDataStream(dataStream, key, iv) {
     let hashKey: string;
     let hashIv: string;
+    const iterations = parseInt(process.env.PBKDF2_ITERATIONS, 10) || 10000;
+    const salt = process.env.ENCRYPT_DATA_STREAM_SALT;
+
     if (key.length < 64) {
       hashKey = key.padEnd(64, '0');
     }
@@ -27,8 +30,8 @@ export class UtilityService {
       hashIv = iv.padEnd(32, '0');
     }
 
-    const derivedKey = pbkdf2Sync(hashKey, 'salt', 10000, 32, 'sha256');
-    const derivedIv = pbkdf2Sync(hashIv, 'salt', 10000, 16, 'sha256');
+    const derivedKey = pbkdf2Sync(hashKey, salt, iterations, 32, 'sha256');
+    const derivedIv = pbkdf2Sync(hashIv, salt, iterations, 16, 'sha256');
     const cipher = createCipheriv('aes-256-cbc', derivedKey, derivedIv);
     let totalLength = 0;
     const encryptedChunks = [];

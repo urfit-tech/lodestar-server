@@ -30,8 +30,6 @@ export class EbookService {
       }
     }
 
-    console.log('randomBytes(16)', randomBytes(16));
-
     return this.utilityService.encryptDataStream(fileStream, hashKey, appId);
   }
 }
