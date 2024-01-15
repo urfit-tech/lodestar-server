@@ -219,7 +219,7 @@ export class VideoService {
           return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
         } else if (row.includes('.ts')) {
           // hls segments
-          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
+          return new URL(`${host}/${path}/${row.split('?')[0]}?${signature}`).toString();
         } else if (row.includes('.mp4')) {
           // dash segments
           const baseUrlWithSignature = row
