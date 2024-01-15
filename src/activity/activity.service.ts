@@ -51,15 +51,18 @@ export class ActivityService {
       this.entityManager,
     );
 
+    const participants = await this.activityInfra.getActivityTicketEnrollmentCount(activityId, this.entityManager);
+
     return {
       ...activity,
       activityTickets: activity.activityTickets
         .sort((a, b) => a.endedAt - b.endedAt)
         .map((ticket) => {
-          const enrolledTicket = activityTickets.find((t) => t.activity_ticket_id === ticket.id);
-
+          const enrolledTicket = activityTickets.find((t) => t.activityTicketId === ticket.id);
+          const enrolledParticipants = participants.find((t) => t.activityTicketId === ticket.id);
           return {
             ...ticket,
+            participants: enrolledParticipants?.participants || 0,
             orderId: enrolledTicket?.orderId || null,
             orderProductId: enrolledTicket?.orderProductId || null,
             activitySessionTickets: ticket.activitySessionTickets
