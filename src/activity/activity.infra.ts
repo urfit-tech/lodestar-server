@@ -233,6 +233,48 @@ export class ActivityInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase(activity);
   }
 
+  async getAllActivityTicketEnrollment(memberId: string, manager: EntityManager) {
+    const activityTickets = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'activity_ticket.id AS activity_ticket_id',
+        'order_log.id AS order_id',
+        'order_product.id AS order_product_id',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', activity_session.id, 'started_at', activity_session.started_at, 'ended_at', activity_session.ended_at, 'location', activity_session.location, 'online_link', activity_session.online_link, 'activity_title', activity.title, 'title', activity_session.title, 'activity_cover_url', activity.cover_url )) AS activity_session`,
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .innerJoin(
+        `order_product`,
+        'order_product',
+        'order_product.order_id = order_log.id' +
+          ' AND order_product.delivered_at < NOW()' +
+          ` AND order_product.product_id ~~ 'ActivityTicket_%'`,
+      )
+      .leftJoin(
+        'activity_ticket',
+        'activity_ticket',
+        `activity_ticket.id::text = split_part(order_product.product_id,'_',2)`,
+      )
+      .leftJoin('activity', 'activity', 'activity.id = activity_ticket.activity_id')
+      .leftJoin(
+        'activity_session_ticket',
+        'activity_session_ticket',
+        'activity_session_ticket.activity_ticket_id = activity_ticket.id',
+      )
+      .leftJoin(
+        'activity_session',
+        'activity_session',
+        'activity_session.id = activity_session_ticket.activity_session_id',
+      )
+      .groupBy('activity_ticket.id')
+      .addGroupBy('order_log.id')
+      .addGroupBy('order_product.id')
+      .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(activityTickets);
+  }
+
   async getActivityTicketEnrollment(activityId: string, memberId: string, manager: EntityManager) {
     const activityTickets = await manager
       .getRepository(OrderLog)
@@ -247,18 +289,18 @@ export class ActivityInfrastructure {
       .innerJoin(
         `order_product`,
         'order_product',
-        'order_product.order_id = order_log.id' + ' AND order_product.delivered_at < NOW()',
+        'order_product.order_id = order_log.id' +
+          ' AND order_product.delivered_at < NOW()' +
+          ` AND order_product.product_id ~~ 'ActivityTicket_%'`,
       )
-      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
-        productType: 'ActivityTicket',
-      })
-      .innerJoin(
+      .leftJoin(
         'activity_ticket',
         'activity_ticket',
-        'activity_ticket.id::text = product.target' + ' AND activity_ticket.activity_id = :activityId',
+        `activity_ticket.id::text = split_part(order_product.product_id,'_',2)` +
+          ' AND activity_ticket.activity_id = :activityId',
         { activityId },
       )
-      .innerJoin(
+      .leftJoin(
         'activity_session_ticket',
         'activity_session_ticket',
         'activity_session_ticket.activity_ticket_id = activity_ticket.id',
