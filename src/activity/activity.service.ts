@@ -40,6 +40,40 @@ export class ActivityService {
     return res;
   }
 
+  public async getActivityByMemberId(activityId: string, memberId?: string) {
+    // Todo: check permission
+    // ...
+
+    const activity = await this.activityInfra.getPublishedActivity(activityId, this.entityManager);
+    const activityTickets = await this.activityInfra.getActivityTicketEnrollment(
+      activityId,
+      memberId,
+      this.entityManager,
+    );
+
+    return {
+      ...activity,
+      activityTickets: activity.activityTickets
+        .sort((a, b) => a.endedAt - b.endedAt)
+        .map((ticket) => {
+          const enrolledTicket = activityTickets.find((t) => t.activity_ticket_id === ticket.id);
+
+          return {
+            ...ticket,
+            orderId: enrolledTicket?.orderId || null,
+            orderProductId: enrolledTicket?.orderProductId || null,
+            activitySessionTickets: ticket.activitySessionTickets
+              .sort((a, b) => a.activitySession.startedAt - b.activitySession.startedAt)
+              .map((st) => {
+                const attended = !!enrolledTicket?.activitySession?.find((s) => s.id === st.activitySession.id)
+                  ?.attended;
+                return { ...st, activitySession: { ...st.activitySession, attended } };
+              }),
+          };
+        }),
+    };
+  }
+
   private async getActivities(dto: ActivityCollectionDTO): Promise<[Activity[], number]> {
     return this.activityInfra.getByApp(
       this.entityManager,
