@@ -188,6 +188,7 @@ export class ActivityInfrastructure {
         isParticipantsVisible: true,
         supportLocales: true,
         activityTags: {
+          id: true,
           activityTagName: true,
         },
         activityCategories: {
@@ -218,6 +219,7 @@ export class ActivityInfrastructure {
               endedAt: true,
               description: true,
               threshold: true,
+              title: true,
             },
           },
         },
@@ -268,5 +270,30 @@ export class ActivityInfrastructure {
       .getRawMany();
 
     return this.utilityService.convertObjectKeysToCamelCase(activityTickets);
+  }
+
+  async getActivityTicketEnrollmentCount(activityId: string, manager: EntityManager) {
+    const activityTicketCount = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select(['activity_ticket.id AS activity_ticket_id', 'COUNT(activity_ticket.id) AS participants'])
+      .innerJoin(
+        `order_product`,
+        'order_product',
+        'order_product.order_id = order_log.id' + ' AND order_product.delivered_at < NOW()',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
+        productType: 'ActivityTicket',
+      })
+      .innerJoin(
+        'activity_ticket',
+        'activity_ticket',
+        'activity_ticket.id::text = product.target' + ' AND activity_ticket.activity_id = :activityId',
+        { activityId },
+      )
+      .groupBy('activity_ticket.id')
+      .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(activityTicketCount);
   }
 }
