@@ -47,7 +47,6 @@ export class StorageService {
   }
 
   getSignedUrlForDownloadStorage(key: string, expiresIn: number): Promise<string> {
-    console.log(key);
     const command = new GetObjectCommand({
       Key: key,
       Bucket: this.awsS3BucketStorage,

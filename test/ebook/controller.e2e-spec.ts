@@ -34,6 +34,8 @@ import { ProgramContentEbook } from '~/entity/ProgramContentEbook';
 import { UtilityService } from '~/utility/utility.service';
 import { createTestMember } from '../factory/member.factory';
 import { Member } from '~/member/entity/member.entity';
+import { EbookRequestDTO } from '~/media/ebook/ebook.dto';
+import { validate } from 'class-validator';
 
 const AUTH_TOKEN_ROUTE = '/auth/token';
 
@@ -334,6 +336,26 @@ describe('EbookController (e2e)', () => {
 
         expect(response.body.code).toBe('EbookByProgramContentId_Error');
         expect(response.body.message).toBe('Invalid request parameters');
+      });
+    });
+
+    describe('EbookRequestDTO', () => {
+      describe('Validation', () => {
+        it('should validate with a valid string', async () => {
+          const dto = new EbookRequestDTO();
+          dto.programContentId = 'valid_string';
+
+          const errors = await validate(dto);
+          expect(errors.length).toBe(0);
+        });
+
+        it('should not validate with a non-string value', async () => {
+          const dto = new EbookRequestDTO();
+          dto.programContentId = 123 as any;
+
+          const errors = await validate(dto);
+          expect(errors.length).toBeGreaterThan(0);
+        });
       });
     });
   });
