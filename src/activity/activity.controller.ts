@@ -48,4 +48,11 @@ export class ActivityController {
 
     return this.activityService.getActivityByMemberId(activityId, String(memberId));
   }
+
+  @Get()
+  async getAllActivityByMemberId(@Req() request: Request): Promise<any> {
+    const { memberId } = request.query;
+
+    return this.activityService.getAllActivityTicketEnrollment(String(memberId));
+  }
 }

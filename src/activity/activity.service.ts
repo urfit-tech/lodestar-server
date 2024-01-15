@@ -77,6 +77,13 @@ export class ActivityService {
     };
   }
 
+  public async getAllActivityTicketEnrollment(memberId: string) {
+    // Todo: check permission
+    // ...
+
+    return await this.activityInfra.getAllActivityTicketEnrollment(memberId, this.entityManager);
+  }
+
   private async getActivities(dto: ActivityCollectionDTO): Promise<[Activity[], number]> {
     return this.activityInfra.getByApp(
       this.entityManager,
