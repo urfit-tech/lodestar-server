@@ -52,9 +52,6 @@ export class StorageService {
       Key: key,
       Bucket: this.awsS3BucketStorage,
     });
-    console.log('----------------');
-    console.log(getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn }));
-    console.log('----------------------');
     return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
   }
 
