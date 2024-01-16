@@ -254,7 +254,7 @@ describe('EbookController (e2e)', () => {
       });
 
       it('should return an error for invalid token', async () => {
-        const invalid = 'invalid';
+        const invalid = Math.random().toString(36).substring(2, 15);
         const invalidToken = `Bearer ${invalid}`;
         const requestHeader = {
           Authorization: invalidToken,

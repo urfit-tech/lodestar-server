@@ -51,7 +51,6 @@ export class UtilityService {
         try {
           encryptedChunks.push(cipher.final());
           this.push(Buffer.concat(encryptedChunks));
-          console.log(`original length: ${totalLength} `);
           callback();
         } catch (err) {
           callback(err);
