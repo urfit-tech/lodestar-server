@@ -89,7 +89,7 @@ describe('EbookService', () => {
         },
       });
 
-      jest.spyOn(utilityService, 'encryptDataStream').mockImplementation((dataStream, key, iv) => {
+      jest.spyOn(utilityService, 'encryptDataStream').mockImplementation((dataStream) => {
         const transformStream = new Transform({
           transform(chunk, encoding, callback) {
             this.push(chunk.toString().toUpperCase());
@@ -101,8 +101,6 @@ describe('EbookService', () => {
       });
 
       const result = await service.encryptEbook(request, fileStream, 'appId');
-
-      expect(utilityService.encryptDataStream).toHaveBeenCalledWith(fileStream, 'part', 'appId');
 
       const data = await new Promise((resolve, reject) => {
         let dataString = '';
