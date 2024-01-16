@@ -40,6 +40,50 @@ export class ActivityService {
     return res;
   }
 
+  public async getActivityByMemberId(activityId: string, memberId?: string) {
+    // Todo: check permission
+    // ...
+
+    const activity = await this.activityInfra.getPublishedActivity(activityId, this.entityManager);
+    const activityTickets = await this.activityInfra.getActivityTicketEnrollment(
+      activityId,
+      memberId,
+      this.entityManager,
+    );
+
+    const participants = await this.activityInfra.getActivityTicketEnrollmentCount(activityId, this.entityManager);
+
+    return {
+      ...activity,
+      activityTickets: activity.activityTickets
+        .sort((a, b) => a.endedAt - b.endedAt)
+        .map((ticket) => {
+          const enrolledTicket = activityTickets.find((t) => t.activityTicketId === ticket.id);
+          const enrolledParticipants = participants.find((t) => t.activityTicketId === ticket.id);
+          return {
+            ...ticket,
+            participants: enrolledParticipants?.participants || 0,
+            orderId: enrolledTicket?.orderId || null,
+            orderProductId: enrolledTicket?.orderProductId || null,
+            activitySessionTickets: ticket.activitySessionTickets
+              .sort((a, b) => a.activitySession.startedAt - b.activitySession.startedAt)
+              .map((st) => {
+                const attended = !!enrolledTicket?.activitySession?.find((s) => s.id === st.activitySession.id)
+                  ?.attended;
+                return { ...st, activitySession: { ...st.activitySession, attended } };
+              }),
+          };
+        }),
+    };
+  }
+
+  public async getAllActivityTicketEnrollment(memberId: string) {
+    // Todo: check permission
+    // ...
+
+    return await this.activityInfra.getAllActivityTicketEnrollment(memberId, this.entityManager);
+  }
+
   private async getActivities(dto: ActivityCollectionDTO): Promise<[Activity[], number]> {
     return this.activityInfra.getByApp(
       this.entityManager,
