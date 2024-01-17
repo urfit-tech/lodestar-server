@@ -21,7 +21,6 @@ import { role, app, appPlan, appSecret, appSetting, appHost } from '../data';
 import { ApiExceptionFilter } from '~/api.filter';
 import { Attachment } from '~/media/attachment.entity';
 import { ProgramContent } from '~/program/entity/program_content.entity';
-import { ProgramContentVideo } from '~/entity/ProgramContentVideo';
 import { ProgramContentBody } from '~/entity/ProgramContentBody';
 import { ProgramContentSection } from '~/entity/ProgramContentSection';
 import { Program } from '~/entity/Program';
@@ -34,8 +33,6 @@ import { ProgramContentEbook } from '~/entity/ProgramContentEbook';
 import { UtilityService } from '~/utility/utility.service';
 import { createTestMember } from '../factory/member.factory';
 import { Member } from '~/member/entity/member.entity';
-import { EbookRequestDTO } from '~/media/ebook/ebook.dto';
-import { validate } from 'class-validator';
 
 const AUTH_TOKEN_ROUTE = '/auth/token';
 
@@ -43,7 +40,6 @@ describe('EbookController (e2e)', () => {
   let application: INestApplication;
   let storageService: StorageService;
   let utilityService: UtilityService;
-  let configService: ConfigService;
 
   let manager: EntityManager;
   let roleRepo: Repository<Role>;
@@ -99,7 +95,6 @@ describe('EbookController (e2e)', () => {
 
     application = module.createNestApplication();
     application.useGlobalPipes(new ValidationPipe()).useGlobalFilters(new ApiExceptionFilter());
-    configService = application.get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService);
     storageService = application.get<StorageService>(StorageService);
     utilityService = application.get<UtilityService>(UtilityService);
     ebookService = application.get<EbookService>(EbookService);
@@ -188,7 +183,7 @@ describe('EbookController (e2e)', () => {
     const programContent = new ProgramContent();
     programContent.id = '5e50b600-5e1b-4094-bd4e-99e506e5ca98';
     programContent.displayMode = 'trial';
-    programContent.title = 'test video program';
+    programContent.title = 'test ebook program';
     programContent.position = 0;
     programContent.contentBody = programContentBody;
     programContent.contentSection = programContentSection;
@@ -336,26 +331,6 @@ describe('EbookController (e2e)', () => {
 
         expect(response.body.code).toBe('EbookByProgramContentId_Error');
         expect(response.body.message).toBe('Invalid request parameters');
-      });
-    });
-
-    describe('EbookRequestDTO', () => {
-      describe('Validation', () => {
-        it('should validate with a valid string', async () => {
-          const dto = new EbookRequestDTO();
-          dto.programContentId = 'valid_string';
-
-          const errors = await validate(dto);
-          expect(errors.length).toBe(0);
-        });
-
-        it('should not validate with a non-string value', async () => {
-          const dto = new EbookRequestDTO();
-          dto.programContentId = 123 as any;
-
-          const errors = await validate(dto);
-          expect(errors.length).toBeGreaterThan(0);
-        });
       });
     });
   });

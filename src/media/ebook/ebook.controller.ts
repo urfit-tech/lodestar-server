@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { EbookRequestDTO } from './ebook.dto';
 import { APIException } from '~/api.excetion';
 
 import { Local } from '~/decorator';
