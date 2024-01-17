@@ -166,6 +166,7 @@ describe('PorterRunner (e2e)', () => {
       'EX',
       7 * 86400,
     );
+
     jest.resetAllMocks();
     await application.init();
   });
@@ -751,4 +752,34 @@ describe('PorterRunner (e2e)', () => {
       });
     });
   });
+
+  // describe.only('portPhoneServiceInsertEvent', () => {
+  //   describe('Successfully scenarios', () => {
+  //     it('Full process', async () => {
+  //       await cacheService.getClient().set(
+  //         `PhoneService:${new Date().getTime()}`,
+  //         JSON.stringify({
+  //           memberNotes: [{}],
+  //           lastMemberNotes: {
+  //             criteria: { id: 'test', appId: 'test' },
+  //             lastMemberRecord: {
+  //               lastMemberNoteCreated: new Date(),
+  //               lastMemberNoteCalled: new Date(),
+  //               lastMemberNoteAnswered: new Date(),
+  //             },
+  //           },
+  //         }),
+  //       );
+
+  //       const porterRunner = application.get<PorterRunner>(Runner);
+  //       await porterRunner.portPhoneServiceInsertEvent(manager, 20);
+  //     });
+  //   });
+
+  //   // describe('Failure scenario', () => {
+  //   //   describe('Data loss', () => {});
+  //   //   describe('Retrieval failure', () => {});
+  //   //   describe('Storage failure', () => {});
+  //   // });
+  // });
 });
