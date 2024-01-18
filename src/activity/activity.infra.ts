@@ -1,4 +1,4 @@
-import { EntityManager, SelectQueryBuilder } from 'typeorm';
+import { EntityManager, IsNull, SelectQueryBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Activity } from './entity/Activity';
 import { ActivitySessionTicket } from './entity/ActivitySessionTicket';
@@ -175,9 +175,12 @@ export class ActivityInfrastructure {
     return enrollmentCountMap;
   }
 
-  async getPublishedActivity(activityId: string, manager: EntityManager) {
+  async getPublishedActivity(manager: EntityManager, activityId: string, includeDeleted?: boolean) {
     const activity = await manager.getRepository(Activity).findOne({
-      where: { id: activityId, activityTickets: { isPublished: true } },
+      where: {
+        id: activityId,
+        activityTickets: { isPublished: true, deletedAt: includeDeleted ? undefined : IsNull() },
+      },
       select: {
         id: true,
         organizerId: true,
