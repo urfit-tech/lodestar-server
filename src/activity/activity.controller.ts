@@ -2,8 +2,6 @@ import { Controller, Get, Logger, Param, ParseIntPipe, Query, Req } from '@nestj
 import { ApiTags } from '@nestjs/swagger';
 import { FetchActivitiesResponseDto, ActivityCollectionDTO } from './activity.dto';
 import { ActivityService } from './activity.service';
-import { JwtMember } from '~/auth/auth.dto';
-import { Local } from '~/decorator';
 import { Request } from 'express';
 
 @ApiTags('Activity')
@@ -44,9 +42,13 @@ export class ActivityController {
 
   @Get(':activity_id')
   async getActivityByMemberId(@Req() request: Request, @Param('activity_id') activityId: string): Promise<any> {
-    const { memberId } = request.query;
+    const { memberId, includeDeleted } = request.query;
 
-    return this.activityService.getActivityByMemberId(activityId, String(memberId));
+    return this.activityService.getActivityByMemberId(
+      activityId,
+      String(memberId),
+      includeDeleted && String(includeDeleted) === 'true',
+    );
   }
 
   @Get()

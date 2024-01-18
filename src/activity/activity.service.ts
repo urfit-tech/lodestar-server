@@ -40,11 +40,11 @@ export class ActivityService {
     return res;
   }
 
-  public async getActivityByMemberId(activityId: string, memberId?: string) {
+  public async getActivityByMemberId(activityId: string, memberId?: string, includeDeleted?: boolean) {
     // Todo: check permission
     // ...
 
-    const activity = await this.activityInfra.getPublishedActivity(activityId, this.entityManager);
+    const activity = await this.activityInfra.getPublishedActivity(this.entityManager, activityId, includeDeleted);
     const activityTickets = await this.activityInfra.getActivityTicketEnrollment(
       activityId,
       memberId,
@@ -56,12 +56,13 @@ export class ActivityService {
     return {
       ...activity,
       activityTickets: activity.activityTickets
-        .sort((a, b) => a.endedAt - b.endedAt)
+        ?.sort((a, b) => a.endedAt - b.endedAt)
         .map((ticket) => {
           const enrolledTicket = activityTickets.find((t) => t.activityTicketId === ticket.id);
           const enrolledParticipants = participants.find((t) => t.activityTicketId === ticket.id);
           return {
             ...ticket,
+            price: Number(ticket.price),
             participants: enrolledParticipants?.participants || 0,
             orderId: enrolledTicket?.orderId || null,
             orderProductId: enrolledTicket?.orderProductId || null,
