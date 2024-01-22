@@ -7,7 +7,7 @@ import { Runner } from './runner';
 import { CacheService } from '~/utility/cache/cache.service';
 import axios from 'axios';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager } from 'typeorm';
+import { EntityManager, FindOperator, LessThan } from 'typeorm';
 import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { MemberService } from '~/member/member.service';
 import { ProgramService } from '~/program/program.service';
@@ -155,48 +155,6 @@ export class PorterRunner extends Runner {
     } while (cursor !== '0');
   }
 
-  async portPhoneServiceInsertEvent(manager: EntityManager, batchSize = 1000): Promise<void> {
-    type DataType = {
-      memberNotes: any[];
-      lastMemberNotes: {
-        criteria: any;
-        lastMemberRecord: any;
-      };
-    };
-    type ErrInfo = {
-      key: string;
-      data: DataType;
-    };
-
-    const client = this.cacheService.getClient();
-    let cursor = '0';
-
-    do {
-      const _tableName = `PhoneService:*`;
-      const scanResult = await client.scan(cursor, 'MATCH', _tableName, 'COUNT', batchSize);
-      cursor = scanResult[0];
-      const keys = scanResult[1];
-
-      for (const key of keys) {
-        const valueString = await client.get(key);
-        if (!valueString) continue;
-        const data: DataType = JSON.parse(valueString);
-
-        const { memberNotes, lastMemberNotes } = data;
-        const { criteria, lastMemberRecord } = lastMemberNotes;
-
-        try {
-          await manager.getRepository(MemberNote).insert(memberNotes);
-          await manager.getRepository(Member).update(criteria, lastMemberRecord);
-
-          await client.del(key);
-        } catch (error) {
-          console.log(`Batch saving failed: ${error}`);
-        }
-      }
-    } while (cursor !== '0');
-  }
-
   async checkAndCallHeartbeat(): Promise<void> {
     const heartbeatUrl = process.env.PORTER_HEARTBEAT_URL;
 
@@ -215,6 +173,116 @@ export class PorterRunner extends Runner {
     } else {
       console.log(`Invalid or no heartbeat URL set, skipping call: ${heartbeatUrl}`);
     }
+  }
+
+  async portPhoneServiceInsertEvent(manager: EntityManager, batchSize = 1000): Promise<void> {
+    type LastMemberNotesType = {
+      criteria: {
+        id: FindOperator<any>;
+        appId: string;
+      };
+      lastMemberRecord: {
+        lastMemberNoteAnswered?: Date | undefined;
+        lastMemberNoteCalled?: Date | undefined;
+        lastMemberNoteCreated: Date;
+      };
+    };
+
+    type ErrInfoType = {
+      memberNote: { data: MemberNote; errMsg: string } | 'NoError';
+      member: { data: LastMemberNotesType; errMsg: string } | 'NoError';
+    };
+
+    type ErrMesType = {
+      key: string;
+      date: string;
+      info: ErrInfoType | 'No data found' | 'Data format error';
+    };
+
+    type DataType = {
+      memberNotes: MemberNote;
+      lastMemberNotes: LastMemberNotesType;
+    };
+
+    function hasDataProperty(data: DataType): boolean {
+      return Boolean(
+        data.hasOwnProperty('lastMemberNotes') &&
+          data.lastMemberNotes?.hasOwnProperty('criteria') &&
+          data.lastMemberNotes?.hasOwnProperty('lastMemberRecord') &&
+          data.hasOwnProperty('memberNotes'),
+      );
+    }
+
+    const client = this.cacheService.getClient();
+    const pattern = `PhoneService:*`;
+    const errAry: ErrMesType[] = [];
+    let cursor = '0';
+
+    do {
+      const scanResult = await client.scan(cursor, 'MATCH', pattern, 'COUNT', batchSize);
+      cursor = scanResult[0];
+      const keys = scanResult[1];
+
+      for (const key of keys) {
+        const valueString = await client.get(key);
+        const dateTime = key.split(':')[1];
+        const errMesInit: ErrMesType = {
+          key,
+          date: `${new Date(parseInt(dateTime, 10))}`,
+          info: {
+            memberNote: 'NoError',
+            member: 'NoError',
+          },
+        };
+
+        if (!valueString) {
+          errMesInit.info = 'No data found';
+          errAry.push(errMesInit);
+          continue;
+        }
+        const data: DataType = JSON.parse(valueString);
+
+        if (!hasDataProperty(data)) {
+          errMesInit.info = 'Data format error';
+          errAry.push(errMesInit);
+          continue;
+        }
+        const { memberNotes, lastMemberNotes } = data;
+        const { criteria, lastMemberRecord } = lastMemberNotes;
+
+        try {
+          await manager.getRepository(MemberNote).insert(memberNotes);
+        } catch (error) {
+          if (typeof errMesInit.info !== 'string' && errMesInit.info.memberNote === 'NoError') {
+            errMesInit.info.memberNote = { data: memberNotes, errMsg: error.toString() };
+          }
+        }
+        try {
+          await manager.getRepository(Member).update(criteria, lastMemberRecord);
+        } catch (error) {
+          if (typeof errMesInit.info !== 'string' && errMesInit.info.member === 'NoError') {
+            errMesInit.info.member = { data: lastMemberNotes, errMsg: error.toString() };
+          }
+        }
+
+        if (
+          typeof errMesInit.info !== 'string' &&
+          (errMesInit.info.member !== null || errMesInit.info.memberNote !== null)
+        ) {
+          errAry.push(errMesInit);
+        }
+
+        await client.del(key);
+      }
+    } while (cursor !== '0');
+
+    if (errAry.length > 0) {
+      for (const item of errAry) {
+        console.error(`Saving phone service failed:${item}`);
+        console.log(item);
+      }
+    }
+    errAry.length = 0;
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
@@ -242,7 +310,7 @@ export class PorterRunner extends Runner {
     await handlePorting('last logged in', () => this.portLastLoggedIn(this.entityManager));
     await handlePorting('player event', () => this.portPlayerEvent(this.entityManager));
     await handlePorting('podcast event', () => this.portPodcastProgram(this.entityManager));
-    // await handlePorting('phone service event', () => this.portPhoneServiceInsertEvent(this.entityManager));
+    await handlePorting('phone service event', () => this.portPhoneServiceInsertEvent(this.entityManager));
 
     if (errors.length > 0) {
       console.error(errors, 'Porting errors occurred');
