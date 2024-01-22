@@ -226,7 +226,7 @@ export class PorterRunner extends Runner {
       for (const key of keys) {
         const valueString = await client.get(key);
         const dateTime = key.split(':')[1];
-        const errMesInit: ErrMesType = {
+        let errMesInit: ErrMesType = {
           key,
           date: `${new Date(parseInt(dateTime, 10))}`,
           info: {
@@ -253,16 +253,24 @@ export class PorterRunner extends Runner {
         try {
           await manager.getRepository(MemberNote).insert(memberNotes);
         } catch (error) {
-          if (typeof errMesInit.info !== 'string' && errMesInit.info.memberNote === 'NoError') {
-            errMesInit.info.memberNote = { data: memberNotes, errMsg: error.toString() };
-          }
+          errMesInit = {
+            ...errMesInit,
+            info: {
+              member: (errMesInit.info as Pick<ErrInfoType, 'member'>).member,
+              memberNote: { data: memberNotes, errMsg: error.toString() },
+            },
+          };
         }
         try {
           await manager.getRepository(Member).update(criteria, lastMemberRecord);
         } catch (error) {
-          if (typeof errMesInit.info !== 'string' && errMesInit.info.member === 'NoError') {
-            errMesInit.info.member = { data: lastMemberNotes, errMsg: error.toString() };
-          }
+          errMesInit = {
+            ...errMesInit,
+            info: {
+              member: { data: lastMemberNotes, errMsg: error.toString() },
+              memberNote: (errMesInit.info as Pick<ErrInfoType, 'memberNote'>).memberNote,
+            },
+          };
         }
 
         if (
@@ -279,7 +287,6 @@ export class PorterRunner extends Runner {
     if (errAry.length > 0) {
       for (const item of errAry) {
         console.error(`Saving phone service failed:${item}`);
-        console.log(item);
       }
     }
     errAry.length = 0;
