@@ -113,7 +113,8 @@ export class StorageService {
       '!': '%21',
       '"': '%22',
       '#': '%23',
-      $: '%24',
+      // eslint-disable-next-line prettier/prettier
+      '$': '%24',
       '&': '%26',
       "'": '%27',
       '(': '%28',
