@@ -219,7 +219,13 @@ export class VideoService {
           return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
         } else if (row.includes('.ts')) {
           // hls segments
-          return `${host}/${path}/${row.split('?')[0]}?${signature}`;
+          const baseUrl = `${host}/${path}/${row.split('?')[0]}`;
+
+          const formatBaseUrl = this.storageService.s3UrlFormatter(baseUrl);
+
+          const fullUrl = `${formatBaseUrl}?${signature}`;
+
+          return fullUrl;
         } else if (row.includes('.mp4')) {
           // dash segments
           const baseUrlWithSignature = row

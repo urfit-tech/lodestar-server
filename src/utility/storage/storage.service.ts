@@ -107,6 +107,29 @@ export class StorageService {
     return getSignedUrl(this.s3(this.awsS3RegionStorage), command, { expiresIn });
   }
 
+  s3UrlFormatter(encodeString: string): string {
+    const encodings = {
+      '+': '%2B',
+      '!': '%21',
+      '"': '%22',
+      '#': '%23',
+      $: '%24',
+      '&': '%26',
+      "'": '%27',
+      '(': '%28',
+      ')': '%29',
+      '*': '%2A',
+      ',': '%2C',
+      ':': '%3A',
+      ';': '%3B',
+      '=': '%3D',
+      '?': '%3F',
+      '@': '%40',
+    };
+
+    return encodeString.replace(/([+!"#$&'()*+,;=?@])/g, (match) => encodings[match]);
+  }
+
   private async getFileFromBucket(region: string, data: GetObjectCommandInput) {
     const command = new GetObjectCommand(data);
     return this.s3(region).send(command);
