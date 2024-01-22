@@ -7,6 +7,7 @@ import { INestApplication } from '@nestjs/common';
 import { EntityManager, Repository } from 'typeorm';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 import { Member } from '~/member/entity/member.entity';
+import { MemberNote } from '~/entity/MemberNote';
 import { Runner } from '~/runner/runner';
 import { Role } from '~/entity/Role';
 import { App } from '~/app/entity/app.entity';
@@ -753,33 +754,107 @@ describe('PorterRunner (e2e)', () => {
     });
   });
 
-  // describe.only('portPhoneServiceInsertEvent', () => {
-  //   describe('Successfully scenarios', () => {
-  //     it('Full process', async () => {
-  //       await cacheService.getClient().set(
-  //         `PhoneService:${new Date().getTime()}`,
-  //         JSON.stringify({
-  //           memberNotes: [{}],
-  //           lastMemberNotes: {
-  //             criteria: { id: 'test', appId: 'test' },
-  //             lastMemberRecord: {
-  //               lastMemberNoteCreated: new Date(),
-  //               lastMemberNoteCalled: new Date(),
-  //               lastMemberNoteAnswered: new Date(),
-  //             },
-  //           },
-  //         }),
-  //       );
+  describe.only('portPhoneServiceInsertEvent', () => {
+    const lastMemberNotes = {
+      criteria: {
+        id: {},
+        appId: 1,
+      },
+      lastMemberRecord: {
+        lastMemberNoteCreated: {},
+      },
+    };
+    // it('Successful scenario', async () => {
+    //   const memberNote = new MemberNote();
+    //   memberNote.id = 'test';
+    //   memberNote.memberId = 'test';
+    //   memberNote.authorId = 'test';
 
-  //       const porterRunner = application.get<PorterRunner>(Runner);
-  //       await porterRunner.portPhoneServiceInsertEvent(manager, 20);
-  //     });
-  //   });
+    //   await cacheService.getClient().set(
+    //     `PhoneService:*${new Date().getTime()}`,
+    //     JSON.stringify({
+    //       memberNotes: memberNote,
+    //       lastMemberNotes,
+    //     }),
+    //   );
 
-  //   // describe('Failure scenario', () => {
-  //   //   describe('Data loss', () => {});
-  //   //   describe('Retrieval failure', () => {});
-  //   //   describe('Storage failure', () => {});
-  //   // });
-  // });
+    //   const logSpy = jest.spyOn(global.console, 'error');
+
+    //   const porterRunner = application.get<PorterRunner>(Runner);
+    //   await expect(porterRunner.portPhoneServiceInsertEvent(manager, 30)).resolves.toBeUndefined();
+
+    //   expect(logSpy).not.toHaveBeenCalled();
+    //   logSpy.mockRestore();
+    // });
+
+    describe('Failed scenario', () => {
+      it('When the "memberNotes" data is missing', async () => {
+        await cacheService.getClient().set(
+          `PhoneService:${new Date().getTime()}`,
+          JSON.stringify({
+            memberNotes: null,
+            lastMemberNotes,
+          }),
+        );
+        const logSpy = jest.spyOn(global.console, 'error');
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 30)).resolves.toBeUndefined();
+
+        expect(logSpy).toHaveBeenCalled();
+        expect(logSpy).toBeCalledTimes(1);
+        logSpy.mockRestore();
+      });
+
+      it('When the "memberNotes" and "lastMemberNotes" data are missing', async () => {
+        await cacheService.getClient().set(
+          `PhoneService:${new Date().getTime()}`,
+          JSON.stringify({
+            memberNotes: null,
+            lastMemberNotes: {
+              criteria: {
+                id: '',
+                appId: '',
+              },
+              lastMemberRecord: {
+                lastMemberNoteCreated: '',
+              },
+            },
+          }),
+        );
+        const logSpy = jest.spyOn(global.console, 'error');
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 30)).resolves.toBeUndefined();
+
+        expect(logSpy).toHaveBeenCalled();
+        expect(logSpy).toBeCalledTimes(1);
+        logSpy.mockRestore();
+      });
+
+      it('Two files with incorrect formats for the "memberNotes" and "lastMemberNotes"', async () => {
+        await cacheService.getClient().set(
+          `PhoneService:${new Date().getTime()}`,
+          JSON.stringify({
+            memberNotes: null,
+            lastMemberNotes: {},
+          }),
+        );
+        await cacheService.getClient().set(
+          `PhoneService:${new Date().getTime()}`,
+          JSON.stringify({
+            memberNotes: {},
+            lastMemberNotes: null,
+          }),
+        );
+        const logSpy = jest.spyOn(console, 'error');
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 20)).resolves.toBeUndefined();
+
+        expect(logSpy).toBeCalledTimes(2);
+        logSpy.mockRestore();
+      });
+    });
+  });
 });
