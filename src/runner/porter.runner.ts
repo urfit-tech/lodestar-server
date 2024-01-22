@@ -267,7 +267,7 @@ export class PorterRunner extends Runner {
 
         if (
           typeof errMesInit.info !== 'string' &&
-          (errMesInit.info.member !== null || errMesInit.info.memberNote !== null)
+          (typeof errMesInit.info.member !== 'string' || typeof errMesInit.info.memberNote !== 'string')
         ) {
           errAry.push(errMesInit);
         }
