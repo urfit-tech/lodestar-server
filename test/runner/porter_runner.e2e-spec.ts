@@ -19,6 +19,7 @@ import {
   appSetting,
   currency,
   member,
+  memberNote,
   podcastAlbum,
   podcastProgram,
   program,
@@ -60,6 +61,7 @@ describe('PorterRunner (e2e)', () => {
   let appHostRepo: Repository<AppHost>;
   let appSecretRepo: Repository<AppSecret>;
   let appSettingRepo: Repository<AppSetting>;
+  let memberNoteRepo: Repository<MemberNote>;
   let memberRepo: Repository<Member>;
   let programPlanRepo: Repository<ProgramPlan>;
   let programContentSectionRepo: Repository<ProgramContentSection>;
@@ -97,6 +99,7 @@ describe('PorterRunner (e2e)', () => {
     appSecretRepo = manager.getRepository(AppSecret);
     appHostRepo = manager.getRepository(AppHost);
     roleRepo = manager.getRepository(Role);
+    memberNoteRepo = manager.getRepository(MemberNote);
     memberRepo = manager.getRepository(Member);
     programRepo = manager.getRepository(Program);
     programPlanRepo = manager.getRepository(ProgramPlan);
@@ -123,6 +126,7 @@ describe('PorterRunner (e2e)', () => {
     await programRepo.delete({});
     await podcastAlbumRepo.delete({});
     await currencyRepo.delete({});
+    await memberNoteRepo.delete({});
     await memberRepo.delete({});
     await appHostRepo.delete({});
     await appSecretRepo.delete({});
@@ -138,6 +142,7 @@ describe('PorterRunner (e2e)', () => {
     await appSecretRepo.save(appSecret);
     await appHostRepo.save(appHost);
     await memberRepo.save(member);
+    await memberNoteRepo.save(memberNote);
     await currencyRepo.save(currency);
     await podcastAlbumRepo.save(podcastAlbum);
     await programRepo.save(program);
@@ -185,6 +190,7 @@ describe('PorterRunner (e2e)', () => {
     await programRepo.delete({});
     await podcastAlbumRepo.delete({});
     await currencyRepo.delete({});
+    await memberNoteRepo.delete({});
     await memberRepo.delete({});
     await appHostRepo.delete({});
     await appSecretRepo.delete({});
@@ -754,38 +760,69 @@ describe('PorterRunner (e2e)', () => {
     });
   });
 
-  describe.only('portPhoneServiceInsertEvent', () => {
+  describe('portPhoneServiceInsertEvent', () => {
     const lastMemberNotes = {
       criteria: {
         id: {},
         appId: 1,
       },
       lastMemberRecord: {
-        lastMemberNoteCreated: {},
+        lastMemberNoteCreated: new Date(),
       },
     };
-    // it('Successful scenario', async () => {
-    //   const memberNote = new MemberNote();
-    //   memberNote.id = 'test';
-    //   memberNote.memberId = 'test';
-    //   memberNote.authorId = 'test';
+    describe('Successful scenario', () => {
+      it('No "console error" notifications', async () => {
+        await cacheService.getClient().set(
+          `PhoneService:*${new Date().getTime()}`,
+          JSON.stringify({
+            memberNotes: memberNote,
+            lastMemberNotes,
+          }),
+        );
 
-    //   await cacheService.getClient().set(
-    //     `PhoneService:*${new Date().getTime()}`,
-    //     JSON.stringify({
-    //       memberNotes: memberNote,
-    //       lastMemberNotes,
-    //     }),
-    //   );
+        const logSpy = jest.spyOn(console, 'error');
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        expect(logSpy).not.toHaveBeenCalled();
+        logSpy.mockRestore();
 
-    //   const logSpy = jest.spyOn(global.console, 'error');
+        const scanRedisKey = await cacheService.getClient().keys('PhoneService:*');
+        const remainingKeysCount = scanRedisKey.length;
+        expect(remainingKeysCount).toEqual(0);
+      });
 
-    //   const porterRunner = application.get<PorterRunner>(Runner);
-    //   await expect(porterRunner.portPhoneServiceInsertEvent(manager, 30)).resolves.toBeUndefined();
+      it('After saving, verify if the "Redis Key" has been deleted', async () => {
+        await cacheService.getClient().set(
+          `PhoneService:*${new Date().getTime()}`,
+          JSON.stringify({
+            memberNotes: memberNote,
+            lastMemberNotes,
+          }),
+        );
 
-    //   expect(logSpy).not.toHaveBeenCalled();
-    //   logSpy.mockRestore();
-    // });
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        const scanRedisKey = await cacheService.getClient().keys('PhoneService:*');
+        const remainingKeysCount = scanRedisKey.length;
+        expect(remainingKeysCount).toEqual(0);
+      });
+
+      it('After saving, DB has the corresponding data.', async () => {
+        await cacheService.getClient().set(
+          `PhoneService:*${new Date().getTime()}`,
+          JSON.stringify({
+            memberNotes: memberNote,
+            lastMemberNotes,
+          }),
+        );
+
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        const _member = await memberRepo.findOne({ where: { name: 'testMember' } });
+        expect(_member.id).toBe(memberNote.authorId);
+        expect(_member.id).toBe(memberNote.memberId);
+      });
+    });
 
     describe('Failed scenario', () => {
       it('When the "memberNotes" data is missing', async () => {
@@ -796,11 +833,10 @@ describe('PorterRunner (e2e)', () => {
             lastMemberNotes,
           }),
         );
-        const logSpy = jest.spyOn(global.console, 'error');
 
+        const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 30)).resolves.toBeUndefined();
-
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
         expect(logSpy).toHaveBeenCalled();
         expect(logSpy).toBeCalledTimes(1);
         logSpy.mockRestore();
@@ -822,37 +858,28 @@ describe('PorterRunner (e2e)', () => {
             },
           }),
         );
-        const logSpy = jest.spyOn(global.console, 'error');
-
+        const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 30)).resolves.toBeUndefined();
-
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
         expect(logSpy).toHaveBeenCalled();
         expect(logSpy).toBeCalledTimes(1);
         logSpy.mockRestore();
       });
 
-      it('Two files with incorrect formats for the "memberNotes" and "lastMemberNotes"', async () => {
-        await cacheService.getClient().set(
-          `PhoneService:${new Date().getTime()}`,
-          JSON.stringify({
-            memberNotes: null,
-            lastMemberNotes: {},
-          }),
-        );
-        await cacheService.getClient().set(
-          `PhoneService:${new Date().getTime()}`,
-          JSON.stringify({
-            memberNotes: {},
-            lastMemberNotes: null,
-          }),
-        );
+      it('Twenty files with incorrect formats for the "memberNotes" and "lastMemberNotes"', async () => {
+        for (let i = 0; i < 20; i++) {
+          await cacheService.getClient().set(
+            `PhoneService:${new Date().getTime()}:${i}`,
+            JSON.stringify({
+              memberNotes: null,
+              lastMemberNotes: null,
+            }),
+          );
+        }
         const logSpy = jest.spyOn(console, 'error');
-
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 20)).resolves.toBeUndefined();
-
-        expect(logSpy).toBeCalledTimes(2);
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        expect(logSpy).toBeCalledTimes(20);
         logSpy.mockRestore();
       });
     });
