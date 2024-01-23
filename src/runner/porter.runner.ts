@@ -207,16 +207,16 @@ export class PorterRunner extends Runner {
       lastMemberNotes: LastMemberNotesType;
     };
 
-    function hasRedisDataProperty(data: redisDataType): boolean {
+    const hasRedisDataProperty = (data: redisDataType): boolean => {
       return Boolean(
         data.hasOwnProperty('lastMemberNotes') &&
           data.lastMemberNotes?.hasOwnProperty('criteria') &&
           data.lastMemberNotes?.hasOwnProperty('lastMemberRecord') &&
           data.hasOwnProperty('memberNotes'),
       );
-    }
+    };
 
-    function createErrorLog(key: string): ErrorLogType {
+    const createErrorLog = (key: string): ErrorLogType => {
       const dateTime = key.split(':')[1];
       const errorLog: ErrorLogType = {
         key,
@@ -227,7 +227,7 @@ export class PorterRunner extends Runner {
         },
       };
       return errorLog;
-    }
+    };
 
     const client = this.cacheService.getClient();
     const pattern = `PhoneService:*`;
@@ -264,60 +264,61 @@ export class PorterRunner extends Runner {
       }
 
       // save data to DB
-      await manager.transaction(async (manager) => {
-        try {
-          await Promise.all(
-            redisDataArray.map(async (data) => {
-              const { memberNotes, lastMemberNotes, key } = data;
-              const { criteria, lastMemberRecord } = lastMemberNotes;
-              let errorLog = createErrorLog(key);
-
+      await Promise.all(
+        redisDataArray.map(
+          async (data) =>
+            await manager.transaction(async (manager) => {
               try {
-                await this.memberInfra.insertData<MemberNote>(memberNotes, MemberNote, manager);
-              } catch (error) {
-                errorLog = {
-                  ...errorLog,
-                  info: {
-                    member: (errorLog.info as Pick<ErrInfoType, 'member'>).member,
-                    memberNote: { data: memberNotes, errMsg: error.toString() },
-                  },
-                };
-              }
-              try {
-                await this.memberInfra.updateData<Member>(criteria, lastMemberRecord, Member, manager);
-              } catch (error) {
-                errorLog = {
-                  ...errorLog,
-                  info: {
-                    member: { data: lastMemberNotes, errMsg: error.toString() },
-                    memberNote: (errorLog.info as Pick<ErrInfoType, 'memberNote'>).memberNote,
-                  },
-                };
-              }
+                const { memberNotes, lastMemberNotes, key } = data;
+                const { criteria, lastMemberRecord } = lastMemberNotes;
+                let errorLog = createErrorLog(key);
 
-              if (
-                typeof errorLog.info !== 'string' &&
-                (typeof errorLog.info.member !== 'string' || typeof errorLog.info.memberNote !== 'string')
-              ) {
-                errorLogs.push(errorLog);
-              }
+                try {
+                  await this.memberInfra.insertData<MemberNote>(memberNotes, MemberNote, manager);
+                } catch (error) {
+                  errorLog = {
+                    ...errorLog,
+                    info: {
+                      member: (errorLog.info as Pick<ErrInfoType, 'member'>).member,
+                      memberNote: { data: memberNotes, errMsg: error.toString() },
+                    },
+                  };
+                }
+                try {
+                  await this.memberInfra.updateData<Member>(criteria, lastMemberRecord, Member, manager);
+                } catch (error) {
+                  errorLog = {
+                    ...errorLog,
+                    info: {
+                      member: { data: lastMemberNotes, errMsg: error.toString() },
+                      memberNote: (errorLog.info as Pick<ErrInfoType, 'memberNote'>).memberNote,
+                    },
+                  };
+                }
 
-              await client.del(key);
+                if (
+                  typeof errorLog.info !== 'string' &&
+                  (typeof errorLog.info.member !== 'string' || typeof errorLog.info.memberNote !== 'string')
+                ) {
+                  errorLogs.push(errorLog);
+                }
+
+                await client.del(key);
+              } catch (error) {
+                // Data rollback
+                throw new Error(`Encountered an issue while handling member or memberNote data: ${error.message}`);
+              }
             }),
-          );
+        ),
+      );
 
-          if (errorLogs.length > 0) {
-            for (const errorItem of errorLogs) {
-              console.error(`Saving phone service failed:${errorItem}`);
-            }
-          }
-          redisDataArray.length = 0;
-          errorLogs.length = 0;
-        } catch (error) {
-          // Data rollback
-          throw new Error(`Encountered an issue while handling member or memberNote data: ${error.message}`);
+      if (errorLogs.length > 0) {
+        for (const errorItem of errorLogs) {
+          console.error(`Saving phone service failed:${errorItem}`);
         }
-      });
+      }
+      redisDataArray.length = 0;
+      errorLogs.length = 0;
     } while (cursor !== '0');
   }
 
