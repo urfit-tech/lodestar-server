@@ -14,7 +14,6 @@ import { StorageController } from './storage/storage.controller';
 import { AuthModule } from '~/auth/auth.module';
 import { MediaService } from '~/media/media.service';
 import { MediaInfrastructure } from '~/media/media.infra';
-
 @Module({
   controllers: [StorageController],
   imports: [AuthModule, FeedModule, MailerModule, CallerModule, SocialModule],

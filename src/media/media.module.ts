@@ -16,9 +16,11 @@ import { DeviceModule } from '~/auth/device/device.module';
 import { CacheService } from '~/utility/cache/cache.service';
 import { MailerModule } from '~/mailer/mailer.module';
 import { UtilityModule } from '~/utility/utility.module';
+import { EbookController } from './ebook/ebook.controller';
+import { EbookService } from './ebook/ebook.service';
 
 @Module({
-  controllers: [VideoController],
+  controllers: [VideoController, EbookController],
   imports: [AppModule, AuthModule, DeviceModule, MemberModule, MailerModule, UtilityModule],
   providers: [
     Logger,
@@ -30,6 +32,7 @@ import { UtilityModule } from '~/utility/utility.module';
     VideoService,
     MediaService,
     ProgramInfrastructure,
+    EbookService,
   ],
   exports: [MediaService],
 })
