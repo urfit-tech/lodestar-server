@@ -226,6 +226,7 @@ import { ActivityTicketEnrollmentCount } from '~/activity/view_entity/ActivityTi
 import { ActivityDuringPeriod } from '~/activity/view_entity/ActivityDuringPeriod';
 import { ActivityEnrollment } from '~/activity/view_entity/ActivityEnrollment';
 import { ActivitySessionTicketEnrollmentCount } from '~/activity/view_entity/ActivitySessionTicketEnrollmentCount';
+import { ProgramContentEbook } from './ProgramContentEbook';
 
 export const PostgresEntities = [
   Activity,
@@ -456,4 +457,5 @@ export const PostgresEntities = [
   ActivityEnrollment,
   ActivitySessionTicketEnrollmentCount,
   ActivityTicketEnrollmentCount,
+  ProgramContentEbook,
 ];

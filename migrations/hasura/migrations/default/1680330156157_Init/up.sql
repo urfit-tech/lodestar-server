@@ -8164,3 +8164,24 @@ ALTER TABLE ONLY public.voucher_plan_product
     ADD CONSTRAINT voucher_plan_product_voucher_plan_id_fkey FOREIGN KEY (voucher_plan_id) REFERENCES public.voucher_plan(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.voucher
     ADD CONSTRAINT voucher_voucher_code_id_fkey FOREIGN KEY (voucher_code_id) REFERENCES public.voucher_code(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+CREATE TABLE "public"."program_content_ebook" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "data" jsonb NOT NULL, "attachment_id" uuid NOT NULL, "created_at" timestamptz NOT NULL DEFAULT now(), "updated_at" timestamptz NOT NULL DEFAULT now(), PRIMARY KEY ("id") );
+CREATE OR REPLACE FUNCTION "public"."set_current_timestamp_updated_at"()
+RETURNS TRIGGER AS $$
+DECLARE
+  _new record;
+BEGIN
+  _new := NEW;
+  _new."updated_at" = NOW();
+  RETURN _new;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER "set_public_program_content_ebook_updated_at"
+BEFORE UPDATE ON "public"."program_content_ebook"
+FOR EACH ROW
+EXECUTE PROCEDURE "public"."set_current_timestamp_updated_at"();
+COMMENT ON TRIGGER "set_public_program_content_ebook_updated_at" ON "public"."program_content_ebook"
+IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+alter table "public"."program_content_ebook" rename column "attachment_id" to "program_content_id";
+
+
+
