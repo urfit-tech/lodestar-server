@@ -15,6 +15,7 @@ import { PodcastService } from '~/podcast/podcast.service';
 import { PodcastProgressInfo } from '~/podcast/podcast.types';
 import { PorterProgramService } from '~/program/porter-program.service';
 import { ProgramInfrastructure } from '~/program/program.infra';
+import { MemberInfrastructure } from '~/member/member.infra';
 import dayjs from 'dayjs';
 import { MemberNote } from '~/entity/MemberNote';
 import { Member } from '~/member/entity/member.entity';
@@ -31,6 +32,7 @@ export class PorterRunner extends Runner {
     private readonly podcastService: PodcastService,
     private readonly porterProgramService: PorterProgramService,
     private readonly programInfra: ProgramInfrastructure,
+    private readonly memberInfra: MemberInfrastructure,
 
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
@@ -193,18 +195,19 @@ export class PorterRunner extends Runner {
       member: { data: LastMemberNotesType; errMsg: string } | 'NoError';
     };
 
-    type ErrMesType = {
+    type ErrorLogType = {
       key: string;
       date: string;
       info: ErrInfoType | 'No data found' | 'Data format error';
     };
 
-    type DataType = {
+    type redisDataType = {
+      key?: string;
       memberNotes: MemberNote;
       lastMemberNotes: LastMemberNotesType;
     };
 
-    function hasDataProperty(data: DataType): boolean {
+    function hasRedisDataProperty(data: redisDataType): boolean {
       return Boolean(
         data.hasOwnProperty('lastMemberNotes') &&
           data.lastMemberNotes?.hasOwnProperty('criteria') &&
@@ -213,83 +216,109 @@ export class PorterRunner extends Runner {
       );
     }
 
+    function createErrorLog(key: string): ErrorLogType {
+      const dateTime = key.split(':')[1];
+      const errorLog: ErrorLogType = {
+        key,
+        date: `${new Date(parseInt(dateTime, 10))}`,
+        info: {
+          memberNote: 'NoError',
+          member: 'NoError',
+        },
+      };
+      return errorLog;
+    }
+
     const client = this.cacheService.getClient();
     const pattern = `PhoneService:*`;
-    const errAry: ErrMesType[] = [];
     let cursor = '0';
 
     do {
       const scanResult = await client.scan(cursor, 'MATCH', pattern, 'COUNT', batchSize);
       cursor = scanResult[0];
       const keys = scanResult[1];
+      const redisDataArray: redisDataType[] = [];
+      const errorLogs: ErrorLogType[] = [];
 
+      // handle data from redis
       for (const key of keys) {
         const valueString = await client.get(key);
-        const dateTime = key.split(':')[1];
-        let errMesInit: ErrMesType = {
-          key,
-          date: `${new Date(parseInt(dateTime, 10))}`,
-          info: {
-            memberNote: 'NoError',
-            member: 'NoError',
-          },
-        };
 
         if (!valueString) {
-          errMesInit.info = 'No data found';
-          errAry.push(errMesInit);
+          const errorLog = createErrorLog(key);
+          errorLog.info = 'No data found';
+          errorLogs.push(errorLog);
           continue;
         }
-        const data: DataType = JSON.parse(valueString);
+        const data: redisDataType = JSON.parse(valueString);
 
-        if (!hasDataProperty(data)) {
-          errMesInit.info = 'Data format error';
-          errAry.push(errMesInit);
+        if (!hasRedisDataProperty(data)) {
+          const errorLog = createErrorLog(key);
+          errorLog.info = 'Data format error';
+          errorLogs.push(errorLog);
           continue;
         }
-        const { memberNotes, lastMemberNotes } = data;
-        const { criteria, lastMemberRecord } = lastMemberNotes;
 
-        try {
-          await manager.getRepository(MemberNote).insert(memberNotes);
-        } catch (error) {
-          errMesInit = {
-            ...errMesInit,
-            info: {
-              member: (errMesInit.info as Pick<ErrInfoType, 'member'>).member,
-              memberNote: { data: memberNotes, errMsg: error.toString() },
-            },
-          };
-        }
-        try {
-          await manager.getRepository(Member).update(criteria, lastMemberRecord);
-        } catch (error) {
-          errMesInit = {
-            ...errMesInit,
-            info: {
-              member: { data: lastMemberNotes, errMsg: error.toString() },
-              memberNote: (errMesInit.info as Pick<ErrInfoType, 'memberNote'>).memberNote,
-            },
-          };
-        }
-
-        if (
-          typeof errMesInit.info !== 'string' &&
-          (typeof errMesInit.info.member !== 'string' || typeof errMesInit.info.memberNote !== 'string')
-        ) {
-          errAry.push(errMesInit);
-        }
-
-        await client.del(key);
+        data.key = key;
+        redisDataArray.push(data);
       }
+
+      // save data to DB
+      await manager.transaction(async (manager) => {
+        try {
+          await Promise.all(
+            redisDataArray.map(async (data) => {
+              const { memberNotes, lastMemberNotes, key } = data;
+              const { criteria, lastMemberRecord } = lastMemberNotes;
+              let errorLog = createErrorLog(key);
+
+              try {
+                await this.memberInfra.insertData<MemberNote>(memberNotes, MemberNote, manager);
+              } catch (error) {
+                errorLog = {
+                  ...errorLog,
+                  info: {
+                    member: (errorLog.info as Pick<ErrInfoType, 'member'>).member,
+                    memberNote: { data: memberNotes, errMsg: error.toString() },
+                  },
+                };
+              }
+              try {
+                await this.memberInfra.updateData<Member>(criteria, lastMemberRecord, Member, manager);
+              } catch (error) {
+                errorLog = {
+                  ...errorLog,
+                  info: {
+                    member: { data: lastMemberNotes, errMsg: error.toString() },
+                    memberNote: (errorLog.info as Pick<ErrInfoType, 'memberNote'>).memberNote,
+                  },
+                };
+              }
+
+              if (
+                typeof errorLog.info !== 'string' &&
+                (typeof errorLog.info.member !== 'string' || typeof errorLog.info.memberNote !== 'string')
+              ) {
+                errorLogs.push(errorLog);
+              }
+
+              await client.del(key);
+            }),
+          );
+
+          if (errorLogs.length > 0) {
+            for (const errorItem of errorLogs) {
+              console.error(`Saving phone service failed:${errorItem}`);
+            }
+          }
+          redisDataArray.length = 0;
+          errorLogs.length = 0;
+        } catch (error) {
+          // Data rollback
+          throw new Error(`Encountered an issue while handling member or memberNote data: ${error.message}`);
+        }
+      });
     } while (cursor !== '0');
-
-    if (errAry.length > 0) {
-      for (const item of errAry) {
-        console.error(`Saving phone service failed:${item}`);
-      }
-    }
-    errAry.length = 0;
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {

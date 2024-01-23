@@ -61,8 +61,8 @@ describe('PorterRunner (e2e)', () => {
   let appHostRepo: Repository<AppHost>;
   let appSecretRepo: Repository<AppSecret>;
   let appSettingRepo: Repository<AppSetting>;
-  let memberNoteRepo: Repository<MemberNote>;
   let memberRepo: Repository<Member>;
+  let memberNoteRepo: Repository<MemberNote>;
   let programPlanRepo: Repository<ProgramPlan>;
   let programContentSectionRepo: Repository<ProgramContentSection>;
   let programContentBodyRepo: Repository<ProgramContentBody>;
@@ -99,8 +99,8 @@ describe('PorterRunner (e2e)', () => {
     appSecretRepo = manager.getRepository(AppSecret);
     appHostRepo = manager.getRepository(AppHost);
     roleRepo = manager.getRepository(Role);
-    memberNoteRepo = manager.getRepository(MemberNote);
     memberRepo = manager.getRepository(Member);
+    memberNoteRepo = manager.getRepository(MemberNote);
     programRepo = manager.getRepository(Program);
     programPlanRepo = manager.getRepository(ProgramPlan);
     programContentSectionRepo = manager.getRepository(ProgramContentSection);
@@ -764,7 +764,7 @@ describe('PorterRunner (e2e)', () => {
     const lastMemberNotes = {
       criteria: {
         id: {},
-        appId: 1,
+        appId: 'test',
       },
       lastMemberRecord: {
         lastMemberNoteCreated: new Date(),

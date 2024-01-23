@@ -1,4 +1,16 @@
-import { EntityManager, FindOptionsWhere, OrderByCondition, In, DeleteResult, Equal, DeepPartial } from 'typeorm';
+import {
+  EntityManager,
+  FindOptionsWhere,
+  OrderByCondition,
+  In,
+  DeleteResult,
+  Equal,
+  DeepPartial,
+  InsertResult,
+  UpdateResult,
+  ObjectId,
+  EntityTarget,
+} from 'typeorm';
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 import { first, keys, omit, pick, values } from 'lodash';
@@ -54,6 +66,7 @@ import { Attend } from '~/entity/Attend';
 import { ReviewReply } from '~/entity/ReviewReply';
 import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -148,6 +161,25 @@ export class MemberInfrastructure {
   async getById(appId: string, memberId: string, entityManager: EntityManager): Promise<Member> {
     const memberRepo = entityManager.getRepository(Member);
     return memberRepo.findOneBy({ appId, id: memberId });
+  }
+
+  async insertData<T>(
+    data: QueryDeepPartialEntity<T> | QueryDeepPartialEntity<T>[],
+    table: EntityTarget<T>,
+    entityManager: EntityManager,
+  ): Promise<InsertResult> {
+    const memberRepo = entityManager.getRepository(table);
+    return await memberRepo.insert(data);
+  }
+
+  async updateData<T>(
+    data: string | string[] | number | number[] | Date | Date[] | ObjectId | ObjectId[] | FindOptionsWhere<T>,
+    partialEntity: QueryDeepPartialEntity<T>,
+    table: EntityTarget<T>,
+    entityManager: EntityManager,
+  ): Promise<UpdateResult> {
+    const memberRepo = entityManager.getRepository(table);
+    return memberRepo.update(data, partialEntity);
   }
 
   async getMembersByConditions(
