@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { Program } from '~/entity/Program';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { UtilityService } from '~/utility/utility.service';
@@ -385,6 +385,24 @@ export class ProgramInfrastructure {
       ...programContentIdByProgramPlanEnrollmentSubcribedFromNowOrAll,
       ...programContentIdByProgramPlanEnrollment,
       ...programContentIdByProgramPackageEnrollment,
+    });
+  }
+  async getProgramCategories(programIds: string[], entityManager: EntityManager) {
+    const programRepo = entityManager.getRepository(Program);
+    return programRepo.find({
+      where: { id: In(programIds) },
+      relations: { programCategories: { category: true } },
+      select: {
+        id: true,
+        programCategories: {
+          id: true,
+          category: {
+            id: true,
+            name: true,
+            position: true,
+          },
+        },
+      },
     });
   }
 }
