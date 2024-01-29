@@ -32,7 +32,7 @@ export class ReportService {
   generateMetabaseSignedUrl(payload: MetabasePayload) {
     const secretKey = this.configService.get('METABASE_SECRET_KEY');
     const siteUrl = this.configService.get('METABASE_SITE_URL');
-    const metabaseType = Object.keys(payload.resource)[0] === 'question' ? 'question' : ' dashboard';
+    const metabaseType = Object.keys(payload.resource)[0] === 'question' ? 'question' : 'dashboard';
     payload.exp = Math.round(Date.now() / 1000) + 10 * 60;
     const token = sign(payload, secretKey);
     const iframeUrl = `${siteUrl}/embed/${metabaseType}/${token}`;
