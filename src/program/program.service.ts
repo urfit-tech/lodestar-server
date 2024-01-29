@@ -97,8 +97,35 @@ export class ProgramService {
       ]),
     ];
   }
+  public async getEnrolledProgramContentById(
+    appId: string,
+    memberId: string,
+    programId: string,
+    programContentId: string,
+  ) {
+    // Todo: check permission
+    // ...
 
-  public sortProgramRole(roles: { id: string; member_id: string; name: string; createdAt: string }[]) {
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { id: memberId });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
+    const enrolledProgramContentId = await this.programInfra.getEnrolledProgramContentById(
+      memberId,
+      programId,
+      programContentId,
+      this.entityManager,
+    );
+
+    return enrolledProgramContentId;
+  }
+
+  private sortProgramRole(roles: { id: string; member_id: string; name: string; createdAt: string }[]) {
     return roles
       .filter((role) => role.id)
       .sort(
