@@ -225,7 +225,7 @@ export class VideoService {
 
           const fullUrl = `${formatBaseUrl}?${signature}`;
 
-          return fullUrl;
+          return new URL(fullUrl).toString();
         } else if (row.includes('.mp4')) {
           // dash segments
           const baseUrlWithSignature = row
