@@ -8,10 +8,10 @@ import { APIException } from '~/api.excetion';
 import { EbookEncryptionError, EbookFileRetrievalError, KeyAndIVRetrievalError } from './ebook.errors';
 
 @Injectable()
-export abstract class EbookService {
+export class EbookService {
   constructor(private readonly storageService: StorageService, private readonly utilityService: UtilityService) {}
 
-  async processEbook(appId: string, programContentId: string, req: Request): Promise<Readable | undefined> {
+  async processEbook(appId: string, programContentId: string, req: Request, isTrial: boolean): Promise<Readable | undefined> {
     let fileStream;
     let key: string;
     let iv: string;
@@ -24,7 +24,7 @@ export abstract class EbookService {
     }
 
     try {
-      const keyAndIv = await this.getKeyAndIV(req, appId);
+      const keyAndIv = isTrial ? await this.getTrialKeyAndIV(req, appId) : await this.getStandardKeyAndIV(req, appId);
       key = keyAndIv.key;
       iv = keyAndIv.iv;
     } catch (error) {
@@ -52,12 +52,7 @@ export abstract class EbookService {
     return this.utilityService.encryptDataStream(fileStream, key, iv);
   }
 
-  abstract getKeyAndIV(request: Request, appId?: string): Promise<{ key: string, iv: string }>;
-}
-
-@Injectable()
-export class StandardEbookService extends EbookService {
-  async getKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string; }> {
+  async getStandardKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string; }> {
     const authorizationHeader = request.headers.authorization;
     let hashKey: string;
 
@@ -79,11 +74,8 @@ export class StandardEbookService extends EbookService {
     return { key: hashKey, iv: iv };
   }
 
-}
-
-export class TrialEbookService extends EbookService {
-  async getKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string; }> {
-    console.log("#@##@#@#@@##@#@")
+  async getTrialKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string; }> {
     return { key: `trial_key_${process.env.ENCRYPT_DATA_STREAM_SALT}`, iv: `trial_key_${process.env.ENCRYPT_DATA_STREAM_SALT}`};
   }
 }
+

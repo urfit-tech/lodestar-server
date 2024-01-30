@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { EbookService, StandardEbookService } from './ebook.service';
+import { EbookService } from './ebook.service';
 import { StorageService } from '~/utility/storage/storage.service';
 import { UtilityService } from '~/utility/utility.service';
 import { Request } from 'express';
@@ -18,7 +18,7 @@ describe('EbookService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        StandardEbookService,
+        EbookService,
         {
           provide: StorageService,
           useValue: {
@@ -52,7 +52,7 @@ describe('EbookService', () => {
       ],
     }).compile();
 
-    service = module.get<EbookService>(StandardEbookService);
+    service = module.get<EbookService>(EbookService);
     storageService = module.get<StorageService>(StorageService);
     utilityService = module.get<UtilityService>(UtilityService);
   });
@@ -70,7 +70,7 @@ describe('EbookService', () => {
       const request = { headers: {} } as Request;
       const fileStream = new Readable();
 
-      const result = await service.getKeyAndIV(request , 'appId');
+      const result = await service.getStandardKeyAndIV(request , 'appId');
 
       expect(result).toBeUndefined();
     });
