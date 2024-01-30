@@ -17,7 +17,7 @@ import { CacheService } from '~/utility/cache/cache.service';
 import { MailerModule } from '~/mailer/mailer.module';
 import { UtilityModule } from '~/utility/utility.module';
 import { EbookController } from './ebook/ebook.controller';
-import { StandardEbookService, TrialEbookService } from './ebook/ebook.service';
+import { EbookService } from './ebook/ebook.service';
 
 @Module({
   controllers: [VideoController, EbookController],
@@ -32,8 +32,7 @@ import { StandardEbookService, TrialEbookService } from './ebook/ebook.service';
     VideoService,
     MediaService,
     ProgramInfrastructure,
-    StandardEbookService,
-    TrialEbookService
+    EbookService
   ],
   exports: [MediaService],
 })
