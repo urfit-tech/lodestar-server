@@ -1,76 +1,79 @@
-import { Body, Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, Res, UseGuards, Headers, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { APIException } from '~/api.excetion';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
-import { EbookService, StandardEbookService, TrialEbookService } from './ebook.service';
+import { EbookService } from './ebook.service';
 import { Request, Response } from 'express';
 import { Readable } from 'node:stream';
 import { EbookEncryptionError, EbookFileRetrievalError, KeyAndIVRetrievalError } from './ebook.errors';
 import { ProgramService } from '~/program/program.service';
+import { AuthService } from '~/auth/auth.service';
 
 @ApiTags('Ebook')
 @ApiBearerAuth()
-@Controller()
+@Controller({
+  path: 'ebook',
+  version: '2',
+})
 export class EbookController {
   constructor(
-    private readonly standardEbookService: StandardEbookService, 
-    private readonly trialEbookService: TrialEbookService,
-    private readonly programService: ProgramService
+    private readonly ebookService: EbookService, 
+    private readonly programService: ProgramService,
+    private readonly authService: AuthService
   ) {}
-  
-  @UseGuards(AuthGuard)
-  @Get('ebook/:programContentId')
+
+  @Get(':programContentId')
   public async getStandardEbook(
     @Param('programContentId') programContentId: string,
+    @Headers('Authorization') authorization: string,
     @Local('member') member: JwtMember,
     @Req() req: Request,
     @Res() res: Response
   ): Promise<void> {
-    console.log('programContentId',programContentId)
-    await this.processGetEbook(this.standardEbookService, member.appId, programContentId, req, res);
+    try {
+      const [contentId, ..._] = programContentId.split(".");
+      const programContents = await this.programService.getProgramContentById(contentId);
+
+      const isTrial = programContents?.displayMode === 'trial';
+      const appId = isTrial ? 'trial' : this.extractAppId(authorization);
+
+      await this.processGetEbook(appId, programContentId, req, res, isTrial);
+    } catch (error) {
+      this.handleError(error, res);
+    }
   }
 
-  @Get('ebook/trial/:programContentId')
-  public async getTrialEbook(
-    @Param('programContentId') programContentId: string,
-    @Req() req: Request,
-    @Res() res: Response
-  ): Promise<void> {
-    const [contentId, ..._] = programContentId.split(".");
-    const programContents = await this.programService.getProgramContentById(contentId);
-    if (programContents?.displayMode === 'trial') {
-      await this.processGetEbook(this.trialEbookService, 'trial', programContentId, req, res);
-    }else {
-      throw new APIException({ code: 'E_UNAUTORIZE', message: 'unautorize to get ebook' }, 401);
+  private extractAppId(authorization: string): string {
+    const token = authorization.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException();
     }
+    return this.authService.verify(token).appId;
   }
 
   private async processGetEbook(
-    ebookService: EbookService,
     appId: string,
     programContentId: string,
     req: Request,
-    res: Response
+    res: Response,
+    isTrial: boolean
   ): Promise<void> {
-    try {
-      const encryptedFileStream = await ebookService.processEbook(appId, programContentId, req);
+    const encryptedFileStream = await this.ebookService.processEbook(appId, programContentId, req, isTrial);
 
-      res.setHeader('Content-Type', 'application/epub+zip');
-      res.setHeader('Content-Disposition', `attachment; filename="${programContentId}.epub"`);
-      encryptedFileStream.pipe(res);
-    } catch (error) {
-      if (error instanceof EbookFileRetrievalError) {
-        throw new APIException({ code: 'E_EBOOK_FILE_RETRIEVAL', message: error.message }, 400);
-      } else if (error instanceof KeyAndIVRetrievalError) {
-        throw new APIException({ code: 'E_KEY_IV_RETRIEVAL', message: error.message }, 400);
-      } else if (error instanceof EbookEncryptionError) {
-        throw new APIException({ code: 'E_EBOOK_ENCRYPTION', message: error.message }, 400);
-      } else {
-        throw new APIException({ code: 'E_UNKNOWN', message: 'Unknown error' }, 500);
-      }
-    }
+    res.setHeader('Content-Type', 'application/epub+zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${programContentId}.epub"`);
+    encryptedFileStream.pipe(res);
   }
 
+  private handleError(error: any, res: Response): void {
+    if (error instanceof EbookFileRetrievalError || error instanceof KeyAndIVRetrievalError || error instanceof EbookEncryptionError) {
+      throw new APIException({ code: `E_${error.name.toUpperCase()}`, message: error.message }, 400);
+    } else if (error instanceof UnauthorizedException) {
+      throw error;
+    } else {
+      throw new APIException({ code: 'E_UNKNOWN', message: 'Unknown error' }, 500);
+    }
+  }
 }
