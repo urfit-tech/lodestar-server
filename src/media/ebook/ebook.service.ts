@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { StorageService } from '~/utility/storage/storage.service';
 import { UtilityService } from '~/utility/utility.service';
-import { createCipheriv, randomBytes, scrypt } from 'crypto';
 import { Request } from 'express';
 import { Readable } from 'node:stream';
 import { APIException } from '~/api.excetion';
@@ -47,7 +46,7 @@ export class EbookService {
     return response.Body;
   }
 
-  async encryptEbook(fileStream: Readable, key: string, iv: string): Promise<Readable | undefined> {
+  public async encryptEbook(fileStream: Readable, key: string, iv: string): Promise<Readable | undefined> {
 
     return this.utilityService.encryptDataStream(fileStream, key, iv);
   }
@@ -75,7 +74,7 @@ export class EbookService {
   }
 
   async getTrialKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string; }> {
-    return { key: `trial_key_${process.env.ENCRYPT_DATA_STREAM_SALT}`, iv: `trial_key_${process.env.ENCRYPT_DATA_STREAM_SALT}`};
+    return { key: `trial_key_${process.env.ENCRYPT_DATA_STREAM_SALT}`, iv: appId};
   }
 }
 
