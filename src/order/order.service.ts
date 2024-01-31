@@ -424,6 +424,7 @@ export class OrderService {
           .map((payment) => (payment.invoiceIssuedAt ? dateFormatter(payment.invoiceIssuedAt) : ''))
           .join('\n');
         csvRawOrderLog.invoiceStatus = getValue(each.invoiceOptions, 'status');
+        csvRawOrderLog.specification = getValue(each.shipping, 'specification');
 
         return csvRawOrderLog;
       })
