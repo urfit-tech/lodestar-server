@@ -28,7 +28,7 @@ import { StorageService } from '~/utility/storage/storage.service';
 import { GetObjectCommandInput, GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import { last } from 'lodash';
 import { Readable } from 'stream';
-import { EbookService, StandardEbookService, TrialEbookService } from '~/media/ebook/ebook.service';
+import { EbookService } from '~/media/ebook/ebook.service';
 import { ProgramContentEbook } from '~/entity/ProgramContentEbook';
 import { UtilityService } from '~/utility/utility.service';
 import { createTestMember } from '../factory/member.factory';
@@ -56,9 +56,8 @@ describe('EbookController (e2e)', () => {
   let programContentEbookRepo: Repository<ProgramContentEbook>;
   let memberRepo: Repository<Member>;
 
-  let standardEbookService: EbookService;
-  let trialEbookService: EbookService;
-  let programContentBody, program, programContentSection, programContent, programContentEbook;
+  let ebookService: EbookService;
+  let programContentBody, program, programContentSection, programContent;
 
   function streamToBuffer(stream) {
     return new Promise((resolve, reject) => {
@@ -100,8 +99,7 @@ describe('EbookController (e2e)', () => {
     application.useGlobalPipes(new ValidationPipe()).useGlobalFilters(new ApiExceptionFilter());
     storageService = application.get<StorageService>(StorageService);
     utilityService = application.get<UtilityService>(UtilityService);
-    standardEbookService = application.get<EbookService>(StandardEbookService);
-    trialEbookService = application.get<EbookService>(TrialEbookService);
+    ebookService = application.get<EbookService>(EbookService);
 
     manager = application.get<EntityManager>(getEntityManagerToken());
     roleRepo = manager.getRepository(Role);
@@ -237,8 +235,17 @@ describe('EbookController (e2e)', () => {
           host: 'test.something.com',
         };
 
+        const programContentPayToWatch = new ProgramContent();
+        programContentPayToWatch.id = '5e50b600-5e1b-4094-bd4e-99e506e5ca98';
+        programContentPayToWatch.displayMode = 'payToWatch';
+        programContentPayToWatch.title = 'test ebook program';
+        programContentPayToWatch.position = 0;
+        programContentPayToWatch.contentBody = programContentBody;
+        programContentPayToWatch.contentSection = programContentSection;
+        await programContentRepo.save(programContentPayToWatch)
+
         const response = await request(application.getHttpServer())
-          .get(`/ebook/some-program-content-id`)
+          .get(`/ebook/${programContentPayToWatch.id}.epub`)
           .set(requestHeader)
           .expect(401);
 
@@ -255,11 +262,11 @@ describe('EbookController (e2e)', () => {
         };
 
         const response = await request(application.getHttpServer())
-          .get(`/ebook/some-program-content-id`)
+          .get(`/ebook/${programContent.id}`)
           .set(requestHeader)
           .expect(401);
 
-        expect(response.body.message).toBe('Unauthorized');
+        expect(response.body.message).toBe('Invalid token');
         expect(response.body.statusCode).toBe(401);
       });
     });
@@ -275,7 +282,7 @@ describe('EbookController (e2e)', () => {
           .set(requestHeader)
           .expect(400);
 
-        expect(response.body.code).toBe('E_EBOOK_FILE_RETRIEVAL');
+        expect(response.body.code).toBe('E_EBOOK_NOT_FOUND');
         expect(response.body.message).toBe('Unable to retrieve ebook file');
       });
     });
@@ -284,7 +291,7 @@ describe('EbookController (e2e)', () => {
       it('should handle encryption errors', async () => {
         const { requestHeader } = await fetchToken();
 
-        jest.spyOn(standardEbookService, 'encryptEbook').mockImplementation(() => {
+        jest.spyOn(ebookService, 'encryptEbook').mockImplementation(() => {
           throw new Error('Encryption error');
         });
 
@@ -294,7 +301,7 @@ describe('EbookController (e2e)', () => {
           .send()
           .expect(400);
 
-        expect(response.body.code).toBe('E_EBOOK_ENCRYPTION');
+        expect(response.body.code).toBe('E_EBOOKENCRYPTIONERROR');
         expect(response.body.message).toBe('Error encrypting ebook');
       });
     });
@@ -317,7 +324,7 @@ describe('EbookController (e2e)', () => {
           host: 'test.something.com',
         };
 
-        jest.spyOn(standardEbookService, 'encryptEbook').mockImplementation(() => {
+        jest.spyOn(ebookService, 'encryptEbook').mockImplementation(() => {
           throw new Error('Encryption error');
         });
 
@@ -327,7 +334,7 @@ describe('EbookController (e2e)', () => {
           .send()
           .expect(400);
 
-        expect(response.body.code).toBe('E_EBOOK_ENCRYPTION');
+        expect(response.body.code).toBe('E_EBOOKENCRYPTIONERROR');
         expect(response.body.message).toBe('Error encrypting ebook');
       });
     });
@@ -341,7 +348,7 @@ describe('EbookController (e2e)', () => {
       });
     
       it('should return an error when key and IV cannot be retrieved', async () => {
-        jest.spyOn(StandardEbookService.prototype, 'getKeyAndIV').mockImplementation(() => {
+        jest.spyOn(ebookService, 'getStandardKeyAndIV').mockImplementation(() => {
           throw new Error("Key and IV retrieval failed");
         });
     
@@ -350,48 +357,9 @@ describe('EbookController (e2e)', () => {
           .set(requestHeader)
           .expect(400);
     
-        expect(response.body.code).toBe('E_KEY_IV_RETRIEVAL');
+        expect(response.body.code).toBe('E_KEYANDIVRETRIEVALERROR');
         expect(response.body.message).toBe('Unable to retrieve key and IV');
       });
     });
   });
-
-  describe('ebook/trail/*epub (GET)',() => {
-    beforeEach(() => {
-      jest.spyOn(storageService, 'getFileFromBucketStorage').mockImplementation((data: GetObjectCommandInput) => {
-        const filename = last(data.Key.split('/'));
-        const manifest = sdkStreamMixin(Readable.from(readFileSync(`${__dirname}/${filename}`)));
-        return Promise.resolve({ Body: manifest, $metadata: null } as GetObjectCommandOutput);
-      });
-    });
-
-    
-    describe('EbookController Trial Ebook Tests', () => {
-      it('success load trial ebook', async () => {
-  
-        const response = await request(application.getHttpServer())
-          .get(`/ebook/trial/${programContent.id}.epub`)
-          .set('host', appHost.host)
-          .expect(200);
-      });
-
-      it('unauthorize to load non trial ebook' , async () => {
-        const nonTrailEbookProgramContent = new ProgramContent();
-        nonTrailEbookProgramContent.id = '5e50b600-5e1b-4094-bd4e-99e506e5ca98';
-        nonTrailEbookProgramContent.displayMode = 'payToWatch';
-        nonTrailEbookProgramContent.title = 'test ebook program';
-        nonTrailEbookProgramContent.position = 0;
-        nonTrailEbookProgramContent.contentBody = programContentBody;
-        nonTrailEbookProgramContent.contentSection = programContentSection;
-        await programContentRepo.save(nonTrailEbookProgramContent)
-
-        const response = await request(application.getHttpServer())
-        .get(`/ebook/trial/${nonTrailEbookProgramContent.id}.epub`)
-        .set('host', appHost.host)
-        .expect(401);
-
-      })
-
-    });
-  })
 });

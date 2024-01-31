@@ -29,7 +29,8 @@ export class ProgramService {
   public async getProgramContentById(id: string): Promise<ProgramContent> {
     const programContentRepo = this.entityManager.getRepository(ProgramContent);
     return programContentRepo.findOne({
-      where: { id } 
+      where: { id },
+      relations: ['contentSection', 'contentSection.program'] 
     });
   }
 
