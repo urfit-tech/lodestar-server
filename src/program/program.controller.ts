@@ -45,4 +45,20 @@ export class ProgramController {
           programContentId,
         );
   }
+
+  @Get('/:programId/contents')
+  async getEnrolledProgramContents(
+    @Local('member') member: JwtMember,
+    @Req() request: Request,
+    @Param('programId') programId: string,
+  ) {
+    const { memberId } = request.query;
+
+    return this.programService.getEnrolledProgramContents(
+      member.appId,
+      String(memberId || member.memberId),
+      programId,
+      member.role,
+    );
+  }
 }
