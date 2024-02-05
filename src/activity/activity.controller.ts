@@ -1,10 +1,9 @@
-import { Body, Controller, Get, Logger, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, Param, ParseIntPipe, Query, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { FetchActivitiesResponseDto, ActivityCollectionDTO } from './activity.dto';
 import { ActivityService } from './activity.service';
-import { AuthGuard } from '~/auth/auth.guard';
+import { Request } from 'express';
 
-@UseGuards(AuthGuard)
 @ApiTags('Activity')
 @Controller({
   path: 'activity',
@@ -39,5 +38,23 @@ export class ActivityController {
       this.logger.error(`Error fetching activity collection: ${error.message}`);
       throw error;
     }
+  }
+
+  @Get(':activity_id')
+  async getActivityByMemberId(@Req() request: Request, @Param('activity_id') activityId: string): Promise<any> {
+    const { memberId, includeDeleted } = request.query;
+
+    return this.activityService.getActivityByMemberId(
+      activityId,
+      String(memberId),
+      includeDeleted && String(includeDeleted) === 'true',
+    );
+  }
+
+  @Get()
+  async getAllActivityByMemberId(@Req() request: Request): Promise<any> {
+    const { memberId } = request.query;
+
+    return this.activityService.getAllActivityTicketEnrollment(String(memberId));
   }
 }
