@@ -30,7 +30,7 @@ export class ProgramService {
     const programContentRepo = this.entityManager.getRepository(ProgramContent);
     return programContentRepo.findOne({
       where: { id },
-      relations: ['contentSection', 'contentSection.program'] 
+      relations: ['contentSection', 'contentSection.program'],
     });
   }
 
@@ -105,6 +105,7 @@ export class ProgramService {
       ]),
     ];
   }
+
   public async getEnrolledProgramContentById(
     appId: string,
     memberId: string,
@@ -131,6 +132,31 @@ export class ProgramService {
     );
 
     return enrolledProgramContentId;
+  }
+
+  public async getEnrolledProgramContents(appId: string, memberId: string, programId: string, role: string) {
+    // Todo: check permission
+    // ...
+    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { id: memberId });
+    if (memberData.length === 0) {
+      throw new APIException({
+        code: 'E_NO_MEMBER',
+        message: 'member not found',
+        result: null,
+      });
+    }
+
+    if (role === 'app-owner') {
+      return await this.programInfra.getProgramContentsByProgramId(programId, this.entityManager);
+    }
+
+    const enrolledProgramContents = await this.programInfra.getEnrolledProgramContentsByProgramId(
+      memberId,
+      programId,
+      this.entityManager,
+    );
+
+    return enrolledProgramContents;
   }
 
   private sortProgramRole(roles: { id: string; member_id: string; name: string; createdAt: string }[]) {
