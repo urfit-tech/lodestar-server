@@ -22,7 +22,7 @@ export class ProgramInfrastructure {
         'program.cover_thumbnail_url AS cover_thumbnail_url',
         'program.abstract AS abstract',
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
-        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        '(FLOOR(((SUM(program_content_progress.progress) + SUM(CASE WHEN program_content_ebook_toc_progress.finished_At IS NOT NULL THEN 1 ELSE 0 END) ) / (COUNT(program_content.id) + COUNT(program_content_ebook_toc)))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
       ])
@@ -56,6 +56,17 @@ export class ProgramInfrastructure {
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
       )
+      .leftJoin(
+        'program_content_ebook_toc',
+        'program_content_ebook_toc',
+        'program_content_ebook_toc.program_content_id = program_content.id',
+      )
+      .leftJoin(
+        'program_content_ebook_toc_progress',
+        'program_content_ebook_toc_progress',
+        'program_content_ebook_toc_progress.program_content_ebook_toc_id = program_content_ebook_toc.id AND program_content_ebook_toc_progress.member_id = :memberId',
+        { memberId },
+      )
       .groupBy('program.id')
       .getRawMany();
 
@@ -74,7 +85,7 @@ export class ProgramInfrastructure {
         'program.cover_thumbnail_url AS cover_thumbnail_url',
         'program.abstract AS abstract',
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
-        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        '(FLOOR(((SUM(program_content_progress.progress) + SUM(CASE WHEN program_content_ebook_toc_progress.finished_At IS NOT NULL THEN 1 ELSE 0 END) ) / (COUNT(program_content.id) + COUNT(program_content_ebook_toc)))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
       ])
@@ -105,6 +116,17 @@ export class ProgramInfrastructure {
         'program_content_progress',
         'program_content_progress.program_content_id = program_content.id' +
           ' AND program_content_progress.member_id = :memberId',
+        { memberId },
+      )
+      .leftJoin(
+        'program_content_ebook_toc',
+        'program_content_ebook_toc',
+        'program_content_ebook_toc.program_content_id = program_content.id',
+      )
+      .leftJoin(
+        'program_content_ebook_toc_progress',
+        'program_content_ebook_toc_progress',
+        'program_content_ebook_toc_progress.program_content_ebook_toc_id = program_content_ebook_toc.id AND program_content_ebook_toc_progress.member_id = :memberId',
         { memberId },
       )
       .groupBy('program.id')
