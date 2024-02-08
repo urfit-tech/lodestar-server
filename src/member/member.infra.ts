@@ -501,6 +501,50 @@ export class MemberInfrastructure {
       throw error;
     }
   }
+  async saveMember(manager: EntityManager, member: Member): Promise<Member> {
+    const memberRepo = manager.getRepository(Member);
+    return memberRepo.save(member);
+  }
+
+  async firstMemberByCondition(manager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<Member | null> {
+    const memberRepo = manager.getRepository(Member);
+    return memberRepo.findOneBy(conditions);
+  }
+
+  async upsertMemberProperty(manager: EntityManager, memberId: string, propertyId: string, value: string) {
+    const memberPropertyRepo = manager.getRepository(MemberProperty);
+    const property = await memberPropertyRepo.findOneBy({
+      memberId,
+      propertyId,
+    });
+    if (property) {
+      property.value = value;
+      return memberPropertyRepo.save(property);
+    }
+
+    const memberProperty = memberPropertyRepo.create({
+      memberId,
+      propertyId,
+      value,
+    });
+    return memberPropertyRepo.save(memberProperty);
+  }
+
+  async upsertMemberPhone(manager: EntityManager, memberId: string, phone: string) {
+    const memberPhoneRepo = manager.getRepository(MemberPhone);
+    const memberPhone = await memberPhoneRepo.findOneBy({
+      memberId,
+      phone,
+    });
+    if (memberPhone) {
+      return memberPhone;
+    }
+    const newMemberPhone = memberPhoneRepo.create({
+      memberId,
+      phone,
+    });
+    return memberPhoneRepo.save(newMemberPhone);
+  }
 
   async upsertMemberByEmail(
     appId: string,
@@ -546,50 +590,6 @@ export class MemberInfrastructure {
       ...data,
     });
     return memberRepo.save(member);
-  }
-  async saveMember(manager: EntityManager, member: Member): Promise<Member> {
-    const memberRepo = manager.getRepository(Member);
-    return memberRepo.save(member);
-  }
-
-  async firstMemberByCondition(manager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<Member | null> {
-    const memberRepo = manager.getRepository(Member);
-    return memberRepo.findOneBy(conditions);
-  }
-
-  async upsertMemberProperty(manager: EntityManager, memberId: string, propertyId: string, value: string) {
-    const memberPropertyRepo = manager.getRepository(MemberProperty);
-    const property = await memberPropertyRepo.findOneBy({
-      memberId,
-      propertyId,
-    });
-    if (property) {
-      property.value = value;
-      return memberPropertyRepo.save(property);
-    }
-
-    const memberProperty = memberPropertyRepo.create({
-      memberId,
-      propertyId,
-      value,
-    });
-    return memberPropertyRepo.save(memberProperty);
-  }
-
-  async upsertMemberPhone(manager: EntityManager, memberId: string, phone: string) {
-    const memberPhoneRepo = manager.getRepository(MemberPhone);
-    const memberPhone = await memberPhoneRepo.findOneBy({
-      memberId,
-      phone,
-    });
-    if (memberPhone) {
-      return memberPhone;
-    }
-    const newMemberPhone = memberPhoneRepo.create({
-      memberId,
-      phone,
-    });
-    return memberPhoneRepo.save(newMemberPhone);
   }
 
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {
