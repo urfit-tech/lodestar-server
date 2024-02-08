@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { chunk, flatten, isNull } from 'lodash';
-import { EntityManager, Equal, FindOptionsWhere, ILike, In, DeleteResult } from 'typeorm';
+import { EntityManager, Equal, FindOptionsWhere, ILike, In, DeleteResult, DeepPartial } from 'typeorm';
 import { ValidationError, isDateString, isEmpty } from 'class-validator';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
