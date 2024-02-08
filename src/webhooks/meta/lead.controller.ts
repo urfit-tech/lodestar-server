@@ -8,6 +8,7 @@ import { AppCache } from '~/app/app.type';
 
 @Controller({
   path: 'webhooks/meta/lead',
+  version: '2',
 })
 export class LeadController {
   constructor(
