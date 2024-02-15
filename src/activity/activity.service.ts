@@ -44,7 +44,7 @@ export class ActivityService {
     // Todo: check permission
     // ...
 
-    const activity = await this.activityInfra.getPublishedActivity(this.entityManager, activityId, includeDeleted);
+    const activity = await this.activityInfra.getPublishedActivity(this.entityManager, activityId);
     const activityTickets = await this.activityInfra.getActivityTicketEnrollment(
       activityId,
       memberId,
@@ -56,6 +56,7 @@ export class ActivityService {
     return {
       ...activity,
       activityTickets: activity.activityTickets
+        ?.filter((ticket) => ticket.isPublished && (includeDeleted || ticket.deletedAt === null))
         ?.sort((a, b) => a.endedAt - b.endedAt)
         .map((ticket) => {
           const enrolledTicket = activityTickets.find((t) => t.activityTicketId === ticket.id);
