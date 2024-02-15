@@ -175,11 +175,10 @@ export class ActivityInfrastructure {
     return enrollmentCountMap;
   }
 
-  async getPublishedActivity(manager: EntityManager, activityId: string, includeDeleted?: boolean) {
+  async getPublishedActivity(manager: EntityManager, activityId: string) {
     const activity = await manager.getRepository(Activity).findOne({
       where: {
         id: activityId,
-        activityTickets: { isPublished: true, deletedAt: includeDeleted ? undefined : IsNull() },
       },
       select: {
         id: true,
@@ -211,6 +210,7 @@ export class ActivityInfrastructure {
           endedAt: true,
           price: true,
           currencyId: true,
+          deletedAt: true,
           activitySessionTickets: {
             id: true,
             activitySessionType: true,
