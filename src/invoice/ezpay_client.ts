@@ -39,17 +39,21 @@ type EzpayRevokeParams = {
 export class EzpayClient {
   constructor(private readonly utilityService: UtilityService) {}
 
-  static formCredentials(appSecrets: Record<string, string>): EzpayCredentials {
-    if (!appSecrets['invoice.merchant_id'] || !appSecrets['invoice.hash_key'] || !appSecrets['invoice.hash_iv']) {
+  static formCredentials(invoiceGatewayConfig: object): EzpayCredentials {
+    if (
+      !invoiceGatewayConfig['invoice.merchant_id'] ||
+      !invoiceGatewayConfig['invoice.hash_key'] ||
+      !invoiceGatewayConfig['invoice.hash_iv']
+    ) {
       throw new Error('cannot create ezpay client: no ezpay secret env');
     }
 
     return {
-      merchantId: appSecrets['invoice.merchant_id'],
-      hashKey: appSecrets['invoice.hash_key'],
-      hashIV: appSecrets['invoice.hash_iv'],
+      merchantId: invoiceGatewayConfig['invoice.merchant_id'],
+      hashKey: invoiceGatewayConfig['invoice.hash_key'],
+      hashIV: invoiceGatewayConfig['invoice.hash_iv'],
       options: {
-        dryRun: ['1', 'true'].includes(appSecrets['invoice.dry_run']),
+        dryRun: ['1', 'true'].includes(invoiceGatewayConfig['invoice.dry_run']),
       },
     };
   }
