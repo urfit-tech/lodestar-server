@@ -6,7 +6,7 @@ import { PaymentModule } from '~/payment/payment.module';
 import { UtilityModule } from '~/utility/utility.module';
 
 import { EzpayClient } from './ezpay_client';
-import { InvoiceService } from './invocie.service';
+import { InvoiceService } from './invoice.service';
 import { InvoiceInfrastructure } from './invoice.infra';
 
 @Module({
