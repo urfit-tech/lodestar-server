@@ -1,1 +1,27 @@
 export type DisplayMode = 'conceal' | 'trial' | 'loginToTrail' | 'payToWatch';
+export type OwnedProgram = {
+  id: string;
+  title: string;
+  coverUrl: string;
+  coverMobileUrl: string;
+  coverThumbnailUrl: string;
+  abstract: string;
+  programRoleId: string;
+  programRoleName: string;
+  programRoleMemberId: string;
+  programRoleMemberName: string;
+  programRoleCreatedAt: string;
+  programContentSectionId: string;
+  programContentId: string;
+  programContentType: string;
+  progress: number;
+  viewedAt: Date;
+  deliveredAt: Date;
+  passingScore: number | null;
+  gainedPoints: number | null;
+  practiceId: string | null;
+  practiceUpdatedAt: Date | null;
+  exerciseUpdatedAt: Date | null;
+  ebookTocProgressFinishedAt: Date | null;
+  ebookTocProgressUpdatedAt: Date | null;
+};
