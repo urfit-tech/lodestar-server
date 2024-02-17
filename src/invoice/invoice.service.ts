@@ -50,17 +50,17 @@ export class InvoiceService {
       const invoiceComment = card4No ? `信用卡末四碼 ${card4No}` : options?.paymentType || '';
 
       const appSettings = await this.appService.getAppSettings(appId, manager);
-      const appSecrets = await this.appService.getAppSecrets(appId, manager);
+      const appInvoiceGateway = await this.invoiceInfra.getAppInvoiceGateway(appId, payment.invoiceGatewayId, manager);
       const appModules = await this.appService.getAppModules(appId, manager);
 
-      if (!this.isAllowUseInvoiceModule(appSecrets, appModules)) {
+      if (!this.isAllowUseInvoiceModule(appInvoiceGateway.options, appModules)) {
         throw new Error(`App: ${appId} invoice module is not enable or missing setting/secrets.`);
       }
 
       this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`);
       const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
 
-      const { Amt, invServiceResponse } = await this.issueInvoice(appSecrets, paymentNo, price, {
+      const { Amt, invServiceResponse } = await this.issueInvoice(appInvoiceGateway.options, paymentNo, price, {
         appId,
         name: invoiceOptions['name'] || member.name,
         email: invoiceOptions['email'] || member.email,
@@ -131,12 +131,7 @@ export class InvoiceService {
     }
   }
 
-  private async issueInvoice(
-    appSecrets: Record<string, string>,
-    paymentNo: string,
-    amount: number,
-    options: InvoiceOptions,
-  ) {
+  private async issueInvoice(invoiceGatewayConfig: object, paymentNo: string, amount: number, options: InvoiceOptions) {
     let invoiceAttrs: { [key: string]: any } = {};
     if (options.donationCode) {
       invoiceAttrs = {
@@ -233,7 +228,7 @@ export class InvoiceService {
       .concat(options.shipping?.method ? ['筆'] : [])
       .join('|');
 
-    const ezpayCredentials = EzpayClient.formCredentials(appSecrets);
+    const ezpayCredentials = EzpayClient.formCredentials(invoiceGatewayConfig);
     const invServiceResponse = await this.ezpayClient.issue(ezpayCredentials, {
       ItemAmt,
       ItemCount,
@@ -303,11 +298,11 @@ export class InvoiceService {
     await this.invoiceInfra.save(invoice, manager);
   }
 
-  private isAllowUseInvoiceModule(appSecrets: Record<string, string>, appModules: Array<string>): boolean {
+  private isAllowUseInvoiceModule(invoiceGatewayConfig: object, appModules: Array<string>): boolean {
     return Boolean(
-      appSecrets['invoice.merchant_id'] &&
-        appSecrets['invoice.hash_key'] &&
-        appSecrets['invoice.hash_iv'] &&
+      invoiceGatewayConfig['invoice.merchant_id'] &&
+        invoiceGatewayConfig['invoice.hash_key'] &&
+        invoiceGatewayConfig['invoice.hash_iv'] &&
         appModules.includes('invoice'),
     );
   }
