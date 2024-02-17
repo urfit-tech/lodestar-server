@@ -2,7 +2,7 @@ import { EntityManager } from 'typeorm';
 import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
-import { InvoiceService } from '~/invoice/invocie.service';
+import { InvoiceService } from '~/invoice/invoice.service';
 import { InvoiceModule } from '~/invoice/invoice.module';
 import { PaymentModule } from '~/payment/payment.module';
 import { PaymentInfrastructure } from '~/payment/payment.infra';
