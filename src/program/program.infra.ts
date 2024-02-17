@@ -21,10 +21,24 @@ export class ProgramInfrastructure {
         'program.cover_mobile_url AS cover_mobile_url',
         'program.cover_thumbnail_url AS cover_thumbnail_url',
         'program.abstract AS abstract',
-        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
-        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
-        'MAX(program_content_progress.updated_at) AS last_viewed_at',
-        'MIN(order_product.delivered_at) AS delivered_at',
+        'program_role.id AS program_role_id',
+        'program_role.name AS program_role_name',
+        'program_role.member_id AS program_role_member_id',
+        'member.name AS member_name',
+        'program_role.created_at AS program_role_created_at',
+        'program_content_section.id AS program_content_section_id',
+        'program_content.id AS program_content_id',
+        'program_content_body.type AS program_content_type',
+        'program_content_progress.progress AS progress',
+        'program_content_progress.updated_at AS viewed_at',
+        'order_product.delivered_at AS delivered_at',
+        'exam.passing_score AS passing_score',
+        'exercise_public.gained_points AS gained_points',
+        'exercise.updated_at AS exercise_updated_at',
+        'practice.id AS practice_id',
+        'practice.updated_at AS practice_updated_at',
+        'program_content_ebook_toc_progress.finished_at AS ebook_toc_progress_finished_at',
+        'program_content_ebook_toc_progress.updated_at AS ebook_toc_progress_updated_at',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -50,13 +64,46 @@ export class ProgramInfrastructure {
           ' AND program_content.published_at IS NOT NULL',
       )
       .leftJoin(
+        'program_content_body',
+        'program_content_body',
+        'program_content.content_body_id = program_content_body.id',
+      )
+      .leftJoin(
         'program_content_progress',
         'program_content_progress',
         'program_content_progress.program_content_id = program_content.id' +
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
       )
-      .groupBy('program.id')
+      .leftJoin(
+        'program_content_ebook_toc',
+        'program_content_ebook_toc',
+        'program_content_ebook_toc.program_content_id = program_content.id',
+      )
+      .leftJoin(
+        'program_content_ebook_toc_progress',
+        'program_content_ebook_toc_progress',
+        'program_content_ebook_toc_progress.program_content_ebook_toc_id = program_content_ebook_toc.id AND program_content_ebook_toc_progress.member_id = :memberId',
+        { memberId },
+      )
+      .leftJoin(
+        'practice',
+        'practice',
+        'practice.program_content_id = program_content.id AND practice.is_deleted = false AND practice.member_id = :memberId',
+        { memberId },
+      )
+      .leftJoin(
+        'exercise',
+        'exercise',
+        'exercise.program_content_id = program_content.id AND exercise.member_id = :memberId',
+        { memberId },
+      )
+      .leftJoin(
+        'exercise_public',
+        'exercise_public',
+        'exercise_public.program_content_id = program_content.id AND exercise_public.exercise_id= exercise.id',
+      )
+      .leftJoin('exam', 'exam', 'exam.id = exercise.exam_id')
       .getRawMany();
 
     return this.utilityService.convertObjectKeysToCamelCase(programs);
