@@ -145,16 +145,16 @@ export class MemberController {
     return this.memberService.getMembersByCondition(appId, option, condition);
   }
 
-  @Post('member-role')
+  @Post('member-role-count')
   @ApiExcludeEndpoint()
-  public async getMembersRoleList(
+  public async getMembersRoleCountList(
     @Local('member') member: JwtMember,
     @Body() condition: MemberGetConditionDTO,
   ) {
     const { appId } = member
 
-    const result = await this.memberService.getMembersRoleList(appId , condition);
-    
+    const result = await this.memberService.getMembersRoleCountList(appId , condition);
+
     return result;
   }
 

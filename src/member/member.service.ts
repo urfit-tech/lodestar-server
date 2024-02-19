@@ -118,7 +118,7 @@ export class MemberService {
     return cb(this.entityManager);
   }
 
-  async getMembersRoleList(
+  async getMembersRoleCountList(
     appId: string,
     condition?: MemberGetConditionDTO,
   ): Promise<{ data: { role: string; count: number }[] }> {
