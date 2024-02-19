@@ -67,7 +67,6 @@ import { ReviewReply } from '~/entity/ReviewReply';
 import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { MemberQueryBase } from './get_member_query_base';
 import MemberQueryObserveBase from './get-member-query/member-query-base';
 import { MemberCategoryObserver, MemberManagerObserver, MemberPermissionGroupObserver, MemberPhoneObserver, MemberPropertyObserver, MemberTagObserver } from './get-member-query/member-query-observer';
 
