@@ -68,6 +68,8 @@ import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { MemberQueryBase } from './get_member_query_base';
+import MemberQueryObserveBase from './get-member-query/member-query-base';
+import { MemberCategoryObserver, MemberManagerObserver, MemberPermissionGroupObserver, MemberPhoneObserver, MemberPropertyObserver, MemberTagObserver } from './get-member-query/member-query-observer';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -81,7 +83,16 @@ export class MemberInfrastructure {
     limit = 10,
     entityManager: EntityManager,
   ): Promise<{ data: Array<Member>; cursor: Cursor }> {
-    let memberQueryBase = new MemberQueryBase()
+
+    const memberQueryBase = new MemberQueryObserveBase();
+
+    memberQueryBase.addObserver(new MemberManagerObserver());
+    memberQueryBase.addObserver(new MemberPhoneObserver());
+    memberQueryBase.addObserver(new MemberTagObserver());
+    memberQueryBase.addObserver(new MemberCategoryObserver());
+    memberQueryBase.addObserver(new MemberPermissionGroupObserver());
+    memberQueryBase.addObserver(new MemberPropertyObserver());
+
     let queryBuilder = await memberQueryBase.execute(appId , conditions , order, entityManager)
 
     const paginator = buildPaginator({
@@ -103,7 +114,15 @@ export class MemberInfrastructure {
     order: OrderByCondition,
     entityManager: EntityManager,
   ): Promise<{ role: string; count: number }[]> {
-    let memberQueryBase = new MemberQueryBase()
+    const memberQueryBase = new MemberQueryObserveBase();
+
+    memberQueryBase.addObserver(new MemberManagerObserver());
+    memberQueryBase.addObserver(new MemberPhoneObserver());
+    memberQueryBase.addObserver(new MemberTagObserver());
+    memberQueryBase.addObserver(new MemberCategoryObserver());
+    memberQueryBase.addObserver(new MemberPermissionGroupObserver());
+    memberQueryBase.addObserver(new MemberPropertyObserver());
+
     let queryBuilder = await memberQueryBase.execute(appId , conditions , order, entityManager)
 
     queryBuilder = queryBuilder
