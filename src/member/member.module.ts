@@ -16,6 +16,7 @@ import { CacheService } from '~/utility/cache/cache.service';
 import { AuthInfrastructure } from '~/auth/auth.infra';
 import { UtilityService } from '~/utility/utility.service';
 import { AuthModule } from '~/auth/auth.module';
+import { MemberQueryBase } from './get_member_query_base';
 
 @Module({
   controllers: [MemberController],
@@ -35,7 +36,8 @@ import { AuthModule } from '~/auth/auth.module';
     CacheService,
     AuthInfrastructure,
     UtilityService,
+    MemberQueryBase,
   ],
-  exports: [MemberInfrastructure, MemberService],
+  exports: [MemberInfrastructure, MemberQueryBase , MemberService],
 })
 export class MemberModule {}

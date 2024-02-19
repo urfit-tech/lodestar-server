@@ -67,9 +67,11 @@ import { ReviewReply } from '~/entity/ReviewReply';
 import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { MemberQueryBase } from './get_member_query_base';
 
 @Injectable()
 export class MemberInfrastructure {
+
   async getSimpleMemberByConditions(
     appId: string,
     conditions: FindOptionsWhere<Member>,
@@ -79,71 +81,8 @@ export class MemberInfrastructure {
     limit = 10,
     entityManager: EntityManager,
   ): Promise<{ data: Array<Member>; cursor: Cursor }> {
-    let queryBuilder = entityManager.getRepository(Member).createQueryBuilder('member');
-
-    if (conditions.manager || conditions.managerId) {
-      queryBuilder = queryBuilder.leftJoinAndSelect('member.manager', 'manager');
-    }
-
-    if (conditions.memberPhones) {
-      const memberPhoneQueryBuilder = await this.getMemberPhoneQueryBuilderByCondition(entityManager, conditions);
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberPhoneQueryBuilder.getSql()})`,
-        'memberPhone',
-        '"memberPhone"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberPhones']);
-    }
-
-    if (conditions.memberTags) {
-      const memberTagQueryBuilder = await this.getMemberTagQueryBuilderByCondition(entityManager, conditions);
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberTagQueryBuilder.getSql()})`,
-        'memberTag',
-        '"memberTag"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberTags']);
-    }
-
-    if (conditions.memberCategories) {
-      const memberCategoriesQueryBuilder = await this.getMemberCategoryBuilderByCondition(entityManager, conditions);
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberCategoriesQueryBuilder.getSql()})`,
-        'memberCategory',
-        '"memberCategory"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberCategories']);
-    }
-
-    if (conditions.memberPermissionGroups) {
-      const memberPermissionGroupQueryBuilder = await this.getMemberPermissionsGroupBuilderByCondition(
-        entityManager,
-        conditions,
-      );
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberPermissionGroupQueryBuilder.getSql()})`,
-        'memberPermissionGroup',
-        '"memberPermissionGroup"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberPermissionGroups']);
-    }
-
-    if (conditions.memberProperties) {
-      const memberPropertyQueryBuilder = await this.getMemberPropertyQueryBuilderByCondition(entityManager, conditions);
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberPropertyQueryBuilder.getSql()})`,
-        'memberProperty',
-        '"memberProperty"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberProperties']);
-    }
-
-    queryBuilder = queryBuilder
-      .where({
-        appId,
-        ...conditions,
-      })
-      .orderBy(Object.keys(order).reduce((prev, current) => ((prev[`member.${current}`] = order[current]), prev), {}));
+    let memberQueryBase = new MemberQueryBase()
+    let queryBuilder = await memberQueryBase.execute(appId , conditions , order, entityManager)
 
     const paginator = buildPaginator({
       entity: Member,
@@ -161,79 +100,19 @@ export class MemberInfrastructure {
   async getMemberRoleCounts(
     appId: string,
     conditions: FindOptionsWhere<Member>,
+    order: OrderByCondition,
     entityManager: EntityManager,
   ): Promise<{ role: string; count: number }[]> {
-    let queryBuilder = entityManager.getRepository(Member).createQueryBuilder('member');
-  
-    if (conditions.manager || conditions.managerId) {
-      queryBuilder = queryBuilder.leftJoinAndSelect('member.manager', 'manager');
-    }
-  
-    if (conditions.memberPhones) {
-      const memberPhoneQueryBuilder = await this.getMemberPhoneQueryBuilderByCondition(entityManager, conditions);
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberPhoneQueryBuilder.getSql()})`,
-        'memberPhone',
-        '"memberPhone"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberPhones']);
-    }
-  
-    if (conditions.memberTags) {
-      const memberTagQueryBuilder = await this.getMemberTagQueryBuilderByCondition(entityManager, conditions);
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberTagQueryBuilder.getSql()})`,
-        'memberTag',
-        '"memberTag"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberTags']);
-    }
-  
-    if (conditions.memberCategories) {
-      const memberCategoriesQueryBuilder = await this.getMemberCategoryBuilderByCondition(entityManager, conditions);
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberCategoriesQueryBuilder.getSql()})`,
-        'memberCategory',
-        '"memberCategory"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberCategories']);
-    }
-  
-    if (conditions.memberPermissionGroups) {
-      const memberPermissionGroupQueryBuilder = await this.getMemberPermissionsGroupBuilderByCondition(
-        entityManager,
-        conditions,
-      );
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberPermissionGroupQueryBuilder.getSql()})`,
-        'memberPermissionGroup',
-        '"memberPermissionGroup"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberPermissionGroups']);
-    }
-  
-    if (conditions.memberProperties) {
-      const memberPropertyQueryBuilder = await this.getMemberPropertyQueryBuilderByCondition(entityManager, conditions);
+    let memberQueryBase = new MemberQueryBase()
+    let queryBuilder = await memberQueryBase.execute(appId , conditions , order, entityManager)
 
-      queryBuilder = queryBuilder.innerJoinAndSelect(
-        `(${memberPropertyQueryBuilder.getSql()})`,
-        'memberProperty',
-        '"memberProperty"."mid"::text = "member"."id"',
-      );
-      conditions = omit(conditions, ['memberProperties']);
-    }
-  
     queryBuilder = queryBuilder
-      .where({
-        appId,
-        ...conditions,
-      })
       .select('member.role', 'role')
       .addSelect('COUNT(member.id)', 'count')
       .groupBy('member.role');
-  
+
     const roleCounts = await queryBuilder.getRawMany();
-  
+
     return roleCounts.map(item => ({
       role: item.role,
       count: parseInt(item.count, 10),

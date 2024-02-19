@@ -162,6 +162,7 @@ export class MemberService {
       const roleCounts = await this.memberInfra.getMemberRoleCounts(
         appId,
         wrapCondition,
+        {},
         manager,
       );
   
