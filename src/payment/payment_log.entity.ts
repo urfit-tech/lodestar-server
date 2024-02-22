@@ -1,7 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import { OrderLog } from '~/order/entity/order_log.entity';
-import { InvoiceGateway } from './invoice_gateway.entity';
 
 @Index('payment_log_custom_no_key', ['customNo'], { unique: true })
 @Index('payment_log_no_key', ['no'], { unique: true })
@@ -66,10 +65,8 @@ export class PaymentLog {
   })
   invoiceOptions: object;
 
-  @Column('uuid', {
-    name: 'invoice_gateway_id'
-  })
-  invoiceGatewayId: string
+  @Column('uuid', { name: 'invoice_gateway_id', nullable: true })
+  invoiceGatewayId: string | null;
 
   @ManyToOne(() => OrderLog, (orderLog) => orderLog.paymentLogs, {
     onDelete: 'RESTRICT',
