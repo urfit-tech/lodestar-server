@@ -725,6 +725,7 @@ describe('MemberService (e2e)', () => {
           insertedMemberProperty: MemberProperty;
           insertedMemberTag: MemberTag;
         }) => {
+          console.log('member.memberPhones', member.memberPhones)
           expect(member.memberPhones.length).toBe(0);
           expect(member.memberCategories[0].category.id).toBe(insertedMemberCategory.category.id);
           expect(member.memberProperties[0].property.name).toBe(insertedMemberProperty.property.name);
