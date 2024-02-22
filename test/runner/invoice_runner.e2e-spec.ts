@@ -132,6 +132,7 @@ describe('InvoiceRunner (e2e)', () => {
     givenPayment.gateway = 'spgateway';
     givenPayment.invoiceIssuedAt = null;
     givenPayment.invoiceOptions = {};
+    givenPayment.invoiceGatewayId = v4()
 
     await autoRollbackTransaction(manager, async (manager) => {
       await manager.save(notAllowedApp);
@@ -205,6 +206,7 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
+      payment.invoiceGatewayId = v4()
       
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
@@ -276,6 +278,7 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
+      payment.invoiceGatewayId = v4()
       
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
@@ -347,6 +350,7 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
+      payment.invoiceGatewayId = v4()
       
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
@@ -430,6 +434,7 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
+      payment.invoiceGatewayId = v4()
       
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
@@ -530,6 +535,7 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
+      payment.invoiceGatewayId = v4()
       
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
