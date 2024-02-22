@@ -180,18 +180,18 @@ export class PorterRunner extends Runner {
   async portPhoneServiceInsertEvent(manager: EntityManager, batchSize = 1000): Promise<void> {
     type LastMemberNotesType = {
       criteria: {
-        id: FindOperator<any>;
+        id: any;
         appId: string;
       };
       lastMemberRecord: {
-        lastMemberNoteAnswered?: Date | undefined;
-        lastMemberNoteCalled?: Date | undefined;
-        lastMemberNoteCreated: Date;
+        lastMemberNoteAnswered?: string | undefined;
+        lastMemberNoteCalled?: string | undefined;
+        lastMemberNoteCreated: string;
       };
     };
 
     type ErrInfoType = {
-      memberNote: { data: MemberNote; errMsg: string } | 'NoError';
+      memberNote: { data: MemberNote[]; errMsg: string } | 'NoError';
       member: { data: LastMemberNotesType; errMsg: string } | 'NoError';
     };
 
@@ -203,7 +203,7 @@ export class PorterRunner extends Runner {
 
     type redisDataType = {
       key?: string;
-      memberNotes: MemberNote;
+      memberNotes: MemberNote[];
       lastMemberNotes: LastMemberNotesType;
     };
 
