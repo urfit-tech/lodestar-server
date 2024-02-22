@@ -882,6 +882,17 @@ describe('PorterRunner (e2e)', () => {
         expect(logSpy).toBeCalledTimes(20);
         logSpy.mockRestore();
       });
+
+      it('should return undefined when getting data from Redis with a key', async () => {
+        await cacheService.getClient().set(`PhoneService:${new Date().getTime()}`, undefined);
+
+        const logSpy = jest.spyOn(console, 'error');
+        const porterRunner = application.get<PorterRunner>(Runner);
+        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        expect(logSpy).toHaveBeenCalled();
+        expect(logSpy).toBeCalledTimes(1);
+        logSpy.mockRestore();
+      });
     });
   });
 });
