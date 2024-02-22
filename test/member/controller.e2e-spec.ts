@@ -2246,6 +2246,7 @@ describe('MemberController (e2e)', () => {
       insertedPaymentLog.no = '1555336487636';
       insertedPaymentLog.status = 'SUCCESS';
       insertedPaymentLog.price = 1000;
+      insertedPaymentLog.invoiceGatewayId = v4()
       await manager.save(insertedPaymentLog);
 
       const insertedVoucherPlan = new VoucherPlan();
