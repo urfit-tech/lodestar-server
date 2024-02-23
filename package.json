@@ -52,6 +52,7 @@
     "ics": "^3.5.0",
     "ioredis": "^5.3.1",
     "jsonwebtoken": "^9.0.0",
+    "libphonenumber-js": "^1.10.56",
     "mustache": "^4.2.0",
     "nestjs-pino": "^3.2.0",
     "nestjs-spelunker": "^1.1.3",

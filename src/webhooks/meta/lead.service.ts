@@ -8,6 +8,7 @@ import { LeadWebhookBody } from './lead.dto';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { Member } from '~/member/entity/member.entity';
 import { AppCache } from '~/app/app.type';
+import parsePhoneNumberFromString from 'libphonenumber-js';
 
 @Injectable()
 export class LeadService {
@@ -49,7 +50,8 @@ export class LeadService {
           );
         }),
       );
-      await this.memberInfra.upsertMemberPhone(entityManager, member.id, body.phone_number);
+
+      await this.memberInfra.upsertMemberPhone(entityManager, member.id, this.parsePhoneNumber(body.phone_number));
     });
   }
 
@@ -90,5 +92,9 @@ export class LeadService {
       });
     }
     return this.memberInfra.saveMember(entityManager, member);
+  }
+
+  private parsePhoneNumber(phoneNumber: string) {
+    return parsePhoneNumberFromString(phoneNumber).formatNational().replace(/\s+/g, '');
   }
 }
