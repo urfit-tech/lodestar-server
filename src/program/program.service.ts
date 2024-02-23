@@ -111,6 +111,7 @@ export class ProgramService {
     memberId: string,
     programId: string,
     programContentId: string,
+    permissionId: string,
   ) {
     // Todo: check permission
     // ...
@@ -129,6 +130,7 @@ export class ProgramService {
       programId,
       programContentId,
       this.entityManager,
+      permissionId,
     );
 
     return enrolledProgramContentId;
