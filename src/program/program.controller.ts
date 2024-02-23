@@ -35,14 +35,18 @@ export class ProgramController {
     @Param('programContentId') programContentId: string,
   ) {
     const { memberId } = request.query;
+    const { role, permissions } = member;
 
-    return member.role === 'app-owner'
+    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
+
+    return role === 'app-owner' || ['PROGRAM_ADMIN'].some((e) => permissions.includes(e))
       ? { programContentId }
       : this.programService.getEnrolledProgramContentById(
           member.appId,
           String(memberId || member.memberId),
           programId,
           programContentId,
+          extraAllowPermission,
         );
   }
 
