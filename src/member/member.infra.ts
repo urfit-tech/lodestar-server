@@ -14,7 +14,7 @@ import {
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
 import { first, keys, omit, pick, values } from 'lodash';
-
+import * as uuid from 'uuid';
 import { Member } from './entity/member.entity';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
 import { MemberCategory } from './entity/member_category.entity';
@@ -521,6 +521,96 @@ export class MemberInfrastructure {
       console.error(`Error when trying to log member action: ${error}`);
       throw error;
     }
+  }
+
+  async upsertMemberByEmail(
+    appId: string,
+    email: string,
+    name: string,
+    username: string,
+    role: string,
+    manager: EntityManager,
+  ): Promise<Member> {
+    const memberRepo = manager.getRepository(Member);
+    const existsMember = await memberRepo.findOneBy({ email, appId });
+    if (existsMember) {
+      existsMember.role = role;
+      existsMember.username = username;
+      return memberRepo.save(existsMember);
+    }
+    const member = memberRepo.create({
+      id: uuid.v4(),
+      appId,
+      email,
+      name,
+      username,
+      role,
+    });
+    return memberRepo.save(member);
+  }
+
+  async upsertMemberBy(
+    manager: EntityManager,
+    data: DeepPartial<Member>,
+    by: FindOptionsWhere<Member>,
+  ): Promise<Member> {
+    const memberRepo = manager.getRepository(Member);
+    const existsMember = await memberRepo.findOneBy(by);
+    if (existsMember) {
+      return memberRepo.save({
+        ...existsMember,
+        ...data,
+      });
+    }
+    const member = memberRepo.create({
+      id: uuid.v4(),
+      ...data,
+    });
+    return memberRepo.save(member);
+  }
+  async saveMember(manager: EntityManager, member: Member): Promise<Member> {
+    const memberRepo = manager.getRepository(Member);
+    return memberRepo.save(member);
+  }
+
+  async firstMemberByCondition(manager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<Member | null> {
+    const memberRepo = manager.getRepository(Member);
+    return memberRepo.findOneBy(conditions);
+  }
+
+  async upsertMemberProperty(manager: EntityManager, memberId: string, propertyId: string, value: string) {
+    const memberPropertyRepo = manager.getRepository(MemberProperty);
+    const property = await memberPropertyRepo.findOneBy({
+      memberId,
+      propertyId,
+    });
+    if (property) {
+      property.value = value;
+      return memberPropertyRepo.save(property);
+    }
+
+    const memberProperty = memberPropertyRepo.create({
+      memberId,
+      propertyId,
+      value,
+    });
+    return memberPropertyRepo.save(memberProperty);
+  }
+
+  async upsertMemberPhone(manager: EntityManager, memberId: string, phone: string) {
+    const memberPhoneRepo = manager.getRepository(MemberPhone);
+    const memberPhone = await memberPhoneRepo.findOneBy({
+      memberId,
+      phone,
+    });
+    if (memberPhone) {
+      return memberPhone;
+    }
+    const newMemberPhone = memberPhoneRepo.create({
+      memberId,
+      phone,
+    });
+    return memberPhoneRepo.save(newMemberPhone);
   }
 
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {
