@@ -38,6 +38,7 @@ import { CouponPlan } from '~/entity/CouponPlan';
 import { CouponCode } from '~/entity/CouponCode';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { CouponPlanProduct } from '~/entity/CouponPlanProduct';
+import { MemberNote } from '~/entity/MemberNote';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -99,6 +100,11 @@ member.username = 'test';
 member.role = role.name;
 member.name = 'testMember';
 member.passhash = bcrypt.hashSync('test_password', 1);
+
+export const memberNote = new MemberNote();
+memberNote.id = v4();
+memberNote.authorId = member.id;
+memberNote.memberId = member.id;
 
 export const program = new Program();
 program.id = v4();

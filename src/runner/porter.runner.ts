@@ -7,7 +7,7 @@ import { Runner } from './runner';
 import { CacheService } from '~/utility/cache/cache.service';
 import axios from 'axios';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager } from 'typeorm';
+import { EntityManager, FindOperator, LessThan } from 'typeorm';
 import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { MemberService } from '~/member/member.service';
 import { ProgramService } from '~/program/program.service';
@@ -15,7 +15,10 @@ import { PodcastService } from '~/podcast/podcast.service';
 import { PodcastProgressInfo } from '~/podcast/podcast.types';
 import { PorterProgramService } from '~/program/porter-program.service';
 import { ProgramInfrastructure } from '~/program/program.infra';
+import { MemberInfrastructure } from '~/member/member.infra';
 import dayjs from 'dayjs';
+import { MemberNote } from '~/entity/MemberNote';
+import { Member } from '~/member/entity/member.entity';
 
 @Injectable()
 export class PorterRunner extends Runner {
@@ -29,6 +32,7 @@ export class PorterRunner extends Runner {
     private readonly podcastService: PodcastService,
     private readonly porterProgramService: PorterProgramService,
     private readonly programInfra: ProgramInfrastructure,
+    private readonly memberInfra: MemberInfrastructure,
 
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
@@ -173,6 +177,151 @@ export class PorterRunner extends Runner {
     }
   }
 
+  async portPhoneServiceInsertEvent(manager: EntityManager, batchSize = 1000): Promise<void> {
+    type LastMemberNotesType = {
+      criteria: {
+        id: any;
+        appId: string;
+      };
+      lastMemberRecord: {
+        lastMemberNoteAnswered?: string | undefined;
+        lastMemberNoteCalled?: string | undefined;
+        lastMemberNoteCreated: string;
+      };
+    };
+
+    type ErrInfoType = {
+      memberNote: { data: MemberNote[]; errMsg: string } | 'NoError';
+      member: { data: LastMemberNotesType; errMsg: string } | 'NoError';
+    };
+
+    type ErrorLogType = {
+      key: string;
+      date: string;
+      info: ErrInfoType | 'No data found' | 'Data format error';
+    };
+
+    type redisDataType = {
+      key?: string;
+      memberNotes: MemberNote[];
+      lastMemberNotes: LastMemberNotesType;
+    };
+
+    const hasRedisDataProperty = (data: redisDataType): boolean => {
+      return Boolean(
+        data.hasOwnProperty('lastMemberNotes') &&
+          data.lastMemberNotes?.hasOwnProperty('criteria') &&
+          data.lastMemberNotes?.hasOwnProperty('lastMemberRecord') &&
+          data.hasOwnProperty('memberNotes'),
+      );
+    };
+
+    const createErrorLog = (key: string): ErrorLogType => {
+      const dateTime = key.split(':')[1];
+      const errorLog: ErrorLogType = {
+        key,
+        date: `${new Date(parseInt(dateTime, 10))}`,
+        info: {
+          memberNote: 'NoError',
+          member: 'NoError',
+        },
+      };
+      return errorLog;
+    };
+
+    const client = this.cacheService.getClient();
+    const pattern = `PhoneService:*`;
+    let cursor = '0';
+
+    do {
+      const scanResult = await client.scan(cursor, 'MATCH', pattern, 'COUNT', batchSize);
+      cursor = scanResult[0];
+      const keys = scanResult[1];
+      const redisDataArray: redisDataType[] = [];
+      const errorLogs: ErrorLogType[] = [];
+
+      // handle data from redis
+      for (const key of keys) {
+        const valueString = await client.get(key);
+
+        if (!valueString) {
+          const errorLog = createErrorLog(key);
+          errorLog.info = 'No data found';
+          errorLogs.push(errorLog);
+          continue;
+        }
+        const data: redisDataType = JSON.parse(valueString);
+
+        if (!hasRedisDataProperty(data)) {
+          const errorLog = createErrorLog(key);
+          errorLog.info = 'Data format error';
+          errorLogs.push(errorLog);
+          continue;
+        }
+
+        data.key = key;
+        redisDataArray.push(data);
+      }
+
+      // save data to DB
+      await Promise.all(
+        redisDataArray.map(
+          async (data) =>
+            await manager.transaction(async (manager) => {
+              try {
+                const { memberNotes, lastMemberNotes, key } = data;
+                const { criteria, lastMemberRecord } = lastMemberNotes;
+                let errorLog = createErrorLog(key);
+
+                try {
+                  await this.memberInfra.insertData<MemberNote>(memberNotes, MemberNote, manager);
+                } catch (error) {
+                  errorLog = {
+                    ...errorLog,
+                    info: {
+                      member: (errorLog.info as Pick<ErrInfoType, 'member'>).member,
+                      memberNote: { data: memberNotes, errMsg: error.toString() },
+                    },
+                  };
+                }
+                try {
+                  await this.memberInfra.updateData<Member>(criteria, lastMemberRecord, Member, manager);
+                } catch (error) {
+                  errorLog = {
+                    ...errorLog,
+                    info: {
+                      member: { data: lastMemberNotes, errMsg: error.toString() },
+                      memberNote: (errorLog.info as Pick<ErrInfoType, 'memberNote'>).memberNote,
+                    },
+                  };
+                }
+
+                if (
+                  typeof errorLog.info !== 'string' &&
+                  (typeof errorLog.info.member !== 'string' || typeof errorLog.info.memberNote !== 'string')
+                ) {
+                  errorLogs.push(errorLog);
+                }
+
+                await client.del(key);
+              } catch (error) {
+                // Data rollback
+                throw new Error(`Encountered an issue while handling member or memberNote data: ${error.message}`);
+              }
+            }),
+        ),
+      );
+
+      if (errorLogs.length > 0) {
+        for (const errorItem of errorLogs) {
+          console.error(`Saving phone service failed:${errorItem}`);
+        }
+      }
+      redisDataArray.length = 0;
+      errorLogs.length = 0;
+    } while (cursor !== '0');
+  }
+
   async execute(entityManager?: EntityManager): Promise<void> {
     console.time('Total Execution Time');
     const currentTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
@@ -198,6 +347,7 @@ export class PorterRunner extends Runner {
     await handlePorting('last logged in', () => this.portLastLoggedIn(this.entityManager));
     await handlePorting('player event', () => this.portPlayerEvent(this.entityManager));
     await handlePorting('podcast event', () => this.portPodcastProgram(this.entityManager));
+    await handlePorting('phone service event', () => this.portPhoneServiceInsertEvent(this.entityManager));
 
     if (errors.length > 0) {
       console.error(errors, 'Porting errors occurred');
