@@ -47,18 +47,19 @@ describe('AuthController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ApplicationModule],
     }).compile();
-    
+
     application = moduleFixture.createNestApplication();
     cacheService = application.get(CacheService);
     configService = application.get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService);
 
-    application.useGlobalPipes(new ValidationPipe())
+    application
+      .useGlobalPipes(new ValidationPipe())
       .useGlobalFilters(new ApiExceptionFilter())
       .use(json({ limit: '10mb' }))
       .use(urlencoded({ extended: true, limit: '10mb' }))
       .use(
         session({
-          secret: 'kolable-test',
+          secret: process.env.SESSION_SECRET,
           store: new RedisStore({ client: cacheService.getClient() }),
           resave: false,
           saveUninitialized: false,
@@ -90,12 +91,12 @@ describe('AuthController (e2e)', () => {
     await appHostRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
-    
+
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
     await appHostRepo.save(appHost);
     await memberRepo.save(member);
-    
+
     await application.init();
   });
 
@@ -108,9 +109,9 @@ describe('AuthController (e2e)', () => {
     await appHostRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
-    
-    await application.close()
-  })
+
+    await application.close();
+  });
 
   describe('/auth/general-login (POST)', () => {
     const route = '/auth/general-login';
@@ -123,11 +124,7 @@ describe('AuthController (e2e)', () => {
         .expect(400);
       expect(body).toStrictEqual({
         statusCode: 400,
-        message: [
-          'appId must be a string',
-          'account must be a string',
-          'password must be a string'
-        ],
+        message: ['appId must be a string', 'account must be a string', 'password must be a string'],
         error: 'Bad Request',
       });
     });
@@ -183,7 +180,7 @@ describe('AuthController (e2e)', () => {
       testNoPwdMember.username = 'test-no-password';
 
       await manager.save(testNoPwdMember);
-            const { body } = await request(application.getHttpServer())
+      const { body } = await request(application.getHttpServer())
         .post(route)
         .set('host', appHost.host)
         .send({
@@ -297,7 +294,7 @@ describe('AuthController (e2e)', () => {
           adminMember.username = 'tdm-admin-member';
           adminMember.passhash = bcrypt.hashSync('test_password', 1);
           await manager.save(adminMember);
-  
+
           const fingerPrint = 'tdm-admin-fingerprint';
           const { body } = await request(application.getHttpServer())
             .post(route)
@@ -310,7 +307,7 @@ describe('AuthController (e2e)', () => {
             })
             .expect(201);
           const { code, message, result } = body;
-          const {authToken, deviceStatus } = result;
+          const { authToken, deviceStatus } = result;
           expect(code).toBe('SUCCESS');
           expect(message).toBe('login successfully');
           expect(authToken).not.toBeUndefined();
@@ -352,7 +349,7 @@ describe('AuthController (e2e)', () => {
           generalMember.username = 'tdm-general-member';
           generalMember.passhash = bcrypt.hashSync('test_password', 1);
           await manager.save(generalMember);
-  
+
           const fingerPrint = 'tdm-general-fingerprint';
           const { body } = await request(application.getHttpServer())
             .post(route)
@@ -365,7 +362,7 @@ describe('AuthController (e2e)', () => {
             })
             .expect(201);
           const { code, message, result } = body;
-          const {authToken, deviceStatus } = result;
+          const { authToken, deviceStatus } = result;
           expect(code).toBe('SUCCESS');
           expect(message).toBe('login successfully');
           expect(authToken).not.toBeUndefined();
@@ -407,7 +404,7 @@ describe('AuthController (e2e)', () => {
           loginedGeneralMember.username = 'tdm-general-member';
           loginedGeneralMember.passhash = bcrypt.hashSync('test_password', 1);
           await manager.save(loginedGeneralMember);
-  
+
           const loginedGeneralMemberDevice = new MemberDevice();
           loginedGeneralMemberDevice.memberId = loginedGeneralMember.id;
           loginedGeneralMemberDevice.fingerprintId = 'fingerprint-tdm-logined';
@@ -425,7 +422,7 @@ describe('AuthController (e2e)', () => {
             })
             .expect(201);
           const { code, message, result } = body;
-          const {authToken, deviceStatus } = result;
+          const { authToken, deviceStatus } = result;
           expect(code).toBe('SUCCESS');
           expect(message).toBe('login successfully');
           expect(authToken).not.toBeUndefined();
@@ -524,7 +521,7 @@ describe('AuthController (e2e)', () => {
           adminMember.username = 'tlm-admin-member';
           adminMember.passhash = bcrypt.hashSync('test_password', 1);
           await manager.save(adminMember);
-  
+
           const fingerPrint = 'tlm-admin-fingerprint';
           const { body } = await request(application.getHttpServer())
             .post(route)
@@ -537,7 +534,7 @@ describe('AuthController (e2e)', () => {
             })
             .expect(201);
           const { code, message, result } = body;
-          const {authToken, deviceStatus } = result;
+          const { authToken, deviceStatus } = result;
           expect(code).toBe('SUCCESS');
           expect(message).toBe('login successfully');
           expect(authToken).not.toBeUndefined();
@@ -592,7 +589,7 @@ describe('AuthController (e2e)', () => {
             })
             .expect(201);
           const { code, message, result } = body;
-          const {authToken, deviceStatus } = result;
+          const { authToken, deviceStatus } = result;
           expect(code).toBe('SUCCESS');
           expect(message).toBe('login successfully');
           expect(authToken).not.toBeUndefined();
@@ -634,7 +631,7 @@ describe('AuthController (e2e)', () => {
           loginedGeneralMember.username = 'tlm-general-member';
           loginedGeneralMember.passhash = bcrypt.hashSync('test_password', 1);
           await manager.save(loginedGeneralMember);
-  
+
           const loginedGeneralMemberDevice = new MemberDevice();
           loginedGeneralMemberDevice.memberId = loginedGeneralMember.id;
           loginedGeneralMemberDevice.fingerprintId = 'fingerprint-tlm-logined';
@@ -652,7 +649,7 @@ describe('AuthController (e2e)', () => {
             })
             .expect(201);
           const { code, message, result } = body;
-          const {authToken, deviceStatus } = result;
+          const { authToken, deviceStatus } = result;
           expect(code).toBe('SUCCESS');
           expect(message).toBe('login successfully');
           expect(authToken).not.toBeUndefined();
@@ -703,7 +700,7 @@ describe('AuthController (e2e)', () => {
           })
           .expect(201);
         const { code, message, result } = body;
-        const {authToken, deviceStatus } = result;
+        const { authToken, deviceStatus } = result;
         expect(code).toBe('SUCCESS');
         expect(message).toBe('login successfully');
         expect(authToken).not.toBeUndefined();
@@ -735,7 +732,9 @@ describe('AuthController (e2e)', () => {
         await manager.save(testTempLoginMember);
 
         const tempPassword = 'login-temp-password';
-        await cacheService.getClient().set(`tmpPass:${testTempLoginMember.appId}:${testTempLoginMember.email}`, tempPassword);
+        await cacheService
+          .getClient()
+          .set(`tmpPass:${testTempLoginMember.appId}:${testTempLoginMember.email}`, tempPassword);
 
         const { body } = await request(application.getHttpServer())
           .post(route)
@@ -747,7 +746,7 @@ describe('AuthController (e2e)', () => {
           })
           .expect(201);
         const { code, message, result } = body;
-        const {authToken, deviceStatus } = result;
+        const { authToken, deviceStatus } = result;
         expect(code).toBe('SUCCESS');
         expect(message).toBe('login successfully');
         expect(authToken).not.toBeUndefined();
@@ -775,11 +774,7 @@ describe('AuthController (e2e)', () => {
     const route = '/auth/refresh-token';
 
     it('Should raise error due to incorrect payload', async () => {
-      await request(application.getHttpServer())
-        .post(route)
-        .set('host', appHost.host)
-        .send({})
-        .expect(400);
+      await request(application.getHttpServer()).post(route).set('host', appHost.host).send({}).expect(400);
     });
 
     it('Should raise E_NO_MEMBER error due to empty session', async () => {
@@ -809,10 +804,10 @@ describe('AuthController (e2e)', () => {
           permissions: [],
         })
         .expect(400);
-      
+
       expect(body).toStrictEqual({
         code: 'E_NOT_FOUND',
-        message: 'client ID doesn\'t exist',
+        message: "client ID doesn't exist",
         result: null,
       });
     });
@@ -828,7 +823,7 @@ describe('AuthController (e2e)', () => {
     //       permissions: [],
     //     })
     //     .expect(400);
-      
+
     //   expect(body).toStrictEqual({
     //     code: 'E_AUTH_TOKEN',
     //     message: 'key is not authenticated',
@@ -845,7 +840,7 @@ describe('AuthController (e2e)', () => {
     //       permissions: [],
     //     })
     //     .expect(200);
-      
+
     //   const { authToken } = body;
     //   expect(body).toStrictEqual({
     //     code: 'SUCCESS',
@@ -863,15 +858,12 @@ describe('AuthController (e2e)', () => {
       const email = member.email;
       const applicant = member.id;
 
-      const { body } = await request(application.getHttpServer())
-        .post(route)
-        .set('host', appHost.host)
-        .send({
-          appId,
-          applicant,
-          email,
-          purpose: 'test',
-        });
+      const { body } = await request(application.getHttpServer()).post(route).set('host', appHost.host).send({
+        appId,
+        applicant,
+        email,
+        purpose: 'test',
+      });
 
       expect(body.code).toBe('SUCCESS');
       expect(body.result.password).toBeDefined();
@@ -886,15 +878,12 @@ describe('AuthController (e2e)', () => {
     });
 
     it(`should fail due to member doesn't exist`, async () => {
-      const { body } = await request(application.getHttpServer())
-        .post(route)
-        .set('host', appHost.host)
-        .send({
-          appId: 'test',
-          applicant: member.id,
-          email: 'test_nonexist@example.com',
-          purpose: 'test',
-        });
+      const { body } = await request(application.getHttpServer()).post(route).set('host', appHost.host).send({
+        appId: 'test',
+        applicant: member.id,
+        email: 'test_nonexist@example.com',
+        purpose: 'test',
+      });
       expect(body).toStrictEqual({
         code: 'E_TMP_PASSWORD',
         message: 'failed to generate temporary password',
@@ -907,15 +896,12 @@ describe('AuthController (e2e)', () => {
       const email = member.email;
       const applicant = member.id;
 
-      const { body } = await request(application.getHttpServer())
-        .post(route)
-        .set('host', appHost.host)
-        .send({
-          appId,
-          applicant,
-          email,
-          purpose: 'test',
-        });
+      const { body } = await request(application.getHttpServer()).post(route).set('host', appHost.host).send({
+        appId,
+        applicant,
+        email,
+        purpose: 'test',
+      });
       const { code, result } = body;
       const { password } = result;
 
