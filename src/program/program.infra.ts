@@ -316,7 +316,7 @@ export class ProgramInfrastructure {
         'program_role.program_id = program.id' +
           ' AND program_role.member_id = :memberId' +
           ` AND program_role.name = :role1 `,
-        { memberId, role1: 'assistant' },
+        { memberId, role1: 'assistant' }, // 2024-02-27 Assistant is a half-developed feature and has not yet been used.
       )
       .getRawOne();
 
