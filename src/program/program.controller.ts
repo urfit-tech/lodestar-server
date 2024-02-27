@@ -27,7 +27,7 @@ export class ProgramController {
     return this.programService.getExpiredProgramByMemberId(member.appId, String(memberId || member.memberId));
   }
 
-  @Get('/:programId/content/:programContentId')
+  @Get('/:programId/contents/:programContentId')
   async getEnrolledProgramById(
     @Local('member') member: JwtMember,
     @Req() request: Request,
