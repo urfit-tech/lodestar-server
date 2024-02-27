@@ -255,6 +255,7 @@ export class ProgramInfrastructure {
     programId: string,
     programContentId: string,
     manager: EntityManager,
+    permissionId: string,
   ) {
     const programContentIdByProgramEnrollment = await manager
       .getRepository(OrderLog)
@@ -314,8 +315,41 @@ export class ProgramInfrastructure {
         'program_role',
         'program_role.program_id = program.id' +
           ' AND program_role.member_id = :memberId' +
-          ` AND ( program_role.name = :role1 OR program_role.name = :role2)`,
-        { memberId, role1: 'assistant', role2: 'instructor' },
+          ` AND program_role.name = :role1 `,
+        { memberId, role1: 'assistant' }, // 2024-02-27 Assistant is a half-developed feature and has not yet been used.
+      )
+      .getRawOne();
+
+    const programContentIdByProgramRoleAndPermission = await manager
+      .getRepository(ProgramContent)
+      .createQueryBuilder('program_content')
+      .select(['program_content.id AS program_content_id'])
+      .where('program_content.id = :programContentId', { programContentId })
+      .leftJoin(
+        'program_content_section',
+        'program_content_section',
+        'program_content_section.id = program_content.content_section_id',
+      )
+      .leftJoin(
+        'program',
+        'program',
+        'program.id = program_content_section.program_id' + ' AND program.id = :programId',
+        { programId },
+      )
+      .innerJoin(
+        'program_role',
+        'program_role',
+        'program_role.program_id = program.id' +
+          ' AND program_role.member_id = :memberId' +
+          ` AND (program_role.name = :role1 OR program_role.name = :role2) `,
+        { memberId, role1: 'owner', role2: 'instructor' },
+      )
+      .innerJoin(
+        'member_permission_extra',
+        'member_permission_extra',
+        'member_permission_extra.member_id = program_role.member_id' +
+          ' AND member_permission_extra.permission_id = :permissionId',
+        { permissionId },
       )
       .getRawOne();
 
@@ -429,6 +463,7 @@ export class ProgramInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase({
       ...programContentIdByProgramEnrollment,
       ...programContentIdByProgramRole,
+      ...programContentIdByProgramRoleAndPermission,
       ...programContentIdByProgramPlanEnrollmentSubscribedFromNowOrAll,
       ...programContentIdByProgramPlanEnrollment,
       ...programContentIdByProgramPackageEnrollment,
