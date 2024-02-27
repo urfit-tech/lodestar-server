@@ -169,7 +169,7 @@ describe('LeadController (e2e)', () => {
         platform: 'platform',
         email: 'email',
         full_name: 'full_name',
-        phone_number: 'phone_number',
+        phone_number: '+8860999999999', // MUST add international number's country calling code ex:+886
         city: 'city',
       };
 
