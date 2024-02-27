@@ -402,7 +402,37 @@ describe('ProgramController (e2e)', () => {
       expect(200).toEqual(result.status);
     });
 
-    it(`Should return programContentId to member's permission is PROGRAM_ADMIN`, async () => {
+    it(`Should return programContentId to member's permission isn't PROGRAM_ADMIN or PROGRAM_NORMAL and program role is assistant`, async () => {
+      const testGeneralMemberProgramRoleAssistant = new ProgramRole();
+      testGeneralMemberProgramRoleAssistant.id = v4();
+      testGeneralMemberProgramRoleAssistant.programId = program.id;
+      testGeneralMemberProgramRoleAssistant.memberId = testGeneralMember.id;
+      testGeneralMemberProgramRoleAssistant.name = 'assistant';
+
+      await memberRepo.save(testGeneralMember);
+      await programRoleRepo.save(testGeneralMemberProgramRoleAssistant);
+
+      const { body } = await request(application.getHttpServer())
+        .post(apiPath.auth.generalLogin)
+        .set('host', appHost.host)
+        .send({
+          appId: testGeneralMember.appId,
+          account: testGeneralMember.email,
+          password: password,
+        })
+        .expect(201);
+
+      const { authToken } = body.result;
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(result.body).toEqual({ programContentId: programContent.id });
+      expect(200).toEqual(result.status);
+    });
+
+    it(`Should return programContentId to member's permission is PROGRAM_ADMIN and isn't program role`, async () => {
       await permissionRepo.save(programAdminPermission);
       await memberRepo.save(testGeneralMember);
       await memberPermissionExtraRepo.save(testGeneralMemberProgramAdminPermission);
