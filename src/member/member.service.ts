@@ -118,6 +118,62 @@ export class MemberService {
     return cb(this.entityManager);
   }
 
+  async getMembersRoleCountList(
+    appId: string,
+    condition?: MemberGetConditionDTO,
+  ): Promise<{ data: { role: string; count: number }[] }> {
+    const cb = async (manager: EntityManager): Promise<{ data: { role: string; count: number }[] }> => {
+      const wrapCondition: FindOptionsWhere<Member> = condition
+        ? {
+            ...(condition.name && { name: ILike(condition.name) }),
+            ...(condition.email && { email: ILike(condition.email) }),
+            ...(condition.managerName && {
+              manager: {
+                name: ILike(condition.managerName),
+              },
+            }),
+            ...(condition.managerId && { managerId: Equal(condition.managerId) }),
+            ...(condition.phone && {
+              memberPhones: {
+                phone: condition.phone,
+              },
+            }),
+            ...(condition.tag && {
+              memberTags: {
+                tagName: condition.tag,
+              },
+            }),
+            ...(condition.category && {
+              memberCategories: {
+                category: { name: condition.category },
+              },
+            }),
+            ...(condition.permissionGroup && {
+              memberPermissionGroups: {
+                permissionGroup: { name: condition.permissionGroup },
+              },
+            }),
+            ...(condition.properties && {
+              memberProperties: condition.properties,
+            }),
+          }
+        : {};
+  
+      const roleCounts = await this.memberInfra.getMemberRoleCounts(
+        appId,
+        wrapCondition,
+        {},
+        manager,
+      );
+  
+      return {
+        data: roleCounts,
+      };
+    };
+    return cb(this.entityManager);
+  }
+  
+
   async processImportFromFile(appId: string, rawRows: Array<Record<string, any>>): Promise<MemberImportResultDTO> {
     const [headerInfos, headerErrors] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
     if (headerErrors.length > 0) {

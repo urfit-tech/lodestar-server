@@ -26,6 +26,7 @@ import { ApiBearerAuth, ApiExcludeEndpoint, ApiHideProperty, ApiTags } from '@ne
 import {
   MemberDeleteResultDTO,
   MemberExportDTO,
+  MemberGetConditionDTO,
   MemberGetDTO,
   MemberGetResultDTO,
   MemberImportDTO,
@@ -142,6 +143,19 @@ export class MemberController {
     }
 
     return this.memberService.getMembersByCondition(appId, option, condition);
+  }
+
+  @Post('member-role-count')
+  @ApiExcludeEndpoint()
+  public async getMembersRoleCountList(
+    @Local('member') member: JwtMember,
+    @Body() condition: MemberGetConditionDTO,
+  ) {
+    const { appId } = member
+
+    const result = await this.memberService.getMembersRoleCountList(appId , condition);
+
+    return result;
   }
 
   @Post('import')
