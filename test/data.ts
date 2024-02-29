@@ -39,6 +39,7 @@ import { CouponCode } from '~/entity/CouponCode';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { CouponPlanProduct } from '~/entity/CouponPlanProduct';
 import { MemberNote } from '~/entity/MemberNote';
+import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -139,6 +140,11 @@ programContent.contentBodyId = programContentBody.id;
 programContent.title = 'test program content title';
 programContent.position = 0;
 programContent.displayMode = 'payToWatch';
+
+export const programContentPlan = new ProgramContentPlan();
+programContentPlan.id = v4();
+programContentPlan.programPlanId = programPlan.id;
+programContentPlan.programContentId = programContent.id;
 
 export const programContentProgress = new ProgramContentProgress();
 programContentProgress.id = v4();

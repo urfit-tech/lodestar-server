@@ -12,13 +12,18 @@ import {
   orderLog,
   orderProduct,
   program,
+  programPackage,
   programContent,
   programContentBody,
   programContentProgress,
   programContentSection,
+  programPackagePlan,
   programPlan,
   programPlanProduct,
   role,
+  programPackagePlanProduct,
+  programPackageProgram,
+  programContentPlan,
 } from '../data';
 import { EntityManager, Repository } from 'typeorm';
 import { ApiExceptionFilter } from '~/api.filter';
@@ -51,6 +56,12 @@ import bcrypt from 'bcrypt';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
 import { Permission } from '~/permission/entity/permission.entity';
 import { ProgramRole } from '~/entity/ProgramRole';
+import dayjs from 'dayjs';
+import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
+import { ProgramPackage } from '~/entity/ProgramPackage';
+import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
+import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
+import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 
 describe('ProgramController (e2e)', () => {
   let application: INestApplication;
@@ -64,7 +75,12 @@ describe('ProgramController (e2e)', () => {
   let memberRepo: Repository<Member>;
   let productRepo: Repository<Product>;
   let programRepo: Repository<Program>;
+  let programTempoDeliveryRepo: Repository<ProgramTempoDelivery>;
+  let programPackageRepo: Repository<ProgramPackage>;
+  let programContentPlanRepo: Repository<ProgramContentPlan>;
+  let programPackageProgramRepo: Repository<ProgramPackageProgram>;
   let programPlanRepo: Repository<ProgramPlan>;
+  let programPackagePlanRepo: Repository<ProgramPackagePlan>;
   let programContentSectionRepo: Repository<ProgramContentSection>;
   let programContentBodyRepo: Repository<ProgramContentBody>;
   let programContentRepo: Repository<ProgramContent>;
@@ -115,11 +131,16 @@ describe('ProgramController (e2e)', () => {
     memberRepo = manager.getRepository(Member);
     productRepo = manager.getRepository(Product);
     programRepo = manager.getRepository(Program);
+    programPackageRepo = manager.getRepository(ProgramPackage);
+    programContentPlanRepo = manager.getRepository(ProgramContentPlan);
+    programPackageProgramRepo = manager.getRepository(ProgramPackageProgram);
+    programTempoDeliveryRepo = manager.getRepository(ProgramTempoDelivery);
     programPlanRepo = manager.getRepository(ProgramPlan);
     programContentSectionRepo = manager.getRepository(ProgramContentSection);
     programContentBodyRepo = manager.getRepository(ProgramContentBody);
     programContentRepo = manager.getRepository(ProgramContent);
     programContentProgressRepo = manager.getRepository(ProgramContentProgress);
+    programPackagePlanRepo = manager.getRepository(ProgramPackagePlan);
     orderLogRepo = manager.getRepository(OrderLog);
     orderProductRepo = manager.getRepository(OrderProduct);
     currencyRepo = manager.getRepository(Currency);
@@ -130,7 +151,12 @@ describe('ProgramController (e2e)', () => {
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
     await productRepo.delete({});
+    await programContentPlanRepo.delete({});
     await programPlanRepo.delete({});
+    await programTempoDeliveryRepo.delete({});
+    await programPackageProgramRepo.delete({});
+    await programPackagePlanRepo.delete({});
+    await programPackageRepo.delete({});
     await currencyRepo.delete({});
     await programContentProgressRepo.delete({});
     await programContentRepo.delete({});
@@ -157,12 +183,17 @@ describe('ProgramController (e2e)', () => {
     await appHostRepo.save(appHost);
     await memberRepo.save(member);
     await programRepo.save(program);
+    await programPackageRepo.save(programPackage);
     await programPlanRepo.save(programPlan);
+    await programPackageProgramRepo.save(programPackageProgram);
+    await programPackagePlanRepo.save(programPackagePlan);
     await programContentBodyRepo.save(programContentBody);
     await programContentSectionRepo.save(programContentSection);
     await programContentRepo.save(programContent);
+    await programContentPlanRepo.save(programContentPlan);
     await programContentProgressRepo.save(programContentProgress);
     await productRepo.save(programPlanProduct);
+    await productRepo.save(programPackagePlanProduct);
     await orderLogRepo.save(orderLog);
     orderProduct.productId = programPlanProduct.id;
     orderProduct.name = programPlan.title;
@@ -176,6 +207,7 @@ describe('ProgramController (e2e)', () => {
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
     await productRepo.delete({});
+    await programContentPlanRepo.delete({});
     await programPlanRepo.delete({});
     await currencyRepo.delete({});
     await programContentProgressRepo.delete({});
@@ -183,6 +215,10 @@ describe('ProgramController (e2e)', () => {
     await programContentSectionRepo.delete({});
     await programContentBodyRepo.delete({});
     await programRoleRepo.delete({});
+    await programTempoDeliveryRepo.delete({});
+    await programPackageProgramRepo.delete({});
+    await programPackagePlanRepo.delete({});
+    await programPackageRepo.delete({});
     await programRepo.delete({});
     await memberPermissionExtraRepo.delete({});
     await permissionRepo.delete({});
@@ -254,6 +290,20 @@ describe('ProgramController (e2e)', () => {
     testGeneralMember.role = 'general-member';
     testGeneralMember.passhash = bcrypt.hashSync('test_password', 1);
 
+    const testGeneralMemberOrderLog = new OrderLog();
+    testGeneralMemberOrderLog.id = 'TES1234567891';
+    testGeneralMemberOrderLog.appId = testGeneralMember.appId;
+    testGeneralMemberOrderLog.memberId = testGeneralMember.id;
+    testGeneralMemberOrderLog.status = 'SUCCESS';
+    testGeneralMemberOrderLog.invoiceOptions = {};
+
+    const testGeneralMemberOrderProduct = new OrderProduct();
+    testGeneralMemberOrderProduct.id = v4();
+    testGeneralMemberOrderProduct.name = 'test program plan product';
+    testGeneralMemberOrderProduct.orderId = testGeneralMemberOrderLog.id;
+    testGeneralMemberOrderProduct.price = 0;
+    testGeneralMemberOrderProduct.deliveredAt = dayjs().subtract(1, 'day').toDate();
+
     const programNormalPermission = new Permission();
     programNormalPermission.id = 'PROGRAM_NORMAL';
     programNormalPermission.group = 'program';
@@ -293,7 +343,7 @@ describe('ProgramController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
-    it(`Should return empty to member's role is general-member`, async () => {
+    it(`Should return empty to member's role is general-member and haven't order`, async () => {
       await memberRepo.save(testGeneralMember);
 
       const { body } = await request(application.getHttpServer())
@@ -355,6 +405,7 @@ describe('ProgramController (e2e)', () => {
       const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
       expect(result.body).toEqual({});
     });
 
@@ -376,6 +427,7 @@ describe('ProgramController (e2e)', () => {
       const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
       expect(result.body).toEqual({});
     });
 
@@ -399,7 +451,156 @@ describe('ProgramController (e2e)', () => {
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
       expect(result.body).toEqual({ programContentId: programContent.id });
+
       expect(200).toEqual(result.status);
+    });
+
+    it(`Should return programContentId to member's role is general-member and have program plan order`, async () => {
+      programPlan.type = 3; // can view all program
+      testGeneralMemberOrderProduct.productId = programPlanProduct.id;
+
+      await memberRepo.save(testGeneralMember);
+      await programPlanRepo.save(programPlan);
+      await orderLogRepo.save(testGeneralMemberOrderLog);
+      await orderProductRepo.save(testGeneralMemberOrderProduct);
+
+      const { body } = await request(application.getHttpServer())
+        .post(apiPath.auth.generalLogin)
+        .set('host', appHost.host)
+        .send({
+          appId: testGeneralMember.appId,
+          account: testGeneralMember.email,
+          password: password,
+        })
+        .expect(201);
+      const { authToken } = body.result;
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(result.body).toEqual({ programContentId: programContent.id });
+    });
+
+    it(`Should return programContentId to member's role is general-member and have program plan order and program plan type is subscribed all`, async () => {
+      programPlan.type = 1; // only can view program_content_plan matched program
+      testGeneralMemberOrderProduct.productId = programPlanProduct.id;
+
+      await memberRepo.save(testGeneralMember);
+      await programPlanRepo.save(programPlan);
+      await orderLogRepo.save(testGeneralMemberOrderLog);
+      await orderProductRepo.save(testGeneralMemberOrderProduct);
+
+      const { body } = await request(application.getHttpServer())
+        .post(apiPath.auth.generalLogin)
+        .set('host', appHost.host)
+        .send({
+          appId: testGeneralMember.appId,
+          account: testGeneralMember.email,
+          password: password,
+        })
+        .expect(201);
+      const { authToken } = body.result;
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(result.body).toEqual({ programContentId: programContent.id });
+    });
+
+    it(`Should return programContentId to member's role is general-member and have program plan order and program plan type is subscribed from now`, async () => {
+      programPlan.type = 2; // only can view program_content_plan matched program and ProgramContent publish_at > orderProduct delivered_at
+      programContent.publishedAt = dayjs(orderProduct.deliveredAt).add(1, 'day').toDate();
+      testGeneralMemberOrderProduct.productId = programPlanProduct.id;
+
+      await memberRepo.save(testGeneralMember);
+      await programPlanRepo.save(programPlan);
+      await programContentRepo.save(programContent);
+      await orderLogRepo.save(testGeneralMemberOrderLog);
+      await orderProductRepo.save(testGeneralMemberOrderProduct);
+
+      const { body } = await request(application.getHttpServer())
+        .post(apiPath.auth.generalLogin)
+        .set('host', appHost.host)
+        .send({
+          appId: testGeneralMember.appId,
+          account: testGeneralMember.email,
+          password: password,
+        })
+        .expect(201);
+      const { authToken } = body.result;
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(result.body).toEqual({ programContentId: programContent.id });
+    });
+
+    it(`Should return programContentId to member's role is general-member and have program package plan order`, async () => {
+      testGeneralMemberOrderProduct.productId = programPackagePlanProduct.id;
+
+      await memberRepo.save(testGeneralMember);
+      await orderLogRepo.save(testGeneralMemberOrderLog);
+      await orderProductRepo.save(testGeneralMemberOrderProduct);
+
+      const { body } = await request(application.getHttpServer())
+        .post(apiPath.auth.generalLogin)
+        .set('host', appHost.host)
+        .send({
+          appId: testGeneralMember.appId,
+          account: testGeneralMember.email,
+          password: password,
+        })
+        .expect(201);
+      const { authToken } = body.result;
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const programPackagePlanData = await programPackagePlanRepo.find();
+      console.log(programPackagePlanData);
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(result.body).toEqual({ programContentId: programContent.id });
+    });
+
+    it(`Should return programContentId to member's role is general-member and have program package plan order and program package plan is tempo delivery`, async () => {
+      programPackagePlan.isTempoDelivery = true;
+      testGeneralMemberOrderProduct.productId = programPackagePlanProduct.id;
+
+      const programTempoDelivery = new ProgramTempoDelivery();
+      programTempoDelivery.id = v4();
+      programTempoDelivery.memberId = testGeneralMember.id;
+      programTempoDelivery.programPackageProgramId = programPackageProgram.id;
+      programTempoDelivery.deliveredAt = dayjs().subtract(1, 'day').toDate();
+
+      await memberRepo.save(testGeneralMember);
+      await programPackagePlanRepo.save(programPackagePlan);
+      await orderLogRepo.save(testGeneralMemberOrderLog);
+      await orderProductRepo.save(testGeneralMemberOrderProduct);
+      await programTempoDeliveryRepo.save(programTempoDelivery);
+
+      const { body } = await request(application.getHttpServer())
+        .post(apiPath.auth.generalLogin)
+        .set('host', appHost.host)
+        .send({
+          appId: testGeneralMember.appId,
+          account: testGeneralMember.email,
+          password: password,
+        })
+        .expect(201);
+      const { authToken } = body.result;
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const programPackagePlanData = await programPackagePlanRepo.find();
+      console.log(programPackagePlanData);
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(result.body).toEqual({ programContentId: programContent.id });
     });
 
     it(`Should return programContentId to member's permission isn't PROGRAM_ADMIN or PROGRAM_NORMAL and program role is assistant`, async () => {
@@ -429,6 +630,7 @@ describe('ProgramController (e2e)', () => {
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
       expect(result.body).toEqual({ programContentId: programContent.id });
+
       expect(200).toEqual(result.status);
     });
 
@@ -475,6 +677,7 @@ describe('ProgramController (e2e)', () => {
       const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
       expect(result.body).toEqual({ programContentId: programContent.id });
     });
 
@@ -498,6 +701,7 @@ describe('ProgramController (e2e)', () => {
       const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
       expect(result.body).toEqual({ programContentId: programContent.id });
     });
   });
