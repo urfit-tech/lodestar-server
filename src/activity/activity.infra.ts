@@ -1,8 +1,10 @@
-import { EntityManager, SelectQueryBuilder } from 'typeorm';
+import { EntityManager, IsNull, SelectQueryBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Activity } from './entity/Activity';
 import { ActivitySessionTicket } from './entity/ActivitySessionTicket';
 import { ActivitySessionTicketEnrollmentCount } from './view_entity/ActivitySessionTicketEnrollmentCount';
+import { UtilityService } from '~/utility/utility.service';
+import { OrderLog } from '~/order/entity/order_log.entity';
 
 interface ActivityDuration {
   startedAt: Date;
@@ -11,6 +13,8 @@ interface ActivityDuration {
 
 @Injectable()
 export class ActivityInfrastructure {
+  constructor(private readonly utilityService: UtilityService) {}
+
   createActivityPeriodSubQuery(manager: EntityManager, appId: string): SelectQueryBuilder<Activity> {
     return manager
       .getRepository(Activity)
@@ -169,5 +173,172 @@ export class ActivityInfrastructure {
     });
 
     return enrollmentCountMap;
+  }
+
+  async getPublishedActivity(manager: EntityManager, activityId: string) {
+    const activity = await manager.getRepository(Activity).findOne({
+      where: {
+        id: activityId,
+      },
+      select: {
+        id: true,
+        organizerId: true,
+        coverUrl: true,
+        title: true,
+        description: true,
+        publishedAt: true,
+        isParticipantsVisible: true,
+        supportLocales: true,
+        activityTags: {
+          id: true,
+          activityTagName: true,
+        },
+        activityCategories: {
+          id: true,
+          category: {
+            id: true,
+            name: true,
+          },
+        },
+        activityTickets: {
+          id: true,
+          title: true,
+          count: true,
+          description: true,
+          startedAt: true,
+          isPublished: true,
+          endedAt: true,
+          price: true,
+          currencyId: true,
+          deletedAt: true,
+          activitySessionTickets: {
+            id: true,
+            activitySessionType: true,
+            activitySession: {
+              id: true,
+              onlineLink: true,
+              location: true,
+              startedAt: true,
+              endedAt: true,
+              description: true,
+              threshold: true,
+              title: true,
+            },
+          },
+        },
+      },
+      relations: {
+        activityTags: true,
+        activityCategories: { category: true },
+        activityTickets: { activitySessionTickets: { activitySession: true } },
+      },
+    });
+    return this.utilityService.convertObjectKeysToCamelCase(activity);
+  }
+
+  async getAllActivityTicketEnrollment(memberId: string, manager: EntityManager) {
+    const activityTickets = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'activity_ticket.id AS activity_ticket_id',
+        'order_log.id AS order_id',
+        'order_product.id AS order_product_id',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', activity_session.id, 'started_at', activity_session.started_at, 'ended_at', activity_session.ended_at, 'location', activity_session.location, 'online_link', activity_session.online_link, 'activity_title', activity.title, 'title', activity_session.title, 'activity_cover_url', activity.cover_url )) AS activity_session`,
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .innerJoin(
+        `order_product`,
+        'order_product',
+        'order_product.order_id = order_log.id' +
+          ' AND order_product.delivered_at < NOW()' +
+          ` AND order_product.product_id ~~ 'ActivityTicket_%'`,
+      )
+      .leftJoin(
+        'activity_ticket',
+        'activity_ticket',
+        `activity_ticket.id::text = split_part(order_product.product_id,'_',2)`,
+      )
+      .leftJoin('activity', 'activity', 'activity.id = activity_ticket.activity_id')
+      .leftJoin(
+        'activity_session_ticket',
+        'activity_session_ticket',
+        'activity_session_ticket.activity_ticket_id = activity_ticket.id',
+      )
+      .leftJoin(
+        'activity_session',
+        'activity_session',
+        'activity_session.id = activity_session_ticket.activity_session_id',
+      )
+      .groupBy('activity_ticket.id')
+      .addGroupBy('order_log.id')
+      .addGroupBy('order_product.id')
+      .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(activityTickets);
+  }
+
+  async getActivityTicketEnrollment(activityId: string, memberId: string, manager: EntityManager) {
+    const activityTickets = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'activity_ticket.id AS activity_ticket_id',
+        'order_log.id AS order_id',
+        'order_product.id AS order_product_id',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', activity_session_ticket.activity_session_id, 'attended', activity_attendance.id is not null)) AS activity_session`,
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .innerJoin(
+        `order_product`,
+        'order_product',
+        'order_product.order_id = order_log.id' +
+          ' AND order_product.delivered_at < NOW()' +
+          ` AND order_product.product_id ~~ 'ActivityTicket_%'`,
+      )
+      .leftJoin(
+        'activity_ticket',
+        'activity_ticket',
+        `activity_ticket.id::text = split_part(order_product.product_id,'_',2)` +
+          ' AND activity_ticket.activity_id = :activityId',
+        { activityId },
+      )
+      .leftJoin(
+        'activity_session_ticket',
+        'activity_session_ticket',
+        'activity_session_ticket.activity_ticket_id = activity_ticket.id',
+      )
+      .leftJoin('activity_attendance', 'activity_attendance', 'activity_attendance.order_product_id = order_product.id')
+      .groupBy('activity_ticket.id')
+      .addGroupBy('order_log.id')
+      .addGroupBy('order_product.id')
+      .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(activityTickets);
+  }
+
+  async getActivityTicketEnrollmentCount(activityId: string, manager: EntityManager) {
+    const activityTicketCount = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select(['activity_ticket.id AS activity_ticket_id', 'COUNT(activity_ticket.id) AS participants'])
+      .innerJoin(
+        `order_product`,
+        'order_product',
+        'order_product.order_id = order_log.id' + ' AND order_product.delivered_at < NOW()',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
+        productType: 'ActivityTicket',
+      })
+      .innerJoin(
+        'activity_ticket',
+        'activity_ticket',
+        'activity_ticket.id::text = product.target' + ' AND activity_ticket.activity_id = :activityId',
+        { activityId },
+      )
+      .groupBy('activity_ticket.id')
+      .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(activityTicketCount);
   }
 }
