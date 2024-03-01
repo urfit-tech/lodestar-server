@@ -292,8 +292,8 @@ export class PorterRunner extends Runner {
                     { id: In(id), appId },
                     {
                       lastMemberNoteCreated: lastMemberNoteCreated && new Date(lastMemberNoteCreated),
-                      lastMemberNoteCalled: lastMemberNoteCreated && new Date(lastMemberNoteCreated),
-                      lastMemberNoteAnswered: lastMemberNoteCreated && new Date(lastMemberNoteCreated),
+                      lastMemberNoteCalled: lastMemberNoteCalled && new Date(lastMemberNoteCalled),
+                      lastMemberNoteAnswered: lastMemberNoteAnswered && new Date(lastMemberNoteAnswered),
                     },
                     Member,
                     manager,
