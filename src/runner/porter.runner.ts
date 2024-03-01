@@ -7,7 +7,7 @@ import { Runner } from './runner';
 import { CacheService } from '~/utility/cache/cache.service';
 import axios from 'axios';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager, FindOperator, LessThan } from 'typeorm';
+import { EntityManager, FindOperator, In, LessThan } from 'typeorm';
 import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
 import { MemberService } from '~/member/member.service';
 import { ProgramService } from '~/program/program.service';
@@ -270,7 +270,10 @@ export class PorterRunner extends Runner {
             await manager.transaction(async (manager) => {
               try {
                 const { memberNotes, lastMemberNotes, key } = data;
-                const { criteria, lastMemberRecord } = lastMemberNotes;
+                const {
+                  criteria: { id, appId },
+                  lastMemberRecord: { lastMemberNoteCreated, lastMemberNoteCalled, lastMemberNoteAnswered },
+                } = lastMemberNotes;
                 let errorLog = createErrorLog(key);
 
                 try {
@@ -285,7 +288,16 @@ export class PorterRunner extends Runner {
                   };
                 }
                 try {
-                  await this.memberInfra.updateData<Member>(criteria, lastMemberRecord, Member, manager);
+                  await this.memberInfra.updateData<Member>(
+                    { id: In(id), appId },
+                    {
+                      lastMemberNoteCreated: lastMemberNoteCreated && new Date(lastMemberNoteCreated),
+                      lastMemberNoteCalled: lastMemberNoteCreated && new Date(lastMemberNoteCreated),
+                      lastMemberNoteAnswered: lastMemberNoteCreated && new Date(lastMemberNoteCreated),
+                    },
+                    Member,
+                    manager,
+                  );
                 } catch (error) {
                   errorLog = {
                     ...errorLog,
