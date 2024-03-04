@@ -13,6 +13,16 @@ export class UploadDTO {
   prefix: string;
 }
 
+export class DownloadDTO {
+  @IsString()
+  appId: string;
+
+  @IsString()
+  fileName: string;
+
+  @IsString()
+  prefix: string;
+}
 class CreateMultipartUploadParams {
   @IsNotEmpty()
   @IsString()
