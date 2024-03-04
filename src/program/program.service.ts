@@ -288,7 +288,12 @@ export class ProgramService {
     return enrolledProgramContentId;
   }
 
-  public async getEnrolledProgramContents(appId: string, memberId: string, programId: string, role: string) {
+  public async getEnrolledProgramContentsByProgramId(
+    appId: string,
+    memberId: string,
+    programId: string,
+    permissionId: string,
+  ) {
     // Todo: check permission
     // ...
     const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { id: memberId });
@@ -300,17 +305,18 @@ export class ProgramService {
       });
     }
 
-    if (role === 'app-owner') {
-      return await this.programInfra.getProgramContentsByProgramId(programId, this.entityManager);
-    }
-
     const enrolledProgramContents = await this.programInfra.getEnrolledProgramContentsByProgramId(
       memberId,
       programId,
       this.entityManager,
+      permissionId,
     );
 
     return enrolledProgramContents;
+  }
+
+  public async getProgramContentsByProgramId(appId: string, programId: string) {
+    return await this.programInfra.getProgramContentsByProgramId(programId, this.entityManager);
   }
 
   private sortProgramRole(roles: { memberId: string; name: string; createdAt: string }[]) {

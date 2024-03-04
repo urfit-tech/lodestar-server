@@ -28,7 +28,7 @@ export class ProgramController {
   }
 
   @Get('/:programId/contents/:programContentId')
-  async getEnrolledProgramById(
+  async getEnrolledProgramContentById(
     @Local('member') member: JwtMember,
     @Req() request: Request,
     @Param('programId') programId: string,
@@ -51,18 +51,23 @@ export class ProgramController {
   }
 
   @Get('/:programId/contents')
-  async getEnrolledProgramContents(
+  async getEnrolledProgramContentsByProgramId(
     @Local('member') member: JwtMember,
     @Req() request: Request,
     @Param('programId') programId: string,
   ) {
     const { memberId } = request.query;
+    const { role, permissions } = member;
 
-    return this.programService.getEnrolledProgramContents(
-      member.appId,
-      String(memberId || member.memberId),
-      programId,
-      member.role,
-    );
+    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
+
+    return role === 'app-owner' || ['PROGRAM_ADMIN'].some((e) => permissions.includes(e))
+      ? this.programService.getProgramContentsByProgramId(member.appId, programId)
+      : this.programService.getEnrolledProgramContentsByProgramId(
+          member.appId,
+          String(memberId || member.memberId),
+          programId,
+          extraAllowPermission,
+        );
   }
 }
