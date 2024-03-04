@@ -112,6 +112,7 @@ program.id = v4();
 program.title = 'test program';
 program.abstract = 'test program abstract';
 program.appId = app.id;
+program.publishedAt = dayjs().subtract(1, 'day').toDate();
 
 export const programPlan = new ProgramPlan();
 programPlan.id = v4();
