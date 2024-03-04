@@ -117,6 +117,7 @@ export const programPlan = new ProgramPlan();
 programPlan.id = v4();
 programPlan.programId = program.id;
 programPlan.title = 'test program plan';
+programPlan.type = 3; // can view all program
 programPlan.listPrice = 0;
 
 export const programRole = new ProgramRole();
@@ -139,6 +140,7 @@ programContent.contentSectionId = programContentSection.id;
 programContent.contentBodyId = programContentBody.id;
 programContent.title = 'test program content title';
 programContent.position = 0;
+programContent.publishedAt = dayjs().subtract(1, 'day').toDate();
 programContent.displayMode = 'payToWatch';
 
 export const programContentPlan = new ProgramContentPlan();
