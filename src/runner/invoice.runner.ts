@@ -53,7 +53,7 @@ export class InvoiceRunner extends Runner {
             message: `paymentNo: ${paymentNo}`,
           });
         }
-        await this.utilityService.sleep(100);
+        await this.utilityService.sleep(1000);
       }
     };
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));
