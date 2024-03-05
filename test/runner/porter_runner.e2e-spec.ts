@@ -763,7 +763,7 @@ describe('PorterRunner (e2e)', () => {
   describe('portPhoneServiceInsertEvent', () => {
     const lastMemberNotes = {
       criteria: {
-        id: {},
+        id: [],
         appId: 'test',
       },
       lastMemberRecord: {
