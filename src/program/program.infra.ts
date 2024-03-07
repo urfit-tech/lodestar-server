@@ -485,7 +485,7 @@ export class ProgramInfrastructure {
         'program.id = program_content_section.program_id' + ' AND program.id = :programId',
         { programId },
       )
-      .leftJoin(
+      .innerJoin(
         'program_role',
         'program_role',
         'program_role.program_id = program.id' +
@@ -625,12 +625,17 @@ export class ProgramInfrastructure {
   async getProgramContentsByProgramId(
     programId: string,
     entityManager: EntityManager,
-  ): Promise<Pick<ProgramContent, 'id' | 'displayMode'>[]> {
+  ): Promise<{ programContentId: string; displayMode: string }[]> {
     const programContentRepo = entityManager.getRepository(ProgramContent);
-    return programContentRepo.find({
+    const programContents = await programContentRepo.find({
       where: { contentSection: { programId } },
-      select: { id: true, displayMode: true },
+      select: ['id', 'displayMode'],
     });
+
+    return programContents.map((content) => ({
+      programContentId: content.id,
+      displayMode: content.displayMode,
+    }));
   }
 
   async getProgramCategories(programIds: string[], entityManager: EntityManager) {
