@@ -2,7 +2,7 @@ import { EntityManager } from 'typeorm';
 import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
-import { InvoiceService } from '~/invoice/invocie.service';
+import { InvoiceService } from '~/invoice/invoice.service';
 import { InvoiceModule } from '~/invoice/invoice.module';
 import { PaymentModule } from '~/payment/payment.module';
 import { PaymentInfrastructure } from '~/payment/payment.infra';
@@ -53,7 +53,7 @@ export class InvoiceRunner extends Runner {
             message: `paymentNo: ${paymentNo}`,
           });
         }
-        await this.utilityService.sleep(100);
+        await this.utilityService.sleep(1000);
       }
     };
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));
