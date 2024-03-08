@@ -625,12 +625,16 @@ export class ProgramInfrastructure {
   async getProgramContentsByProgramId(
     programId: string,
     entityManager: EntityManager,
-  ): Promise<Pick<ProgramContent, 'id' | 'displayMode'>[]> {
+  ): Promise<{ programContentId: string; displayMode: string }[]> {
     const programContentRepo = entityManager.getRepository(ProgramContent);
-    return programContentRepo.find({
+    const programContents = await programContentRepo.find({
       where: { contentSection: { programId } },
       select: { id: true, displayMode: true },
     });
+    return programContents.map((content) => ({
+      programContentId: content.id,
+      displayMode: content.displayMode,
+    }));
   }
 
   async getProgramCategories(programIds: string[], entityManager: EntityManager) {
