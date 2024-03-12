@@ -2246,7 +2246,7 @@ describe('MemberController (e2e)', () => {
       insertedPaymentLog.no = '1555336487636';
       insertedPaymentLog.status = 'SUCCESS';
       insertedPaymentLog.price = 1000;
-      insertedPaymentLog.invoiceGatewayId = v4()
+      insertedPaymentLog.invoiceGatewayId = v4();
       await manager.save(insertedPaymentLog);
 
       const insertedVoucherPlan = new VoucherPlan();
@@ -2811,6 +2811,46 @@ describe('MemberController (e2e)', () => {
 
         expect(res.body.result).toEqual(['appId must be a string and cannot be empty']);
       });
+    });
+  });
+
+  describe('members/member-role-count (POST)', () => {
+    const route = '/members/member-role-count';
+    it('should get member role counts', async () => {
+      const insertedMember = new Member();
+      const memberId = v4();
+      insertedMember.appId = app.id;
+      insertedMember.id = memberId;
+      insertedMember.name = `name`;
+      insertedMember.username = `username`;
+      insertedMember.email = `email@example.com`;
+      insertedMember.role = 'general-member';
+      insertedMember.star = 0;
+      insertedMember.createdAt = new Date();
+      insertedMember.loginedAt = new Date();
+      await manager.save(insertedMember);
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          appId: app.id,
+          memberId,
+          permissions: ['MEMBER_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const res = await request(application.getHttpServer())
+        .post(route)
+        .set('Authorization', `Bearer ${token}`)
+        .set('host', appHost.host)
+        .send({ role: 'general-member' })
+        .expect(201);
+      const { data } = res.body;
+      expect(data.length).toBe(1);
     });
   });
 });
