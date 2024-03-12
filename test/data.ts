@@ -39,6 +39,7 @@ import { CouponCode } from '~/entity/CouponCode';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { CouponPlanProduct } from '~/entity/CouponPlanProduct';
 import { MemberNote } from '~/entity/MemberNote';
+import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -111,11 +112,13 @@ program.id = v4();
 program.title = 'test program';
 program.abstract = 'test program abstract';
 program.appId = app.id;
+program.publishedAt = dayjs().subtract(1, 'day').toDate();
 
 export const programPlan = new ProgramPlan();
 programPlan.id = v4();
 programPlan.programId = program.id;
 programPlan.title = 'test program plan';
+programPlan.type = 3; // can view all program
 programPlan.listPrice = 0;
 
 export const programRole = new ProgramRole();
@@ -138,7 +141,13 @@ programContent.contentSectionId = programContentSection.id;
 programContent.contentBodyId = programContentBody.id;
 programContent.title = 'test program content title';
 programContent.position = 0;
+programContent.publishedAt = dayjs().subtract(1, 'day').toDate();
 programContent.displayMode = 'payToWatch';
+
+export const programContentPlan = new ProgramContentPlan();
+programContentPlan.id = v4();
+programContentPlan.programPlanId = programPlan.id;
+programContentPlan.programContentId = programContent.id;
 
 export const programContentProgress = new ProgramContentProgress();
 programContentProgress.id = v4();
