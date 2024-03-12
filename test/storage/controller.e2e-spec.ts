@@ -21,6 +21,7 @@ import { ApiExceptionFilter } from '~/api.filter';
 import {
   CompleteMultipartUploadDTO,
   CreateMultipartUploadDTO,
+  DownloadDTO,
   MultipartUploadSignUrlDTO,
   UploadDTO,
 } from '~/utility/storage/storage.dto';
@@ -149,6 +150,69 @@ describe('StorageController (e2e)', () => {
         .mockImplementationOnce((appId: string, key: string, prefix: string, expiresIn: number) => {
           return new Promise((resolve) => {
             resolve(`https://aws.sign.url?appId=${appId}&Expires=${expiresIn}&Prefix=${prefix}&key=${key}`);
+          });
+        });
+
+      const res = await request(application.getHttpServer()).post(api).set(requestHeader).send(requestBody).expect(201);
+      expect(res.text).toEqual('https://aws.sign.url?appId=test&Expires=60&Prefix=prefix&key=test.csv');
+    });
+  });
+
+  describe('/storage/download (POST)', () => {
+    const api = '/storage/storage/download';
+
+    it('should AuthToken is invalid', async () => {
+      const requestBody: DownloadDTO = { appId: 'test', fileName: 'test.csv', prefix: 'prefix' };
+      const requestHeader = {
+        authorization: 'Bearer ' + '',
+        host: 'test.something.com',
+      };
+      await request(application.getHttpServer()).post(api).set(requestHeader).send(requestBody).expect(401);
+    });
+
+    it('should get bad request', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+      await request(application.getHttpServer()).post(api).set(requestHeader).send().expect(400);
+    });
+
+    it('should get get sign url', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = sign(
+        {
+          memberId: 'invoker_member_id',
+        },
+        jwtSecret,
+      );
+      const requestBody: DownloadDTO = { appId: 'test', fileName: 'test.csv', prefix: 'prefix' };
+      const requestHeader = {
+        authorization: 'Bearer ' + token,
+        host: 'test.something.com',
+      };
+
+      jest
+        .spyOn(storageService, 'getSignedUrlForDownloadStorage')
+        .mockImplementationOnce((key: string, expiresIn: number) => {
+          return new Promise((resolve) => {
+            const splitKey = key.split('/');
+            resolve(
+              `https://aws.sign.url?appId=${splitKey[1]}&Expires=${expiresIn}&Prefix=${splitKey[0]}&key=${splitKey[2]}`,
+            );
           });
         });
 
