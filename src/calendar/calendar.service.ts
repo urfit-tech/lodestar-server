@@ -35,6 +35,8 @@ export class CalendarService {
     });
 
     const appointmentEnrollment = await this.appointmentService.getAppointmentEnrollmentByCreatorId(memberId);
+    console.log({ appointmentEnrollment });
+
     const appointmentEvents: EventAttributes[] = appointmentEnrollment.map((appointment) => {
       return {
         uid: appointment.orderProductId,
