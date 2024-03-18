@@ -229,6 +229,7 @@ import { ActivitySessionTicketEnrollmentCount } from '~/activity/view_entity/Act
 import { ProgramContentEbook } from './ProgramContentEbook';
 import { AppInvoiceGateway } from './AppInvoiceGateway';
 import { InvoiceGateway } from './InvoiceGateway';
+import { AppointmentEnrollmentView } from './AppointmentEnrollmentView';
 
 export const PostgresEntities = [
   Activity,
@@ -259,6 +260,7 @@ export const PostgresEntities = [
   AppUsage,
   AppWebhook,
   AppointmentPlan,
+  AppointmentEnrollmentView,
   AppointmentSchedule,
   Attachment,
   Attend,
