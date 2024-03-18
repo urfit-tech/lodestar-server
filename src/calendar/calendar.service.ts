@@ -23,7 +23,7 @@ export class CalendarService {
       return cachedEvents;
     }
 
-    const tasks = await this.memberService.getMemberTasks(memberId);
+    const tasks = await this.memberService.getMemberTasksByExecutorId(memberId);
     const taskEvents: EventAttributes[] = tasks.map((task) => {
       return {
         uid: task.id,
