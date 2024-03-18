@@ -12,6 +12,9 @@ export class AppointmentPlan {
   @Column('text', { name: 'title' })
   title: string;
 
+  @Column('text', { name: 'creator_id' })
+  creatorId: string;
+
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
 

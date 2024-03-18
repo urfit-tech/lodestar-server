@@ -3,7 +3,7 @@ import { EventAttributes, convertTimestampToArray } from 'ics';
 
 import { CacheService } from '~/utility/cache/cache.service';
 import { MemberService } from '~/member/member.service';
-import { OrderService } from '~/order/order.service';
+import { AppointmentService } from '~/appointment/appointment.service';
 
 @Injectable()
 export class CalendarService {
@@ -11,7 +11,7 @@ export class CalendarService {
   constructor(
     private readonly cacheService: CacheService,
     private readonly memberService: MemberService,
-    private readonly orderService: OrderService,
+    private readonly appointmentService: AppointmentService,
   ) {}
 
   async getCalendarEventsByMemberId(memberId: string): Promise<EventAttributes[]> {
@@ -23,7 +23,7 @@ export class CalendarService {
       return cachedEvents;
     }
 
-    const tasks = await this.memberService.getMemberTasks(memberId);
+    const tasks = await this.memberService.getMemberTasksByExecutorId(memberId);
     const taskEvents: EventAttributes[] = tasks.map((task) => {
       return {
         uid: task.id,
@@ -34,18 +34,20 @@ export class CalendarService {
       };
     });
 
-    const orderProducts = await this.orderService.getOrderProductsByMemberId(memberId, 'AppointmentPlan');
-    const orderProductEvents: EventAttributes[] = orderProducts.map((orderProduct) => {
+    const appointmentEnrollment = await this.appointmentService.getAppointmentEnrollmentByCreatorId(memberId);
+    console.log({ appointmentEnrollment });
+
+    const appointmentEvents: EventAttributes[] = appointmentEnrollment.map((appointment) => {
       return {
-        uid: orderProduct.id,
-        start: convertTimestampToArray(orderProduct.startedAt.getTime(), 'local'),
-        end: convertTimestampToArray(orderProduct.endedAt.getTime(), 'local'),
-        title: orderProduct.name,
-        description: orderProduct.description || '',
+        uid: appointment.orderProductId,
+        start: convertTimestampToArray(appointment.startedAt.getTime(), 'local'),
+        end: convertTimestampToArray(appointment.endedAt.getTime(), 'local'),
+        title: appointment.orderProductName || '',
+        description: appointment.order_product_description || '',
       };
     });
 
-    const events: EventAttributes[] = taskEvents.concat(orderProductEvents);
+    const events: EventAttributes[] = taskEvents.concat(appointmentEvents);
     redisCli.set(`${this.cacheKeyPrefix}${memberId}`, JSON.stringify(events), 'EX', 3600); // Cache expire in 60 mins.
     return events;
   }

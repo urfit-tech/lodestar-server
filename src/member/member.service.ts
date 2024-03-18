@@ -158,21 +158,15 @@ export class MemberService {
             }),
           }
         : {};
-  
-      const roleCounts = await this.memberInfra.getMemberRoleCounts(
-        appId,
-        wrapCondition,
-        {},
-        manager,
-      );
-  
+
+      const roleCounts = await this.memberInfra.getMemberRoleCounts(appId, wrapCondition, {}, manager);
+
       return {
         data: roleCounts,
       };
     };
     return cb(this.entityManager);
   }
-  
 
   async processImportFromFile(appId: string, rawRows: Array<Record<string, any>>): Promise<MemberImportResultDTO> {
     const [headerInfos, headerErrors] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
@@ -424,6 +418,10 @@ export class MemberService {
 
   async getMemberTasks(memberId: string): Promise<Array<MemberTask>> {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
+  }
+
+  async getMemberTasksByExecutorId(executorId: string): Promise<Array<MemberTask>> {
+    return this.memberInfra.getMemberTasksByExecutorId(executorId, this.entityManager);
   }
 
   async timedMemberInfraFunction(name, memberInfraFunction, managerId, appId) {
