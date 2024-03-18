@@ -14,6 +14,9 @@ export class MemberTask {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
+  @Column('text', { name: 'executor_id' })
+  executorId: string | null;
+
   @Column('text', { name: 'priority', default: () => "'high'" })
   priority: string;
 

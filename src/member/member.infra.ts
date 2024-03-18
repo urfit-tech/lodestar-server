@@ -68,11 +68,17 @@ import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import MemberQueryObserveBase from './get-member-query/member-query-base';
-import { MemberCategoryObserver, MemberManagerObserver, MemberPermissionGroupObserver, MemberPhoneObserver, MemberPropertyObserver, MemberTagObserver } from './get-member-query/member-query-observer';
+import {
+  MemberCategoryObserver,
+  MemberManagerObserver,
+  MemberPermissionGroupObserver,
+  MemberPhoneObserver,
+  MemberPropertyObserver,
+  MemberTagObserver,
+} from './get-member-query/member-query-observer';
 
 @Injectable()
 export class MemberInfrastructure {
-
   async getSimpleMemberByConditions(
     appId: string,
     conditions: FindOptionsWhere<Member>,
@@ -82,7 +88,6 @@ export class MemberInfrastructure {
     limit = 10,
     entityManager: EntityManager,
   ): Promise<{ data: Array<Member>; cursor: Cursor }> {
-
     const memberQueryBase = new MemberQueryObserveBase();
 
     memberQueryBase.addObserver(new MemberManagerObserver());
@@ -92,7 +97,7 @@ export class MemberInfrastructure {
     memberQueryBase.addObserver(new MemberPermissionGroupObserver());
     memberQueryBase.addObserver(new MemberPropertyObserver());
 
-    let queryBuilder = await memberQueryBase.execute(appId , conditions , order, entityManager)
+    let queryBuilder = await memberQueryBase.execute(appId, conditions, order, entityManager);
 
     const paginator = buildPaginator({
       entity: Member,
@@ -122,7 +127,7 @@ export class MemberInfrastructure {
     memberQueryBase.addObserver(new MemberPermissionGroupObserver());
     memberQueryBase.addObserver(new MemberPropertyObserver());
 
-    let queryBuilder = await memberQueryBase.execute(appId , conditions , order, entityManager)
+    let queryBuilder = await memberQueryBase.execute(appId, conditions, order, entityManager);
 
     queryBuilder = queryBuilder
       .select('member.role', 'role')
@@ -131,7 +136,7 @@ export class MemberInfrastructure {
 
     const roleCounts = await queryBuilder.getRawMany();
 
-    return roleCounts.map(item => ({
+    return roleCounts.map((item) => ({
       role: item.role,
       count: parseInt(item.count, 10),
     }));
@@ -197,6 +202,12 @@ export class MemberInfrastructure {
   async getMemberTasks(memberId: string, manager: EntityManager): Promise<Array<MemberTask>> {
     const memberTaskRepo = manager.getRepository(MemberTask);
     const tasks = await memberTaskRepo.findBy({ memberId });
+    return tasks;
+  }
+
+  async getMemberTasksByExecutorId(executorId: string, manager: EntityManager): Promise<Array<MemberTask>> {
+    const memberTaskRepo = manager.getRepository(MemberTask);
+    const tasks = await memberTaskRepo.findBy({ executorId });
     return tasks;
   }
 
@@ -595,7 +606,7 @@ export class MemberInfrastructure {
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {
     const memberPropertyConditions = pick(conditions, ['memberProperties'])
       .memberProperties as MemberPropertiesCondition[];
-      
+
     const sqlCondition = memberPropertyConditions
       .map((property) => {
         const key = first(keys(property));
