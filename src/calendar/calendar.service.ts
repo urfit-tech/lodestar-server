@@ -24,28 +24,31 @@ export class CalendarService {
     }
 
     const tasks = await this.memberService.getMemberTasksByExecutorId(memberId);
-    const taskEvents: EventAttributes[] = tasks.map((task) => {
-      return {
-        uid: task.id,
-        start: convertTimestampToArray(task.dueAt.getTime(), 'local'),
-        title: task.title,
-        description: task.description || '',
-        duration: { minutes: 0 },
-      };
-    });
+    const taskEvents: EventAttributes[] = tasks
+      .filter((task) => !!task.dueAt)
+      .map((task) => {
+        return {
+          uid: task.id,
+          start: convertTimestampToArray(task.dueAt.getTime(), 'local'),
+          title: task.title,
+          description: task.description || '',
+          duration: { minutes: 0 },
+        };
+      });
 
     const appointmentEnrollment = await this.appointmentService.getAppointmentEnrollmentByCreatorId(memberId);
-    console.log({ appointmentEnrollment });
 
-    const appointmentEvents: EventAttributes[] = appointmentEnrollment.map((appointment) => {
-      return {
-        uid: appointment.orderProductId,
-        start: convertTimestampToArray(appointment.startedAt.getTime(), 'local'),
-        end: convertTimestampToArray(appointment.endedAt.getTime(), 'local'),
-        title: appointment.orderProductName || '',
-        description: appointment.order_product_description || '',
-      };
-    });
+    const appointmentEvents: EventAttributes[] = appointmentEnrollment
+      .filter((appointment) => !!appointment.startedAt && !!appointment.endedAt)
+      .map((appointment) => {
+        return {
+          uid: appointment.orderProductId,
+          start: convertTimestampToArray(appointment.startedAt.getTime(), 'local'),
+          end: convertTimestampToArray(appointment.endedAt.getTime(), 'local'),
+          title: appointment.orderProductName || '',
+          description: appointment.order_product_description || '',
+        };
+      });
 
     const events: EventAttributes[] = taskEvents.concat(appointmentEvents);
     redisCli.set(`${this.cacheKeyPrefix}${memberId}`, JSON.stringify(events), 'EX', 3600); // Cache expire in 60 mins.
