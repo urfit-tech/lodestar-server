@@ -227,6 +227,7 @@ import { ActivityDuringPeriod } from '~/activity/view_entity/ActivityDuringPerio
 import { ActivityEnrollment } from '~/activity/view_entity/ActivityEnrollment';
 import { ActivitySessionTicketEnrollmentCount } from '~/activity/view_entity/ActivitySessionTicketEnrollmentCount';
 import { ProgramContentEbook } from './ProgramContentEbook';
+import { AppointmentEnrollmentView } from './AppointmentEnrollmentView';
 
 export const PostgresEntities = [
   Activity,
@@ -256,6 +257,7 @@ export const PostgresEntities = [
   AppUsage,
   AppWebhook,
   AppointmentPlan,
+  AppointmentEnrollmentView,
   AppointmentSchedule,
   Attachment,
   Attend,
