@@ -12,6 +12,7 @@ import { UtilityService } from '~/utility/utility.service';
 
 import { Runner } from './runner';
 import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class InvoiceRunner extends Runner {
@@ -31,6 +32,9 @@ export class InvoiceRunner extends Runner {
     private readonly paymentInfra: PaymentInfrastructure,
     private readonly invoiceService: InvoiceService,
     private readonly utilityService: UtilityService,
+    private readonly configService: ConfigService<{
+      INVOICE_RUNNER_SLEEP_DELAY: string;
+    }>,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     super(InvoiceRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
@@ -56,7 +60,7 @@ export class InvoiceRunner extends Runner {
             message: `paymentNo: ${paymentNo}`,
           });
         }
-        await this.utilityService.sleep(1000);
+        await this.utilityService.sleep(this.configService.get('INVOICE_RUNNER_SLEEP_DELAY') || 1000);
       }
     };
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));
