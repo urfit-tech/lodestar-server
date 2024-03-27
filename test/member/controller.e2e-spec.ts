@@ -424,7 +424,7 @@ describe('MemberController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
-          permissions: [],
+          permissions: [''],
         },
         jwtSecret,
       );
@@ -434,7 +434,7 @@ describe('MemberController (e2e)', () => {
         .set('host', appHost.host)
         .send({})
         .expect(401);
-      expect(res.body.message).toBe('missing required permission');
+      expect(res.body.message).toBe("Unauthorized");
     });
 
     it('Should raise error due to incorrect payload of nextToken & prevToken', async () => {
@@ -446,7 +446,7 @@ describe('MemberController (e2e)', () => {
         {
           appId: app.id,
           memberId: 'invoker_member_id',
-          permissions: [],
+          permissions: ['MEMBER_ADMIN'],
         },
         jwtSecret,
       );
@@ -825,7 +825,7 @@ describe('MemberController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
-          permissions: [],
+          permissions: [''],
         },
         jwtSecret,
       );
@@ -835,7 +835,7 @@ describe('MemberController (e2e)', () => {
         .set('host', appHost.host)
         .send({})
         .expect(401);
-      expect(res.body.message).toBe('missing required permission');
+      expect(res.body.message).toBe('Unauthorized');
     });
 
     it('Should raise error due to incorrect payload of nextToken & prevToken', async () => {
@@ -847,7 +847,7 @@ describe('MemberController (e2e)', () => {
         {
           appId: app.id,
           memberId: 'invoker_member_id',
-          permissions: [],
+          permissions: ['MEMBER_ADMIN'],
         },
         jwtSecret,
       );
