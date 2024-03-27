@@ -22,7 +22,6 @@ export class AuthGuard implements CanActivate {
 
     try {
      const member = this.authService.verify(token);
-     console.log('DDDF##R',member)
      response.locals.member = member;
     } catch (err) {
       throw new UnauthorizedException();

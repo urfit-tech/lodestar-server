@@ -11,7 +11,6 @@ export class AccessControlService {
   constructor() {}
 
   public isAuthorized({ currentRoles, requiredRoles }: IsAuthorizedParams) {
-    console.log("E$@EF@F@")
     return currentRoles.some(role => requiredRoles.includes(role));
   }
 }

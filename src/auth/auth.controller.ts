@@ -205,8 +205,6 @@ export class AuthController {
   }
 
   @Post('password/temporary')
-  // @Roles(Role.MEMBER_ADMIN)
-  // @UseGuards(AuthGuard, RoleGuard)
   @ApiExcludeEndpoint()
   async generateTmpPassword(@Body() body: GenerateTmpPasswordDTO) {
     try {

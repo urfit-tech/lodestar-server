@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { ROLE_KEY } from 'src/decorators/roles.decorator';
 import { Role } from 'src/enums/role.enum';
 import { AccessControlService } from './access-control.service';
-
 @Injectable()
 export class RoleGuard implements CanActivate {
   constructor(
@@ -15,7 +14,6 @@ export class RoleGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    console.log("@$G$GF@EQWFDWQ")
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLE_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -27,14 +25,15 @@ export class RoleGuard implements CanActivate {
 
     const http = context.switchToHttp();
     const request = http.getRequest();
-    const member = request.locals?.member;
+    const response = http.getResponse();
+    const member = response.locals?.member;
 
     if (!member) {
       throw new UnauthorizedException('none member found');
     }
 
     const hasAccess = this.accessControlService.isAuthorized({
-      currentRoles: member.roles,
+      currentRoles: member.permissions,
       requiredRoles,
     });
 
