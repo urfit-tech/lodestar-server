@@ -14,6 +14,9 @@ export class RoleGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
+
+    // Get required roles for the current route handler or controller class.
+    // If roles are defined on the handler, they override those on the controller.
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLE_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -29,7 +32,7 @@ export class RoleGuard implements CanActivate {
     const member = response.locals?.member;
 
     if (!member) {
-      throw new UnauthorizedException('none member found');
+      throw new UnauthorizedException('No member found for the current token');
     }
 
     const hasAccess = this.accessControlService.isAuthorized({

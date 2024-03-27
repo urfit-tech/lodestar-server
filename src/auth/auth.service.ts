@@ -164,7 +164,6 @@ export class AuthService {
   }
 
   verify(token: string): Record<string, any> {
-    console.log('DDD')
     return jwtVerify(token, this.hasuraJwtSecret) as Record<string, any>;
   }
 

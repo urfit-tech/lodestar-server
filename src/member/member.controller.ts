@@ -61,7 +61,6 @@ const GET_MEMBER_PERMISSIONS: Role[] = [
   Role.MATERIAL_AUDIT_LOG_ADMIN,
 ];
 
-@Roles(...GET_MEMBER_PERMISSIONS)
 @UseGuards(AuthGuard, RoleGuard)
 @ApiTags('Member')
 @ApiBearerAuth()
@@ -86,6 +85,7 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
+  @Roles(...GET_MEMBER_PERMISSIONS)
   @ApiExcludeEndpoint()
   public async getMembersByPost(
     @Local('member') member: JwtMember,
@@ -101,6 +101,7 @@ export class MemberController {
   }
 
   @Get()
+  @Roles(...GET_MEMBER_PERMISSIONS)
   @ApiExcludeEndpoint()
   public async getMembers(@Local('member') member: JwtMember, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
@@ -114,6 +115,7 @@ export class MemberController {
   }
 
   @Post('member-role-count')
+  @Roles(...GET_MEMBER_PERMISSIONS)
   @ApiExcludeEndpoint()
   public async getMembersRoleCountList(
     @Local('member') member: JwtMember,
