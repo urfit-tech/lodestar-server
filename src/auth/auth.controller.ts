@@ -136,7 +136,6 @@ export class AuthController {
   ) {
     const { cookies } = request;
     const { appId, fingerPrintId: bodyFingerPrint, geoLocation } = body;
-    console.log({ appId, fingerPrintId: bodyFingerPrint, geoLocation })
     const { fingerPrintId: cookieFingerPrint } = cookies;
     const fingerPrintId =
       bodyFingerPrint && !cookieFingerPrint
@@ -155,21 +154,12 @@ export class AuthController {
       return { code: 'E_SESSION', message: 'cannot get session' };
     }
 
-    console.log({
-      appCache,
-      fingerPrintId,
-      sessionMemberId,
-      loggedInMembers,
-    })
-
     try {
       const { status, refreshedToken } = await this.authService.refreshToken(appCache, {
         fingerPrintId,
         sessionMemberId,
         loggedInMembers,
       });
-
-
 
       switch (status) {
         case RefreshStatus.E_NO_MEMBER:
