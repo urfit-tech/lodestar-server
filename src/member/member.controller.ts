@@ -36,6 +36,9 @@ import {
 import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
 import { ExecutorInfo, DeleteMemberInfo } from './member.type';
+import { Roles } from '~/decorators/roles.decorator';
+import { Role } from '~/enums/role.enum';
+import { RoleGuard } from '~/auth/role.guard';
 
 @UseGuards(AuthGuard)
 @ApiTags('Member')
@@ -146,6 +149,8 @@ export class MemberController {
   }
 
   @Post('member-role-count')
+  // @Roles(Role.MEMBER_ADMIN)
+  // @UseGuards(AuthGuard, RoleGuard)
   @ApiExcludeEndpoint()
   public async getMembersRoleCountList(
     @Local('member') member: JwtMember,

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Body, Controller, Headers, Logger, Post, Req, Res, Session } from '@nestjs/common';
+import { Body, Controller, Headers, Logger, Post, Req, Res, Session, UseGuards } from '@nestjs/common';
 
 import { PublicMember } from '~/member/member.type';
 import { AppCache } from '~/app/app.type';
@@ -12,6 +12,10 @@ import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
 import { ApiTags, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import CrossServerTokenDTOProperty from './api_property/cross_server_token_dto';
+import { Roles } from '~/decorators/roles.decorator';
+import { Role } from '~/enums/role.enum';
+import { AuthGuard } from './auth.guard';
+import { RoleGuard } from './role.guard';
 
 @ApiTags('Auth')
 @Controller({
@@ -132,6 +136,7 @@ export class AuthController {
   ) {
     const { cookies } = request;
     const { appId, fingerPrintId: bodyFingerPrint, geoLocation } = body;
+    console.log({ appId, fingerPrintId: bodyFingerPrint, geoLocation })
     const { fingerPrintId: cookieFingerPrint } = cookies;
     const fingerPrintId =
       bodyFingerPrint && !cookieFingerPrint
@@ -150,12 +155,21 @@ export class AuthController {
       return { code: 'E_SESSION', message: 'cannot get session' };
     }
 
+    console.log({
+      appCache,
+      fingerPrintId,
+      sessionMemberId,
+      loggedInMembers,
+    })
+
     try {
       const { status, refreshedToken } = await this.authService.refreshToken(appCache, {
         fingerPrintId,
         sessionMemberId,
         loggedInMembers,
       });
+
+
 
       switch (status) {
         case RefreshStatus.E_NO_MEMBER:
@@ -191,6 +205,8 @@ export class AuthController {
   }
 
   @Post('password/temporary')
+  // @Roles(Role.MEMBER_ADMIN)
+  // @UseGuards(AuthGuard, RoleGuard)
   @ApiExcludeEndpoint()
   async generateTmpPassword(@Body() body: GenerateTmpPasswordDTO) {
     try {

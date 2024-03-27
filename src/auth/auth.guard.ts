@@ -15,12 +15,14 @@ export class AuthGuard implements CanActivate {
     const request = http.getRequest();
     const response = http.getResponse();
     const token = this.extractTokenFromHeader(request);
+    console.log({token})
     if (!token) {
       throw new UnauthorizedException();
     }
 
     try {
      const member = this.authService.verify(token);
+     console.log('DDDF##R',member)
      response.locals.member = member;
     } catch (err) {
       throw new UnauthorizedException();
