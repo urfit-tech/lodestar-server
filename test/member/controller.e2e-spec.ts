@@ -1676,6 +1676,7 @@ describe('MemberController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
         },
         jwtSecret,
       );
@@ -1697,6 +1698,7 @@ describe('MemberController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
         },
         jwtSecret,
       );
@@ -1751,6 +1753,7 @@ describe('MemberController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
         },
         jwtSecret,
       );
@@ -1773,6 +1776,7 @@ describe('MemberController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
+          permissions: ['MEMBER_ADMIN'],
         },
         jwtSecret,
       );

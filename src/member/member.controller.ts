@@ -129,6 +129,7 @@ export class MemberController {
   }
 
   @Post('import')
+  @Roles(...GET_MEMBER_PERMISSIONS)
   @ApiExcludeEndpoint()
   public async importMembers(@Local('member') member: JwtMember, @Body() metadata: MemberImportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
@@ -147,6 +148,7 @@ export class MemberController {
   }
 
   @Post('export')
+  @Roles(...GET_MEMBER_PERMISSIONS)
   @ApiExcludeEndpoint()
   public async exportMembers(@Local('member') member: JwtMember, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
