@@ -12,6 +12,7 @@ import { VoucherModule } from '~/voucher/voucher.module';
 import { OrderController } from './order.controller';
 import { OrderInfrastructure } from './order.infra';
 import { OrderService } from './order.service';
+import { AccessControlService } from '~/auth/access-control.service';
 
 @Module({
   controllers: [OrderController],
@@ -25,6 +26,6 @@ import { OrderService } from './order.service';
     VoucherModule,
   ],
   exports: [OrderInfrastructure],
-  providers: [OrderService, OrderInfrastructure],
+  providers: [OrderService, OrderInfrastructure,AccessControlService,],
 })
 export class OrderModule {}

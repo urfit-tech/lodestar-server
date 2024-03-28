@@ -40,7 +40,7 @@ import { Roles } from '~/decorators/roles.decorator';
 import { Role } from '~/enums/role.enum';
 import { RoleGuard } from '~/auth/role.guard';
 
-const GET_MEMBER_PERMISSIONS: Role[] = [
+const MEMBER_PERMISSION_GROUP_ADMIN: Role[] = [
   Role.MEMBER_ADMIN,
   Role.POST_ADMIN,
   Role.SALES_RECORDS_NORMAL,
@@ -85,7 +85,7 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
-  @Roles(...GET_MEMBER_PERMISSIONS)
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembersByPost(
     @Local('member') member: JwtMember,
@@ -101,7 +101,7 @@ export class MemberController {
   }
 
   @Get()
-  @Roles(...GET_MEMBER_PERMISSIONS)
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembers(@Local('member') member: JwtMember, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
@@ -115,7 +115,7 @@ export class MemberController {
   }
 
   @Post('member-role-count')
-  @Roles(...GET_MEMBER_PERMISSIONS)
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembersRoleCountList(
     @Local('member') member: JwtMember,
@@ -129,7 +129,7 @@ export class MemberController {
   }
 
   @Post('import')
-  @Roles(...GET_MEMBER_PERMISSIONS)
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async importMembers(@Local('member') member: JwtMember, @Body() metadata: MemberImportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
@@ -148,7 +148,7 @@ export class MemberController {
   }
 
   @Post('export')
-  @Roles(...GET_MEMBER_PERMISSIONS)
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async exportMembers(@Local('member') member: JwtMember, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
