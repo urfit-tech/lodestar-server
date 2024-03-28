@@ -11,11 +11,12 @@ import { AuthInfrastructure } from './auth.infra';
 import DeviceService from './device/device.service';
 import { CacheService } from '~/utility/cache/cache.service';
 import { UtilityService } from '~/utility/utility.service';
+import { AccessControlService } from './access-control.service';
 
 @Module({
   controllers: [AuthController],
   imports: [AppModule, MemberModule, PermissionModule, MailerModule],
-  providers: [Logger, AuthService, DeviceService, AuthInfrastructure, CacheService, UtilityService],
-  exports: [AuthService, AuthInfrastructure],
+  providers: [Logger, AuthService, DeviceService, AuthInfrastructure, CacheService, UtilityService,AccessControlService],
+  exports: [AuthService, AuthInfrastructure,AccessControlService],
 })
 export class AuthModule {}

@@ -854,11 +854,25 @@ describe('AuthController (e2e)', () => {
     const route = '/auth/password/temporary';
 
     it('should successfully retrieve a temporary password', async () => {
+      let jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      let token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+          permissions: ['APP_TMP_PASSWORD_ADMIN'],
+        },
+        jwtSecret,
+      );
       const appId = member.appId;
       const email = member.email;
       const applicant = member.id;
 
-      const { body } = await request(application.getHttpServer()).post(route).set('host', appHost.host).send({
+      const { body } = await request(application.getHttpServer()).post(route)
+      .set('host', appHost.host)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
         appId,
         applicant,
         email,
@@ -878,7 +892,22 @@ describe('AuthController (e2e)', () => {
     });
 
     it(`should fail due to member doesn't exist`, async () => {
-      const { body } = await request(application.getHttpServer()).post(route).set('host', appHost.host).send({
+      let jwtSecret = application
+      .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+      .getOrThrow('HASURA_JWT_SECRET');
+
+      let token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+          permissions: ['APP_TMP_PASSWORD_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const { body } = await request(application.getHttpServer()).post(route)
+      .set('host', appHost.host)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
         appId: 'test',
         applicant: member.id,
         email: 'test_nonexist@example.com',
@@ -892,11 +921,27 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should successfully login with a temporary password', async () => {
+      let jwtSecret = application
+      .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+      .getOrThrow('HASURA_JWT_SECRET');
+
+      let token = jwt.sign(
+        {
+          memberId: 'invoker_member_id',
+          permissions: ['APP_TMP_PASSWORD_ADMIN'],
+        },
+        jwtSecret,
+      );
+
       const appId = member.appId;
       const email = member.email;
       const applicant = member.id;
+      console.log({token})
 
-      const { body } = await request(application.getHttpServer()).post(route).set('host', appHost.host).send({
+      const { body } = await request(application.getHttpServer()).post(route)
+      .set('host', appHost.host)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
         appId,
         applicant,
         email,
