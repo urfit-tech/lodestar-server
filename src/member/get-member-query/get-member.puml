@@ -1,0 +1,46 @@
+@startuml
+
+interface QueryObserver {
+  +update(entityManager: EntityManager, queryBuilder: SelectQueryBuilder<Member>, conditions: FindOptionsWhere<Member>): Promise<void> | void
+}
+
+class MemberQueryObserveBase {
+  -observers: QueryObserver[]
+  +addObserver(observer: QueryObserver): void
+  +removeObserver(observer: QueryObserver): void
+  +execute(appId: string, conditions: FindOptionsWhere<Member>, order: OrderByCondition, entityManager: EntityManager): Promise<SelectQueryBuilder<Member>>
+}
+
+class MemberManagerObserver {
+  +update(): void
+}
+
+class MemberPhoneObserver {
+  +update(): Promise<void>
+}
+
+class MemberTagObserver {
+  +update(): Promise<void>
+}
+
+class MemberCategoryObserver {
+  +update(): Promise<void>
+}
+
+class MemberPermissionGroupObserver {
+  +update(): Promise<void>
+}
+
+class MemberPropertyObserver {
+  +update(): Promise<void>
+}
+
+MemberQueryObserveBase "1" -- "*" QueryObserver : observes
+QueryObserver <|.. MemberManagerObserver
+QueryObserver <|.. MemberPhoneObserver
+QueryObserver <|.. MemberTagObserver
+QueryObserver <|.. MemberCategoryObserver
+QueryObserver <|.. MemberPermissionGroupObserver
+QueryObserver <|.. MemberPropertyObserver
+
+@enduml

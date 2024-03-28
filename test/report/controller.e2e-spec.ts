@@ -87,14 +87,7 @@ describe('ReportController (e2e)', () => {
     member.role = role.name;
     member.name = 'testMember';
 
-    const metabaseReport = new Report();
-    metabaseReport.id = v4();
-    metabaseReport.type = 'metabase';
-    metabaseReport.title = 'test report';
-    metabaseReport.app = app;
-    metabaseReport.options = { metabase: { params: { appId: app.id }, resource: { question: 1 } } };
-
-    it('should AuthToken is invalid', async () => {
+    it('Should AuthToken is invalid', async () => {
       const requestHeader = {
         authorization: 'Bearer ' + '',
         host: 'test.something.com',
@@ -107,11 +100,19 @@ describe('ReportController (e2e)', () => {
         .expect('{"statusCode":401,"message":"Unauthorized"}');
     });
 
-    it('Should get metabase signed url successfully', async () => {
+    it('Should get question metabase signed url successfully', async () => {
       const report = new Report();
       report.id = v4();
       await memberRepo.save(member);
-      await reportRepo.save(metabaseReport);
+
+      const metabaseReportQuestion = new Report();
+      metabaseReportQuestion.id = v4();
+      metabaseReportQuestion.type = 'metabase';
+      metabaseReportQuestion.title = 'test report';
+      metabaseReportQuestion.app = app;
+      metabaseReportQuestion.options = { metabase: { params: { appId: app.id }, resource: { question: 1 } } };
+      await reportRepo.save(metabaseReportQuestion);
+
       const tokenResponse = await request(application.getHttpServer())
         .post(authTokenRoute)
         .set('host', appHost.host)
@@ -126,7 +127,39 @@ describe('ReportController (e2e)', () => {
       };
 
       await request(application.getHttpServer())
-        .get(`${getReportRoute}/${metabaseReport.id}`)
+        .get(`${getReportRoute}/${metabaseReportQuestion.id}`)
+        .set(requestHeader)
+        .expect(200);
+    });
+
+    it('Should get dashboard metabase signed url successfully', async () => {
+      const report = new Report();
+      report.id = v4();
+      await memberRepo.save(member);
+
+      const metabaseReportDashboard = new Report();
+      metabaseReportDashboard.id = v4();
+      metabaseReportDashboard.type = 'metabase';
+      metabaseReportDashboard.title = 'test report';
+      metabaseReportDashboard.app = app;
+      metabaseReportDashboard.options = { metabase: { params: { appId: app.id }, resource: { dashboard: 1 } } };
+      await reportRepo.save(metabaseReportDashboard);
+
+      const tokenResponse = await request(application.getHttpServer())
+        .post(authTokenRoute)
+        .set('host', appHost.host)
+        .send({ clientId: 'test', key: 'testKey', permissions: [] });
+      const {
+        result: { authToken },
+      } = tokenResponse.body;
+
+      const requestHeader = {
+        Authorization: 'Bearer ' + authToken,
+        host: 'test.something.com',
+      };
+
+      await request(application.getHttpServer())
+        .get(`${getReportRoute}/${metabaseReportDashboard.id}`)
         .set(requestHeader)
         .expect(200);
     });

@@ -119,7 +119,7 @@ export class Member {
   passhash: string | null;
 
   @Column('text', { name: 'manager_id', nullable: true })
-  managerId: string;
+  managerId: string | null;
 
   @Column('text', { name: 'facebook_user_id', nullable: true })
   facebookUserId: string | null;
@@ -171,6 +171,12 @@ export class Member {
   })
   lastMemberNoteCreated: Date | null;
 
+  @Column('timestamp with time zone', {
+    name: 'last_member_note_called',
+    nullable: true,
+  })
+  lastMemberNoteCalled: Date | null;
+
   @Column('text', { name: 'status', default: () => "'verified'" })
   status: string;
 
@@ -179,6 +185,12 @@ export class Member {
     default: () => 'jsonb_build_array()',
   })
   verifiedEmails: object;
+
+  @Column('timestamp with time zone', {
+    name: 'last_member_note_answered',
+    nullable: true,
+  })
+  lastMemberNoteAnswered: Date | null;
 
   @Column('boolean', { name: 'is_business', default: () => false })
   isBusiness: boolean;
