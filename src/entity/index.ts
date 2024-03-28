@@ -227,6 +227,8 @@ import { ActivityDuringPeriod } from '~/activity/view_entity/ActivityDuringPerio
 import { ActivityEnrollment } from '~/activity/view_entity/ActivityEnrollment';
 import { ActivitySessionTicketEnrollmentCount } from '~/activity/view_entity/ActivitySessionTicketEnrollmentCount';
 import { ProgramContentEbook } from './ProgramContentEbook';
+import { AppInvoiceGateway } from './AppInvoiceGateway';
+import { InvoiceGateway } from './InvoiceGateway';
 
 export const PostgresEntities = [
   Activity,
@@ -243,6 +245,7 @@ export const PostgresEntities = [
   AppEmailTemplate,
   AppExtendedModule,
   AppHost,
+  AppInvoiceGateway,
   AppLanguage,
   AppModule,
   AppNav,
@@ -294,6 +297,7 @@ export const PostgresEntities = [
   GiftPlanProduct,
   Identity,
   Invoice,
+  InvoiceGateway,
   Issue,
   IssueReaction,
   IssueReply,
