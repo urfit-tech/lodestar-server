@@ -13,7 +13,7 @@ export class ApplicationService {
   async healthz(): Promise<string> {
     try {
       await Promise.all([this.cacheService.getClient().ping(), this.entityManager.query('SELECT 1')]);
-      return dayjs().toISOString();
+      return 'OK';
     } catch (error) {
       throw new APIException({ code: 'E_HEALTHZ', message: null, result: error }, 500);
     }
