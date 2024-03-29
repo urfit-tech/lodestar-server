@@ -158,7 +158,7 @@ export class PorterRunner extends Runner {
   }
 
   async checkAndCallHeartbeat(): Promise<void> {
-    const heartbeatUrl = process.env.PORTER_HEARTBEAT_URL;
+    const heartbeatUrl = process.env.PORTER_RUNNER_HEARTBEAT_URL;
 
     const isValidUrl = (url) => {
       try {
