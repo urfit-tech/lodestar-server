@@ -203,10 +203,10 @@ describe('PorterRunner (e2e)', () => {
   });
 
   describe('testing heartbeat', () => {
-    it('should call the heartbeat URL if PORTER_HEARTBEAT_URL is set', async () => {
+    it('should call the heartbeat URL if PORTER_RUNNER_HEARTBEAT_URL is set', async () => {
       const mockedAxiosGet = axios.get as jest.Mock;
       const testUrl = 'http://test-heartbeat-url.com';
-      process.env.PORTER_HEARTBEAT_URL = testUrl;
+      process.env.PORTER_RUNNER_HEARTBEAT_URL = testUrl;
 
       const porterRunner = application.get<PorterRunner>(Runner);
       await porterRunner.execute(manager);
@@ -214,9 +214,9 @@ describe('PorterRunner (e2e)', () => {
       expect(mockedAxiosGet).toHaveBeenCalledWith(testUrl);
     });
 
-    it('should not call the heartbeat URL if PORTER_HEARTBEAT_URL is not set', async () => {
+    it('should not call the heartbeat URL if PORTER_RUNNER_HEARTBEAT_URL is not set', async () => {
       const mockedAxiosGet = axios.get as jest.Mock;
-      delete process.env.PORTER_HEARTBEAT_URL;
+      delete process.env.PORTER_RUNNER_HEARTBEAT_URL;
 
       const porterRunner = application.get<PorterRunner>(Runner);
       await porterRunner.execute(manager);
@@ -224,10 +224,10 @@ describe('PorterRunner (e2e)', () => {
       expect(mockedAxiosGet).not.toHaveBeenCalled();
     });
 
-    it('should not call the heartbeat URL if PORTER_HEARTBEAT_URL is not a valid URL', async () => {
+    it('should not call the heartbeat URL if PORTER_RUNNER_HEARTBEAT_URL is not a valid URL', async () => {
       const mockedAxiosGet = axios.get as jest.Mock;
       const invalidUrl = 'not-a-valid-url';
-      process.env.PORTER_HEARTBEAT_URL = invalidUrl;
+      process.env.PORTER_RUNNER_HEARTBEAT_URL = invalidUrl;
 
       const porterRunner = application.get<PorterRunner>(Runner);
       await porterRunner.execute(manager);

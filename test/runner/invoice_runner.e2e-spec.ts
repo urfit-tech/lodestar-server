@@ -22,6 +22,11 @@ import { Invoice } from '~/invoice/invoice.entity';
 import { app, appPlan, role } from '../data';
 import { autoRollbackTransaction } from '../utils';
 import { getEntityManagerToken } from '@nestjs/typeorm';
+import axios from 'axios';
+
+jest.mock('axios', () => ({
+  get: jest.fn(),
+}));
 
 describe('InvoiceRunner (e2e)', () => {
   let application: INestApplication;
@@ -54,8 +59,9 @@ describe('InvoiceRunner (e2e)', () => {
         }),
       ],
     })
-    .overrideProvider(EzpayClient).useValue(ezpayClient)
-    .compile();
+      .overrideProvider(EzpayClient)
+      .useValue(ezpayClient)
+      .compile();
 
     application = moduleFixture.createNestApplication();
 
@@ -70,7 +76,7 @@ describe('InvoiceRunner (e2e)', () => {
     orderLogRepo = manager.getRepository(OrderLog);
     paymentLogRepo = manager.getRepository(PaymentLog);
     invoiceRepo = manager.getRepository(Invoice);
-    
+
     await invoiceRepo.delete({});
     await paymentLogRepo.delete({});
     await orderLogRepo.delete({});
@@ -132,7 +138,7 @@ describe('InvoiceRunner (e2e)', () => {
     givenPayment.gateway = 'spgateway';
     givenPayment.invoiceIssuedAt = null;
     givenPayment.invoiceOptions = {};
-    givenPayment.invoiceGatewayId = v4()
+    givenPayment.invoiceGatewayId = v4();
 
     await autoRollbackTransaction(manager, async (manager) => {
       await manager.save(notAllowedApp);
@@ -140,21 +146,31 @@ describe('InvoiceRunner (e2e)', () => {
       await manager.save(givenOrder);
       await manager.save(givenPayment);
 
-      await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-        { 'error': `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
-      ])));
-      await expect(invoiceRunner.execute(manager)).rejects.toEqual(new Error(JSON.stringify([
-        { 'error': `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
-      ])));
+      await expect(invoiceRunner.execute(manager)).rejects.toEqual(
+        new Error(
+          JSON.stringify([
+            { error: `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
+          ]),
+        ),
+      );
+      await expect(invoiceRunner.execute(manager)).rejects.toEqual(
+        new Error(
+          JSON.stringify([
+            { error: `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
+          ]),
+        ),
+      );
 
       const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: givenPayment.no } });
-        const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: givenPayment.no });
-        for (const each of [orderLog, paymentLog]) {
-          expect(each.invoiceIssuedAt).toBeNull();
-          expect(each.invoiceOptions['status']).toEqual('LODESTAR_FAIL');
-          expect(each.invoiceOptions['reason']).toEqual(`App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.`);
-          expect(each.invoiceOptions['retry']).toEqual(2);
-        }
+      const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: givenPayment.no });
+      for (const each of [orderLog, paymentLog]) {
+        expect(each.invoiceIssuedAt).toBeNull();
+        expect(each.invoiceOptions['status']).toEqual('LODESTAR_FAIL');
+        expect(each.invoiceOptions['reason']).toEqual(
+          `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.`,
+        );
+        expect(each.invoiceOptions['retry']).toEqual(2);
+      }
     });
   });
 
@@ -181,7 +197,7 @@ describe('InvoiceRunner (e2e)', () => {
         'invoice.hash_iv': 'test_hash_iv0000',
         'invoice.dry_run': 'true',
       };
-      
+
       const appExtendedModule = new AppExtendedModule();
       appExtendedModule.app = app;
       appExtendedModule.module = invoiceModule;
@@ -192,11 +208,11 @@ describe('InvoiceRunner (e2e)', () => {
       member.email = 'member@example.com';
       member.username = 'member';
       member.role = role.name;
-      
+
       const order = new OrderLog();
       order.member = member;
       order.invoiceOptions = {};
-      
+
       const payment = new PaymentLog();
       payment.no = 'payment_no';
       payment.order = order;
@@ -206,8 +222,8 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
-      payment.invoiceGatewayId = v4()
-      
+      payment.invoiceGatewayId = v4();
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -222,7 +238,7 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(payment);
 
         await invoiceRunner.execute(manager);
-        
+
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
         for (const each of [orderLog, paymentLog]) {
@@ -253,7 +269,7 @@ describe('InvoiceRunner (e2e)', () => {
         'invoice.hash_iv': 'test_hash_iv0000',
         'invoice.dry_run': 'true',
       };
-      
+
       const appExtendedModule = new AppExtendedModule();
       appExtendedModule.app = app;
       appExtendedModule.module = invoiceModule;
@@ -264,11 +280,11 @@ describe('InvoiceRunner (e2e)', () => {
       member.email = 'to_fail_member@example.com';
       member.username = 'to_fail_member';
       member.role = role.name;
-      
+
       const order = new OrderLog();
       order.member = member;
       order.invoiceOptions = {};
-      
+
       const payment = new PaymentLog();
       payment.no = 'to_fail_payment_no';
       payment.order = order;
@@ -278,8 +294,8 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
-      payment.invoiceGatewayId = v4()
-      
+      payment.invoiceGatewayId = v4();
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -294,7 +310,7 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(payment);
 
         await invoiceRunner.execute(manager);
-        
+
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
         for (const each of [orderLog, paymentLog]) {
@@ -325,7 +341,7 @@ describe('InvoiceRunner (e2e)', () => {
         'invoice.hash_iv': 'test_hash_iv0000',
         'invoice.dry_run': 'true',
       };
-      
+
       const appExtendedModule = new AppExtendedModule();
       appExtendedModule.app = app;
       appExtendedModule.module = invoiceModule;
@@ -336,11 +352,11 @@ describe('InvoiceRunner (e2e)', () => {
       member.email = 'member@example.com';
       member.username = 'member';
       member.role = role.name;
-      
+
       const order = new OrderLog();
       order.member = member;
       order.invoiceOptions = {};
-      
+
       const payment = new PaymentLog();
       payment.no = 'to_fail_payment_no';
       payment.order = order;
@@ -350,8 +366,8 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
-      payment.invoiceGatewayId = v4()
-      
+      payment.invoiceGatewayId = v4();
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -366,7 +382,7 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(payment);
 
         await invoiceRunner.execute(manager);
-        
+
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
         for (const each of [orderLog, paymentLog]) {
@@ -380,11 +396,11 @@ describe('InvoiceRunner (e2e)', () => {
     it('Should success with retry with 2 times at most 5 times', async () => {
       const success = {
         Status: 'SUCCESS',
-          Message: 'message',
-          Result: {
-            InvoiceNumber: 'retry_success_invoice_number',
-            InvoiceTransNo: 'retry_success_invoice_trans_no',
-          },
+        Message: 'message',
+        Result: {
+          InvoiceNumber: 'retry_success_invoice_number',
+          InvoiceTransNo: 'retry_success_invoice_trans_no',
+        },
       };
       const libSomethingFail = {
         Status: 'LIB_SOMETHING_FAIL',
@@ -402,14 +418,14 @@ describe('InvoiceRunner (e2e)', () => {
         .mockImplementationOnce(() => libShouldNotAppearFail);
 
       const invoiceRunner = application.get<InvoiceRunner>(Runner);
-      
+
       const appSecretSet = {
         'invoice.merchant_id': 'test_merchant_id',
         'invoice.hash_key': 'test_hash_key0000000000000000000',
         'invoice.hash_iv': 'test_hash_iv0000',
         'invoice.dry_run': 'true',
       };
-      
+
       const appExtendedModule = new AppExtendedModule();
       appExtendedModule.app = app;
       appExtendedModule.module = invoiceModule;
@@ -420,11 +436,11 @@ describe('InvoiceRunner (e2e)', () => {
       member.email = 'retry_success_member@example.com';
       member.username = 'retry_success_member';
       member.role = role.name;
-      
+
       const order = new OrderLog();
       order.member = member;
       order.invoiceOptions = {};
-      
+
       const payment = new PaymentLog();
       payment.no = 'retry_success_payment_no';
       payment.order = order;
@@ -434,8 +450,8 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
-      payment.invoiceGatewayId = v4()
-      
+      payment.invoiceGatewayId = v4();
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -503,14 +519,14 @@ describe('InvoiceRunner (e2e)', () => {
         .mockImplementationOnce(() => libShouldNotAppearFail);
 
       const invoiceRunner = application.get<InvoiceRunner>(Runner);
-      
+
       const appSecretSet = {
         'invoice.merchant_id': 'test_merchant_id',
         'invoice.hash_key': 'test_hash_key0000000000000000000',
         'invoice.hash_iv': 'test_hash_iv0000',
         'invoice.dry_run': 'true',
       };
-      
+
       const appExtendedModule = new AppExtendedModule();
       appExtendedModule.app = app;
       appExtendedModule.module = invoiceModule;
@@ -521,11 +537,11 @@ describe('InvoiceRunner (e2e)', () => {
       member.email = 'retry_fail_member@example.com';
       member.username = 'retry_fail_member';
       member.role = role.name;
-      
+
       const order = new OrderLog();
       order.member = member;
       order.invoiceOptions = {};
-      
+
       const payment = new PaymentLog();
       payment.no = 'retry_fail_payment_no';
       payment.order = order;
@@ -535,8 +551,8 @@ describe('InvoiceRunner (e2e)', () => {
       payment.gateway = 'spgateway';
       payment.invoiceIssuedAt = null;
       payment.invoiceOptions = {};
-      payment.invoiceGatewayId = v4()
-      
+      payment.invoiceGatewayId = v4();
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -576,12 +592,46 @@ describe('InvoiceRunner (e2e)', () => {
         await invoiceRunner.execute(manager);
         const orderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
         const paymentLog = await manager.getRepository(PaymentLog).findOneBy({ no: payment.no });
-        for (const { invoiceIssuedAt, invoiceOptions} of [orderLog, paymentLog]) {
+        for (const { invoiceIssuedAt, invoiceOptions } of [orderLog, paymentLog]) {
           expect(invoiceIssuedAt).toBeNull();
           expect(invoiceOptions['status']).toEqual('LIB_ANOTHER_FAIL');
           expect(invoiceOptions['retry']).toEqual(5);
         }
       });
+    });
+  });
+
+  describe('testing heartbeat', () => {
+    it('should call the heartbeat URL if INVOICE_RUNNER_HEARTBEAT_URL is set', async () => {
+      const mockedAxiosGet = axios.get as jest.Mock;
+      const testUrl = 'http://test-heartbeat-url.com';
+      process.env.INVOICE_RUNNER_HEARTBEAT_URL = testUrl;
+
+      const invoiceRunner = application.get<InvoiceRunner>(Runner);
+      await invoiceRunner.execute(manager);
+
+      expect(mockedAxiosGet).toHaveBeenCalledWith(testUrl);
+    });
+
+    it('should not call the heartbeat URL if INVOICE_RUNNER_HEARTBEAT_URL is not set', async () => {
+      const mockedAxiosGet = axios.get as jest.Mock;
+      delete process.env.INVOICE_RUNNER_HEARTBEAT_URL;
+
+      const invoiceRunner = application.get<InvoiceRunner>(Runner);
+      await invoiceRunner.execute(manager);
+
+      expect(mockedAxiosGet).not.toHaveBeenCalled();
+    });
+
+    it('should not call the heartbeat URL if INVOICE_RUNNER_HEARTBEAT_URL is not a valid URL', async () => {
+      const mockedAxiosGet = axios.get as jest.Mock;
+      const invalidUrl = 'not-a-valid-url';
+      process.env.INVOICE_RUNNER_HEARTBEAT_URL = invalidUrl;
+
+      const invoiceRunner = application.get<InvoiceRunner>(Runner);
+      await invoiceRunner.execute(manager);
+
+      expect(mockedAxiosGet).not.toHaveBeenCalled();
     });
   });
 });
