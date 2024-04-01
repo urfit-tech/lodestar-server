@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Logger, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { FetchActivitiesResponseDto, ActivityCollectionDTO } from './activity.dto';
+import { FetchActivitiesResponseDto, ActivityCollectionDTO, FetchMemberRightActivityTicketDTO } from './activity.dto';
 import { ActivityService } from './activity.service';
 import { AuthGuard } from '~/auth/auth.guard';
 
@@ -40,4 +40,12 @@ export class ActivityController {
       throw error;
     }
   }
+
+  @Get('/member_right')
+  public async memberRightActivityTicket(
+    @Query() dto: FetchMemberRightActivityTicketDTO,
+  ){
+    return {status: 200}
+  }
 }
+

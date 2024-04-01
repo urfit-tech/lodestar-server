@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsObject, IsString } from 'class-validator';
+import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class ParticipantsCountDto {
   @ApiProperty()
@@ -67,4 +67,16 @@ export class ActivityCollectionDTO {
 
   @IsString()
   categoryId: string;
+}
+
+export class FetchMemberRightActivityTicketDTO {
+  @IsString()
+  memberId: string
+
+  @IsString()
+  activityTicketId: string
+
+  @IsOptional()
+  @IsString()
+  sessionId?: string
 }
