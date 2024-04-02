@@ -65,51 +65,14 @@ describe('EbookService', () => {
     });
   });
 
-  describe('encryptEbook', () => {
+  describe('getKeyAndIV', () => {
     it('should return undefined if no authorization header is present', async () => {
       const request = { headers: {} } as Request;
       const fileStream = new Readable();
 
-      const result = await service.encryptEbook(request, fileStream, 'appId');
+      const result = await service.getStandardKeyAndIV(request , 'appId');
 
       expect(result).toBeUndefined();
-    });
-
-    it('should encrypt data stream if valid authorization token is provided', async () => {
-      const request = {
-        headers: {
-          authorization: Math.random().toString(36).substring(2, 15),
-        },
-      } as unknown as Request;
-
-      const fileStream = new Readable({
-        read() {
-          this.push('some data');
-          this.push(null);
-        },
-      });
-
-      jest.spyOn(utilityService, 'encryptDataStream').mockImplementation((dataStream) => {
-        const transformStream = new Transform({
-          transform(chunk, encoding, callback) {
-            this.push(chunk.toString().toUpperCase());
-            callback();
-          },
-        });
-        dataStream.pipe(transformStream);
-        return transformStream;
-      });
-
-      const result = await service.encryptEbook(request, fileStream, 'appId');
-
-      const data = await new Promise((resolve, reject) => {
-        let dataString = '';
-        result.on('data', (chunk) => (dataString += chunk));
-        result.on('end', () => resolve(dataString));
-        result.on('error', reject);
-      });
-
-      expect(data).toBe('SOME DATA');
     });
   });
 });
