@@ -19,9 +19,9 @@ import { AuthService } from '~/auth/auth.service';
 })
 export class EbookController {
   constructor(
-    private readonly ebookService: EbookService, 
+    private readonly ebookService: EbookService,
     private readonly programService: ProgramService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
   ) {}
 
   @Get(':programContentId')
@@ -29,15 +29,15 @@ export class EbookController {
     @Param('programContentId') programContentId: string,
     @Req() req: Request,
     @Res() res: Response,
-    @Headers('Authorization') authorization?: string
+    @Headers('Authorization') authorization?: string,
   ): Promise<void> {
-    const contentId = programContentId.split(".")[0];
+    const contentId = programContentId.split('.')[0];
     let programContents;
 
     try {
       programContents = await this.programService.getProgramContentById(contentId);
     } catch (err) {
-      throw new APIException({ code: 'E_EBOOK_NOT_FOUND', message: 'Unable to retrieve ebook file' }, 400)
+      throw new APIException({ code: 'E_EBOOK_NOT_FOUND', message: 'Unable to retrieve ebook file' }, 400);
     }
 
     const isTrial = !authorization && programContents.displayMode === 'trial';
@@ -56,8 +56,7 @@ export class EbookController {
       res.setHeader('Content-Disposition', `attachment; filename="${programContentId}.epub"`);
 
       encryptedFileStream.pipe(res);
-
-    } catch(error) {
+    } catch (error) {
       this.handleError(error, res);
     }
   }
@@ -67,7 +66,7 @@ export class EbookController {
     if (!token) {
       throw new UnauthorizedException('No token provided');
     }
-    
+
     try {
       const verifiedToken = this.authService.verify(token);
       if (!verifiedToken) {
@@ -79,9 +78,12 @@ export class EbookController {
     }
   }
 
-
   private handleError(error: any, res: Response): void {
-    if (error instanceof EbookFileRetrievalError || error instanceof KeyAndIVRetrievalError || error instanceof EbookEncryptionError) {
+    if (
+      error instanceof EbookFileRetrievalError ||
+      error instanceof KeyAndIVRetrievalError ||
+      error instanceof EbookEncryptionError
+    ) {
       res.status(400).json(new APIException({ code: `E_${error.name.toUpperCase()}`, message: error.message }));
     } else {
       res.status(500).json(new APIException({ code: 'E_UNKNOWN', message: 'Unknown error' }));

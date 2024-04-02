@@ -6,8 +6,6 @@ import dayjs from 'dayjs';
 import { MemberService } from '~/member/member.service';
 import { APIException } from '~/api.excetion';
 import { ProgramInfrastructure } from './program.infra';
-import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
-import { validate as uuidValidate } from 'uuid';
 
 @Injectable()
 export class ProgramService {
@@ -23,6 +21,14 @@ export class ProgramService {
       programContentVideos: {
         attachment: { id: attachmentId },
       },
+    });
+  }
+
+  public async getProgramContentById(id: string): Promise<ProgramContent> {
+    const programContentRepo = this.entityManager.getRepository(ProgramContent);
+    return programContentRepo.findOne({
+      where: { id },
+      relations: ['contentSection', 'contentSection.program'],
     });
   }
 
