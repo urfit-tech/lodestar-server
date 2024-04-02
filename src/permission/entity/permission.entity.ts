@@ -1,4 +1,4 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
 
 import { AppDefaultPermission } from '~/entity/AppDefaultPermission';
 import { MemberPermissionExtra } from '~/entity/MemberPermissionExtra';
@@ -8,7 +8,7 @@ import { RolePermission } from '~/entity/RolePermission';
 @Index('permission_pkey', ['id'], { unique: true })
 @Entity('permission', { schema: 'public' })
 export class Permission {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: string;
 
   @Column('text', { name: 'group' })

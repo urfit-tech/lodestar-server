@@ -85,18 +85,18 @@ export class ProgramPackageService {
       });
     }
 
-    const ownedProgramPackages = await this.programPackageInfra.getEnrolledProgramPackageById(
+    const ownedProgramPackage = await this.programPackageInfra.getEnrolledProgramPackageById(
       memberId,
       programPackageId,
       this.entityManager,
     );
 
-    const filterProgramContentProgress = ownedProgramPackages.isTempoDelivery
+    const filterProgramContentProgress = ownedProgramPackage.isTempoDelivery
       ? this.filterProgramContentProgressNotTempoDelivered(
-          ownedProgramPackages.programContentProgress,
-          ownedProgramPackages.programTempoDelivery.filter((delivery) => !isEmpty(delivery)),
+          ownedProgramPackage.programContentProgress,
+          ownedProgramPackage.programTempoDelivery.filter((delivery) => !isEmpty(delivery)),
         )
-      : ownedProgramPackages.programContentProgress;
+      : ownedProgramPackage.programContentProgress;
 
     const programCategories = await this.programInfra.getProgramCategories(
       filterProgramContentProgress.map((p: ProgramPackageProgramContentProgressDTO) => p.programId),
@@ -106,9 +106,9 @@ export class ProgramPackageService {
     const progress = await this.calculateProgramPackageProgramProgress(filterProgramContentProgress);
 
     return {
-      id: ownedProgramPackages.id,
-      title: ownedProgramPackages.title,
-      coverUrl: ownedProgramPackages.coverUrl,
+      id: ownedProgramPackage.id,
+      title: ownedProgramPackage.title,
+      coverUrl: ownedProgramPackage.coverUrl,
       programs: [
         ...new Set(filterProgramContentProgress.sort((a, b) => a.position - b.position).map((p) => p.programId)),
       ].map((programId: string) => ({

@@ -109,7 +109,7 @@ export class ProgramPackageInfrastructure {
   }
 
   async getEnrolledProgramPackageById(memberId: string, programPackageId: string, manager: EntityManager) {
-    const programPackages = await manager
+    const programPackage = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
       .select([
@@ -169,6 +169,6 @@ export class ProgramPackageInfrastructure {
       .addGroupBy('program_package_plan.id')
       .getRawOne();
 
-    return this.utilityService.convertObjectKeysToCamelCase(programPackages);
+    return this.utilityService.convertObjectKeysToCamelCase(programPackage);
   }
 }

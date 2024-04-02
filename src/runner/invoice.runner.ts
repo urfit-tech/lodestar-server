@@ -2,7 +2,7 @@ import { EntityManager } from 'typeorm';
 import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
-import { InvoiceService } from '~/invoice/invoice.service';
+import { InvoiceService } from '~/invoice/invocie.service';
 import { InvoiceModule } from '~/invoice/invoice.module';
 import { PaymentModule } from '~/payment/payment.module';
 import { PaymentInfrastructure } from '~/payment/payment.infra';
@@ -11,8 +11,6 @@ import { DistributedLockService } from '~/utility/lock/distributed_lock.service'
 import { UtilityService } from '~/utility/utility.service';
 
 import { Runner } from './runner';
-import axios from 'axios';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class InvoiceRunner extends Runner {
@@ -32,9 +30,6 @@ export class InvoiceRunner extends Runner {
     private readonly paymentInfra: PaymentInfrastructure,
     private readonly invoiceService: InvoiceService,
     private readonly utilityService: UtilityService,
-    private readonly configService: ConfigService<{
-      INVOICE_RUNNER_SLEEP_DELAY: string;
-    }>,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     super(InvoiceRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
@@ -42,8 +37,6 @@ export class InvoiceRunner extends Runner {
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
-    await this.checkAndCallHeartbeat();
-
     const errors: Array<{ error: any }> = [];
     const cb = async (manager: EntityManager) => {
       const paymentLogs = await this.paymentInfra.getShouldIssueInvoicePaymentLogs(this.batchSize, manager);
@@ -60,32 +53,12 @@ export class InvoiceRunner extends Runner {
             message: `paymentNo: ${paymentNo}`,
           });
         }
-        await this.utilityService.sleep(Number(this.configService.get('INVOICE_RUNNER_SLEEP_DELAY')) || 1000);
+        await this.utilityService.sleep(1000);
       }
     };
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));
     if (errors.length > 0) {
       throw new Error(JSON.stringify(errors));
-    }
-  }
-
-  async checkAndCallHeartbeat(): Promise<void> {
-    const heartbeatUrl = process.env.INVOICE_RUNNER_HEARTBEAT_URL;
-
-    const isValidUrl = (url) => {
-      try {
-        new URL(url);
-        return true;
-      } catch (_) {
-        return false;
-      }
-    };
-
-    if (heartbeatUrl && typeof heartbeatUrl === 'string' && isValidUrl(heartbeatUrl)) {
-      console.log('Calling heartbeat URL:', heartbeatUrl);
-      await axios.get(heartbeatUrl);
-    } else {
-      console.log(`Invalid or no heartbeat URL set, skipping call: ${heartbeatUrl}`);
     }
   }
 }
