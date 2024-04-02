@@ -12,9 +12,6 @@ export class MemberPermissionExtra {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @Column('text', { name: 'permission_id' })
-  permissionId: string;
-
   @Column('timestamp with time zone', {
     name: 'created_at',
     default: () => 'now()',

@@ -9,12 +9,10 @@ import { MemberService } from '~/member/member.service';
 import { DefinitionInfrastructure } from '~/definition/definition.infra';
 import { ProgramPackageInfrastructure } from './program-package.infra';
 import { UtilityService } from '~/utility/utility.service';
-import { ProgramInfrastructure } from '~/program/program.infra';
-import { ProgramModule } from '~/program/program.module';
 
 @Module({
   controllers: [ProgramPackageController],
-  imports: [AuthModule, MemberModule, ProgramModule],
+  imports: [AuthModule, MemberModule],
   providers: [
     ProgramPackageService,
     ProgramPackagePlanService,
@@ -22,7 +20,6 @@ import { ProgramModule } from '~/program/program.module';
     DefinitionInfrastructure,
     ProgramPackageInfrastructure,
     UtilityService,
-    ProgramInfrastructure,
   ],
   exports: [],
 })
