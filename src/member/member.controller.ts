@@ -36,8 +36,32 @@ import {
 import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
 import { ExecutorInfo, DeleteMemberInfo } from './member.type';
+import { Roles } from '~/decorators/roles.decorator';
+import { Role } from '~/enums/role.enum';
+import { RoleGuard } from '~/auth/role.guard';
 
-@UseGuards(AuthGuard)
+const MEMBER_PERMISSION_GROUP_ADMIN: Role[] = [
+  Role.MEMBER_ADMIN,
+  Role.POST_ADMIN,
+  Role.SALES_RECORDS_NORMAL,
+  Role.SALES_RECORDS_ADMIN,
+  Role.PROGRAM_ADMIN,
+  Role.PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN,
+  Role.APPOINTMENT_PLAN_ADMIN,
+  Role.COIN_ADMIN,
+  Role.SALES_LEAD_SELECTOR_ADMIN,
+  Role.SHIPPING_ADMIN,
+  Role.SHIPPING_NORMAL,
+  Role.MEMBER_PHONE_ADMIN,
+  Role.PROJECT_PORTFOLIO_NORMAL,
+  Role.PROJECT_PORTFOLIO_ADMIN,
+  Role.SALES_PERFORMANCE_ADMIN,
+  Role.SALES_LEAD_ADMIN,
+  Role.SALES_LEAD_NORMAL,
+  Role.MATERIAL_AUDIT_LOG_ADMIN,
+];
+
+@UseGuards(AuthGuard, RoleGuard)
 @ApiTags('Member')
 @ApiBearerAuth()
 @Controller({
@@ -61,6 +85,7 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembersByPost(
     @Local('member') member: JwtMember,
@@ -70,41 +95,13 @@ export class MemberController {
     if (option && option.nextToken && option.prevToken) {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
     }
-
     const { appId, permissions } = member;
-
-    if (
-      ![
-        'MEMBER_ADMIN',
-        'POST_ADMIN',
-        'SALES_RECORDS_NORMAL',
-        'SALES_RECORDS_ADMIN',
-        'PROGRAM_ADMIN',
-        'PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN',
-        'APPOINTMENT_PLAN_ADMIN',
-        'COIN_ADMIN',
-        'SALES_LEAD_SELECTOR_ADMIN',
-        'SHIPPING_ADMIN',
-        'SHIPPING_NORMAL',
-        'MEMBER_PHONE_ADMIN',
-        'PROJECT_PORTFOLIO_NORMAL',
-        'PROJECT_PORTFOLIO_ADMIN',
-        'SALES_PERFORMANCE_ADMIN',
-        'SALES_LEAD_ADMIN',
-        'SALES_LEAD_NORMAL',
-        'MATERIAL_AUDIT_LOG_ADMIN',
-      ].some((e) => permissions.includes(e))
-    ) {
-      throw new UnauthorizedException(
-        { message: 'missing required permission' },
-        'User permission is not met required permissions.',
-      );
-    }
 
     return this.memberService.getMembersByCondition(appId, option, condition);
   }
 
   @Get()
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembers(@Local('member') member: JwtMember, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
@@ -114,38 +111,11 @@ export class MemberController {
 
     const { appId, permissions } = member;
 
-    if (
-      ![
-        'MEMBER_ADMIN',
-        'POST_ADMIN',
-        'SALES_RECORDS_NORMAL',
-        'SALES_RECORDS_ADMIN',
-        'PROGRAM_ADMIN',
-        'PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN',
-        'APPOINTMENT_PLAN_ADMIN',
-        'COIN_ADMIN',
-        'SALES_LEAD_SELECTOR_ADMIN',
-        'SHIPPING_ADMIN',
-        'SHIPPING_NORMAL',
-        'MEMBER_PHONE_ADMIN',
-        'PROJECT_PORTFOLIO_NORMAL',
-        'PROJECT_PORTFOLIO_ADMIN',
-        'SALES_PERFORMANCE_ADMIN',
-        'SALES_LEAD_ADMIN',
-        'SALES_LEAD_NORMAL',
-        'MATERIAL_AUDIT_LOG_ADMIN',
-      ].some((e) => permissions.includes(e))
-    ) {
-      throw new UnauthorizedException(
-        { message: 'missing required permission' },
-        'User permission is not met required permissions.',
-      );
-    }
-
     return this.memberService.getMembersByCondition(appId, option, condition);
   }
 
   @Post('member-role-count')
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembersRoleCountList(
     @Local('member') member: JwtMember,
@@ -159,6 +129,7 @@ export class MemberController {
   }
 
   @Post('import')
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async importMembers(@Local('member') member: JwtMember, @Body() metadata: MemberImportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
@@ -177,6 +148,7 @@ export class MemberController {
   }
 
   @Post('export')
+  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async exportMembers(@Local('member') member: JwtMember, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
