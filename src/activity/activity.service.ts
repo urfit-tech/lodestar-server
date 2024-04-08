@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ActivityCollectionDTO, ActivityDto, FetchActivitiesResponseDto } from './activity.dto';
+import { ActivityCollectionDTO, ActivityDto, FetchActivitiesResponseDto } from './dto/activity.dto';
 import { ActivityInfrastructure } from './activity.infra';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Activity } from './entity/Activity';
 import { ActivitySessionTicketEnrollmentCount } from './view_entity/ActivitySessionTicketEnrollmentCount';
+import { FetchMemberRightActivityTicketDTO, MemberRightActivityTicketDataDto } from './dto/member-right-activity-ticket.dto';
 
 @Injectable()
 export class ActivityService {
@@ -38,6 +39,11 @@ export class ActivityService {
     res.totalCount = totalCount;
 
     return res;
+  }
+
+  async memberRightActivityTicket(dto: FetchMemberRightActivityTicketDTO): Promise<MemberRightActivityTicketDataDto> {
+    return this.activityInfra.getActivityTicketInfoByIdAndMemberId(this.entityManager,  dto.activityTicketId,dto.memberId)
+
   }
 
   private async getActivities(dto: ActivityCollectionDTO): Promise<[Activity[], number]> {

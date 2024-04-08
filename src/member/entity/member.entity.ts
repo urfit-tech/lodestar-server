@@ -64,6 +64,7 @@ import { MemberDevice } from './member_device.entity';
 import { MemberOauth } from './member_oauth.entity';
 import { MemberPhone } from './member_phone.entity';
 import { MemberTag } from './member_tag.entity';
+import { ActivityTicketEnrollment } from '~/activity/view_entity/ActivityTicketEnrollment';
 
 @Index('member_line_user_id_app_id_key', ['appId', 'lineUserId'], {
   unique: true,
@@ -412,4 +413,7 @@ export class Member {
 
   @OneToMany(() => Voucher, (voucher) => voucher.member)
   vouchers: Voucher[];
+
+  @OneToMany(() => ActivityTicketEnrollment, (enrollment) => enrollment.member)
+  enrollments: ActivityTicketEnrollment[];
 }

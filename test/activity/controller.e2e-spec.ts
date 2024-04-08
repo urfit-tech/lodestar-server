@@ -37,7 +37,9 @@ import { createTestActivityCategory } from '../factory/activityCategory.factory'
 import { ActivityCategory } from '~/activity/entity/ActivityCategory';
 import { Category } from '~/definition/entity/category.entity';
 import { ApiExceptionFilter } from '~/api.filter';
-
+import { ConfigService } from '@nestjs/config';
+import jwt from 'jsonwebtoken';
+import { FetchMemberRightActivityTicketDTO } from '~/activity/dto/member-right-activity-ticket.dto';
 interface RepositoryMap {
   [key: string]: Repository<any>;
 }
@@ -723,10 +725,137 @@ describe('ActivityController (e2e)', () => {
   })
 
   describe('GET /member_right', () => {
-  
     describe('Basic Positive Tests', () => {
-      it('should return 2XX HTTP status code for valid requests', () => {});
-      it('should return a well-formed JSON object according to the schema', () => {});
+      it('should return 2XX HTTP status code for valid requests',async () => {
+        const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: 'invoker_member_id',
+            permissions: [],
+          },
+          jwtSecret,
+        );
+
+        const dto: FetchMemberRightActivityTicketDTO = {
+          memberId: 'someMemberId',
+          activityTicketId: 'someActivityTicketId',
+          sessionId: 'someSessionId', 
+        };
+    
+        const response = await request(application.getHttpServer())
+          .get(`/activity/member_right?memberId=${dto.memberId}&activityTicketId=${dto.activityTicketId}${dto.sessionId ? `&sessionId=${dto.sessionId}` : ''}`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`) 
+          .expect(200)
+
+        console.log(response.body)
+    
+        expect(response.status).toBe(200);
+    
+      });
+      it.only('should return a well-formed JSON object according to the schema', async() => {
+        const currentDate = new Date();
+
+        const insertedMember = await createTestMember(manager, {
+          appId: app.id,
+          role: 'app-owner',
+        });
+  
+        const insertedActivity = await createTestActivity(manager, {
+          app: app,
+          organizer: insertedMember,
+          isPrivate: false, // scenario: 'holding' condition
+          publishedAt: new Date(), // scenario: 'holding' condition
+        });
+
+        const insertedCategory = await createTestCategory(manager, {
+          appId: app.id,
+          class: 'activity',
+        });
+
+        const insertedActivityCategory = await createTestActivityCategory(manager, {
+          activity: insertedActivity,
+          category: insertedCategory,
+        });
+
+        const insertedActivitySession1 = await createTestActivitySession(manager, {
+          activity: insertedActivity,
+          startedAt: new Date('2020-01-01T00:00:00Z'),
+          endedAt: new Date('2020-01-02T00:00:00Z'),
+        });
+  
+        const insertedActivityTicket1 = await createTestActivityTicket(manager, {
+          activity: insertedActivity,
+          startedAt: new Date('2020-01-01T00:00:00Z'),
+          endedAt: new Date('2020-01-02T00:00:00Z'),
+        });
+  
+        const insertedActivitySessionTicket1 = await createTestActivitySessionTicket(manager, {
+          activitySession: insertedActivitySession1,
+          activityTicket: insertedActivityTicket1,
+          activitySessionType: 'offline',
+        });
+  
+        const insertedOrderLog = await createTestOrderLog(manager, {
+          member: insertedMember,
+          appId: app.id,
+        });
+  
+        const insertedProduct = await createTestProduct(manager, {
+          id: `ActivityTicket_${insertedActivityTicket1.id}`,
+          type: 'ActivityTicket',
+          target: insertedActivityTicket1.id,
+        });
+
+  
+        const insertedCurrency = await createTestCurrency(manager, {
+          id: 'TWD',
+        });
+  
+        const insertedOrderProduct = await createTestOrderProduct(manager, {
+          order: insertedOrderLog,
+          product: insertedProduct,
+          currency: insertedCurrency,
+          productId: insertedActivity.id,
+          options: {
+            from: `/activities/${insertedActivity.id}`,
+            currencyId: insertedCurrency.id,
+            currencyPrice: 2000,
+          },
+        });
+
+
+        const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: [],
+          },
+          jwtSecret,
+        );
+
+        const dto: FetchMemberRightActivityTicketDTO = {
+          memberId: insertedMember.id,
+          activityTicketId: insertedActivityTicket1.id,
+          sessionId: 'someSessionId', 
+        };
+
+        console.log({dto})
+    
+        const response = await request(application.getHttpServer())
+          .get(`/activity/member_right?memberId=${dto.memberId}&activityTicketId=${dto.activityTicketId}${dto.sessionId ? `&sessionId=${dto.sessionId}` : ''}`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`) 
+          .expect(200)
+
+        console.log(response.body)
+      });
       it('should correctly perform the action without state change for GET requests', () => {});
       it('should contain expected HTTP headers', () => {});
     });
@@ -737,10 +866,25 @@ describe('ActivityController (e2e)', () => {
   
     describe('Negative Testing with Valid Input', () => {
       it('should return appropriate error for non-existent resources or illegal operations', () => {});
+      it('should verify error status code is not 2XX and matches specification', () => {});
+      it('should verify error payload format and message correctness', () => {});
     });
   
     describe('Negative Testing with Invalid Input', () => {
       it('should handle invalid input gracefully (e.g., missing required parameters, invalid UUID)', () => {});
+      it('should verify error status code is not 2XX and matches specification', () => {});
+      it('should verify error payload format and message correctness', () => {});
+    });
+
+    describe('Permission Tests', () => {
+      describe('Executing API Calls with Different Permission Levels', () => {
+        it('should allow access for users with correct permissions', async () => {
+        });
+  
+        it('should deny access for users without correct permissions', async () => {
+        });
+
+      });
     });
   
     describe('Destructive Testing', () => {

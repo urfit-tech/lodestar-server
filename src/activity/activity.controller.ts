@@ -1,8 +1,9 @@
 import { Body, Controller, Get, Logger, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { FetchActivitiesResponseDto, ActivityCollectionDTO, FetchMemberRightActivityTicketDTO } from './activity.dto';
+import { FetchActivitiesResponseDto, ActivityCollectionDTO} from './dto/activity.dto';
 import { ActivityService } from './activity.service';
 import { AuthGuard } from '~/auth/auth.guard';
+import { FetchMemberRightActivityTicketDTO } from './dto/member-right-activity-ticket.dto';
 
 @UseGuards(AuthGuard)
 @ApiTags('Activity')
@@ -45,7 +46,13 @@ export class ActivityController {
   public async memberRightActivityTicket(
     @Query() dto: FetchMemberRightActivityTicketDTO,
   ){
-    return {status: 200}
+    try{
+      const response = await this.activityService.memberRightActivityTicket(dto)
+      return response
+    } catch (error) {
+      this.logger.error(`Error fetching activity collection: ${error.message}`);
+      throw error;
+    }
   }
 }
 

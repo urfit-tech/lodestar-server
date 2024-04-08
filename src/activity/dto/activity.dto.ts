@@ -68,15 +68,3 @@ export class ActivityCollectionDTO {
   @IsString()
   categoryId: string;
 }
-
-export class FetchMemberRightActivityTicketDTO {
-  @IsString()
-  memberId: string
-
-  @IsString()
-  activityTicketId: string
-
-  @IsOptional()
-  @IsString()
-  sessionId?: string
-}

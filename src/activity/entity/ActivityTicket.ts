@@ -1,6 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Activity } from './Activity';
 import { ActivitySessionTicket } from './ActivitySessionTicket';
+import { ActivityTicketEnrollment } from '../view_entity/ActivityTicketEnrollment';
 
 @Index('activity_ticket_pkey', ['id'], { unique: true })
 @Entity('activity_ticket', { schema: 'public' })
@@ -44,4 +45,7 @@ export class ActivityTicket {
   })
   @JoinColumn([{ name: 'activity_id', referencedColumnName: 'id' }])
   activity: Activity;
+
+  @OneToMany(() => ActivityTicketEnrollment, (enrollment) => enrollment.activityTicket)
+  enrollments: ActivityTicketEnrollment[];
 }
