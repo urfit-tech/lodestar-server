@@ -40,6 +40,7 @@ import { ApiExceptionFilter } from '~/api.filter';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
 import { FetchMemberRightActivityTicketDTO } from '~/activity/dto/member-right-activity-ticket.dto';
+import Joi from 'joi';
 interface RepositoryMap {
   [key: string]: Repository<any>;
 }
@@ -726,6 +727,88 @@ describe('ActivityController (e2e)', () => {
 
   describe('GET /member_right', () => {
     describe('Basic Positive Tests', () => {
+      let insertedMember
+      let insertedActivity
+      let insertedCategory
+      let insertedActivityCategory
+      let insertedActivitySession1
+      let insertedActivityTicket1
+      let insertedActivitySessionTicket1
+      let insertedOrderLog
+      let insertedProduct
+      let insertedCurrency
+      let insertedOrderProduct
+
+      beforeEach(async ()=> {
+        insertedMember = await createTestMember(manager, {
+          appId: app.id,
+          role: 'app-owner',
+        });
+  
+        insertedActivity = await createTestActivity(manager, {
+          app: app,
+          organizer: insertedMember,
+          isPrivate: false, // scenario: 'holding' condition
+          publishedAt: new Date(), // scenario: 'holding' condition
+        });
+
+        insertedCategory = await createTestCategory(manager, {
+          appId: app.id,
+          class: 'activity',
+        });
+
+        insertedActivityCategory = await createTestActivityCategory(manager, {
+          activity: insertedActivity,
+          category: insertedCategory,
+        });
+
+        insertedActivitySession1 = await createTestActivitySession(manager, {
+          activity: insertedActivity,
+          startedAt: new Date('2020-01-01T00:00:00Z'),
+          endedAt: new Date('2020-01-02T00:00:00Z'),
+        });
+  
+        insertedActivityTicket1 = await createTestActivityTicket(manager, {
+          activity: insertedActivity,
+          startedAt: new Date('2020-01-01T00:00:00Z'),
+          endedAt: new Date('2020-01-02T00:00:00Z'),
+        });
+  
+        insertedActivitySessionTicket1 = await createTestActivitySessionTicket(manager, {
+          activitySession: insertedActivitySession1,
+          activityTicket: insertedActivityTicket1,
+          activitySessionType: 'offline',
+        });
+  
+        insertedOrderLog = await createTestOrderLog(manager, {
+          member: insertedMember,
+          appId: app.id,
+        });
+  
+        insertedProduct = await createTestProduct(manager, {
+          id: `ActivityTicket_${insertedActivityTicket1.id}`,
+          type: 'ActivityTicket',
+          target: insertedActivityTicket1.id,
+        });
+
+  
+        insertedCurrency = await createTestCurrency(manager, {
+          id: 'TWD',
+        });
+  
+        insertedOrderProduct = await createTestOrderProduct(manager, {
+          order: insertedOrderLog,
+          product: insertedProduct,
+          currency: insertedCurrency,
+          productId: insertedActivity.id,
+          options: {
+            from: `/activities/${insertedActivity.id}`,
+            currencyId: insertedCurrency.id,
+            currencyPrice: 2000,
+          },
+        });
+      })
+
       it('should return 2XX HTTP status code for valid requests',async () => {
         const jwtSecret = application
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
@@ -740,13 +823,12 @@ describe('ActivityController (e2e)', () => {
         );
 
         const dto: FetchMemberRightActivityTicketDTO = {
-          memberId: 'someMemberId',
           activityTicketId: 'someActivityTicketId',
           sessionId: 'someSessionId', 
         };
     
         const response = await request(application.getHttpServer())
-          .get(`/activity/member_right?memberId=${dto.memberId}&activityTicketId=${dto.activityTicketId}${dto.sessionId ? `&sessionId=${dto.sessionId}` : ''}`)
+          .get(`/activity/member_right?&activityTicketId=${dto.activityTicketId}${dto.sessionId ? `&sessionId=${dto.sessionId}` : ''}`)
           .set('host', appHost.host)
           .set('Authorization', `Bearer ${token}`) 
           .expect(200)
@@ -756,78 +838,9 @@ describe('ActivityController (e2e)', () => {
         expect(response.status).toBe(200);
     
       });
+
+
       it.only('should return a well-formed JSON object according to the schema', async() => {
-        const currentDate = new Date();
-
-        const insertedMember = await createTestMember(manager, {
-          appId: app.id,
-          role: 'app-owner',
-        });
-  
-        const insertedActivity = await createTestActivity(manager, {
-          app: app,
-          organizer: insertedMember,
-          isPrivate: false, // scenario: 'holding' condition
-          publishedAt: new Date(), // scenario: 'holding' condition
-        });
-
-        const insertedCategory = await createTestCategory(manager, {
-          appId: app.id,
-          class: 'activity',
-        });
-
-        const insertedActivityCategory = await createTestActivityCategory(manager, {
-          activity: insertedActivity,
-          category: insertedCategory,
-        });
-
-        const insertedActivitySession1 = await createTestActivitySession(manager, {
-          activity: insertedActivity,
-          startedAt: new Date('2020-01-01T00:00:00Z'),
-          endedAt: new Date('2020-01-02T00:00:00Z'),
-        });
-  
-        const insertedActivityTicket1 = await createTestActivityTicket(manager, {
-          activity: insertedActivity,
-          startedAt: new Date('2020-01-01T00:00:00Z'),
-          endedAt: new Date('2020-01-02T00:00:00Z'),
-        });
-  
-        const insertedActivitySessionTicket1 = await createTestActivitySessionTicket(manager, {
-          activitySession: insertedActivitySession1,
-          activityTicket: insertedActivityTicket1,
-          activitySessionType: 'offline',
-        });
-  
-        const insertedOrderLog = await createTestOrderLog(manager, {
-          member: insertedMember,
-          appId: app.id,
-        });
-  
-        const insertedProduct = await createTestProduct(manager, {
-          id: `ActivityTicket_${insertedActivityTicket1.id}`,
-          type: 'ActivityTicket',
-          target: insertedActivityTicket1.id,
-        });
-
-  
-        const insertedCurrency = await createTestCurrency(manager, {
-          id: 'TWD',
-        });
-  
-        const insertedOrderProduct = await createTestOrderProduct(manager, {
-          order: insertedOrderLog,
-          product: insertedProduct,
-          currency: insertedCurrency,
-          productId: insertedActivity.id,
-          options: {
-            from: `/activities/${insertedActivity.id}`,
-            currencyId: insertedCurrency.id,
-            currencyPrice: 2000,
-          },
-        });
-
-
         const jwtSecret = application
         .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
         .getOrThrow('HASURA_JWT_SECRET');
@@ -841,23 +854,97 @@ describe('ActivityController (e2e)', () => {
         );
 
         const dto: FetchMemberRightActivityTicketDTO = {
-          memberId: insertedMember.id,
           activityTicketId: insertedActivityTicket1.id,
           sessionId: 'someSessionId', 
         };
-
-        console.log({dto})
     
-        const response = await request(application.getHttpServer())
-          .get(`/activity/member_right?memberId=${dto.memberId}&activityTicketId=${dto.activityTicketId}${dto.sessionId ? `&sessionId=${dto.sessionId}` : ''}`)
+        const {body: data} = await request(application.getHttpServer())
+          .get(`/activity/member_right?&activityTicketId=${dto.activityTicketId}${dto.sessionId ? `&sessionId=${dto.sessionId}` : ''}`)
           .set('host', appHost.host)
           .set('Authorization', `Bearer ${token}`) 
           .expect(200)
 
-        console.log(response.body)
+          console.log(data)
+
+        const activitySchema = Joi.object({
+          id: Joi.string().required(),
+          title: Joi.string().required(),
+          coverUrl: Joi.string().allow(null),
+          categories: Joi.array().items(Joi.object()).required(),
+        });
+        
+        const sessionSchema = Joi.object({
+          id: Joi.string().required(),
+          startedAt: Joi.date().iso(),
+          endedAt: Joi.date().iso(),
+          location: Joi.string().allow(''),
+          description: Joi.string().allow(''),
+          threshold: Joi.allow(null),
+          onlineLink: Joi.string().allow(null),
+          title: Joi.string().required(),
+          maxAmount: Joi.object(),
+          participants: Joi.object(),
+          isEnrolled: Joi.boolean(),
+          type: Joi.string(),
+          attended: Joi.boolean().required(),
+        });
+        
+        const invoiceSchema = Joi.object({
+          name: Joi.string().required(),
+          email: Joi.string().required(),
+          phone: Joi.string().required(),
+          orderProductId: Joi.string().required(),
+        });
+        
+        const responseSchema = Joi.object({
+          id: Joi.string().required(),
+          activity: activitySchema,
+          sessions: Joi.array().items(sessionSchema),
+          invoice: invoiceSchema,
+        });
+
+        const { error } = responseSchema.validate(data);
+        expect(error).toBeUndefined();
+        expect(data.id).toEqual(insertedActivityTicket1.id)
+        expect(data.activity).toEqual({
+          id: insertedActivity.id,
+          title: insertedActivity.title,
+          coverUrl: insertedActivity.coverUrl,
+          categories: [{
+            id: insertedCategory.id,
+            name: insertedCategory.name
+          }]
+        })
+        expect(data.sessions).toEqual([{
+          id: insertedActivitySession1.id,
+          startedAt: "2020-01-01T00:00:00.000Z",
+          endedAt: "2020-01-02T00:00:00.000Z",
+          location: insertedActivitySession1.location,
+          description: insertedActivitySession1.description,
+          threshold: insertedActivitySession1.threshold,
+          onlineLink: insertedActivitySession1.onlineLink,
+          title: insertedActivitySession1.title,
+          maxAmount: {
+            "offline": 1,
+            "online": 0
+          },
+          participants: {
+            "offline": 1,
+            "online": 0
+          },
+          isEnrolled: true,
+          type: insertedActivitySessionTicket1.activitySessionType,
+          attended: false,
+        }])
+
+        expect(data.invoice).toEqual({
+          name: insertedOrderLog.invoiceOptions.name,
+          email: insertedOrderLog.invoiceOptions.email,
+          phone: insertedOrderLog.invoiceOptions.phone,
+          orderProductId: insertedOrderProduct.id
+        })
+
       });
-      it('should correctly perform the action without state change for GET requests', () => {});
-      it('should contain expected HTTP headers', () => {});
     });
   
     describe('Positive Tests with Optional Parameters', () => {

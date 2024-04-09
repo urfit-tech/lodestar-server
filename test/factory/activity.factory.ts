@@ -22,6 +22,7 @@ export const createTestActivity = async (
   activity.description = faker.lorem.sentence();
   activity.publishedAt = overrides.publishedAt === null ? null : new Date();
   activity.organizer = overrides.organizer;
+  activity.coverUrl = overrides.coverUrl || faker.internet.url()
 
   await entityManager.save(activity);
   return activity;

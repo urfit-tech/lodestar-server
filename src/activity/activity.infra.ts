@@ -273,8 +273,8 @@ export class ActivityInfrastructure {
         online: parseInt(session.maxAmountOnline, 10) || 0,
       },
       participants: {
-        online: session.onlineParticipants,
-        offline: session.offlineParticipants,
+        online: Number(session.onlineParticipants),
+        offline: Number(session.offlineParticipants),
       },
       isEnrolled: true,
       type: session.type,
