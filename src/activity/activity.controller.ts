@@ -4,6 +4,7 @@ import { FetchActivitiesResponseDto, ActivityCollectionDTO} from './dto/activity
 import { ActivityService } from './activity.service';
 import { AuthGuard } from '~/auth/auth.guard';
 import { FetchMemberRightActivityTicketDTO } from './dto/member-right-activity-ticket.dto';
+import { APIException } from '~/api.excetion';
 
 @UseGuards(AuthGuard)
 @ApiTags('Activity')
@@ -46,12 +47,16 @@ export class ActivityController {
   public async memberRightActivityTicket(
     @Query() dto: FetchMemberRightActivityTicketDTO,
   ){
-    try{
-      const response = await this.activityService.memberRightActivityTicket(dto)
-      return response
+    try {
+      return await this.activityService.memberRightActivityTicket(dto);
     } catch (error) {
-      this.logger.error(`Error fetching activity collection: ${error.message}`);
-      throw error;
+      const errorMessage = `Error fetching activity collection: ${error.message}`;
+      this.logger.error(errorMessage);
+
+      throw new APIException({
+        code: 'E_NOT_FOUND',
+        message: `Activity ticket data not found, activity_ticket_id: ${dto.activityTicketId}, member_id: ${dto.memberId}, session_id ${dto.sessionId}`,
+      });
     }
   }
 }
