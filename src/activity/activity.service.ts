@@ -5,7 +5,7 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Activity } from './entity/Activity';
 import { ActivitySessionTicketEnrollmentCount } from './view_entity/ActivitySessionTicketEnrollmentCount';
-import { FetchMemberRightActivityTicketDTO, MemberRightActivityTicketDataDto } from './dto/member-right-activity-ticket.dto';
+import { FetchMemberRightActivityTicketDTO, FetchMemberRightActivityTicketQuery, MemberRightActivityTicketDataDto } from './dto/member-right-activity-ticket.dto';
 
 @Injectable()
 export class ActivityService {
@@ -41,7 +41,7 @@ export class ActivityService {
     return res;
   }
 
-  async memberRightActivityTicket(dto: FetchMemberRightActivityTicketDTO): Promise<MemberRightActivityTicketDataDto> {
+  async memberRightActivityTicket(dto: FetchMemberRightActivityTicketQuery): Promise<MemberRightActivityTicketDataDto> {
     return this.activityInfra.getActivityTicketInfoByIdAndMemberId(this.entityManager,  dto.activityTicketId,dto.memberId)
 
   }

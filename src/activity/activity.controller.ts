@@ -1,12 +1,19 @@
 import { Body, Controller, Get, Logger, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { FetchActivitiesResponseDto, ActivityCollectionDTO} from './dto/activity.dto';
+
 import { ActivityService } from './activity.service';
 import { AuthGuard } from '~/auth/auth.guard';
-import { FetchMemberRightActivityTicketDTO } from './dto/member-right-activity-ticket.dto';
-import { APIException } from '~/api.excetion';
 
-@UseGuards(AuthGuard)
+import { APIException } from '~/api.excetion';
+import { FetchMemberRightActivityTicketDTO, FetchMemberRightActivityTicketQuery, MemberRightActivityTicketDataDto } from './dto/member-right-activity-ticket.dto';
+import { ActivityCollectionDTO, FetchActivitiesResponseDto } from './dto/activity.dto';
+import { RoleGuard } from '~/auth/role.guard';
+import { Roles } from '~/decorators/roles.decorator';
+import { Role } from '~/enums/role.enum';
+import { Local } from '~/decorator';
+import { JwtMember } from '~/auth/auth.dto';
+
+@UseGuards(AuthGuard, RoleGuard)
 @ApiTags('Activity')
 @Controller({
   path: 'activity',
@@ -46,16 +53,25 @@ export class ActivityController {
   @Get('/member_right')
   public async memberRightActivityTicket(
     @Query() dto: FetchMemberRightActivityTicketDTO,
-  ){
+    @Local('member') member: JwtMember
+  ): Promise<MemberRightActivityTicketDataDto>{
+    const { memberId } = member;
+
+    const queryString = {
+      memberId,
+      ...dto
+    }
+
     try {
-      return await this.activityService.memberRightActivityTicket(dto);
+      return await this.activityService.memberRightActivityTicket(queryString);
+
     } catch (error) {
       const errorMessage = `Error fetching activity collection: ${error.message}`;
       this.logger.error(errorMessage);
 
       throw new APIException({
         code: 'E_NOT_FOUND',
-        message: `Activity ticket data not found, activity_ticket_id: ${dto.activityTicketId}, member_id: ${dto.memberId}, session_id ${dto.sessionId}`,
+        message: `Activity ticket data not found, activity_ticket_id: ${dto.activityTicketId}, member_id: ${memberId}, session_id ${dto.sessionId}`,
       });
     }
   }

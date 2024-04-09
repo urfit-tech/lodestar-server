@@ -54,6 +54,15 @@ export class MemberRightActivityTicketDataDto {
 
 export class FetchMemberRightActivityTicketDTO {
   @IsString()
+  activityTicketId: string
+
+  @IsOptional()
+  @IsString()
+  sessionId?: string
+}
+
+export class FetchMemberRightActivityTicketQuery {
+  @IsString()
   memberId: string
 
   @IsString()
