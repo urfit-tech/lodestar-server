@@ -46,6 +46,8 @@ export class ProgramService {
       this.entityManager,
     );
 
+    const ownedProgramsFromCard = await this.programInfra.getOwnedProgramsFromCard(memberId, this.entityManager);
+
     const programWithRoleIsAssistant = await this.programInfra.getProgramsWithRoleIsAssistant(
       memberId,
       this.entityManager,
@@ -64,6 +66,11 @@ export class ProgramService {
           roles: this.sortProgramRole(program.roles),
         })),
         ...programWithRoleIsAssistant.map((program) => ({
+          ...program,
+          viewRate: Number(program.viewRate || 0),
+          roles: this.sortProgramRole(program.roles),
+        })),
+        ...ownedProgramsFromCard.map((program) => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
