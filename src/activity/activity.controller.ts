@@ -67,7 +67,7 @@ export class ActivityController {
 
     } catch (error) {
       const errorMessage = `Error fetching activity collection: ${error.message}`;
-      this.logger.error(errorMessage);
+      console.error(errorMessage)
 
       throw new APIException({
         code: 'E_NOT_FOUND',

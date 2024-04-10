@@ -840,7 +840,7 @@ describe('ActivityController (e2e)', () => {
         expect(response.status).toBe(200);
       });
   
-      it.only("should return a valid JSON response that matches the expected schema", async () => {
+      it("should return a valid JSON response that matches the expected schema", async () => {
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow("HASURA_JWT_SECRET");
@@ -865,8 +865,6 @@ describe('ActivityController (e2e)', () => {
           .set("host", appHost.host)
           .set("Authorization", `Bearer ${token}`)
           .expect(200);
-
-          console.log(JSON.stringify(data))
   
         const activitySchema = Joi.object({
           id: Joi.string().required(),
@@ -1195,6 +1193,8 @@ describe('ActivityController (e2e)', () => {
       });
   
       it("should return an error when the member does not have access to the activity ticket", async () => {
+        const logSpy = jest.spyOn(console, 'error');
+
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow("HASURA_JWT_SECRET");
@@ -1225,6 +1225,10 @@ describe('ActivityController (e2e)', () => {
         expect(res.message).toEqual(
           `Activity ticket data not found, activity_ticket_id: ${dto.activityTicketId}, member_id: ${insertedUnregisterMember.id}, session_id undefined`,
         );
+
+        expect(logSpy).toHaveBeenCalled();
+        expect(logSpy).toBeCalledTimes(1);
+        logSpy.mockRestore();
       });
     });
   
