@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsOptional, IsString, IsUUID } from "class-validator";
 
 class ActivityCategoryDto {
   id: string;
@@ -53,22 +53,22 @@ export class MemberRightActivityTicketDataDto {
 }
 
 export class FetchMemberRightActivityTicketDTO {
-  @IsString()
-  activityTicketId: string
+  @IsUUID()
+  activityTicketId: string;
 
   @IsOptional()
-  @IsString()
-  sessionId?: string
+  @IsUUID()
+  sessionId?: string;
 }
 
 export class FetchMemberRightActivityTicketQuery {
-  @IsString()
+  @IsUUID()
   memberId: string
 
-  @IsString()
+  @IsUUID()
   activityTicketId: string
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   sessionId?: string
 }

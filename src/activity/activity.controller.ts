@@ -57,13 +57,13 @@ export class ActivityController {
   ): Promise<MemberRightActivityTicketDataDto>{
     const { memberId } = member;
 
-    const queryString = {
-      memberId,
-      ...dto
-    }
+    const queryDto = new FetchMemberRightActivityTicketQuery()
+    queryDto.activityTicketId = dto.activityTicketId
+    queryDto.sessionId = dto.sessionId
+    queryDto.memberId = memberId
 
     try {
-      return await this.activityService.memberRightActivityTicket(queryString);
+      return await this.activityService.memberRightActivityTicket(queryDto);
 
     } catch (error) {
       const errorMessage = `Error fetching activity collection: ${error.message}`;

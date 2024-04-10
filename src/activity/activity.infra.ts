@@ -179,7 +179,7 @@ export class ActivityInfrastructure {
     return enrollmentCountMap;
   }
 
-  async getActivityTicketInfoByIdAndMemberId(manager: EntityManager, activityTicketId: string, memberId: string): Promise<MemberRightActivityTicketDataDto> {
+async getActivityTicketInfoByIdAndMemberId(manager: EntityManager, activityTicketId: string, memberId: string, sessionId: string | null): Promise<MemberRightActivityTicketDataDto> {
     let activityTicket = await manager
       .createQueryBuilder(ActivityTicketEnrollment, "ate")
       .select("at2.id", "id")
@@ -208,8 +208,6 @@ export class ActivityInfrastructure {
     .andWhere("ate.member_id = :memberId", {memberId})
     .andWhere("ate.activity_ticket_id = :activityTicketId", {activityTicketId})
     .getRawOne()
-
-    console.log({invoice})
   
     let categories = await manager
       .createQueryBuilder(Category, "c")
@@ -221,7 +219,7 @@ export class ActivityInfrastructure {
       })
       .getRawMany();
   
-      const sessions = await manager
+      const sessionQueryBuilder = manager
       .createQueryBuilder(ActivitySession, "asession")
       .select(
         `DISTINCT ON (asession.id) asession.id as id,
@@ -256,8 +254,14 @@ export class ActivityInfrastructure {
         "ae.activity_session_id = asession.id AND ae.activity_ticket_id = at.id"
       )
       .where("at.id = :activityTicketId", { activityTicketId })
-      .orderBy("asession.id", "DESC")
-      .getRawMany();
+      .orderBy("asession.id", "DESC");
+    
+    if (sessionId && sessionId !== '') {
+      sessionQueryBuilder.andWhere("asession.id = :sessionId", { sessionId });
+    }
+    
+    const sessions = await sessionQueryBuilder.getRawMany();
+    
   
     let activitySessions = sessions.map((session) => ({
       id: session.id,

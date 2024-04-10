@@ -42,7 +42,7 @@ export class ActivityService {
   }
 
   async memberRightActivityTicket(dto: FetchMemberRightActivityTicketQuery): Promise<MemberRightActivityTicketDataDto> {
-    return this.activityInfra.getActivityTicketInfoByIdAndMemberId(this.entityManager,  dto.activityTicketId,dto.memberId)
+    return this.activityInfra.getActivityTicketInfoByIdAndMemberId(this.entityManager,  dto.activityTicketId, dto.memberId, dto.sessionId)
 
   }
 
