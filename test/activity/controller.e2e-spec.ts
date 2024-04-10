@@ -811,7 +811,7 @@ describe('ActivityController (e2e)', () => {
         });
       });
   
-      it("should return 2XX HTTP status code for valid requests", async () => {
+      it("should successfully retrieve member rights for a valid activity ticket", async () => {
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow("HASURA_JWT_SECRET");
@@ -840,7 +840,7 @@ describe('ActivityController (e2e)', () => {
         expect(response.status).toBe(200);
       });
   
-      it("should return a well-formed JSON object according to the schema", async () => {
+      it.only("should return a valid JSON response that matches the expected schema", async () => {
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow("HASURA_JWT_SECRET");
@@ -865,6 +865,8 @@ describe('ActivityController (e2e)', () => {
           .set("host", appHost.host)
           .set("Authorization", `Bearer ${token}`)
           .expect(200);
+
+          console.log(JSON.stringify(data))
   
         const activitySchema = Joi.object({
           id: Joi.string().required(),
@@ -949,7 +951,7 @@ describe('ActivityController (e2e)', () => {
         });
       });
   
-      it("should correctly return two sessions", async () => {
+      it("should include all associated sessions in the response", async () => {
         const insertedActivitySession2 = await createTestActivitySession(
           manager,
           {
@@ -1014,7 +1016,7 @@ describe('ActivityController (e2e)', () => {
         expect(data.sessions.length).toEqual(2);
       });
 
-      it("should correctly return mutiple category", async () => {
+      it("should include all associated categories in the activity response", async () => {
         const insertedCategory2 = await createTestCategory(manager, {
           appId: app.id,
           class: "activity",
@@ -1054,7 +1056,7 @@ describe('ActivityController (e2e)', () => {
         expect(data.activity.categories.length).toEqual(2);
       });
   
-      it("should correctly apply filters, sorting, pagination on the response", async () => {
+      it("should apply filters and return only the specified session in the response", async () => {
         const insertedActivitySession2 = await createTestActivitySession(
           manager,
           {
@@ -1192,7 +1194,7 @@ describe('ActivityController (e2e)', () => {
         });
       });
   
-      it("should return appropriate error for non-existent resources or illegal operations", async () => {
+      it("should return an error when the member does not have access to the activity ticket", async () => {
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow("HASURA_JWT_SECRET");
@@ -1227,7 +1229,7 @@ describe('ActivityController (e2e)', () => {
     });
   
     describe("Negative Testing with Invalid Input", () => {
-      it("should handle invalid input gracefully (e.g., missing required parameters, invalid UUID)", async () => {
+      it("should return a validation error for missing or invalid parameters)", async () => {
         const jwtSecret = application
           .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
           .getOrThrow("HASURA_JWT_SECRET");
@@ -1263,7 +1265,7 @@ describe('ActivityController (e2e)', () => {
   
     describe("Permission Tests", () => {
       describe("Executing API Calls with Different Permission Levels", () => {
-        it("should deny access for users without correct permissions", async () => {
+        it("should return an unauthorized error for users without the necessary permissions", async () => {
           const dto: FetchMemberRightActivityTicketDTO = {
             activityTicketId: "non_uuid",
             sessionId: "non_uuid",

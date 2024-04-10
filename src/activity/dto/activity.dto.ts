@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsObject, IsString } from 'class-validator';
 
 export class ParticipantsCountDto {
   @ApiProperty()
