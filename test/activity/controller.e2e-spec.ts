@@ -1013,6 +1013,46 @@ describe('ActivityController (e2e)', () => {
         expect(error).toBeUndefined();
         expect(data.sessions.length).toEqual(2);
       });
+
+      it("should correctly return mutiple category", async () => {
+        const insertedCategory2 = await createTestCategory(manager, {
+          appId: app.id,
+          class: "activity",
+        });
+  
+        const insertedActivityCategory = await createTestActivityCategory(manager, {
+          activity: insertedActivity,
+          category: insertedCategory2,
+        });
+
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow("HASURA_JWT_SECRET");
+  
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: [],
+          },
+          jwtSecret,
+        );
+  
+        const dto: FetchMemberRightActivityTicketDTO = {
+          activityTicketId: insertedActivityTicket1.id,
+          sessionId: "",
+        };
+  
+        const { body: data } = await request(application.getHttpServer())
+          .get(
+            `/activity/member_right?&activityTicketId=${dto.activityTicketId}${dto.sessionId ? `&sessionId=${dto.sessionId}` : ""}`,
+          )
+          .set("host", appHost.host)
+          .set("Authorization", `Bearer ${token}`)
+          .expect(200);
+  
+
+        expect(data.activity.categories.length).toEqual(2);
+      });
   
       it("should correctly apply filters, sorting, pagination on the response", async () => {
         const insertedActivitySession2 = await createTestActivitySession(
@@ -1239,12 +1279,6 @@ describe('ActivityController (e2e)', () => {
         });
       });
     });
-  
-    describe("Destructive Testing", () => {
-      it("should handle malformed content, wrong content-type, overflow values, and boundary scenarios gracefully", () => {});
-    });
   });
-  
-  
-  
+
 });
