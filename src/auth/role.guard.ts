@@ -2,10 +2,10 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { ROLE_KEY } from '../decorators/roles.decorator';
-import { Role } from 'src/enums/role.enum';
+import { PermissionSet } from 'src/enums/role.enum';
 import { AccessControlService } from './access-control.service';
 @Injectable()
-export class RoleGuard implements CanActivate {
+export class PermissionGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private accessControlService: AccessControlService,
@@ -17,7 +17,7 @@ export class RoleGuard implements CanActivate {
 
     // Get required roles for the current route handler or controller class.
     // If roles are defined on the handler, they override those on the controller.
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLE_KEY, [
+    const requiredRoles = this.reflector.getAllAndOverride<PermissionSet[]>(ROLE_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);

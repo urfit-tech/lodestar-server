@@ -36,32 +36,32 @@ import {
 import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
 import { ExecutorInfo, DeleteMemberInfo } from './member.type';
-import { Roles } from '~/decorators/roles.decorator';
-import { Role } from '~/enums/role.enum';
-import { RoleGuard } from '~/auth/role.guard';
+import { Permissions } from '~/decorators/roles.decorator';
+import { PermissionSet } from '~/enums/role.enum';
+import { PermissionGuard } from '~/auth/role.guard';
 
-const MEMBER_PERMISSION_GROUP_ADMIN: Role[] = [
-  Role.MEMBER_ADMIN,
-  Role.POST_ADMIN,
-  Role.SALES_RECORDS_NORMAL,
-  Role.SALES_RECORDS_ADMIN,
-  Role.PROGRAM_ADMIN,
-  Role.PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN,
-  Role.APPOINTMENT_PLAN_ADMIN,
-  Role.COIN_ADMIN,
-  Role.SALES_LEAD_SELECTOR_ADMIN,
-  Role.SHIPPING_ADMIN,
-  Role.SHIPPING_NORMAL,
-  Role.MEMBER_PHONE_ADMIN,
-  Role.PROJECT_PORTFOLIO_NORMAL,
-  Role.PROJECT_PORTFOLIO_ADMIN,
-  Role.SALES_PERFORMANCE_ADMIN,
-  Role.SALES_LEAD_ADMIN,
-  Role.SALES_LEAD_NORMAL,
-  Role.MATERIAL_AUDIT_LOG_ADMIN,
+const MEMBER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
+  PermissionSet.MEMBER_ADMIN,
+  PermissionSet.POST_ADMIN,
+  PermissionSet.SALES_RECORDS_NORMAL,
+  PermissionSet.SALES_RECORDS_ADMIN,
+  PermissionSet.PROGRAM_ADMIN,
+  PermissionSet.PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN,
+  PermissionSet.APPOINTMENT_PLAN_ADMIN,
+  PermissionSet.COIN_ADMIN,
+  PermissionSet.SALES_LEAD_SELECTOR_ADMIN,
+  PermissionSet.SHIPPING_ADMIN,
+  PermissionSet.SHIPPING_NORMAL,
+  PermissionSet.MEMBER_PHONE_ADMIN,
+  PermissionSet.PROJECT_PORTFOLIO_NORMAL,
+  PermissionSet.PROJECT_PORTFOLIO_ADMIN,
+  PermissionSet.SALES_PERFORMANCE_ADMIN,
+  PermissionSet.SALES_LEAD_ADMIN,
+  PermissionSet.SALES_LEAD_NORMAL,
+  PermissionSet.MATERIAL_AUDIT_LOG_ADMIN,
 ];
 
-@UseGuards(AuthGuard, RoleGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 @ApiTags('Member')
 @ApiBearerAuth()
 @Controller({
@@ -85,7 +85,7 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
-  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembersByPost(
     @Local('member') member: JwtMember,
@@ -101,7 +101,7 @@ export class MemberController {
   }
 
   @Get()
-  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembers(@Local('member') member: JwtMember, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
@@ -115,7 +115,7 @@ export class MemberController {
   }
 
   @Post('member-role-count')
-  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembersRoleCountList(
     @Local('member') member: JwtMember,
@@ -129,7 +129,7 @@ export class MemberController {
   }
 
   @Post('import')
-  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async importMembers(@Local('member') member: JwtMember, @Body() metadata: MemberImportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
@@ -148,7 +148,7 @@ export class MemberController {
   }
 
   @Post('export')
-  @Roles(...MEMBER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async exportMembers(@Local('member') member: JwtMember, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
