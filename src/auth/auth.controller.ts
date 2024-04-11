@@ -12,10 +12,10 @@ import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
 import { ApiTags, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import CrossServerTokenDTOProperty from './api_property/cross_server_token_dto';
-import { Permissions } from '~/decorators/roles.decorator';
-import { PermissionSet } from '~/enums/role.enum';
+import { Permissions } from '~/decorators/permissions.decorator';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { AuthGuard } from './auth.guard';
-import { PermissionGuard } from './role.guard';
+import { PermissionGuard } from './permission.guard';
 
 @ApiTags('Auth')
 @Controller({

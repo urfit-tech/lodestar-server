@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { PermissionSet } from '~/enums/role.enum';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
 
 interface IsAuthorizedParams {
-  currentRoles: PermissionSet[];
-  requiredRoles: PermissionSet[];
+  currentPermissions: PermissionSet[];
+  requiredPermissions: PermissionSet[];
 }
 
 @Injectable()
 export class AccessControlService {
   constructor() {}
 
-  public isAuthorized({ currentRoles, requiredRoles }: IsAuthorizedParams) {
-    return currentRoles.some(role => requiredRoles.includes(role));
+  public isAuthorized({ currentPermissions, requiredPermissions }: IsAuthorizedParams) {
+    return currentPermissions.some( permissions=> requiredPermissions.includes(permissions));
   }
 }

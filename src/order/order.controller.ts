@@ -15,9 +15,9 @@ import {
 import { Queue } from 'bull';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
-import { Permissions } from '~/decorators/roles.decorator';
-import { PermissionSet } from '~/enums/role.enum';
-import { PermissionGuard } from '~/auth/role.guard';
+import { Permissions } from '~/decorators/permissions.decorator';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
+import { PermissionGuard } from '~/auth/permission.guard';
 
 const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SALES_RECORDS_NORMAL,

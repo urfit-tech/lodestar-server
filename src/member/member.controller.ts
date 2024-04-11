@@ -36,9 +36,9 @@ import {
 import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
 import { ExecutorInfo, DeleteMemberInfo } from './member.type';
-import { Permissions } from '~/decorators/roles.decorator';
-import { PermissionSet } from '~/enums/role.enum';
-import { PermissionGuard } from '~/auth/role.guard';
+import { Permissions } from '~/decorators/permissions.decorator';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
+import { PermissionGuard } from '~/auth/permission.guard';
 
 const MEMBER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.MEMBER_ADMIN,
