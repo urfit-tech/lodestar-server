@@ -53,13 +53,20 @@ const MEMBER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SHIPPING_ADMIN,
   PermissionSet.SHIPPING_NORMAL,
   PermissionSet.MEMBER_PHONE_ADMIN,
-  PermissionSet.PROJECT_PORTFOLIO_NORMAL,
   PermissionSet.PROJECT_PORTFOLIO_ADMIN,
   PermissionSet.SALES_PERFORMANCE_ADMIN,
   PermissionSet.SALES_LEAD_ADMIN,
   PermissionSet.SALES_LEAD_NORMAL,
   PermissionSet.MATERIAL_AUDIT_LOG_ADMIN,
 ];
+
+const MEMBER_DOWNLOAD_PERMISSION_GROUP: PermissionSet[] = [
+  PermissionSet.MEMBER_ADMIN,
+  PermissionSet.MEMBER_CREATE,
+  PermissionSet.SALES_LEAD_ADMIN,
+  PermissionSet.SALES_LEAD_NORMAL,
+  PermissionSet.SALES_PERFORMANCE_ADMIN,
+]
 
 @UseGuards(AuthGuard, PermissionGuard)
 @ApiTags('Member')
@@ -148,7 +155,7 @@ export class MemberController {
   }
 
   @Post('export')
-  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...MEMBER_DOWNLOAD_PERMISSION_GROUP)
   @ApiExcludeEndpoint()
   public async exportMembers(@Local('member') member: JwtMember, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
