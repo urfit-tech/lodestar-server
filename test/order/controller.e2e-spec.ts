@@ -329,7 +329,7 @@ describe('OrderController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
-          permissions: ['MEMBER_ADMIN'],
+          permissions: ['SALES_RECORDS_ADMIN'],
         },
         jwtSecret,
       );
@@ -352,7 +352,7 @@ describe('OrderController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
-          permissions: ['MEMBER_ADMIN'],
+          permissions: ['SALES_RECORDS_ADMIN'],
         },
         jwtSecret,
       );
@@ -396,7 +396,7 @@ describe('OrderController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
-          permissions: ['MEMBER_ADMIN'],
+          permissions: ['SALES_RECORDS_ADMIN'],
         },
         jwtSecret,
       );
@@ -419,7 +419,7 @@ describe('OrderController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
-          permissions: ['MEMBER_ADMIN'],
+          permissions: ['SALES_RECORDS_ADMIN'],
         },
         jwtSecret,
       );
@@ -463,7 +463,7 @@ describe('OrderController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
-          permissions: ['MEMBER_ADMIN'],
+          permissions: ['SALES_RECORDS_ADMIN'],
         },
         jwtSecret,
       );
@@ -486,7 +486,7 @@ describe('OrderController (e2e)', () => {
       const token = jwt.sign(
         {
           memberId: 'invoker_member_id',
-          permissions: ['MEMBER_ADMIN'],
+          permissions: ['SALES_RECORDS_ADMIN'],
         },
         jwtSecret,
       );

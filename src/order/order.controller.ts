@@ -15,33 +15,17 @@ import {
 import { Queue } from 'bull';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
-import { Roles } from '~/decorators/roles.decorator';
-import { Role } from '~/enums/role.enum';
-import { RoleGuard } from '~/auth/role.guard';
+import { Permissions } from '~/decorators/permissions.decorator';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
+import { PermissionGuard } from '~/auth/permission.guard';
 
-const ORDER_PERMISSION_GROUP_ADMIN: Role[] = [
-  Role.MEMBER_ADMIN,
-  Role.POST_ADMIN,
-  Role.SALES_RECORDS_NORMAL,
-  Role.SALES_RECORDS_ADMIN,
-  Role.PROGRAM_ADMIN,
-  Role.PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN,
-  Role.APPOINTMENT_PLAN_ADMIN,
-  Role.COIN_ADMIN,
-  Role.SALES_LEAD_SELECTOR_ADMIN,
-  Role.SHIPPING_ADMIN,
-  Role.SHIPPING_NORMAL,
-  Role.MEMBER_PHONE_ADMIN,
-  Role.PROJECT_PORTFOLIO_NORMAL,
-  Role.PROJECT_PORTFOLIO_ADMIN,
-  Role.SALES_PERFORMANCE_ADMIN,
-  Role.SALES_LEAD_ADMIN,
-  Role.SALES_LEAD_NORMAL,
-  Role.MATERIAL_AUDIT_LOG_ADMIN,
+const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
+  PermissionSet.SALES_RECORDS_NORMAL,
+  PermissionSet.SALES_RECORDS_ADMIN,
 ];
 
 
-@UseGuards(AuthGuard, RoleGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 @Controller({
   path: 'orders',
   version: '2',
@@ -82,7 +66,7 @@ export class OrderController {
   }
 
   @Post('export')
-  @Roles(...ORDER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...ORDER_PERMISSION_GROUP_ADMIN)
   public async exportOrderLogs(@Local('member') member: JwtMember, @Body() metadata: OrderExportDTO): Promise<void> {
     const { appId, memberId: invokerMemberId } = member;
 
@@ -98,7 +82,7 @@ export class OrderController {
   }
 
   @Post('export/products')
-  @Roles(...ORDER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...ORDER_PERMISSION_GROUP_ADMIN)
   public async exportOrderProducts(
     @Local('member') member: JwtMember,
     @Body() metadata: OrderExportDTO,
@@ -116,7 +100,7 @@ export class OrderController {
   }
 
   @Post('export/discounts')
-  @Roles(...ORDER_PERMISSION_GROUP_ADMIN)
+  @Permissions(...ORDER_PERMISSION_GROUP_ADMIN)
   public async exportOrderDiscounts(
     @Local('member') member: JwtMember,
     @Body() metadata: OrderExportDTO,
