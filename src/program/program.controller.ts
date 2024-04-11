@@ -70,4 +70,28 @@ export class ProgramController {
           extraAllowPermission,
         );
   }
+
+  // Todo: deleted this after @Get('/:programId/contents/:programContentId') deployed
+  @Get('/:programId/content/:programContentId')
+  async getEnrolledProgramContentByIds(
+    @Local('member') member: JwtMember,
+    @Req() request: Request,
+    @Param('programId') programId: string,
+    @Param('programContentId') programContentId: string,
+  ) {
+    const { memberId } = request.query;
+    const { role, permissions } = member;
+
+    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
+
+    return role === 'app-owner' || ['PROGRAM_ADMIN'].some((e) => permissions.includes(e))
+      ? { programContentId }
+      : this.programService.getEnrolledProgramContentById(
+          member.appId,
+          String(memberId || member.memberId),
+          programId,
+          programContentId,
+          extraAllowPermission,
+        );
+  }
 }
