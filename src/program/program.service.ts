@@ -26,6 +26,13 @@ export class ProgramService {
     });
   }
 
+  private _mergeProgramPlans(primaryPlans: Record<string, any>[], secondaryPlans: Record<string, any>[]) {
+    const mergedProgramPlanIds = new Map();
+    primaryPlans.forEach((plan) => mergedProgramPlanIds.set(plan.id, plan));
+    secondaryPlans.forEach((plan) => mergedProgramPlanIds.set(plan.id, plan));
+    return Array.from(mergedProgramPlanIds.values());
+  }
+
   public async getProgramByMemberId(appId: string, memberId: string) {
     // Todo: check permission
     // ...
@@ -48,6 +55,8 @@ export class ProgramService {
 
     const ownedProgramsFromCard = await this.programInfra.getOwnedProgramsFromCard(memberId, this.entityManager);
 
+    const ownedProgramPlans = this._mergeProgramPlans(ownedProgramsFromCard, ownedProgramsFromProgramPlan);
+
     const programWithRoleIsAssistant = await this.programInfra.getProgramsWithRoleIsAssistant(
       memberId,
       this.entityManager,
@@ -60,17 +69,13 @@ export class ProgramService {
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
-        ...ownedProgramsFromProgramPlan.map((program) => ({
-          ...program,
-          viewRate: Number(program.viewRate || 0),
-          roles: this.sortProgramRole(program.roles),
-        })),
         ...programWithRoleIsAssistant.map((program) => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
-        ...ownedProgramsFromCard.map((program) => ({
+
+        ...ownedProgramPlans.map((program) => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
