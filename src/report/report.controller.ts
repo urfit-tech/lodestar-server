@@ -30,7 +30,7 @@ export class ReportController {
               ...options.metabase,
               params: {
                 appid: appId,
-                memerid: memberId,
+                memberid: memberId,
                 role,
               },
             }
