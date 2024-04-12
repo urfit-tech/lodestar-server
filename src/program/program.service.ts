@@ -52,6 +52,10 @@ export class ProgramService {
       this.entityManager,
     );
 
+    const ownedProgramsFromCard = await this.programInfra.getOwnedProgramsFromCard(memberId, this.entityManager);
+
+    const ownedProgramPlans = this._mergeProgramPlans(ownedProgramsFromCard, ownedProgramsFromProgramPlan);
+
     const programWithRoleIsAssistant = await this.programInfra.getProgramsWithRoleIsAssistant(
       memberId,
       this.entityManager,
@@ -64,12 +68,12 @@ export class ProgramService {
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
-        ...ownedProgramsFromProgramPlan.map((program) => ({
+        ...programWithRoleIsAssistant.map((program) => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
-        ...programWithRoleIsAssistant.map((program) => ({
+        ...ownedProgramPlans.map((program) => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
@@ -170,5 +174,12 @@ export class ProgramService {
       (a: { createdAt: string }, b: { createdAt: string }) =>
         dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
     );
+  }
+
+  private _mergeProgramPlans(primaryPlans: Record<string, any>[], secondaryPlans: Record<string, any>[]) {
+    const mergedProgramPlanIds = new Map();
+    primaryPlans.forEach((plan) => mergedProgramPlanIds.set(plan.id, plan));
+    secondaryPlans.forEach((plan) => mergedProgramPlanIds.set(plan.id, plan));
+    return Array.from(mergedProgramPlanIds.values());
   }
 }
