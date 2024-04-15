@@ -7,13 +7,10 @@ import { AuthGuard } from '~/auth/auth.guard';
 import { APIException } from '~/api.excetion';
 import { FetchMemberRightActivityTicketDTO, FetchMemberRightActivityTicketQuery, MemberRightActivityTicketDataDto } from './dto/member-right-activity-ticket.dto';
 import { ActivityCollectionDTO, FetchActivitiesResponseDto } from './dto/activity.dto';
-import { RoleGuard } from '~/auth/role.guard';
-import { Roles } from '~/decorators/roles.decorator';
-import { Role } from '~/enums/role.enum';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
 
-@UseGuards(AuthGuard, RoleGuard)
+@UseGuards(AuthGuard)
 @ApiTags('Activity')
 @Controller({
   path: 'activity',
