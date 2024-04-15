@@ -23,6 +23,7 @@ export const createTestActivity = async (
   activity.publishedAt = overrides.publishedAt === null ? null : new Date();
   activity.organizer = overrides.organizer;
   activity.coverUrl = overrides.coverUrl || faker.internet.url()
+  activity.isParticipantsVisible = overrides.isParticipantsVisible || true
 
   await entityManager.save(activity);
   return activity;

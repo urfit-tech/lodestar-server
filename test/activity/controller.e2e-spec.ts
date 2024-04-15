@@ -749,7 +749,8 @@ describe('ActivityController (e2e)', () => {
           app: app,
           organizer: insertedMember,
           isPrivate: false, // scenario: 'holding' condition
-          publishedAt: new Date(), // scenario: 'holding' condition
+          publishedAt: new Date(), // scenario: 'holding' condition,
+          isParticipantsVisible: true
         });
   
         insertedCategory = await createTestCategory(manager, {
@@ -871,6 +872,7 @@ describe('ActivityController (e2e)', () => {
           title: Joi.string().required(),
           coverUrl: Joi.string().allow(null),
           categories: Joi.array().items(Joi.object()).required(),
+          isParticipantsVisible: Joi.boolean().required()
         });
   
         const sessionSchema = Joi.object({
@@ -916,6 +918,7 @@ describe('ActivityController (e2e)', () => {
               name: insertedCategory.name,
             },
           ],
+          isParticipantsVisible: true
         });
         expect(data.sessions).toEqual([
           {

@@ -188,6 +188,7 @@ async getActivityTicketInfoByIdAndMemberId(manager: EntityManager, activityTicke
       .addSelect("a.cover_url", "activityCoverUrl")
       .addSelect("m.name", "name")
       .addSelect("m.id", "memberId")
+      .addSelect("a.is_participants_visible", "isParticipantsVisible")
       .innerJoin("activity_ticket", "at2", "at2.id = ate.activity_ticket_id")
       .innerJoin("activity", "a", "a.id = at2.activity_id")
       .innerJoin("member", "m", "m.id = ate.member_id")
@@ -292,6 +293,7 @@ async getActivityTicketInfoByIdAndMemberId(manager: EntityManager, activityTicke
         title: activityTicket.activityTitle,
         coverUrl: activityTicket.activityCoverUrl,
         categories,
+        isParticipantsVisible: activityTicket.isParticipantsVisible
       },
       sessions: activitySessions,
       invoice: {

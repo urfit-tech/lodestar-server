@@ -36,6 +36,7 @@ class ActivityDto {
   title: string;
   coverUrl: string;
   categories: ActivityCategoryDto[];
+  isParticipantsVisible: boolean;
 }
 
 class ActivityInvoiceDto {
