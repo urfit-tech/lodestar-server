@@ -47,30 +47,5 @@ export class ActivityController {
     }
   }
 
-  @Get('/member_right')
-  public async memberRightActivityTicket(
-    @Query() dto: FetchMemberRightActivityTicketDTO,
-    @Local('member') member: JwtMember
-  ): Promise<MemberRightActivityTicketDataDto>{
-    const { memberId } = member;
-
-    const queryDto = new FetchMemberRightActivityTicketQuery()
-    queryDto.activityTicketId = dto.activityTicketId
-    queryDto.sessionId = dto.sessionId
-    queryDto.memberId = memberId
-
-    try {
-      return await this.activityService.memberRightActivityTicket(queryDto);
-
-    } catch (error) {
-      const errorMessage = `Error fetching activity collection: ${error.message}`;
-      console.error(errorMessage)
-
-      throw new APIException({
-        code: 'E_NOT_FOUND',
-        message: `Activity ticket data not found, activity_ticket_id: ${dto.activityTicketId}, member_id: ${memberId}, session_id ${dto.sessionId}`,
-      });
-    }
-  }
 }
 

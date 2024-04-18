@@ -10,5 +10,6 @@ import { DefinitionModule } from '~/definition/definition.module';
   providers: [Logger, ActivityTicketService, ActivityService, ActivityInfrastructure],
   imports: [DefinitionModule, forwardRef(() => AuthModule)],
   controllers: [ActivityController],
+  exports: [ActivityService, ActivityModule]
 })
 export class ActivityModule {}
