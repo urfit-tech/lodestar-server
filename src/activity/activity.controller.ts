@@ -1,14 +1,8 @@
 import { Body, Controller, Get, Logger, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-
 import { ActivityService } from './activity.service';
 import { AuthGuard } from '~/auth/auth.guard';
-
-import { APIException } from '~/api.excetion';
-import { FetchMemberRightActivityTicketDTO, FetchMemberRightActivityTicketQuery, MemberRightActivityTicketDataDto } from './dto/member-right-activity-ticket.dto';
 import { ActivityCollectionDTO, FetchActivitiesResponseDto } from './dto/activity.dto';
-import { Local } from '~/decorator';
-import { JwtMember } from '~/auth/auth.dto';
 
 @UseGuards(AuthGuard)
 @ApiTags('Activity')
@@ -46,6 +40,4 @@ export class ActivityController {
       throw error;
     }
   }
-
 }
-

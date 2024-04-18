@@ -39,7 +39,6 @@ import { Category } from '~/definition/entity/category.entity';
 import { ApiExceptionFilter } from '~/api.filter';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
-import { FetchMemberRightActivityTicketDTO } from '~/activity/dto/member-right-activity-ticket.dto';
 import Joi from 'joi';
 interface RepositoryMap {
   [key: string]: Repository<any>;

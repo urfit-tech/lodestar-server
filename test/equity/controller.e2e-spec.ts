@@ -1,6 +1,5 @@
 import { EntityManager, Repository } from 'typeorm';
 import request from 'supertest';
-import { v4 } from 'uuid';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
@@ -39,15 +38,15 @@ import { Category } from '~/definition/entity/category.entity';
 import { ApiExceptionFilter } from '~/api.filter';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
-import { FetchMemberRightActivityTicketDTO } from '~/activity/dto/member-right-activity-ticket.dto';
 import Joi from 'joi';
+import { FetchMemberRightActivityTicketDTO } from '~/equity/dto/equity-activity-ticket.dto';
 interface RepositoryMap {
   [key: string]: Repository<any>;
 }
 
 const AUTH_TOKEN_ROUTE = '/auth/token';
 
-describe('ActivityController (e2e)', () => {
+describe('EquityController (e2e)', () => {
   let application: INestApplication;
   let manager: EntityManager;
   let repositories;

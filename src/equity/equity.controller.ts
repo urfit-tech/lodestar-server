@@ -1,10 +1,10 @@
 import { Controller, Get, Logger, Query, UseGuards } from '@nestjs/common';
-import { ActivityService } from '~/activity/activity.service';
-import { FetchMemberRightActivityTicketDTO, FetchMemberRightActivityTicketQuery, MemberRightActivityTicketDataDto } from '~/activity/dto/member-right-activity-ticket.dto';
 import { APIException } from '~/api.excetion';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
+import { FetchMemberRightActivityTicketDTO, FetchMemberRightActivityTicketQuery, MemberRightActivityTicketDataDto } from './dto/equity-activity-ticket.dto';
+import { ActivityTicketService } from '~/activity/activity-ticket/activity-ticket.service';
 
 
 @UseGuards(AuthGuard)
@@ -13,7 +13,7 @@ import { Local } from '~/decorator';
   version: '2',
 })
 export class EquityController {
-  constructor(private logger: Logger, private readonly activityService: ActivityService) {}
+  constructor(private logger: Logger, private readonly activityTicketService: ActivityTicketService) {}
 
   @Get('/activity_ticket')
   public async memberRightActivityTicket(
@@ -28,7 +28,7 @@ export class EquityController {
     queryDto.memberId = memberId
 
     try {
-      return await this.activityService.memberRightActivityTicket(queryDto);
+      return await this.activityTicketService.memberRightActivityTicket(queryDto);
 
     } catch (error) {
       const errorMessage = `Error fetching activity collection: ${error.message}`;

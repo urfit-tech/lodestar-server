@@ -2,17 +2,13 @@ import { forwardRef, Logger, Module } from '@nestjs/common';
 import { EquityController } from './equity.controller';
 import { AuthModule } from '~/auth/auth.module';
 import { DefinitionModule } from '~/definition/definition.module';
-import { ActivityService } from '~/activity/activity.service';
+import { ActivityTicketInfrastructure } from '~/activity/activity-ticket/activity-ticket.infra';
+import { ActivityTicketService } from '~/activity/activity-ticket/activity-ticket.service';
 import { ActivityModule } from '~/activity/activity.module';
-import { ActivityInfrastructure } from '~/activity/activity.infra';
 
 @Module({
-  imports: [
-    DefinitionModule,
-    forwardRef(() => AuthModule),
-    ActivityModule
-  ],
   controllers: [EquityController],
-  providers: [Logger, ActivityService,ActivityInfrastructure]  
+  imports: [DefinitionModule, forwardRef(()=> AuthModule), ActivityModule],
+  providers: [Logger, ActivityTicketInfrastructure, ActivityTicketService]  
 })
 export class EquityModule {}
