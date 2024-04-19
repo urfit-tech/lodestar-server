@@ -14,4 +14,5 @@ export interface GetReportDTO {
 
 export interface ReportOptions {
   metabase: MetabasePayload | null;
+  canViewSelfDataOnly: boolean;
 }
