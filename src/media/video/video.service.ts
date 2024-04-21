@@ -272,10 +272,10 @@ export class VideoService {
         message: `cannot get the attachment: no cloudfront options or no attachment`,
       });
     }
-    const {
-      cloudfront: { path, playPaths },
-      originCloudfront: { playPaths: originPlayPaths },
-    } = cloudfrontOptions;
+    const { cloudfront, originCloudfront } = cloudfrontOptions;
+    const path = cloudfront?.path;
+    const playPaths = cloudfront?.playPaths;
+    const originPlayPaths = originCloudfront?.playPaths;
     if (!path && !playPaths) {
       throw new APIException({
         code: 'E_ATTACHMENT',
