@@ -241,10 +241,15 @@ export class VideoService {
     return signedManifest;
   }
 
-  private async getCloudfrontOptions(id: string): Promise<CloudfrontVideoOptions | null> {
+  private async getCloudfrontOptions(
+    id: string,
+  ): Promise<{ cloudfront: CloudfrontVideoOptions | null; originCloudfront: CloudfrontVideoOptions | null }> {
     try {
       const attachment = await this.mediaInfra.getById(id, this.entityManager);
-      return attachment.options.cloudfront as CloudfrontVideoOptions;
+      return {
+        cloudfront: attachment.options.cloudfront as CloudfrontVideoOptions,
+        originCloudfront: attachment.options.originCloudfront as CloudfrontVideoOptions,
+      };
     } catch (error) {
       console.error(error);
       return null;
@@ -267,7 +272,10 @@ export class VideoService {
         message: `cannot get the attachment: no cloudfront options or no attachment`,
       });
     }
-    const { path, playPaths } = cloudfrontOptions;
+    const {
+      cloudfront: { path, playPaths },
+      originCloudfront: { playPaths: originPlayPaths },
+    } = cloudfrontOptions;
     if (!path && !playPaths) {
       throw new APIException({
         code: 'E_ATTACHMENT',
@@ -275,7 +283,11 @@ export class VideoService {
       });
     }
 
-    const videoUrl = playPaths?.hls ? `${playPaths.hls.split('hls')[0]}*` : `${path.split('manifest')[0]}*`;
+    const videoUrl = originPlayPaths?.hls
+      ? `${originPlayPaths.hls.split('hls')[0]}*`
+      : playPaths?.hls
+      ? `${playPaths.hls.split('hls')[0]}*`
+      : `${path.split('manifest')[0]}*`;
     const captionUrl = playPaths?.hls
       ? `${playPaths.hls.split('output')[0]}captions/*`
       : `${path.split('manifest')[0]}*`;
@@ -284,15 +296,17 @@ export class VideoService {
     const captionPaths = await this.getCaptions(videoId);
     const captionSignedUrls = captionPaths.map((captionUrl) => `${new URL(captionUrl)}${captionUrlSignature}`);
 
-    const hlsPath = cloudfrontOptions?.playPaths
-      ? `${new URL(cloudfrontOptions.playPaths.hls).pathname}${videoUrlSignature}`
+    const hlsPath = originPlayPaths
+      ? `${new URL(originPlayPaths.hls).pathname}${videoUrlSignature}`
+      : playPaths
+      ? `${new URL(playPaths.hls).pathname}${videoUrlSignature}`
       : null;
-    const dashPath = cloudfrontOptions?.playPaths
-      ? `${new URL(cloudfrontOptions.playPaths.dash).pathname}${videoUrlSignature}`
+    const dashPath = originPlayPaths
+      ? `${new URL(originPlayPaths.dash).pathname}${videoUrlSignature}`
+      : playPaths
+      ? `${new URL(playPaths.dash).pathname}${videoUrlSignature}`
       : null;
-    const cloudfrontMigratedHlsPath = cloudfrontOptions?.path
-      ? `${new URL(cloudfrontOptions.path).pathname}${videoUrlSignature}`
-      : null;
+    const cloudfrontMigratedHlsPath = path ? `${new URL(path).pathname}${videoUrlSignature}` : null;
 
     return {
       videoSignedPaths: {
