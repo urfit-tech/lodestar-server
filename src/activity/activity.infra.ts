@@ -170,6 +170,4 @@ export class ActivityInfrastructure {
 
     return enrollmentCountMap;
   }
-  
-
 }
