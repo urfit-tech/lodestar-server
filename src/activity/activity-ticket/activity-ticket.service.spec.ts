@@ -18,12 +18,12 @@ describe('ActivityTicketService', () => {
         ActivityTicketService,
         {
           provide: ActivityTicketInfrastructure,
-          useValue: mockActivityTicketInfra
+          useValue: mockActivityTicketInfra,
         },
         {
           provide: getEntityManagerToken(),
-          useValue: jest.fn() 
-        }
+          useValue: jest.fn(),
+        },
       ],
     }).compile();
 
@@ -35,4 +35,3 @@ describe('ActivityTicketService', () => {
     expect(service).toBeDefined();
   });
 });
-

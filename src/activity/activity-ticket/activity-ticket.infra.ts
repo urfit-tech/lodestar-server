@@ -8,14 +8,18 @@ import { ActivityTicketEnrollment } from '../view_entity/ActivityTicketEnrollmen
 import { ActivityCategory } from '../entity/ActivityCategory';
 import { ActivitySession } from '../entity/ActivitySession';
 
-
 @Injectable()
 export class ActivityTicketInfrastructure {
-  async getActivityTicketInfoByIdAndMemberId(manager: EntityManager, activityTicketId: string, memberId: string, sessionId: string | null): Promise<MemberRightActivityTicketDataDto> {
-    const activityTicket = await this.fetchActivityTicket(manager, activityTicketId, memberId);
-    const invoice = await this.fetchInvoice(manager, activityTicketId, memberId);
-    const categories = await this.fetchCategories(manager, activityTicket.activityId);
-    const sessions = await this.fetchSessions(manager, activityTicketId, sessionId);
+  async getActivityTicketInfoByIdAndMemberId(
+    manager: EntityManager,
+    activityTicketId: string,
+    memberId: string,
+    sessionId: string | null,
+  ): Promise<MemberRightActivityTicketDataDto> {
+    const activityTicket = await this._fetchActivityTicket(manager, activityTicketId, memberId);
+    const invoice = await this._fetchInvoice(manager, activityTicketId, memberId);
+    const categories = await this._fetchCategories(manager, activityTicket.activityId);
+    const sessions = await this._fetchSessions(manager, activityTicketId, sessionId);
 
     return {
       id: activityTicket.id,
@@ -26,55 +30,59 @@ export class ActivityTicketInfrastructure {
         categories,
         isParticipantsVisible: activityTicket.isParticipantsVisible,
       },
-      sessions: this.mapSessions(sessions),
+      sessions: this._mapSessions(sessions),
       invoice: {
         name: invoice.invoiceOptions.name,
         email: invoice.invoiceOptions.email,
         phone: invoice.invoiceOptions.phone,
-        orderProductId: invoice.orderProductId
-      }
+        orderProductId: invoice.orderProductId,
+      },
     };
   }
 
-  private async fetchActivityTicket(manager: EntityManager, activityTicketId: string, memberId: string) {
-    return await manager.createQueryBuilder(ActivityTicketEnrollment, "ate")
-      .select("at2.id", "id")
-      .addSelect("a.id", "activityId")
-      .addSelect("a.title", "activityTitle")
-      .addSelect("a.cover_url", "activityCoverUrl")
-      .addSelect("m.name", "name")
-      .addSelect("m.id", "memberId")
-      .addSelect("a.is_participants_visible", "isParticipantsVisible")
-      .innerJoin("activity_ticket", "at2", "at2.id = ate.activity_ticket_id")
-      .innerJoin("activity", "a", "a.id = at2.activity_id")
-      .innerJoin("member", "m", "m.id = ate.member_id")
-      .where("m.id = :memberId", { memberId })
-      .andWhere("at2.id = :activityTicketId", { activityTicketId })
+  private async _fetchActivityTicket(manager: EntityManager, activityTicketId: string, memberId: string) {
+    return await manager
+      .createQueryBuilder(ActivityTicketEnrollment, 'ate')
+      .select('at2.id', 'id')
+      .addSelect('a.id', 'activityId')
+      .addSelect('a.title', 'activityTitle')
+      .addSelect('a.cover_url', 'activityCoverUrl')
+      .addSelect('m.name', 'name')
+      .addSelect('m.id', 'memberId')
+      .addSelect('a.is_participants_visible', 'isParticipantsVisible')
+      .innerJoin('activity_ticket', 'at2', 'at2.id = ate.activity_ticket_id')
+      .innerJoin('activity', 'a', 'a.id = at2.activity_id')
+      .innerJoin('member', 'm', 'm.id = ate.member_id')
+      .where('m.id = :memberId', { memberId })
+      .andWhere('at2.id = :activityTicketId', { activityTicketId })
       .getRawOne();
   }
 
-  private async fetchInvoice(manager: EntityManager, activityTicketId: string, memberId: string) {
-    return await manager.createQueryBuilder(ActivityTicketEnrollment, "ate")
-      .select("ol.invoice_options", 'invoiceOptions')
-      .addSelect("ate.order_product_id", "orderProductId")
+  private async _fetchInvoice(manager: EntityManager, activityTicketId: string, memberId: string) {
+    return await manager
+      .createQueryBuilder(ActivityTicketEnrollment, 'ate')
+      .select('ol.invoice_options', 'invoiceOptions')
+      .addSelect('ate.order_product_id', 'orderProductId')
       .innerJoin(OrderProduct, 'op', 'op.id = ate.order_product_id')
       .innerJoin(OrderLog, 'ol', 'ol.id = op.order_id')
-      .andWhere("ate.member_id = :memberId", { memberId })
-      .andWhere("ate.activity_ticket_id = :activityTicketId", { activityTicketId })
+      .andWhere('ate.member_id = :memberId', { memberId })
+      .andWhere('ate.activity_ticket_id = :activityTicketId', { activityTicketId })
       .getRawOne();
   }
 
-  private async fetchCategories(manager: EntityManager, activityId: string) {
-    return await manager.createQueryBuilder(Category, "c")
-      .select("c.id", "id")
-      .addSelect("c.name", "name")
-      .innerJoin(ActivityCategory, "ac", "ac.category_id = c.id")
-      .andWhere("ac.activity_id = :activityId", { activityId })
+  private async _fetchCategories(manager: EntityManager, activityId: string) {
+    return await manager
+      .createQueryBuilder(Category, 'c')
+      .select('c.id', 'id')
+      .addSelect('c.name', 'name')
+      .innerJoin(ActivityCategory, 'ac', 'ac.category_id = c.id')
+      .andWhere('ac.activity_id = :activityId', { activityId })
       .getRawMany();
   }
 
-  private async fetchSessions(manager: EntityManager, activityTicketId: string, sessionId: string | null) {
-    const queryBuilder = manager.createQueryBuilder(ActivitySession, "asession")
+  private async _fetchSessions(manager: EntityManager, activityTicketId: string, sessionId: string | null) {
+    const queryBuilder = manager
+      .createQueryBuilder(ActivitySession, 'asession')
       .select(
         `DISTINCT ON (asession.id) asession.id as id,
         asession.started_at as "startedAt",
@@ -89,23 +97,23 @@ export class ActivityTicketInfrastructure {
         ast.activity_session_type as "type",
         (SELECT SUM(CASE WHEN ast.activity_session_type = 'offline' THEN 1 ELSE 0 END) FROM activity_session_ticket ast WHERE ast.activity_session_id = asession.id) as "maxAmountOffline",
         (SELECT SUM(CASE WHEN ast.activity_session_type = 'online' THEN 1 ELSE 0 END) FROM activity_session_ticket ast WHERE ast.activity_session_id = asession.id) as "maxAmountOnline",
-        ae.attended as "attended"`
+        ae.attended as "attended"`,
       )
-      .leftJoin("activity_session_ticket", "ast", "ast.activity_session_id = asession.id")
-      .leftJoin("activity_ticket", "at", "at.id = ast.activity_ticket_id")
-      .leftJoin("activity_session_ticket_enrollment_count", "astec", "astec.activity_session_id = asession.id")
-      .leftJoin("activity_enrollment", "ae", "ae.activity_session_id = asession.id AND ae.activity_ticket_id = at.id")
-      .where("at.id = :activityTicketId", { activityTicketId })
-      .orderBy("asession.id", "DESC");
+      .leftJoin('activity_session_ticket', 'ast', 'ast.activity_session_id = asession.id')
+      .leftJoin('activity_ticket', 'at', 'at.id = ast.activity_ticket_id')
+      .leftJoin('activity_session_ticket_enrollment_count', 'astec', 'astec.activity_session_id = asession.id')
+      .leftJoin('activity_enrollment', 'ae', 'ae.activity_session_id = asession.id AND ae.activity_ticket_id = at.id')
+      .where('at.id = :activityTicketId', { activityTicketId })
+      .orderBy('asession.id', 'DESC');
 
     if (sessionId && sessionId !== '') {
-      queryBuilder.andWhere("asession.id = :sessionId", { sessionId });
+      queryBuilder.andWhere('asession.id = :sessionId', { sessionId });
     }
     return await queryBuilder.getRawMany();
   }
 
-  private mapSessions(sessions) {
-    return sessions.map(session => ({
+  private _mapSessions(sessions) {
+    return sessions.map((session) => ({
       id: session.id,
       startedAt: session.startedAt,
       endedAt: session.endedAt,
@@ -124,7 +132,7 @@ export class ActivityTicketInfrastructure {
       },
       isEnrolled: true,
       type: session.type,
-      attended: session.attended
+      attended: session.attended,
     }));
   }
 }

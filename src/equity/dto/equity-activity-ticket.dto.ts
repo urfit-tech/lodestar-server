@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID } from "class-validator";
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 class ActivityCategoryDto {
   id: string;
@@ -28,7 +28,7 @@ class ActivitySessionDto {
   participants: ActivitySessionParticipantsDto;
   isEnrolled: boolean;
   type: 'both' | 'offline' | 'online';
-  attended: boolean
+  attended: boolean;
 }
 
 class ActivityDto {
@@ -64,12 +64,12 @@ export class FetchMemberRightActivityTicketDTO {
 
 export class FetchMemberRightActivityTicketQuery {
   @IsUUID()
-  memberId: string
+  memberId: string;
 
   @IsUUID()
-  activityTicketId: string
+  activityTicketId: string;
 
   @IsOptional()
   @IsUUID()
-  sessionId?: string
+  sessionId?: string;
 }
