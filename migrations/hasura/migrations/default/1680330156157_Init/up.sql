@@ -1584,10 +1584,9 @@ CREATE FUNCTION public.update_last_manager_assigned_at() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    -- 检查 manager_id 是否有变化
-    IF NEW.manager_id <> OLD.manager_id THEN
-        -- 更新 last_manager_assigned_at 为当前时间
+    IF NEW.manager_id <> OLD.manager_id OR OLD.manager_id IS NULL OR NEW.manager_id IS NULL THEN
         NEW.last_manager_assigned_at = NOW();
+ 		NEW.assigned_at = NOW();
     END IF;
     RETURN NEW;
 END;
@@ -2695,7 +2694,10 @@ CREATE VIEW public.appointment_enrollment AS
     (order_product.options ->> 'appointmentCanceledAt'::text) AS canceled_at,
     order_product.id,
     member.app_id,
-    ap.published_at
+    ap.published_at,
+    ap.creator_id,
+    order_product.name AS order_product_name,
+    order_product.description AS order_product_description
    FROM (((public.order_log
      JOIN public.order_product ON (((order_product.delivered_at < now()) AND (order_product.order_id = order_log.id))))
      JOIN public.member ON ((member.id = order_log.member_id)))
@@ -2807,7 +2809,8 @@ CREATE TABLE public.card (
     title text NOT NULL,
     description text NOT NULL,
     template text NOT NULL,
-    creator_id text
+    creator_id text,
+    sku text
 );
 CREATE TABLE public.card_discount (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -4910,12 +4913,12 @@ UNION
 UNION
  SELECT program_content_info.program_id,
     program_content_info.program_content_id,
-    member.id AS member_id,
+    member_permission_extra.member_id,
     NULL::timestamp with time zone AS product_delivered_at
    FROM ((program_content_info
      JOIN public.program_role ON ((program_role.program_id = program_content_info.program_id)))
-     JOIN public.member ON ((member.id = program_role.member_id)))
-  WHERE (program_role.name = 'instructor'::text)
+     JOIN public.member_permission_extra ON ((member_permission_extra.member_id = program_role.member_id)))
+  WHERE (member_permission_extra.permission_id = 'PROGRAM_ADMIN'::text)
 UNION
  SELECT program_content_info.program_id,
     program_content_info.program_content_id,
@@ -5042,9 +5045,21 @@ CREATE TABLE public.program_content_ebook_bookmark (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     highlight_content text NOT NULL,
     chapter text,
-    href text NOT NULL,
-    percentage numeric NOT NULL
+    href text,
+    percentage numeric
 );
+CREATE TABLE public.program_content_ebook_highlight (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    epub_cfi text NOT NULL,
+    program_content_id uuid NOT NULL,
+    member_id text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    highlight_content text,
+    chapter text NOT NULL,
+    color text NOT NULL,
+    annotation text
+);
+COMMENT ON TABLE public.program_content_ebook_highlight IS 'ebook highlights made by users in an eBook. Each highlight includes location information (epub_cfi), content (highlight_content), metadata (chapter, color), and references to the program content and member associated with the highlight';
 CREATE TABLE public.program_content_ebook_toc (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     program_content_id uuid NOT NULL,
@@ -7159,6 +7174,8 @@ ALTER TABLE ONLY public.program_content_audio
     ADD CONSTRAINT program_content_audio_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_body
     ADD CONSTRAINT program_content_body_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.program_content_ebook_highlight
+    ADD CONSTRAINT program_content_ebook_highlight_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_ebook
     ADD CONSTRAINT program_content_ebook_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_ebook
@@ -7890,7 +7907,7 @@ CREATE TRIGGER set_public_voucher_plan_updated_at BEFORE UPDATE ON public.vouche
 COMMENT ON TRIGGER set_public_voucher_plan_updated_at ON public.voucher_plan IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_token_product AFTER INSERT ON public.token FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Token');
 CREATE TRIGGER set_voucher_plan_product AFTER INSERT ON public.voucher_plan FOR EACH ROW EXECUTE PROCEDURE public.insert_product('VoucherPlan');
-CREATE TRIGGER trigger_update_last_manager_assigned_at BEFORE UPDATE ON public.member FOR EACH ROW WHEN ((old.manager_id IS DISTINCT FROM new.manager_id)) EXECUTE PROCEDURE public.update_last_manager_assigned_at();
+CREATE TRIGGER trigger_update_last_manager_assigned_at BEFORE UPDATE OF manager_id ON public.member FOR EACH ROW EXECUTE PROCEDURE public.update_last_manager_assigned_at();
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.app(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.activity_attendance
@@ -8285,6 +8302,10 @@ ALTER TABLE ONLY public.program_content
     ADD CONSTRAINT program_content_content_section_id_fkey FOREIGN KEY (content_section_id) REFERENCES public.program_content_section(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.program_content_ebook_bookmark
     ADD CONSTRAINT program_content_ebook_bookmark_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.program_content_ebook_highlight
+    ADD CONSTRAINT program_content_ebook_highlight_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.program_content_ebook_highlight
+    ADD CONSTRAINT program_content_ebook_highlight_program_content_id_fkey FOREIGN KEY (program_content_id) REFERENCES public.program_content(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.program_content_log
     ADD CONSTRAINT program_content_log_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.program_content_log

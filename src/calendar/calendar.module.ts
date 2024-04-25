@@ -13,6 +13,8 @@ import { VoucherInfrastructure } from '~/voucher/voucher.infra';
 
 import { CalendarController } from './calendar.controller';
 import { CalendarService } from './calendar.service';
+import { AppointmentInfrastructure } from '~/appointment/appointment.infra';
+import { AppointmentService } from '~/appointment/appointment.service';
 
 @Module({
   controllers: [CalendarController],
@@ -29,6 +31,8 @@ import { CalendarService } from './calendar.service';
     ProductInfrastructure,
     SharingCodeInfrastructure,
     VoucherInfrastructure,
+    AppointmentInfrastructure,
+    AppointmentService,
   ],
   exports: [],
 })

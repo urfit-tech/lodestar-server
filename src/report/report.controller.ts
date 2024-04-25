@@ -5,6 +5,8 @@ import { APIException } from '~/api.excetion';
 
 import { ReportService } from './report.service';
 import { GetReportDTO } from './report.type';
+import { Local } from '~/decorator';
+import { JwtMember } from '~/auth/auth.dto';
 
 @UseGuards(AuthGuard)
 @Controller({
@@ -15,14 +17,33 @@ export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
   @Get('/:reportId')
-  async getReportSignedUrl(@Param('reportId') reportId: string) {
+  async getReportSignedUrl(@Local('member') member: JwtMember, @Param('reportId') reportId: string) {
     const report: GetReportDTO = await this.reportService.getReportById(reportId);
     const { type, options } = report;
-
+    const { appId, memberId, role } = member;
     let result;
     switch (type) {
       case 'metabase':
-        const payload = options.metabase;
+        const payload = options.canViewSelfDataOnly
+          ? !!Object.keys(options.metabase.resource).includes('dashboard')
+            ? {
+                ...options.metabase,
+                params: {
+                  appid: appId,
+                  memberid: memberId,
+                  role,
+                },
+              }
+            : {
+                ...options.metabase,
+                params: {
+                  appId,
+                  memberId,
+                  role,
+                },
+              }
+          : options.metabase;
+
         result = this.reportService.generateMetabaseSignedUrl(payload);
         break;
       default:

@@ -57,6 +57,7 @@ describe('EbookController (e2e)', () => {
   let memberRepo: Repository<Member>;
 
   let ebookService: EbookService;
+  let programContentBody, program, programContentSection, programContent;
 
   function streamToBuffer(stream) {
     return new Promise((resolve, reject) => {
@@ -66,6 +67,7 @@ describe('EbookController (e2e)', () => {
       stream.on('end', () => resolve(Buffer.concat(chunks)));
     });
   }
+  
 
   async function fetchToken() {
     try {
@@ -135,6 +137,33 @@ describe('EbookController (e2e)', () => {
     await appSecretRepo.save(appSecret);
     await appSettingRepo.save(appSetting);
 
+    programContentBody = new ProgramContentBody();
+    programContentBody.id = v4();
+    await programContentBodyRepo.save(programContentBody)
+
+    program = new Program();
+    program.title = 'test ebook program';
+    program.appId = 'test';
+    program.id = v4();
+    await programRepo.save(program)
+
+    programContentSection = new ProgramContentSection();
+    programContentSection.id = v4();
+    programContentSection.program = program;
+    programContentSection.title = 'test ebook program content section';
+    programContentSection.position = 0;
+    await programContentSectionRepo.save(programContentSection)
+
+
+    programContent = new ProgramContent();
+    programContent.id = '5e50b600-5e1b-4094-bd4e-99e506e5ca98';
+    programContent.displayMode = 'trial';
+    programContent.title = 'test ebook program';
+    programContent.position = 0;
+    programContent.contentBody = programContentBody;
+    programContent.contentSection = programContentSection;
+    await programContentRepo.save(programContent)
+
     await application.init();
   });
 
@@ -160,43 +189,10 @@ describe('EbookController (e2e)', () => {
     beforeEach(() => {
       jest.spyOn(storageService, 'getFileFromBucketStorage').mockImplementation((data: GetObjectCommandInput) => {
         const filename = last(data.Key.split('/'));
-        console.log(filename);
         const manifest = sdkStreamMixin(Readable.from(readFileSync(`${__dirname}/${filename}`)));
         return Promise.resolve({ Body: manifest, $metadata: null } as GetObjectCommandOutput);
       });
     });
-
-    const programContentBody = new ProgramContentBody();
-    programContentBody.id = v4();
-
-    const program = new Program();
-    program.title = 'test ebook program';
-    program.appId = 'test';
-    program.id = v4();
-
-    const programContentSection = new ProgramContentSection();
-    programContentSection.id = v4();
-    programContentSection.program = program;
-    programContentSection.title = 'test ebook program content section';
-    programContentSection.position = 0;
-
-    const programContent = new ProgramContent();
-    programContent.id = '5e50b600-5e1b-4094-bd4e-99e506e5ca98';
-    programContent.displayMode = 'trial';
-    programContent.title = 'test ebook program';
-    programContent.position = 0;
-    programContent.contentBody = programContentBody;
-    programContent.contentSection = programContentSection;
-
-    const programContentEbook = new ProgramContentEbook();
-    programContentEbook.id = v4();
-    programContentEbook.programContentId = programContent.id;
-    programContentEbook.data = {
-      name: '7B_2048 試閱本版本號3.0.epub',
-      size: 1963602,
-      type: 'application/epub+zip',
-      lastModified: 1702894577490,
-    };
 
     describe('Success Test', () => {
       it('should retrieve an encrypted EPUB file and verify its length', async () => {
@@ -239,8 +235,17 @@ describe('EbookController (e2e)', () => {
           host: 'test.something.com',
         };
 
+        const programContentPayToWatch = new ProgramContent();
+        programContentPayToWatch.id = '5e50b600-5e1b-4094-bd4e-99e506e5ca98';
+        programContentPayToWatch.displayMode = 'payToWatch';
+        programContentPayToWatch.title = 'test ebook program';
+        programContentPayToWatch.position = 0;
+        programContentPayToWatch.contentBody = programContentBody;
+        programContentPayToWatch.contentSection = programContentSection;
+        await programContentRepo.save(programContentPayToWatch)
+
         const response = await request(application.getHttpServer())
-          .get(`/ebook/some-program-content-id`)
+          .get(`/ebook/${programContentPayToWatch.id}.epub`)
           .set(requestHeader)
           .expect(401);
 
@@ -257,11 +262,11 @@ describe('EbookController (e2e)', () => {
         };
 
         const response = await request(application.getHttpServer())
-          .get(`/ebook/some-program-content-id`)
+          .get(`/ebook/${programContent.id}`)
           .set(requestHeader)
           .expect(401);
 
-        expect(response.body.message).toBe('Unauthorized');
+        expect(response.body.message).toBe('Invalid token');
         expect(response.body.statusCode).toBe(401);
       });
     });
@@ -277,7 +282,7 @@ describe('EbookController (e2e)', () => {
           .set(requestHeader)
           .expect(400);
 
-        expect(response.body.code).toBe('EbookFileRetrievalError');
+        expect(response.body.code).toBe('E_EBOOK_NOT_FOUND');
         expect(response.body.message).toBe('Unable to retrieve ebook file');
       });
     });
@@ -296,8 +301,8 @@ describe('EbookController (e2e)', () => {
           .send()
           .expect(400);
 
-        expect(response.body.code).toBe('EbookFileEncryptionError');
-        expect(response.body.message).toBe('Error encrypting ebook file');
+        expect(response.body.code).toBe('E_EBOOKENCRYPTIONERROR');
+        expect(response.body.message).toBe('Error encrypting ebook');
       });
     });
 
@@ -329,8 +334,31 @@ describe('EbookController (e2e)', () => {
           .send()
           .expect(400);
 
-        expect(response.body.code).toBe('EbookByProgramContentId_Error');
-        expect(response.body.message).toBe('Invalid request parameters');
+        expect(response.body.code).toBe('E_EBOOKENCRYPTIONERROR');
+        expect(response.body.message).toBe('Error encrypting ebook');
+      });
+    });
+
+    describe('EbookController KeyAndIV Retrieval Tests', () => {
+      let requestHeader;
+    
+      beforeEach(async () => {
+        const tokenResponse = await fetchToken();
+        requestHeader = tokenResponse.requestHeader;
+      });
+    
+      it('should return an error when key and IV cannot be retrieved', async () => {
+        jest.spyOn(ebookService, 'getStandardKeyAndIV').mockImplementation(() => {
+          throw new Error("Key and IV retrieval failed");
+        });
+    
+        const response = await request(application.getHttpServer())
+          .get(`/ebook/${programContent.id}.epub`)
+          .set(requestHeader)
+          .expect(400);
+    
+        expect(response.body.code).toBe('E_KEYANDIVRETRIEVALERROR');
+        expect(response.body.message).toBe('Unable to retrieve key and IV');
       });
     });
   });

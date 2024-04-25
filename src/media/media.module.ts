@@ -32,7 +32,7 @@ import { EbookService } from './ebook/ebook.service';
     VideoService,
     MediaService,
     ProgramInfrastructure,
-    EbookService,
+    EbookService
   ],
   exports: [MediaService],
 })

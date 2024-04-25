@@ -298,10 +298,9 @@ export class ProgramInfrastructure {
         { memberId, role1: 'owner', role2: 'instructor' },
       )
       .innerJoin(
-        'member_permission_extra',
-        'member_permission_extra',
-        'member_permission_extra.member_id = program_role.member_id' +
-          ' AND member_permission_extra.permission_id = :permissionId',
+        'member_permission',
+        'member_permission',
+        'member_permission.member_id = program_role.member_id' + ' AND member_permission.permission_id = :permissionId',
         { permissionId },
       )
       .getRawOne();
@@ -504,10 +503,9 @@ export class ProgramInfrastructure {
         { memberId, role1: 'owner', role2: 'instructor' },
       )
       .innerJoin(
-        'member_permission_extra',
-        'member_permission_extra',
-        'member_permission_extra.member_id = program_role.member_id' +
-          ' AND member_permission_extra.permission_id = :permissionId',
+        'member_permission',
+        'member_permission',
+        'member_permission.member_id = program_role.member_id' + ' AND member_permission.permission_id = :permissionId',
         { permissionId },
       )
       .getRawMany();

@@ -32,6 +32,7 @@ import { AppEmailTemplate } from './app_email_template.entity';
 import { AppHost } from './app_host.entity';
 import { AppSecret } from './app_secret.entity';
 import { AppSetting } from './app_setting.entity';
+import { AppInvoiceGateway } from '~/entity/AppInvoiceGateway';
 
 @Index('App_pkey', ['id'], { unique: true })
 @Index('app_symbol_key', ['symbol'], { unique: true })
@@ -195,4 +196,7 @@ export class App {
 
   @OneToMany(() => Report, (report) => report.app)
   reports: Report[];
+
+  @OneToMany(() => AppInvoiceGateway, (appInvoiceGateway) => appInvoiceGateway.app)
+  appInvoiceGateways: AppInvoiceGateway[];
 }

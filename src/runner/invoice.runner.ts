@@ -11,7 +11,6 @@ import { DistributedLockService } from '~/utility/lock/distributed_lock.service'
 import { UtilityService } from '~/utility/utility.service';
 
 import { Runner } from './runner';
-import axios from 'axios';
 
 @Injectable()
 export class InvoiceRunner extends Runner {
@@ -38,8 +37,6 @@ export class InvoiceRunner extends Runner {
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
-    await this.checkAndCallHeartbeat();
-
     const errors: Array<{ error: any }> = [];
     const cb = async (manager: EntityManager) => {
       const paymentLogs = await this.paymentInfra.getShouldIssueInvoicePaymentLogs(this.batchSize, manager);
@@ -62,26 +59,6 @@ export class InvoiceRunner extends Runner {
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));
     if (errors.length > 0) {
       throw new Error(JSON.stringify(errors));
-    }
-  }
-
-  async checkAndCallHeartbeat(): Promise<void> {
-    const heartbeatUrl = process.env.INVOICE_RUNNER_HEARTBEAT_URL;
-
-    const isValidUrl = (url) => {
-      try {
-        new URL(url);
-        return true;
-      } catch (_) {
-        return false;
-      }
-    };
-
-    if (heartbeatUrl && typeof heartbeatUrl === 'string' && isValidUrl(heartbeatUrl)) {
-      console.log('Calling heartbeat URL:', heartbeatUrl);
-      await axios.get(heartbeatUrl);
-    } else {
-      console.log(`Invalid or no heartbeat URL set, skipping call: ${heartbeatUrl}`);
     }
   }
 }

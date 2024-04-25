@@ -18,6 +18,9 @@ export class Activity {
   @Column('text', { name: 'title' })
   title: string;
 
+  @Column('text', { name: 'organizer_id' })
+  organizerId: string;
+
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
 
@@ -37,7 +40,7 @@ export class Activity {
   position: number | null;
 
   @Column('jsonb', { name: 'support_locales', nullable: true })
-  supportLocales: object | null;
+  supportLocales: Array<string> | null;
 
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;

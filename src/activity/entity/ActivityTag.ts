@@ -11,6 +11,9 @@ export class ActivityTag {
   @Column('integer', { name: 'position' })
   position: number;
 
+  @Column('text', { name: 'tag_name' })
+  activityTagName: string;
+
   @Column('text', { name: 'activity_id' })
   activityId: string;
 
