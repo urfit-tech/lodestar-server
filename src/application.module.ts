@@ -26,7 +26,7 @@ import { EquityController } from './equity/equity.controller';
 import { EquityModule } from './equity/equity.module';
 
 @Module({
-  controllers: [ApplicationController],
+  controllers: [ApplicationController, EquityController],
   providers: [Logger, ApplicationService],
   imports: [
     ConfigModule.forRoot({

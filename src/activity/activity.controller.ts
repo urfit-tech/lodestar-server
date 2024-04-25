@@ -1,8 +1,8 @@
 import { Controller, Get, Logger, Param, ParseIntPipe, Query, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ActivityService } from './activity.service';
+import { AuthGuard } from '~/auth/auth.guard';
 import { ActivityCollectionDTO, FetchActivitiesResponseDto } from './dto/activity.dto';
-import { Request } from 'express';
 
 @ApiTags('Activity')
 @Controller({
