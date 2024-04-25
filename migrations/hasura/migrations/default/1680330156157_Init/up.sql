@@ -1418,6 +1418,47 @@ CREATE FUNCTION public.set_estimator_product() RETURNS trigger
         INSERT INTO product VALUES(concat('Estimator_', NEW.id), 'Estimator', NEW.id);
         RETURN NEW;
     END;$$;
+CREATE FUNCTION public.set_lead_audit_log() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	member_id text = COALESCE(current_setting('hasura.user', TRUE), 'System or FromDB');
+BEGIN
+	IF(NEW.manager_id IS DISTINCT FROM OLD.manager_id) THEN
+		INSERT INTO lead_audit_log (app_id, executor, target, "type", "old", "new")
+			VALUES(NEW.app_id, member_id, NEW.id, 'MANAGER', OLD.manager_id::text, NEW.manager_id::text);
+	END IF;
+	IF(NEW.star IS DISTINCT FROM OLD.star) THEN
+		INSERT INTO lead_audit_log (app_id, executor, target, "type", "old", "new")
+			VALUES(NEW.app_id, member_id, NEW.id, 'STAR', OLD.star::text, NEW.star::text);
+	END IF;
+	IF(NEW.followed_at IS DISTINCT FROM OLD.followed_at) THEN
+		INSERT INTO lead_audit_log (app_id, executor, target, "type", "old", "new")
+			VALUES(NEW.app_id, member_id, NEW.id, 'FOLLOW', OLD.followed_at::text, NEW.followed_at::text);
+	END IF;
+	IF(NEW.closed_at IS DISTINCT FROM OLD.closed_at) THEN
+		INSERT INTO lead_audit_log (app_id, executor, target, "type", "old", "new")
+			VALUES(NEW.app_id, member_id, NEW.id, 'REJECT', OLD.closed_at::text, NEW.closed_at::text);
+	END IF;
+	IF(NEW.completed_at IS DISTINCT FROM OLD.completed_at) THEN
+		INSERT INTO lead_audit_log (app_id, executor, target, "type", "old", "new")
+			VALUES(NEW.app_id, member_id, NEW.id, 'COMPLETE', OLD.completed_at::text, NEW.completed_at::text);
+	END IF;
+	IF(NEW.recycled_at IS DISTINCT FROM OLD.recycled_at) THEN
+		INSERT INTO lead_audit_log (app_id, executor, target, "type", "old", "new")
+			VALUES(NEW.app_id, member_id, NEW.id, 'FOLLOW', OLD.recycled_at::text, NEW.recycled_at::text);
+	END IF;
+	IF(NEW.excluded_at IS DISTINCT FROM OLD.excluded_at) THEN
+		INSERT INTO lead_audit_log (app_id, executor, target, "type", "old", "new")
+			VALUES(NEW.app_id, member_id, NEW.id, 'DELETE', OLD.excluded_at::text, NEW.excluded_at::text);
+	END IF;
+	IF(NEW.metadata IS DISTINCT FROM OLD.metadata) THEN
+		INSERT INTO lead_audit_log (app_id, executor, target, "type", "old", "new")
+			VALUES(NEW.app_id, member_id, NEW.id, 'METADATA', OLD.metadata::text, NEW.metadata::text);
+	END IF;
+	RETURN NEW;
+END
+$$;
 CREATE FUNCTION public.set_member_manager_updated_audit_log() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1446,6 +1487,18 @@ default_options jsonb;
     END IF;
     RETURN NULL;
     END;
+$$;
+CREATE FUNCTION public.set_member_property_updated_audit_log() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	IF(OLD.value IS NULL OR OLD.value != NEW.value) THEN
+		INSERT INTO member_property_audit_log (member_id, property_id, old, new, created_at)
+			VALUES(NEW.member_id, NEW.property_id, OLD.value, NEW.value, now());
+		RETURN NEW;
+	END IF;
+	RETURN NULL;
+END;
 $$;
 CREATE FUNCTION public.set_merchandise_product() RETURNS trigger
     LANGUAGE plpgsql
@@ -1527,6 +1580,18 @@ CREATE FUNCTION public.set_project_plan_product() RETURNS trigger
         INSERT INTO product VALUES(concat('ProjectPlan_', NEW.id), 'ProjectPlan', NEW.id);
         RETURN NEW;
     END;$$;
+CREATE FUNCTION public.update_last_manager_assigned_at() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- 检查 manager_id 是否有变化
+    IF NEW.manager_id <> OLD.manager_id THEN
+        -- 更新 last_manager_assigned_at 为当前时间
+        NEW.last_manager_assigned_at = NOW();
+    END IF;
+    RETURN NEW;
+END;
+$$;
 CREATE FUNCTION public.update_modified_column() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1666,11 +1731,12 @@ CREATE TABLE public.member (
     completed_at timestamp with time zone,
     recycled_at timestamp with time zone,
     excluded_at timestamp with time zone,
+    last_manager_assigned_at timestamp with time zone,
     CONSTRAINT role CHECK (((role = 'app-owner'::text) OR (role = 'content-creator'::text) OR (role = 'general-member'::text))),
     CONSTRAINT status CHECK ((status = ANY (ARRAY['invited'::text, 'verified'::text, 'activated'::text, 'engaged'::text])))
 );
 COMMENT ON COLUMN public.member.roles_deprecated IS '["admin", "creator", "member"]';
-COMMENT ON COLUMN public.member.role IS 'app-owner / content-creator';
+COMMENT ON COLUMN public.member.role IS 'app-owner / content-creator / general-member';
 COMMENT ON COLUMN public.member.youtube_channel_ids IS 'array of youtube channel ids';
 COMMENT ON COLUMN public.member.status IS 'invited | verified | activated | engaged';
 CREATE TABLE public.member_learned_log (
@@ -1949,7 +2015,8 @@ CREATE TABLE public.payment_log (
     method text,
     custom_no text,
     invoice_issued_at timestamp with time zone,
-    invoice_options jsonb DEFAULT jsonb_build_object() NOT NULL
+    invoice_options jsonb DEFAULT jsonb_build_object() NOT NULL,
+    invoice_gateway_id uuid
 );
 COMMENT ON COLUMN public.payment_log.created_at IS 'merchant order number ';
 COMMENT ON COLUMN public.payment_log.gateway IS 'spgateway, tappay, ezfund,paypal';
@@ -2285,6 +2352,14 @@ CREATE TABLE public.app_extended_module (
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 COMMENT ON TABLE public.app_extended_module IS 'extended module for each app';
+CREATE TABLE public.app_invoice_gateway (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    gateway_id uuid NOT NULL,
+    options jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    app_id text NOT NULL
+);
 CREATE TABLE public.app_language (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     app_id text NOT NULL,
@@ -2374,6 +2449,22 @@ CREATE TABLE public.app_page_template (
     published_at timestamp with time zone,
     name text DEFAULT now() NOT NULL,
     cover_url text
+);
+CREATE TABLE public.app_payment_gateway (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    app_id text NOT NULL,
+    gateway_id uuid NOT NULL,
+    options jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+CREATE TABLE public.app_payment_gateway_method (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    app_gateway_id uuid NOT NULL,
+    method_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    status text DEFAULT 'disabled'::text NOT NULL
 );
 CREATE TABLE public.app_plan (
     id text NOT NULL,
@@ -3080,6 +3171,12 @@ CREATE TABLE public.invoice (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     executor_id uuid
 );
+CREATE TABLE public.invoice_gateway (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
 CREATE TABLE public.issue (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     app_id text NOT NULL,
@@ -3223,6 +3320,17 @@ CREATE TABLE public.iszn_user (
     status text,
     updatedat timestamp with time zone
 );
+CREATE TABLE public.lead_audit_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    app_id text NOT NULL,
+    executor text NOT NULL,
+    target text NOT NULL,
+    type text NOT NULL,
+    old text,
+    new text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
 CREATE TABLE public.member_contract (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -3238,7 +3346,8 @@ CREATE TABLE public.member_contract (
     options jsonb,
     author_id text,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    dealer text
 );
 CREATE TABLE public.member_note (
     id text DEFAULT public.gen_random_uuid() NOT NULL,
@@ -3274,7 +3383,8 @@ CREATE TABLE public.member_task (
     has_meeting boolean DEFAULT false NOT NULL,
     meet_id uuid,
     meeting_hours numeric DEFAULT '0'::numeric NOT NULL,
-    meeting_gateway text
+    meeting_gateway text,
+    deleted_at timestamp without time zone
 );
 COMMENT ON COLUMN public.member_task.priority IS 'high / medium / low';
 COMMENT ON COLUMN public.member_task.status IS 'pending / in-progress / done';
@@ -3583,6 +3693,8 @@ CREATE TABLE public.meet (
     deleted_at timestamp with time zone,
     gateway text NOT NULL,
     service_id uuid,
+    recording_url text,
+    recording_type text,
     CONSTRAINT started_at_ended_at_constraint CHECK ((ended_at > started_at))
 );
 COMMENT ON COLUMN public.meet.target IS 'appointment_plan_id, member_task_id';
@@ -3611,7 +3723,7 @@ CREATE TABLE public.member_audit_log (
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     CONSTRAINT action CHECK ((action = ANY (ARRAY['upload'::text, 'download'::text, 'delete'::text])))
 );
-COMMENT ON COLUMN public.member_audit_log.action IS 'upload | download';
+COMMENT ON COLUMN public.member_audit_log.action IS 'upload | download | delete';
 CREATE TABLE public.member_card (
     id text DEFAULT public.gen_random_uuid() NOT NULL,
     member_id text NOT NULL,
@@ -3667,7 +3779,8 @@ CREATE TABLE public.member_phone (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     is_primary boolean DEFAULT false NOT NULL,
-    is_valid boolean DEFAULT true NOT NULL
+    is_valid boolean DEFAULT true NOT NULL,
+    manager_id text
 );
 CREATE TABLE public.member_property (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -3825,6 +3938,14 @@ CREATE VIEW public.member_phone_duplicated AS
   GROUP BY member_phone.phone, member.app_id
  HAVING (count(*) > 1)
   ORDER BY (count(*));
+CREATE TABLE public.member_property_audit_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    member_id text NOT NULL,
+    property_id uuid NOT NULL,
+    old text,
+    new text,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
 CREATE VIEW public.member_public AS
 SELECT
     NULL::text AS id,
@@ -4403,6 +4524,12 @@ CREATE TABLE public.package_section (
     "position" integer NOT NULL,
     package_id uuid NOT NULL
 );
+CREATE TABLE public.payment_gateway (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
 CREATE VIEW public.payment_log_export AS
  SELECT payment_log.no AS payment_log_no,
     payment_log.paid_at,
@@ -4435,6 +4562,12 @@ CREATE VIEW public.payment_log_export AS
              LEFT JOIN public.order_discount ON ((order_discount.order_id = order_log_1.id)))
           GROUP BY order_log_1.id) o1 ON ((o1.order_log_id = order_log.id)))
   ORDER BY payment_log.created_at DESC;
+CREATE TABLE public.payment_method (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
 CREATE TABLE public.permission (
     id text DEFAULT public.gen_random_uuid() NOT NULL,
     "group" text NOT NULL,
@@ -4553,7 +4686,7 @@ UNION
    FROM (( SELECT DISTINCT podcast_album.app_id,
             podcast_album_podcast_program.podcast_program_id
            FROM (public.podcast_album
-             JOIN public.podcast_album_podcast_program ON (((podcast_album_podcast_program.podcast_album_id = podcast_album.id) AND (podcast_album.is_public = true))))) public_podcast_program
+             JOIN public.podcast_album_podcast_program ON (((podcast_album_podcast_program.podcast_album_id = podcast_album.id) AND (podcast_album.published_at IS NOT NULL))))) public_podcast_program
      JOIN ( SELECT member_1.app_id,
             member_1.id
            FROM public.member member_1) member ON ((member.app_id = public_podcast_program.app_id)));
@@ -4893,6 +5026,42 @@ CREATE TABLE public.program_content_body (
     description text,
     data jsonb,
     target uuid
+);
+CREATE TABLE public.program_content_ebook (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    data jsonb NOT NULL,
+    program_content_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+CREATE TABLE public.program_content_ebook_bookmark (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    epub_cfi text NOT NULL,
+    program_content_id uuid NOT NULL,
+    member_id text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    highlight_content text NOT NULL,
+    chapter text,
+    href text NOT NULL,
+    percentage numeric NOT NULL
+);
+CREATE TABLE public.program_content_ebook_toc (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    program_content_id uuid NOT NULL,
+    label text NOT NULL,
+    href text NOT NULL,
+    parent text,
+    "position" numeric NOT NULL
+);
+COMMENT ON TABLE public.program_content_ebook_toc IS 'ebook table of content';
+CREATE TABLE public.program_content_ebook_toc_progress (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    program_content_ebook_toc_id uuid NOT NULL,
+    member_id text NOT NULL,
+    latest_progress numeric DEFAULT '0'::numeric NOT NULL,
+    finished_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now()
 );
 CREATE MATERIALIZED VIEW public.program_content_enrollment_mv AS
  WITH program_content_info(program_id, program_content_id, app_id) AS (
@@ -5277,8 +5446,18 @@ CREATE TABLE public.report (
     title text NOT NULL,
     options jsonb,
     app_id text NOT NULL,
-    type text
+    type text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
+CREATE TABLE public.report_permission_group (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    report_id uuid NOT NULL,
+    permission_group_id uuid NOT NULL,
+    editor_id text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+COMMENT ON TABLE public.report_permission_group IS 'which permission group has the ability to view which data table';
 CREATE MATERIALIZED VIEW public.resource AS
  WITH program_owners AS (
          SELECT program_role.program_id,
@@ -6570,6 +6749,10 @@ ALTER TABLE ONLY public.app_extended_module
     ADD CONSTRAINT app_extended_module_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.app_host
     ADD CONSTRAINT app_host_pkey PRIMARY KEY (host);
+ALTER TABLE ONLY public.app_invoice_gateway
+    ADD CONSTRAINT app_invoice_gateway_app_id_gateway_id_key UNIQUE (app_id, gateway_id);
+ALTER TABLE ONLY public.app_invoice_gateway
+    ADD CONSTRAINT app_invoice_gateway_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.app_language
     ADD CONSTRAINT app_language_app_id_language_key UNIQUE (app_id, language);
 ALTER TABLE ONLY public.app_language
@@ -6586,6 +6769,12 @@ ALTER TABLE ONLY public.app_page_template
     ADD CONSTRAINT app_page_template_author_id_name_key UNIQUE (author_id, name);
 ALTER TABLE ONLY public.app_page_template
     ADD CONSTRAINT app_page_template_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.app_payment_gateway
+    ADD CONSTRAINT app_payment_gateway_app_id_gateway_id_key UNIQUE (app_id, gateway_id);
+ALTER TABLE ONLY public.app_payment_gateway_method
+    ADD CONSTRAINT app_payment_gateway_method_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.app_payment_gateway
+    ADD CONSTRAINT app_payment_gateway_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.app_plan_module
     ADD CONSTRAINT app_plan_module_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.app_plan
@@ -6674,6 +6863,8 @@ ALTER TABLE ONLY public.creator_display
     ADD CONSTRAINT creator_display_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.currency
     ADD CONSTRAINT currency_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.program_content_ebook_bookmark
+    ADD CONSTRAINT ebook_bookmark_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.email_template
     ADD CONSTRAINT email_template_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.estimator
@@ -6698,6 +6889,8 @@ ALTER TABLE ONLY public.gift_plan_product
     ADD CONSTRAINT gift_plan_product_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.identity
     ADD CONSTRAINT identity_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.invoice_gateway
+    ADD CONSTRAINT invoice_gateway_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.invoice
     ADD CONSTRAINT invoice_order_id_key UNIQUE (order_id);
 ALTER TABLE ONLY public.invoice
@@ -6734,6 +6927,8 @@ ALTER TABLE ONLY public.iszn_order
     ADD CONSTRAINT iszn_order_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.iszn_user
     ADD CONSTRAINT iszn_user_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.lead_audit_log
+    ADD CONSTRAINT lead_audit_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.locale
     ADD CONSTRAINT locale_pkey PRIMARY KEY (key);
 ALTER TABLE ONLY public.material_audit_log
@@ -6794,6 +6989,8 @@ ALTER TABLE ONLY public.member_phone
     ADD CONSTRAINT member_phone_member_id_phone_key UNIQUE (member_id, phone);
 ALTER TABLE ONLY public.member_phone
     ADD CONSTRAINT member_phone_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.member_property_audit_log
+    ADD CONSTRAINT member_property_audit_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.member_property
     ADD CONSTRAINT member_property_member_id_property_id_key UNIQUE (member_id, property_id);
 ALTER TABLE ONLY public.member_property
@@ -6866,12 +7063,16 @@ ALTER TABLE ONLY public.package
     ADD CONSTRAINT package_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.package_section
     ADD CONSTRAINT package_section_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.payment_gateway
+    ADD CONSTRAINT payment_gateway_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.payment_log
     ADD CONSTRAINT payment_log_custom_no_key UNIQUE (custom_no);
 ALTER TABLE ONLY public.payment_log
     ADD CONSTRAINT payment_log_no_key UNIQUE (no);
 ALTER TABLE ONLY public.payment_log
     ADD CONSTRAINT payment_log_pkey PRIMARY KEY (no);
+ALTER TABLE ONLY public.payment_method
+    ADD CONSTRAINT payment_method_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.permission_audit_log
     ADD CONSTRAINT permission_audit_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.permission_group
@@ -6958,6 +7159,16 @@ ALTER TABLE ONLY public.program_content_audio
     ADD CONSTRAINT program_content_audio_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_body
     ADD CONSTRAINT program_content_body_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.program_content_ebook
+    ADD CONSTRAINT program_content_ebook_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.program_content_ebook
+    ADD CONSTRAINT program_content_ebook_program_content_id_key UNIQUE (program_content_id);
+ALTER TABLE ONLY public.program_content_ebook_toc
+    ADD CONSTRAINT program_content_ebook_toc_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.program_content_ebook_toc_progress
+    ADD CONSTRAINT program_content_ebook_toc_pro_program_content_ebook_toc_id__key UNIQUE (program_content_ebook_toc_id, member_id);
+ALTER TABLE ONLY public.program_content_ebook_toc_progress
+    ADD CONSTRAINT program_content_ebook_toc_progress_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_log
     ADD CONSTRAINT program_content_log_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.program_content_material
@@ -7038,6 +7249,10 @@ ALTER TABLE ONLY public.question_option
     ADD CONSTRAINT question_option_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.question
     ADD CONSTRAINT question_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.report_permission_group
+    ADD CONSTRAINT report_permission_group_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.report_permission_group
+    ADD CONSTRAINT report_permission_group_report_id_permission_group_id_key UNIQUE (report_id, permission_group_id);
 ALTER TABLE ONLY public.report
     ADD CONSTRAINT report_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.review
@@ -7120,22 +7335,26 @@ CREATE INDEX member_contract_agreed_at_revoked_at_idx ON public.member_contract 
 CREATE INDEX member_contract_revoked_at ON public.member_contract USING btree (revoked_at);
 CREATE INDEX member_created_at_brin_index ON public.member USING brin (created_at);
 CREATE INDEX member_created_at_desc_null_last_index ON public.member USING btree (created_at DESC NULLS LAST);
+CREATE INDEX member_manager_id_app_id_key ON public.member USING btree (app_id, manager_id);
 CREATE INDEX member_note_author_id ON public.member_note USING btree (author_id);
-CREATE INDEX member_note_created_at_asc ON public.member_note USING btree (created_at);
 CREATE INDEX member_note_created_at_desc ON public.member_note USING btree (created_at DESC);
+CREATE INDEX member_note_member_id_type ON public.member_note USING btree (member_id, type);
 CREATE INDEX member_note_rejected_at ON public.member_note USING btree (rejected_at);
 CREATE INDEX member_note_status ON public.member_note USING btree (status);
-CREATE INDEX member_note_type ON public.member_note USING btree (type);
-CREATE INDEX member_note_type_outbound ON public.member_note USING btree (type) WHERE (type = 'outbound'::text);
 CREATE INDEX member_property_property_id_value_key ON public.member_property USING btree (property_id, value);
+CREATE UNIQUE INDEX member_property_property_id_value_member_id_key ON public.member_property USING btree (member_id, property_id, value);
+CREATE INDEX member_role_key ON public.member USING btree (role);
+CREATE INDEX member_task_category_id ON public.member_task USING btree (category_id);
+CREATE INDEX member_task_member_id ON public.member_task USING btree (member_id);
 CREATE INDEX notification_updated_at_desc ON public.notification USING btree (updated_at DESC);
 CREATE INDEX notification_updated_at_desc_nulls_first_index ON public.notification USING btree (updated_at DESC);
 CREATE INDEX order_discount_order_id_key ON public.order_discount USING btree (order_id);
 CREATE INDEX order_executor_order_id_key ON public.order_executor USING btree (order_id);
-CREATE INDEX order_log_app_id_status ON public.order_log USING btree (app_id, status);
+CREATE INDEX order_log_created_at_app_id ON public.order_log USING btree (created_at, app_id);
 CREATE INDEX order_log_member_id ON public.order_log USING btree (member_id);
 CREATE INDEX order_log_started_at_desc ON public.order_log USING btree (created_at DESC);
 CREATE INDEX order_log_status ON public.order_log USING btree (status);
+CREATE INDEX order_log_status_app_id_key ON public.order_log USING btree (app_id, status);
 CREATE INDEX order_product_ended_at_desc ON public.order_product USING btree (ended_at DESC);
 CREATE INDEX order_product_order_id ON public.order_product USING btree (order_id);
 CREATE INDEX order_product_started_at_desc_nulls_first_index ON public.order_product USING btree (started_at DESC);
@@ -7156,6 +7375,7 @@ CREATE INDEX program_plan_program_id ON public.program_plan USING btree (program
 CREATE INDEX program_position_published_at_updated_at_index ON public.program USING btree ("position", published_at DESC, updated_at DESC);
 CREATE INDEX program_role_program_id ON public.program_role USING btree (program_id);
 CREATE INDEX program_updated_at_desc ON public.program USING btree (updated_at DESC);
+CREATE INDEX role_permission_role_id_key ON public.role_permission USING btree (role_id);
 CREATE OR REPLACE VIEW public.member_public AS
  WITH backstage_enter_member AS (
          SELECT member_permission.member_id
@@ -7427,6 +7647,8 @@ CREATE OR REPLACE VIEW public.coin_usage_export AS
   WHERE (mc.revoked_at IS NULL)
   GROUP BY m.app_id, mc.id, o.invoice_issued_at, o.invoice_options, m.id, m.email, m.name
   ORDER BY mc.agreed_at DESC;
+CREATE TRIGGER lead_audit_log_insert AFTER INSERT ON public.member FOR EACH ROW EXECUTE PROCEDURE public.set_lead_audit_log();
+CREATE TRIGGER lead_audit_log_update AFTER UPDATE ON public.member FOR EACH ROW EXECUTE PROCEDURE public.set_lead_audit_log();
 CREATE TRIGGER lodestar_app_setting_audit_delete AFTER DELETE ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
 CREATE TRIGGER lodestar_app_setting_audit_insert AFTER INSERT ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
 CREATE TRIGGER lodestar_app_setting_audit_update AFTER UPDATE ON public.app_setting FOR EACH ROW EXECUTE PROCEDURE public.func_table_log('app_setting');
@@ -7450,6 +7672,8 @@ CREATE TRIGGER set_appointment_plan_product AFTER INSERT ON public.appointment_p
 CREATE TRIGGER set_card_product AFTER INSERT ON public.card FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Card');
 CREATE TRIGGER set_estimator_product AFTER INSERT ON public.estimator FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Estimator');
 CREATE TRIGGER set_member_manager_updated_audit_log AFTER INSERT ON public.member FOR EACH ROW EXECUTE PROCEDURE public.set_member_manager_updated_audit_log();
+CREATE TRIGGER set_member_property_insert_audit_log AFTER INSERT ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.set_member_property_updated_audit_log();
+CREATE TRIGGER set_member_property_updated_audit_log AFTER UPDATE ON public.member_property FOR EACH ROW EXECUTE PROCEDURE public.set_member_property_updated_audit_log();
 CREATE TRIGGER set_merchandise_product AFTER INSERT ON public.merchandise FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Merchandise');
 CREATE TRIGGER set_merchandise_spec_product AFTER INSERT ON public.merchandise_spec FOR EACH ROW EXECUTE PROCEDURE public.insert_product('MerchandiseSpec');
 CREATE TRIGGER set_podcast_album_product AFTER INSERT ON public.podcast_album FOR EACH ROW EXECUTE PROCEDURE public.insert_product('PodcastAlbum');
@@ -7467,10 +7691,16 @@ CREATE TRIGGER set_public_app_achievement_updated_at BEFORE UPDATE ON public.app
 COMMENT ON TRIGGER set_public_app_achievement_updated_at ON public.app_achievement IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_app_extended_module_updated_at BEFORE UPDATE ON public.app_extended_module FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_app_extended_module_updated_at ON public.app_extended_module IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_app_invoice_gateway_updated_at BEFORE UPDATE ON public.app_invoice_gateway FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_app_invoice_gateway_updated_at ON public.app_invoice_gateway IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_app_page_template_updated_at BEFORE UPDATE ON public.app_page_template FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_app_page_template_updated_at ON public.app_page_template IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_app_page_updated_at BEFORE UPDATE ON public.app_page FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_app_page_updated_at ON public.app_page IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_app_payment_gateway_method_updated_at BEFORE UPDATE ON public.app_payment_gateway_method FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_app_payment_gateway_method_updated_at ON public.app_payment_gateway_method IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_app_payment_gateway_updated_at BEFORE UPDATE ON public.app_payment_gateway FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_app_payment_gateway_updated_at ON public.app_payment_gateway IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_app_plan_module_updated_at BEFORE UPDATE ON public.app_plan_module FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_app_plan_module_updated_at ON public.app_plan_module IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_app_plan_updated_at BEFORE UPDATE ON public.app_plan FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7513,8 +7743,12 @@ CREATE TRIGGER set_public_file_updated_at BEFORE UPDATE ON public.file FOR EACH 
 COMMENT ON TRIGGER set_public_file_updated_at ON public.file IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_gift_plan_updated_at BEFORE UPDATE ON public.gift_plan FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_gift_plan_updated_at ON public.gift_plan IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_invoice_gateway_updated_at BEFORE UPDATE ON public.invoice_gateway FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_invoice_gateway_updated_at ON public.invoice_gateway IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_invoice_updated_at BEFORE UPDATE ON public.invoice FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_invoice_updated_at ON public.invoice IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_lead_audit_log_updated_at BEFORE UPDATE ON public.lead_audit_log FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_lead_audit_log_updated_at ON public.lead_audit_log IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_meet_member_updated_at BEFORE UPDATE ON public.meet_member FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_meet_member_updated_at ON public.meet_member IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_meet_updated_at BEFORE UPDATE ON public.meet FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7560,7 +7794,11 @@ CREATE TRIGGER set_public_order_product_updated_at BEFORE UPDATE ON public.order
 COMMENT ON TRIGGER set_public_order_product_updated_at ON public.order_product IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_organization_updated_at BEFORE UPDATE ON public.org FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_organization_updated_at ON public.org IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_payment_gateway_updated_at BEFORE UPDATE ON public.payment_gateway FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_payment_gateway_updated_at ON public.payment_gateway IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_payment_log_updated_at BEFORE UPDATE ON public.payment_log FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+CREATE TRIGGER set_public_payment_method_updated_at BEFORE UPDATE ON public.payment_method FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_payment_method_updated_at ON public.payment_method IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_permission_group_permission_updated_at BEFORE UPDATE ON public.permission_group_permission FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_permission_group_permission_updated_at ON public.permission_group_permission IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_permission_group_updated_at BEFORE UPDATE ON public.permission_group FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7592,6 +7830,10 @@ CREATE TRIGGER set_public_program_approval_updated_at BEFORE UPDATE ON public.pr
 COMMENT ON TRIGGER set_public_program_approval_updated_at ON public.program_approval IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_program_content_audio_updated_at BEFORE UPDATE ON public.program_content_audio FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_program_content_audio_updated_at ON public.program_content_audio IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_program_content_ebook_toc_progress_updated_at BEFORE UPDATE ON public.program_content_ebook_toc_progress FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_program_content_ebook_toc_progress_updated_at ON public.program_content_ebook_toc_progress IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_program_content_ebook_updated_at BEFORE UPDATE ON public.program_content_ebook FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_program_content_ebook_updated_at ON public.program_content_ebook IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_program_content_material_updated_at BEFORE UPDATE ON public.program_content_material FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_program_content_material_updated_at ON public.program_content_material IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_program_content_progress_updated_at BEFORE UPDATE ON public.program_content_progress FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7614,6 +7856,8 @@ CREATE TRIGGER set_public_question_option_updated_at BEFORE UPDATE ON public.que
 COMMENT ON TRIGGER set_public_question_option_updated_at ON public.question_option IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_question_updated_at BEFORE UPDATE ON public.question FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_question_updated_at ON public.question IS 'trigger to set value of column "updated_at" to current timestamp on row update';
+CREATE TRIGGER set_public_report_updated_at BEFORE UPDATE ON public.report FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
+COMMENT ON TRIGGER set_public_report_updated_at ON public.report IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_review_reply_updated_at BEFORE UPDATE ON public.review_reply FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
 COMMENT ON TRIGGER set_public_review_reply_updated_at ON public.review_reply IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_public_review_updated_at BEFORE UPDATE ON public.review FOR EACH ROW EXECUTE PROCEDURE public.set_current_timestamp_updated_at();
@@ -7646,6 +7890,7 @@ CREATE TRIGGER set_public_voucher_plan_updated_at BEFORE UPDATE ON public.vouche
 COMMENT ON TRIGGER set_public_voucher_plan_updated_at ON public.voucher_plan IS 'trigger to set value of column "updated_at" to current timestamp on row update';
 CREATE TRIGGER set_token_product AFTER INSERT ON public.token FOR EACH ROW EXECUTE PROCEDURE public.insert_product('Token');
 CREATE TRIGGER set_voucher_plan_product AFTER INSERT ON public.voucher_plan FOR EACH ROW EXECUTE PROCEDURE public.insert_product('VoucherPlan');
+CREATE TRIGGER trigger_update_last_manager_assigned_at BEFORE UPDATE ON public.member FOR EACH ROW WHEN ((old.manager_id IS DISTINCT FROM new.manager_id)) EXECUTE PROCEDURE public.update_last_manager_assigned_at();
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.app(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.activity_attendance
@@ -7776,6 +8021,8 @@ ALTER TABLE ONLY public.creator_category
     ADD CONSTRAINT creator_category_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.creator_display
     ADD CONSTRAINT creator_display_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.program_content_ebook_bookmark
+    ADD CONSTRAINT ebook_bookmark_program_content_id_fkey FOREIGN KEY (program_content_id) REFERENCES public.program_content(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.exercise
     ADD CONSTRAINT exercise_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.exercise
@@ -7836,6 +8083,8 @@ ALTER TABLE ONLY public.member_permission_extra
     ADD CONSTRAINT member_permission_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.member_permission_extra
     ADD CONSTRAINT member_permission_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES public.permission(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.member_phone
+    ADD CONSTRAINT member_phone_manager_id_fkey FOREIGN KEY (manager_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.member_phone
     ADD CONSTRAINT member_phone_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.member_property
@@ -8034,6 +8283,8 @@ ALTER TABLE ONLY public.program_content
     ADD CONSTRAINT program_content_content_body_id_fkey FOREIGN KEY (content_body_id) REFERENCES public.program_content_body(id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE ONLY public.program_content
     ADD CONSTRAINT program_content_content_section_id_fkey FOREIGN KEY (content_section_id) REFERENCES public.program_content_section(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.program_content_ebook_bookmark
+    ADD CONSTRAINT program_content_ebook_bookmark_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.program_content_log
     ADD CONSTRAINT program_content_log_member_id_fkey FOREIGN KEY (member_id) REFERENCES public.member(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.program_content_log
@@ -8164,48 +8415,3 @@ ALTER TABLE ONLY public.voucher_plan_product
     ADD CONSTRAINT voucher_plan_product_voucher_plan_id_fkey FOREIGN KEY (voucher_plan_id) REFERENCES public.voucher_plan(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.voucher
     ADD CONSTRAINT voucher_voucher_code_id_fkey FOREIGN KEY (voucher_code_id) REFERENCES public.voucher_code(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
-CREATE TABLE "public"."program_content_ebook" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "data" jsonb NOT NULL, "attachment_id" uuid NOT NULL, "created_at" timestamptz NOT NULL DEFAULT now(), "updated_at" timestamptz NOT NULL DEFAULT now(), PRIMARY KEY ("id") );
-CREATE OR REPLACE FUNCTION "public"."set_current_timestamp_updated_at"()
-RETURNS TRIGGER AS $$
-DECLARE
-  _new record;
-BEGIN
-  _new := NEW;
-  _new."updated_at" = NOW();
-  RETURN _new;
-END;
-$$ LANGUAGE plpgsql;
-CREATE TRIGGER "set_public_program_content_ebook_updated_at"
-BEFORE UPDATE ON "public"."program_content_ebook"
-FOR EACH ROW
-EXECUTE PROCEDURE "public"."set_current_timestamp_updated_at"();
-COMMENT ON TRIGGER "set_public_program_content_ebook_updated_at" ON "public"."program_content_ebook"
-IS 'trigger to set value of column "updated_at" to current timestamp on row update';
-alter table "public"."program_content_ebook" rename column "attachment_id" to "program_content_id";
-CREATE TABLE "public"."invoice_gateway" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "name" text NOT NULL, "created_at" timestamp with time zone NOT NULL DEFAULT now(), "updated_at" timestamp with time zone NOT NULL DEFAULT now(), PRIMARY KEY ("id") , UNIQUE ("id"));
-CREATE OR REPLACE FUNCTION "public"."set_current_timestamp_updated_at"()
-RETURNS TRIGGER AS $$
-DECLARE
-  _new record;
-BEGIN
-  _new := NEW;
-  _new."updated_at" = NOW();
-  RETURN _new;
-END;
-$$ LANGUAGE plpgsql;
-CREATE TRIGGER "set_public_invoice_gateway_updated_at"
-BEFORE UPDATE ON "public"."invoice_gateway"
-FOR EACH ROW
-EXECUTE PROCEDURE "public"."set_current_timestamp_updated_at"();
-COMMENT ON TRIGGER "set_public_invoice_gateway_updated_at" ON "public"."invoice_gateway"
-IS 'trigger to set value of column "updated_at" to current timestamp on row update';
-
-alter table "public"."payment_log" add column "invoice_gateway_id" uuid
- null;
-
-
-
-
-
-
-
