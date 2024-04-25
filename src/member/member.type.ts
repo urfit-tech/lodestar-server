@@ -37,9 +37,6 @@ export class PublicMember {
   name: string;
 
   @IsString()
-  pictureUrl: string;
-
-  @IsString()
   isBusiness: boolean;
 }
 export interface DeleteMemberInfo {
