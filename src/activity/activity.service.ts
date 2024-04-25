@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ActivityCollectionDTO, ActivityDto, FetchActivitiesResponseDto } from './activity.dto';
 import { ActivityInfrastructure } from './activity.infra';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Activity } from './entity/Activity';
 import { ActivitySessionTicketEnrollmentCount } from './view_entity/ActivitySessionTicketEnrollmentCount';
+import { ActivityCollectionDTO, ActivityDto, FetchActivitiesResponseDto } from './dto/activity.dto';
 
 @Injectable()
 export class ActivityService {

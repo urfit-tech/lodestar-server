@@ -1,4 +1,7 @@
-import { ViewEntity, ViewColumn } from 'typeorm';
+import { ViewEntity, ViewColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { ActivityTicket } from '../entity/ActivityTicket';
+import { Member } from '~/member/entity/member.entity';
+
 
 @ViewEntity({
   name: 'activity_ticket_enrollment',
@@ -26,9 +29,13 @@ export class ActivityTicketEnrollment {
   @ViewColumn({ name: 'order_log_id' })
   orderLogId: number;
 
-  @ViewColumn({ name: 'member_id' })
-  memberId: number;
+  @ManyToOne(() => Member, (member) => member.enrollments)
+  @JoinColumn({ name: 'member_id' }) 
+  member: Member;
 
   @ViewColumn({ name: 'order_product_id' })
   orderProductId: number;
+
+  @ManyToOne(() => ActivityTicket, (activityTicket) => activityTicket.enrollments)
+  activityTicket: ActivityTicket; 
 }
