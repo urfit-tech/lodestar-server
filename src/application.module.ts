@@ -22,9 +22,10 @@ import { SwaggerConfigModule } from './swagger-config/swagger-config.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ActivityModule } from './activity/activity.module';
 import { WebhookModule } from './webhooks/webhook.module';
+import { EquityController } from './equity/equity.controller';
 
 @Module({
-  controllers: [ApplicationController],
+  controllers: [ApplicationController, EquityController],
   providers: [Logger, ApplicationService],
   imports: [
     ConfigModule.forRoot({
