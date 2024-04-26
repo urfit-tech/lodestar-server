@@ -5,6 +5,11 @@ import { OrderLog } from '~/order/entity/order_log.entity';
 import { UtilityService } from '~/utility/utility.service';
 import { ProgramContent } from './entity/program_content.entity';
 import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
+import { ProgramContentMaterial } from '~/entity/ProgramContentMaterial';
+import { ProgramContentAudio } from '~/entity/ProgramContentAudio';
+import { ProgramContentVideo } from '~/entity/ProgramContentVideo';
+import { Attachment } from '~/media/attachment.entity';
+import { ProgramContentBody } from '~/entity/ProgramContentBody';
 
 @Injectable()
 export class ProgramInfrastructure {
@@ -142,6 +147,187 @@ export class ProgramInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
+  async getProgramByProgramPlanEnrollment(memberId: string, programId: string, manager: EntityManager) {
+    const programByProgramPlanEnrollment = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'program.id AS id',
+        'program.title AS title',
+        'program.cover_url AS cover_url',
+        'program.cover_mobile_url AS cover_mobile_url',
+        'program.cover_thumbnail_url AS cover_thumbnail_url',
+        'program.abstract AS abstract',
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .andWhere(`program.id = :programId`, { programId })
+      .innerJoin(
+        'order_product',
+        'order_product',
+        'order_product.delivered_at < NOW()' +
+          ' AND order_product.order_id = order_log.id' +
+          ' AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW())' +
+          ' AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
+        productType: 'ProgramPlan',
+      })
+      .leftJoin('program_plan', 'program_plan', 'program_plan.id::text = product.target')
+      .leftJoin('program', 'program', 'program.id = program_plan.program_id')
+      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .leftJoin(
+        'program_content',
+        'program_content',
+        'program_content.content_section_id = program_content_section.id' +
+          ' AND program_content.published_at IS NOT NULL',
+      )
+      .getRawOne();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programByProgramPlanEnrollment);
+  }
+
+  async getProgramByProgramEnrollment(memberId: string, programId: string, manager: EntityManager) {
+    const programByProgramEnrollment = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'program.id AS id',
+        'program.title AS title',
+        'program.cover_url AS cover_url',
+        'program.cover_mobile_url AS cover_mobile_url',
+        'program.cover_thumbnail_url AS cover_thumbnail_url',
+        'program.abstract AS abstract',
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .andWhere(`program.id = :programId`, { programId })
+      .innerJoin(
+        'order_product',
+        'order_product',
+        'order_product.delivered_at < NOW()' +
+          ' AND order_product.order_id = order_log.id' +
+          ' AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW())' +
+          ' AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
+        productType: 'Program',
+      })
+      .leftJoin('program', 'program', 'program.id::text = product.target')
+      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .leftJoin(
+        'program_content',
+        'program_content',
+        'program_content.content_section_id = program_content_section.id' +
+          ' AND program_content.published_at IS NOT NULL',
+      )
+      .getRawOne();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programByProgramEnrollment);
+  }
+
+  async getProgramByProgramRoleAndPermission(
+    memberId: string,
+    programId: string,
+    permissionId: string,
+    manager: EntityManager,
+  ) {
+    const programByProgramRoleAndPermission = await manager
+      .getRepository(Program)
+      .createQueryBuilder('program')
+      .select([
+        'program.id AS id',
+        'program.title AS title',
+        'program.cover_url AS cover_url',
+        'program.cover_mobile_url AS cover_mobile_url',
+        'program.cover_thumbnail_url AS cover_thumbnail_url',
+        'program.abstract AS abstract',
+      ])
+      .where(`program.id = :programId`, { programId })
+      .innerJoin(
+        'program_role',
+        'program_role',
+        'program_role.program_id = program.id' +
+          ' AND program_role.member_id = :memberId' +
+          ` AND program_role.name IN(:...roles)`,
+        { memberId, roles: ['owner', 'instructor'] },
+      )
+      .innerJoin(
+        'member_permission',
+        'member_permission',
+        'member_permission.member_id = program_role.member_id' + ' AND member_permission.permission_id = :permissionId',
+        { permissionId },
+      )
+      .getRawOne();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programByProgramRoleAndPermission);
+  }
+
+  async getProgramByProgramId(programId: string, manager: EntityManager) {
+    const programByProgramId = await manager
+      .getRepository(Program)
+      .createQueryBuilder('program')
+      .select([
+        'program.id AS id',
+        'program.title AS title',
+        'program.cover_url AS cover_url',
+        'program.cover_mobile_url AS cover_mobile_url',
+        'program.cover_thumbnail_url AS cover_thumbnail_url',
+        'program.abstract AS abstract',
+      ])
+      .where(`program.id = :programId`, { programId })
+      .getRawOne();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programByProgramId);
+  }
+
+  async getProgramByProgramPackageEnrollment(memberId: string, programId: string, manager: EntityManager) {
+    const programByProgramPackageEnrollment = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'program.id AS id',
+        'program.title AS title',
+        'program.cover_url AS cover_url',
+        'program.cover_mobile_url AS cover_mobile_url',
+        'program.cover_thumbnail_url AS cover_thumbnail_url',
+        'program.abstract AS abstract',
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .andWhere('program.id = :programId', { programId })
+      .andWhere(`(program_package_plan.is_tempo_delivery = false OR ( program_tempo_delivery.delivered_at < NOW() ))`)
+      .innerJoin(
+        'order_product',
+        'order_product',
+        'order_product.delivered_at < NOW()' +
+          ' AND order_product.order_id = order_log.id' +
+          ' AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW())' +
+          ' AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ' AND product.type = :productType', {
+        productType: 'ProgramPackagePlan',
+      })
+      .leftJoin('program_package_plan', 'program_package_plan', 'program_package_plan.id::text = product.target')
+      .leftJoin('program_package', 'program_package', 'program_package.id = program_package_plan.program_package_id')
+      .innerJoin(
+        'program_package_program',
+        'program_package_program',
+        'program_package_program.program_package_id = program_package.id' +
+          ' AND program_package_program.program_id = :programId',
+        { programId },
+      )
+      .leftJoin('program', 'program', 'program.id = program_package_program.program_id')
+      .leftJoin(
+        'program_tempo_delivery',
+        'program_tempo_delivery',
+        'program_tempo_delivery.program_package_program_id = program_package_program.id' +
+          ' AND program_tempo_delivery.member_id = :memberId',
+        {
+          memberId,
+        },
+      )
+      .getRawOne();
+    return this.utilityService.convertObjectKeysToCamelCase(programByProgramPackageEnrollment);
+  }
+
   async getExpiredPrograms(memberId: string, manager: EntityManager) {
     const programs = await manager
       .getRepository(OrderLog)
@@ -194,9 +380,49 @@ export class ProgramInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
-  async findProgramContentById(id: string, entityManager: EntityManager): Promise<ProgramContent | null> {
-    const programContentRepo = entityManager.getRepository(ProgramContent);
-    return programContentRepo.findOneBy({ id });
+  async getProgramContentById(programContentId: string, manager: EntityManager): Promise<ProgramContent | null> {
+    const programContent = await manager
+      .getRepository(ProgramContent)
+      .createQueryBuilder('program_content')
+      .select([
+        'program.app_id AS app_id',
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
+      .where('program_content.id = :programContentId', { programContentId })
+      .leftJoin(
+        'program_content_section',
+        'program_content_section',
+        'program_content_section.id = program_content.content_section_id',
+      )
+      .innerJoin('program', 'program', 'program.id = program_content_section.program_id ')
+      .getRawOne();
+
+    const programContentAudio = await this.getProgramContentAudio(programContentId, manager);
+
+    const programContentVideo = await this.getProgramContentVideo(programContentId, manager);
+
+    const programContentAttachment = await this.getProgramContentAttachment(programContentId, manager);
+
+    const programContentBody = await this.getProgramContentBody(programContentId, manager);
+
+    return Object.keys(programContent).length > 0
+      ? this.utilityService.convertObjectKeysToCamelCase({
+          ...programContent,
+          contentType: programContentBody.type,
+          audios: programContentAudio,
+          videos: programContentVideo,
+          attachment: programContentAttachment,
+          programContentBody,
+        })
+      : {};
   }
 
   async saveProgramContentLogs(programContentLogs: ProgramContentLog[], entityManager: EntityManager): Promise<void> {
@@ -210,10 +436,31 @@ export class ProgramInfrastructure {
     manager: EntityManager,
     permissionId: string,
   ) {
+    const programContentById = await manager
+      .getRepository(ProgramContent)
+      .createQueryBuilder('program_content')
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.display_mode AS display_mode',
+      ])
+      .where('program_content.id = :programContentId', { programContentId })
+      .getRawOne();
+
     const programContentIdByProgramEnrollment = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
-      .select(['program_content.id AS program_content_id'])
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere('program_content.id = :programContentId', { programContentId })
       .innerJoin(
@@ -250,7 +497,17 @@ export class ProgramInfrastructure {
     const programContentIdByProgramRole = await manager
       .getRepository(ProgramContent)
       .createQueryBuilder('program_content')
-      .select(['program_content.id AS program_content_id'])
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
       .where('program_content.id = :programContentId', { programContentId })
       .leftJoin(
         'program_content_section',
@@ -276,7 +533,17 @@ export class ProgramInfrastructure {
     const programContentIdByProgramRoleAndPermission = await manager
       .getRepository(ProgramContent)
       .createQueryBuilder('program_content')
-      .select(['program_content.id AS program_content_id'])
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
       .where('program_content.id = :programContentId', { programContentId })
       .leftJoin(
         'program_content_section',
@@ -308,7 +575,17 @@ export class ProgramInfrastructure {
     const programContentIdByProgramPlanEnrollmentSubscribedFromNowOrAll = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
-      .select(['program_content.id AS program_content_id'])
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere(
         `((program_plan.type = 1 AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())) OR (program_plan.type = 2 AND program_content.published_at > order_product.delivered_at AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())))`,
@@ -325,6 +602,11 @@ export class ProgramInfrastructure {
         productType: 'ProgramPlan',
       })
       .leftJoin('program_plan', 'program_plan', 'program_plan.id::text = product.target')
+      .leftJoin(
+        'program_content_section',
+        'program_content_section',
+        'program_content_section.program_id = program_plan.program_id',
+      )
       .innerJoin(
         'program_content_plan',
         'program_content_plan',
@@ -338,7 +620,17 @@ export class ProgramInfrastructure {
     const programContentIdByProgramPlanEnrollment = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
-      .select(['program_content.id AS program_content_id'])
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
         'order_product',
@@ -369,7 +661,17 @@ export class ProgramInfrastructure {
     const programContentIdByProgramPackageEnrollment = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
-      .select(['program_content.id AS program_content_id'])
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere(`(program_package_plan.is_tempo_delivery = false OR ( program_tempo_delivery.delivered_at < NOW() ))`)
       .innerJoin(
@@ -412,7 +714,15 @@ export class ProgramInfrastructure {
       )
       .getRawOne();
 
-    return this.utilityService.convertObjectKeysToCamelCase({
+    const programContentAudio = await this.getProgramContentAudio(programContentId, manager);
+
+    const programContentVideo = await this.getProgramContentVideo(programContentId, manager);
+
+    const programContentAttachment = await this.getProgramContentAttachment(programContentId, manager);
+
+    const programContentBody = await this.getProgramContentBody(programContentId, manager);
+
+    const programContent = this.utilityService.convertObjectKeysToCamelCase({
       ...programContentIdByProgramEnrollment,
       ...programContentIdByProgramRole,
       ...programContentIdByProgramRoleAndPermission,
@@ -420,6 +730,113 @@ export class ProgramInfrastructure {
       ...programContentIdByProgramPlanEnrollment,
       ...programContentIdByProgramPackageEnrollment,
     });
+
+    const isEquity = Object.keys(programContent).length > 0;
+
+    return isEquity
+      ? {
+          ...programContent,
+          contentType: programContentBody.type,
+          audios: programContentAudio,
+          videos: programContentVideo,
+          attachment: programContentAttachment,
+          programContentBody,
+          isEquity,
+        }
+      : { ...programContentById, isEquity };
+  }
+
+  async getTrialProgramContent(programContentId: string, manager: EntityManager) {
+    const programContent = await manager
+      .getRepository(ProgramContent)
+      .createQueryBuilder('program_content')
+      .select([
+        'program.app_id AS appId',
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
+      .where('program_content.id = :programContentId', { programContentId })
+      .andWhere('program_content.display_mode = :displayMode', { displayMode: 'trial' })
+      .leftJoin(
+        'program_content_section',
+        'program_content_section',
+        'program_content_section.id = program_content.content_section_id',
+      )
+      .leftJoin('program', 'program', 'program.id = program_content_section.program_id')
+      .getRawOne();
+
+    const programContentAudio = await this.getProgramContentAudio(programContentId, manager);
+
+    const programContentVideo = await this.getProgramContentVideo(programContentId, manager);
+
+    const programContentAttachment = await this.getProgramContentAttachment(programContentId, manager);
+
+    const programContentBody = await this.getProgramContentBody(programContentId, manager);
+
+    return !!programContent
+      ? this.utilityService.convertObjectKeysToCamelCase({
+          ...programContent,
+          contentType: programContentBody.type,
+          audios: programContentAudio,
+          videos: programContentVideo,
+          attachment: programContentAttachment,
+          programContentBody,
+          isEquity: true,
+        })
+      : {};
+  }
+
+  async getLoginToTrialProgramContent(programContentId: string, manager: EntityManager) {
+    const programContent = await manager
+      .getRepository(ProgramContent)
+      .createQueryBuilder('program_content')
+      .select([
+        'program.app_id AS appId',
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+      ])
+      .where('program_content.id = :programContentId', { programContentId })
+      .andWhere('program_content.display_mode = :displayMode', { displayMode: 'loginToTrial' })
+      .leftJoin(
+        'program_content_section',
+        'program_content_section',
+        'program_content_section.id = program_content.content_section_id',
+      )
+      .leftJoin('program', 'program', 'program.id = program_content_section.program_id')
+      .getRawOne();
+
+    const programContentAudio = await this.getProgramContentAudio(programContentId, manager);
+
+    const programContentVideo = await this.getProgramContentVideo(programContentId, manager);
+
+    const programContentAttachment = await this.getProgramContentAttachment(programContentId, manager);
+
+    const programContentBody = await this.getProgramContentBody(programContentId, manager);
+
+    return !!programContent
+      ? this.utilityService.convertObjectKeysToCamelCase({
+          ...programContent,
+          contentType: programContentBody.type,
+          audios: programContentAudio,
+          videos: programContentVideo,
+          attachment: programContentAttachment,
+          programContentBody,
+        })
+      : {};
   }
 
   async getEnrolledProgramContentsByProgramId(
@@ -671,5 +1088,89 @@ export class ProgramInfrastructure {
         },
       },
     });
+  }
+
+  async getProgramContentMaterialsByProgramId(
+    programId: string,
+    entityManager: EntityManager,
+  ): Promise<{ programContentId: string; id: string; data: object; createdAt: Date }[]> {
+    const programContentMaterials = await entityManager
+      .getRepository(ProgramContentMaterial)
+      .createQueryBuilder('program_content_material')
+      .select([
+        'program_content_material.program_content_id AS program_content_id',
+        'program_content_material.id AS id',
+        'program_content_material.data AS data',
+        'program_content_material.created_at AS created_at',
+      ])
+      .innerJoin(
+        'program_content',
+        'program_content',
+        'program_content.id = program_content_material.program_content_id',
+      )
+      .innerJoin(
+        'program_content_section',
+        'program_content_section',
+        'program_content_section.id = program_content.content_section_id',
+      )
+      .where('program_content_section.program_id = :programId', { programId })
+      .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programContentMaterials);
+  }
+
+  async getProgramContentAudio(programContentId: string, manager: EntityManager) {
+    const programContentAudio = await manager
+      .getRepository(ProgramContentAudio)
+      .createQueryBuilder('program_content_audio')
+      .select(['program_content_audio.data AS data'])
+      .where('program_content_audio.program_content_id = :programContentId', { programContentId })
+      .getRawOne();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programContentAudio ? [programContentAudio] : []);
+  }
+  async getProgramContentVideo(programContentId: string, manager: EntityManager) {
+    const programContentVideo = await manager
+      .getRepository(ProgramContentVideo)
+      .createQueryBuilder('program_content_video')
+      .select([
+        'attachment.id AS id',
+        'attachment.size AS size',
+        'attachment.options AS options',
+        'attachment.data AS data',
+      ])
+      .where('program_content_video.program_content_id = :programContentId', { programContentId })
+      .innerJoin('attachment', 'attachment', 'attachment.id = program_content_video.attachment_id')
+      .getRawOne();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programContentVideo ? [programContentVideo] : []);
+  }
+
+  async getProgramContentAttachment(programContentId: string, manager: EntityManager) {
+    const programContentAttachment = await manager
+      .getRepository(Attachment)
+      .createQueryBuilder('attachment')
+      .select([])
+      .where('attachment.type = :type', { type: 'ProgramContent' })
+      .andWhere('attachment.target = :programContentId', { programContentId })
+      .getRawOne();
+    return this.utilityService.convertObjectKeysToCamelCase(programContentAttachment ? [programContentAttachment] : []);
+  }
+
+  async getProgramContentBody(programContentId: string, manager: EntityManager) {
+    const programContentBody = await manager
+      .getRepository(ProgramContentBody)
+      .createQueryBuilder('program_content_body')
+      .select([
+        'program_content_body.data AS data',
+        'program_content_body.description AS description',
+        'program_content_body.id AS id',
+        'program_content_body.type AS type',
+      ])
+      .where('program_content.id = :programContentId', { programContentId })
+      .innerJoin('program_content', 'program_content', 'program_content.content_body_id = program_content_body.id')
+      .getRawOne();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programContentBody);
   }
 }

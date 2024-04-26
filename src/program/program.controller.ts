@@ -5,7 +5,6 @@ import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
 import { ProgramService } from './program.service';
 
-@UseGuards(AuthGuard)
 @Controller({
   path: 'programs',
   version: '2',
@@ -13,13 +12,7 @@ import { ProgramService } from './program.service';
 export class ProgramController {
   constructor(private programService: ProgramService) {}
 
-  @Get()
-  async getProgramByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
-    const { memberId } = request.query;
-
-    return this.programService.getProgramByMemberId(member.appId, String(memberId || member.memberId));
-  }
-
+  @UseGuards(AuthGuard)
   @Get('/expired')
   async getExpiredProgramByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
     const { memberId } = request.query;
@@ -27,6 +20,29 @@ export class ProgramController {
     return this.programService.getExpiredProgramByMemberId(member.appId, String(memberId || member.memberId));
   }
 
+  @UseGuards(AuthGuard)
+  @Get('/:programId')
+  async getProgramByMemberId(@Local('member') member: JwtMember, @Param('programId') programId: string) {
+    const { permissions } = member;
+
+    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
+    return ['PROGRAM_ADMIN'].some((e) => permissions.includes(e))
+      ? this.programService.getProgramByProgramId(programId)
+      : this.programService.getProgramByMemberId(member.memberId, programId, extraAllowPermission);
+  }
+
+  @Get('/:programId/contents/:programContentId/trial')
+  async getProgramContentById(@Param('programContentId') programContentId: string) {
+    const programContent = await this.programService.getProgramContentById(programContentId);
+
+    return programContent.displayMode === 'trial'
+      ? this.programService.getTrialProgramContent(programContentId)
+      : programContent.displayMode === 'loginToTrial'
+      ? this.programService.getLoginToTrialProgramContent(programContentId)
+      : {};
+  }
+
+  @UseGuards(AuthGuard)
   @Get('/:programId/contents/:programContentId')
   async getEnrolledProgramContentById(
     @Local('member') member: JwtMember,
@@ -35,12 +51,15 @@ export class ProgramController {
     @Param('programContentId') programContentId: string,
   ) {
     const { memberId } = request.query;
-    const { role, permissions } = member;
 
-    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
+    const programContent = await this.programService.getProgramContentById(programContentId);
+    const loginToTrialProgramContent = await this.programService.getLoginToTrialProgramContent(programContentId);
+    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => member.permissions.includes(e));
 
-    return role === 'app-owner' || ['PROGRAM_ADMIN'].some((e) => permissions.includes(e))
-      ? { programContentId }
+    return programContent.displayMode === 'loginToTrial'
+      ? { ...loginToTrialProgramContent, isEquity: true }
+      : ['PROGRAM_ADMIN'].find((e) => member.permissions.includes(e))
+      ? { ...programContent, isEquity: true }
       : this.programService.getEnrolledProgramContentById(
           member.appId,
           String(memberId || member.memberId),
@@ -50,6 +69,7 @@ export class ProgramController {
         );
   }
 
+  @UseGuards(AuthGuard)
   @Get('/:programId/contents')
   async getEnrolledProgramContentsByProgramId(
     @Local('member') member: JwtMember,
@@ -71,27 +91,9 @@ export class ProgramController {
         );
   }
 
-  // Todo: deleted this after @Get('/:programId/contents/:programContentId') deployed
-  @Get('/:programId/content/:programContentId')
-  async getEnrolledProgramContentByIds(
-    @Local('member') member: JwtMember,
-    @Req() request: Request,
-    @Param('programId') programId: string,
-    @Param('programContentId') programContentId: string,
-  ) {
-    const { memberId } = request.query;
-    const { role, permissions } = member;
-
-    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
-
-    return role === 'app-owner' || ['PROGRAM_ADMIN'].some((e) => permissions.includes(e))
-      ? { programContentId }
-      : this.programService.getEnrolledProgramContentById(
-          member.appId,
-          String(memberId || member.memberId),
-          programId,
-          programContentId,
-          extraAllowPermission,
-        );
+  @UseGuards(AuthGuard)
+  @Get('/:programId/materials')
+  async getProgramContentMaterialByProgramContentId(@Param('programId') programId: string) {
+    return this.programService.getProgramContentMaterialsByProgramId(programId);
   }
 }

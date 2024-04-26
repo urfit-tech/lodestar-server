@@ -32,16 +32,16 @@ export class EbookController {
     @Headers('Authorization') authorization?: string,
   ): Promise<void> {
     const contentId = programContentId.split('.')[0];
-    let programContents;
+    let programContent;
 
     try {
-      programContents = await this.programService.getProgramContentById(contentId);
+      programContent = await this.programService.getProgramContentById(contentId);
     } catch (err) {
       throw new APIException({ code: 'E_EBOOK_NOT_FOUND', message: 'Unable to retrieve ebook file' }, 400);
     }
 
-    const isTrial = !authorization && programContents.displayMode === 'trial';
-    const appId = programContents.contentSection.program.appId;
+    const isTrial = !authorization && programContent.displayMode === 'trial';
+    const appId = programContent.appId;
 
     if (authorization) {
       this.verifyAuthorization(authorization);
