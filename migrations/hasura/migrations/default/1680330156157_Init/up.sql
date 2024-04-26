@@ -1850,7 +1850,8 @@ CREATE TABLE public.program_content (
     content_type text,
     is_notify_update boolean DEFAULT false NOT NULL,
     notified_at timestamp with time zone,
-    display_mode text NOT NULL
+    display_mode text NOT NULL,
+    pinned_status boolean DEFAULT false NOT NULL
 );
 COMMENT ON COLUMN public.program_content.duration IS 'sec';
 COMMENT ON COLUMN public.program_content.display_mode IS 'conceal, trial, loginToTrail, payToWatch';
@@ -1868,7 +1869,8 @@ CREATE TABLE public.program_content_section (
     program_id uuid NOT NULL,
     title text NOT NULL,
     description text,
-    "position" integer NOT NULL
+    "position" integer NOT NULL,
+    collapsed_status boolean DEFAULT true NOT NULL
 );
 CREATE TABLE public.program_package_plan (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -1886,7 +1888,9 @@ CREATE TABLE public.program_package_plan (
     discount_down_price numeric,
     "position" numeric NOT NULL,
     is_tempo_delivery boolean DEFAULT false NOT NULL,
-    is_participants_visible boolean DEFAULT true NOT NULL
+    is_participants_visible boolean DEFAULT true NOT NULL,
+    remind_period_amount integer,
+    remind_period_type text
 );
 COMMENT ON COLUMN public.program_package_plan.period_type IS 'Y / M / W / D';
 CREATE VIEW public.program_package_plan_enrollment AS
@@ -1927,7 +1931,8 @@ CREATE TABLE public.program_plan (
     remind_period_amount integer,
     remind_period_type text,
     is_primary boolean DEFAULT false NOT NULL,
-    is_deleted boolean DEFAULT false NOT NULL
+    is_deleted boolean DEFAULT false NOT NULL,
+    card_id uuid
 );
 COMMENT ON COLUMN public.program_plan.type IS '1 - subscribe all / 2 - subscribe from now / 3 - all';
 CREATE VIEW public.program_plan_enrollment AS
@@ -3366,7 +3371,8 @@ CREATE TABLE public.member_note (
     note text,
     rejected_at timestamp with time zone,
     deleted_at timestamp with time zone,
-    deleted_from text
+    deleted_from text,
+    transcript text
 );
 COMMENT ON COLUMN public.member_note.type IS 'NULL | inbound | outbound | demo';
 COMMENT ON COLUMN public.member_note.status IS 'NULL | answered | missed';
@@ -3387,7 +3393,8 @@ CREATE TABLE public.member_task (
     meet_id uuid,
     meeting_hours numeric DEFAULT '0'::numeric NOT NULL,
     meeting_gateway text,
-    deleted_at timestamp without time zone
+    deleted_at timestamp without time zone,
+    is_private boolean DEFAULT false NOT NULL
 );
 COMMENT ON COLUMN public.member_task.priority IS 'high / medium / low';
 COMMENT ON COLUMN public.member_task.status IS 'pending / in-progress / done';
@@ -3783,7 +3790,13 @@ CREATE TABLE public.member_phone (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     is_primary boolean DEFAULT false NOT NULL,
     is_valid boolean DEFAULT true NOT NULL,
-    manager_id text
+    manager_id text,
+    last_manager_assigned_at timestamp with time zone,
+    followed_at timestamp with time zone,
+    closed_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    recycled_at timestamp with time zone,
+    excluded_at timestamp with time zone
 );
 CREATE TABLE public.member_property (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -4913,12 +4926,12 @@ UNION
 UNION
  SELECT program_content_info.program_id,
     program_content_info.program_content_id,
-    member_permission_extra.member_id,
+    member_permission.member_id,
     NULL::timestamp with time zone AS product_delivered_at
    FROM ((program_content_info
-     JOIN public.program_role ON ((program_role.program_id = program_content_info.program_id)))
-     JOIN public.member_permission_extra ON ((member_permission_extra.member_id = program_role.member_id)))
-  WHERE (member_permission_extra.permission_id = 'PROGRAM_ADMIN'::text)
+     JOIN public.member ON ((member.app_id = program_content_info.app_id)))
+     JOIN public.member_permission ON ((member_permission.member_id = member.id)))
+  WHERE (member_permission.permission_id = 'PROGRAM_ADMIN'::text)
 UNION
  SELECT program_content_info.program_id,
     program_content_info.program_content_id,
@@ -5057,7 +5070,8 @@ CREATE TABLE public.program_content_ebook_highlight (
     highlight_content text,
     chapter text NOT NULL,
     color text NOT NULL,
-    annotation text
+    annotation text,
+    percentage numeric
 );
 COMMENT ON TABLE public.program_content_ebook_highlight IS 'ebook highlights made by users in an eBook. Each highlight includes location information (epub_cfi), content (highlight_content), metadata (chapter, color), and references to the program content and member associated with the highlight';
 CREATE TABLE public.program_content_ebook_toc (
@@ -5244,6 +5258,29 @@ CREATE SEQUENCE public.program_package_category_position_seq
     NO MAXVALUE
     CACHE 1;
 ALTER SEQUENCE public.program_package_category_position_seq OWNED BY public.program_package_category."position";
+CREATE VIEW public.program_package_plan_expiring_enrollment AS
+ SELECT program_package_plan.id AS program_package_plan_id,
+    program_package_plan.remind_period_amount,
+    program_package_plan.remind_period_type,
+    order_log.member_id,
+    order_product.id,
+    order_log.id AS order_id,
+    order_product.product_id,
+    order_product.name,
+    order_product.options,
+    order_product.started_at,
+    order_product.ended_at
+   FROM ((public.order_product
+     JOIN public.program_package_plan ON (((concat('ProgramPackagePlan_', program_package_plan.id) = order_product.product_id) AND (program_package_plan.remind_period_amount IS NOT NULL) AND (program_package_plan.remind_period_type IS NOT NULL))))
+     JOIN public.order_log ON (((order_log.id = order_product.order_id) AND (order_log.status = 'SUCCESS'::text))))
+  WHERE ((order_product.ended_at > now()) AND ((order_product.options ->> 'isReminded'::text) IS NULL) AND ((order_product.ended_at - (concat((program_package_plan.remind_period_amount)::text, ' ',
+        CASE
+            WHEN (program_package_plan.remind_period_type = 'D'::text) THEN 'days'::text
+            WHEN (program_package_plan.remind_period_type = 'W'::text) THEN 'weeks'::text
+            WHEN (program_package_plan.remind_period_type = 'M'::text) THEN 'months'::text
+            WHEN (program_package_plan.remind_period_type = 'Y'::text) THEN 'years'::text
+            ELSE 'days'::text
+        END))::interval) < now()));
 CREATE VIEW public.program_plan_expiring_enrollment AS
  SELECT program_plan.id AS program_plan_id,
     program_plan.remind_period_amount,
