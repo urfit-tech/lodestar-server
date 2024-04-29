@@ -395,6 +395,11 @@ export class ProgramInfrastructure {
         'program_content.display_mode AS display_mode',
         'program_content.content_type AS content_type',
         'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
       ])
       .where('program_content.id = :programContentId', { programContentId })
       .leftJoin(
@@ -460,6 +465,11 @@ export class ProgramInfrastructure {
         'program_content.display_mode AS display_mode',
         'program_content.content_type AS content_type',
         'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere('program_content.id = :programContentId', { programContentId })
@@ -507,6 +517,11 @@ export class ProgramInfrastructure {
         'program_content.display_mode AS display_mode',
         'program_content.content_type AS content_type',
         'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
       ])
       .where('program_content.id = :programContentId', { programContentId })
       .leftJoin(
@@ -543,6 +558,11 @@ export class ProgramInfrastructure {
         'program_content.display_mode AS display_mode',
         'program_content.content_type AS content_type',
         'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
       ])
       .where('program_content.id = :programContentId', { programContentId })
       .leftJoin(
@@ -585,6 +605,11 @@ export class ProgramInfrastructure {
         'program_content.display_mode AS display_mode',
         'program_content.content_type AS content_type',
         'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere(
@@ -630,6 +655,11 @@ export class ProgramInfrastructure {
         'program_content.display_mode AS display_mode',
         'program_content.content_type AS content_type',
         'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -671,6 +701,11 @@ export class ProgramInfrastructure {
         'program_content.display_mode AS display_mode',
         'program_content.content_type AS content_type',
         'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere(`(program_package_plan.is_tempo_delivery = false OR ( program_tempo_delivery.delivered_at < NOW() ))`)
@@ -808,6 +843,11 @@ export class ProgramInfrastructure {
         'program_content.display_mode AS display_mode',
         'program_content.content_type AS content_type',
         'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
       ])
       .where('program_content.id = :programContentId', { programContentId })
       .andWhere('program_content.display_mode = :displayMode', { displayMode: 'loginToTrial' })

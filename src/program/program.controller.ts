@@ -16,7 +16,6 @@ import { ProgramService } from './program.service';
   path: 'programs',
   version: '2',
 })
-@ApiTags('program')
 export class ProgramController {
   constructor(private logger: Logger, private programService: ProgramService) {}
 

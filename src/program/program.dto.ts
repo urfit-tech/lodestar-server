@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { DisplayMode } from './program.type';
 
 export class ProgramResponseDTO {
   @ApiProperty()
@@ -112,6 +113,12 @@ class AttachmentDto {
   fileId: any | null;
 }
 
+class MetadataDTO {
+  private: boolean;
+  difficulty: number;
+  isCoverRequired: boolean;
+}
+
 export class ProgramContentResponseDTO {
   @ApiProperty()
   appid: string;
@@ -132,10 +139,10 @@ export class ProgramContentResponseDTO {
   publishedAt: Date;
 
   @ApiProperty()
-  duration: string;
+  duration: string | null;
 
   @ApiProperty()
-  displayMode: string;
+  displayMode: DisplayMode;
 
   @ApiProperty()
   contentType: string;
@@ -154,6 +161,21 @@ export class ProgramContentResponseDTO {
 
   @ApiProperty({ type: ProgramContentBodyDataDTO })
   programContentBody: ProgramContentBodyDataDTO;
+
+  @ApiProperty({ type: MetadataDTO })
+  metadata: MetadataDTO | null;
+
+  @ApiProperty()
+  listPrice: number | null;
+
+  @ApiProperty()
+  salePrice: number | null;
+
+  @ApiProperty()
+  soldAt: Date | null;
+
+  @ApiProperty()
+  pinnedStatus: boolean;
 
   @ApiProperty()
   isEquity: boolean;
