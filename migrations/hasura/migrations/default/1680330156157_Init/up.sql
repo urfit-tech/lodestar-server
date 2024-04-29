@@ -8473,3 +8473,6 @@ ALTER TABLE ONLY public.voucher_plan_product
     ADD CONSTRAINT voucher_plan_product_voucher_plan_id_fkey FOREIGN KEY (voucher_plan_id) REFERENCES public.voucher_plan(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.voucher
     ADD CONSTRAINT voucher_voucher_code_id_fkey FOREIGN KEY (voucher_code_id) REFERENCES public.voucher_code(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+alter table "public"."program_plan" add column "card_id" uuid
+ null;
