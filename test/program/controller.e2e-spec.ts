@@ -475,8 +475,27 @@ describe('ProgramController (e2e)', () => {
       const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
+      expect(result.body).toEqual({
+        id: programContent.id,
+        title: programContent.title,
+        abstract: programContent.abstract,
+        contentBodyId: programContent.contentBodyId,
+        publishedAt: programContent.publishedAt.toISOString(),
+        duration: programContent.duration,
+        displayMode: programContent.displayMode,
+        contentType: programContent.contentType,
+        contentSectionTitle: programContentSection.title,
+        audios: [],
+        videos: [],
+        attachment: [],
+        programContentBody: {
+          data: programContentBody.data,
+          description: programContentBody.description,
+          id: programContentBody.id,
+          type: programContentBody.type,
+        },
+        isEquity: true,
+      });
     });
 
     it(`Should return successfully to member's role is general-member and have program plan order and program plan type is subscribed from now`, async () => {
