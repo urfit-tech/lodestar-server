@@ -41,7 +41,10 @@ export class InvoiceService {
   ) {}
 
   public async issueInvoiceByPayment(payment: PaymentLog, manager: EntityManager) {
+    console.log({ payment });
     const { order, no: paymentNo, options, price } = payment;
+
+    console.log('ccccc');
 
     try {
       const { member } = order;
@@ -53,8 +56,8 @@ export class InvoiceService {
       const appInvoiceGateway = await this.invoiceInfra.getAppInvoiceGateway(appId, payment.invoiceGatewayId, manager);
       const appModules = await this.appService.getAppModules(appId, manager);
 
-      if (!this.isAllowUseInvoiceModule(appInvoiceGateway.options, appModules)) {
-        throw new Error(`App: ${appId} invoice module is not enable or missing setting/secrets.`);
+      if (!appInvoiceGateway || !this.isAllowUseInvoiceModule(appInvoiceGateway.options, appModules)) {
+        throw new Error(`App: ${appId} invoice module is not enabled or missing settings/secrets.`);
       }
 
       this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`);
@@ -298,9 +301,10 @@ export class InvoiceService {
     await this.invoiceInfra.save(invoice, manager);
   }
 
-  private isAllowUseInvoiceModule(invoiceGatewayConfig: object, appModules: Array<string>): boolean {
+  private isAllowUseInvoiceModule(invoiceGatewayConfig: object | null, appModules: Array<string>): boolean {
     return Boolean(
-      invoiceGatewayConfig['invoice.merchant_id'] &&
+      invoiceGatewayConfig &&
+        invoiceGatewayConfig['invoice.merchant_id'] &&
         invoiceGatewayConfig['invoice.hash_key'] &&
         invoiceGatewayConfig['invoice.hash_iv'] &&
         appModules.includes('invoice'),

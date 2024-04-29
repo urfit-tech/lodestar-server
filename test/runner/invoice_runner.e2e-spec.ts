@@ -30,7 +30,7 @@ jest.mock('axios', () => ({
 
 describe('InvoiceRunner (e2e)', () => {
   let application: INestApplication;
-  let ezpayClient = {
+  const ezpayClient = {
     issue: jest.fn(),
   };
 
@@ -149,14 +149,14 @@ describe('InvoiceRunner (e2e)', () => {
       await expect(invoiceRunner.execute(manager)).rejects.toEqual(
         new Error(
           JSON.stringify([
-            { error: `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
+            { error: `App: ${notAllowedApp.id} invoice module is not enabled or missing settings/secrets.` },
           ]),
         ),
       );
       await expect(invoiceRunner.execute(manager)).rejects.toEqual(
         new Error(
           JSON.stringify([
-            { error: `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
+            { error: `App: ${notAllowedApp.id} invoice module is not enabled or missing settings/secrets.` },
           ]),
         ),
       );
@@ -167,7 +167,7 @@ describe('InvoiceRunner (e2e)', () => {
         expect(each.invoiceIssuedAt).toBeNull();
         expect(each.invoiceOptions['status']).toEqual('LODESTAR_FAIL');
         expect(each.invoiceOptions['reason']).toEqual(
-          `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.`,
+          `App: ${notAllowedApp.id} invoice module is not enabled or missing settings/secrets.`,
         );
         expect(each.invoiceOptions['retry']).toEqual(2);
       }
