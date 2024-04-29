@@ -1,16 +1,24 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Req, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
+import {
+  MaterialsResponseDto,
+  ProgramContentResponseDTO,
+  ProgramContentsResponseDto,
+  ProgramResponseDTO,
+} from './program.dto';
 import { ProgramService } from './program.service';
 
 @Controller({
   path: 'programs',
   version: '2',
 })
+@ApiTags('program')
 export class ProgramController {
-  constructor(private programService: ProgramService) {}
+  constructor(private logger: Logger, private programService: ProgramService) {}
 
   @UseGuards(AuthGuard)
   @Get('/expired')
@@ -22,7 +30,10 @@ export class ProgramController {
 
   @UseGuards(AuthGuard)
   @Get('/:programId')
-  async getProgramByMemberId(@Local('member') member: JwtMember, @Param('programId') programId: string) {
+  async getProgramByMemberId(
+    @Local('member') member: JwtMember,
+    @Param('programId') programId: string,
+  ): Promise<ProgramResponseDTO> {
     const { permissions } = member;
 
     const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
@@ -32,8 +43,15 @@ export class ProgramController {
   }
 
   @Get('/:programId/contents/:programContentId/trial')
-  async getProgramContentById(@Param('programContentId') programContentId: string) {
-    const programContent = await this.programService.getProgramContentById(programContentId);
+  async getProgramContentById(@Param('programContentId') programContentId: string): Promise<ProgramContentResponseDTO> {
+    let programContent: ProgramContentResponseDTO;
+
+    try {
+      programContent = await this.programService.getProgramContentById(programContentId);
+    } catch (error) {
+      this.logger.error(`Error fetching program content: ${error.message}`);
+      throw error;
+    }
 
     return programContent.displayMode === 'trial'
       ? this.programService.getTrialProgramContent(programContentId)
@@ -49,11 +67,18 @@ export class ProgramController {
     @Req() request: Request,
     @Param('programId') programId: string,
     @Param('programContentId') programContentId: string,
-  ) {
+  ): Promise<ProgramContentResponseDTO[]> {
     const { memberId } = request.query;
+    let programContent: ProgramContentResponseDTO;
+    let loginToTrialProgramContent: ProgramContentResponseDTO;
 
-    const programContent = await this.programService.getProgramContentById(programContentId);
-    const loginToTrialProgramContent = await this.programService.getLoginToTrialProgramContent(programContentId);
+    try {
+      programContent = await this.programService.getProgramContentById(programContentId);
+      loginToTrialProgramContent = await this.programService.getLoginToTrialProgramContent(programContentId);
+    } catch (error) {
+      this.logger.error(`Error fetching program content: ${error.message}`);
+      throw error;
+    }
     const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => member.permissions.includes(e));
 
     return programContent.displayMode === 'loginToTrial'
@@ -75,7 +100,7 @@ export class ProgramController {
     @Local('member') member: JwtMember,
     @Req() request: Request,
     @Param('programId') programId: string,
-  ) {
+  ): Promise<ProgramContentsResponseDto[]> {
     const { memberId } = request.query;
     const { role, permissions } = member;
 
@@ -93,7 +118,9 @@ export class ProgramController {
 
   @UseGuards(AuthGuard)
   @Get('/:programId/materials')
-  async getProgramContentMaterialByProgramContentId(@Param('programId') programId: string) {
+  async getProgramContentMaterialByProgramContentId(
+    @Param('programId') programId: string,
+  ): Promise<MaterialsResponseDto[]> {
     return this.programService.getProgramContentMaterialsByProgramId(programId);
   }
 }

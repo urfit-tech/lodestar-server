@@ -380,7 +380,7 @@ export class ProgramInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
-  async getProgramContentById(programContentId: string, manager: EntityManager): Promise<ProgramContent | null> {
+  async getProgramContentById(programContentId: string, manager: EntityManager) {
     const programContent = await manager
       .getRepository(ProgramContent)
       .createQueryBuilder('program_content')

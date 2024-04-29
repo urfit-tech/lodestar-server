@@ -1,5 +1,4 @@
-import { Controller, Get, UseGuards, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, UseGuards, Query } from '@nestjs/common';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
 import { ProgramService } from '~/program/program.service';
@@ -14,9 +13,7 @@ export class EquityController {
   constructor(private programService: ProgramService) {}
 
   @Get('/programs')
-  async getProgramsByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
-    const { memberId } = request.query;
-
+  async getProgramsByMemberId(@Local('member') member: JwtMember, @Query('memberId') memberId: string) {
     return this.programService.getProgramsByMemberId(member.appId, String(memberId || member.memberId));
   }
 }

@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { MemberService } from '~/member/member.service';
 import { APIException } from '~/api.excetion';
 import { ProgramInfrastructure } from './program.infra';
+import { ProgramResponseDTO } from './program.dto';
 
 @Injectable()
 export class ProgramService {
@@ -24,7 +25,7 @@ export class ProgramService {
     });
   }
 
-  public async getProgramContentById(programContentId: string): Promise<ProgramContent> {
+  public async getProgramContentById(programContentId: string) {
     return this.programInfra.getProgramContentById(programContentId, this.entityManager);
   }
 
@@ -83,29 +84,34 @@ export class ProgramService {
   }
 
   public async getProgramByMemberId(memberId: string, programId: string, permissionId: string) {
-    const programByProgramPlanEnrollment = await this.programInfra.getProgramByProgramPlanEnrollment(
-      memberId,
-      programId,
-      this.entityManager,
-    );
-    const programByProgramEnrollment = await this.programInfra.getProgramByProgramEnrollment(
-      memberId,
-      programId,
-      this.entityManager,
-    );
+    let programByProgramPlanEnrollment: ProgramResponseDTO;
+    let programByProgramEnrollment: ProgramResponseDTO;
+    let programByProgramRoleAndPermission: ProgramResponseDTO;
+    let programByProgramPackageEnrollment: ProgramResponseDTO;
 
-    const programByProgramRoleAndPermission = await this.programInfra.getProgramByProgramRoleAndPermission(
-      memberId,
-      programId,
-      permissionId,
-      this.entityManager,
-    );
-
-    const programByProgramPackageEnrollment = await this.programInfra.getProgramByProgramPackageEnrollment(
-      memberId,
-      programId,
-      this.entityManager,
-    );
+    Promise.all([
+      (programByProgramPlanEnrollment = await this.programInfra.getProgramByProgramPlanEnrollment(
+        memberId,
+        programId,
+        this.entityManager,
+      )),
+      (programByProgramEnrollment = await this.programInfra.getProgramByProgramEnrollment(
+        memberId,
+        programId,
+        this.entityManager,
+      )),
+      (programByProgramRoleAndPermission = await this.programInfra.getProgramByProgramRoleAndPermission(
+        memberId,
+        programId,
+        permissionId,
+        this.entityManager,
+      )),
+      (programByProgramPackageEnrollment = await this.programInfra.getProgramByProgramPackageEnrollment(
+        memberId,
+        programId,
+        this.entityManager,
+      )),
+    ]);
 
     const program = {
       ...programByProgramPlanEnrollment,
