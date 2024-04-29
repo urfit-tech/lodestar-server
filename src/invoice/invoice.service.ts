@@ -41,10 +41,7 @@ export class InvoiceService {
   ) {}
 
   public async issueInvoiceByPayment(payment: PaymentLog, manager: EntityManager) {
-    console.log({ payment });
     const { order, no: paymentNo, options, price } = payment;
-
-    console.log('ccccc');
 
     try {
       const { member } = order;
