@@ -1831,7 +1831,9 @@ CREATE TABLE public.program (
     cover_mobile_url text,
     cover_thumbnail_url text,
     metadata jsonb,
-    views numeric DEFAULT '0'::numeric NOT NULL
+    views numeric DEFAULT '0'::numeric NOT NULL,
+    display_header boolean DEFAULT true NOT NULL,
+    display_footer boolean DEFAULT true NOT NULL
 );
 CREATE TABLE public.program_content (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,

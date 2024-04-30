@@ -109,6 +109,7 @@ describe('CalendarService (e2e)', () => {
     memberTask.description = 'Mock member task description';
     memberTask.status = 'pending';
     memberTask.dueAt = new Date('2023-12-01T00:00:00.000000');
+    memberTask.executor = member;
 
     const orderLog = new OrderLog();
     orderLog.id = 'TES1234567890';
@@ -140,6 +141,7 @@ describe('CalendarService (e2e)', () => {
     orderProduct.currency = currency;
     orderProduct.startedAt = new Date('2023-12-02T01:00:00.000000');
     orderProduct.endedAt = new Date('2023-12-02T02:00:00.000000');
+    orderProduct.deliveredAt = new Date('2023-12-02T02:00:00.000000');
 
     it('Should get member task calendar event with specified memberId', async () => {
       await memberRepo.save(member);
