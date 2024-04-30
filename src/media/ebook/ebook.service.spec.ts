@@ -77,14 +77,16 @@ describe('EbookService', () => {
 
   describe('getStandardKeyAndIV', () => {
     it('should return key and IV based on the token and appId', async () => {
-      const request = { headers: { authorization: 'Bearer token.part2.signature' } } as Request;
+      const token = 'Bearer valid_token.part2.signature';
+      const request = { headers: { authorization: token } } as Request;
 
       const result = await service.getStandardKeyAndIV(request, 'appId');
       expect(result).toEqual({ key: 'signature', iv: 'appId' });
     });
 
     it('should throw KeyAndIVRetrievalError if token format is incorrect', async () => {
-      const request = { headers: { authorization: 'Bearer incorrect_token_format' } } as Request;
+      const invalidToken = 'Bearer invalid_token_format';
+      const request = { headers: { authorization: invalidToken } } as Request;
 
       await expect(service.getStandardKeyAndIV(request, 'appId')).rejects.toThrow(KeyAndIVRetrievalError);
     });
