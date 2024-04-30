@@ -495,6 +495,11 @@ describe('ProgramController (e2e)', () => {
           type: programContentBody.type,
         },
         isEquity: true,
+        listPrice: programContent.listPrice,
+        metadata: programContent.metadata,
+        pinnedStatus: programContent.pinnedStatus,
+        salePrice: programContent.salePrice,
+        soldAt: programContent.soldAt,
       });
     });
 
