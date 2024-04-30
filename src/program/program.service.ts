@@ -1,4 +1,4 @@
-import { EntityManager, In } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { ProgramContent } from './entity/program_content.entity';
@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { MemberService } from '~/member/member.service';
 import { APIException } from '~/api.excetion';
 import { ProgramInfrastructure } from './program.infra';
+import { ProgramResponseDTO } from './program.dto';
 
 @Injectable()
 export class ProgramService {
@@ -24,15 +25,19 @@ export class ProgramService {
     });
   }
 
-  public async getProgramContentById(id: string): Promise<ProgramContent> {
-    const programContentRepo = this.entityManager.getRepository(ProgramContent);
-    return programContentRepo.findOne({
-      where: { id },
-      relations: ['contentSection', 'contentSection.program'],
-    });
+  public async getProgramContentById(programContentId: string) {
+    return this.programInfra.getProgramContentById(programContentId, this.entityManager);
   }
 
-  public async getProgramByMemberId(appId: string, memberId: string) {
+  public async getTrialProgramContent(programContentId: string) {
+    return this.programInfra.getTrialProgramContent(programContentId, this.entityManager);
+  }
+
+  public async getLoginToTrialProgramContent(programContentId: string) {
+    return this.programInfra.getLoginToTrialProgramContent(programContentId, this.entityManager);
+  }
+
+  public async getProgramsByMemberId(appId: string, memberId: string) {
     // Todo: check permission
     // ...
 
@@ -76,6 +81,50 @@ export class ProgramService {
         })),
       ]),
     ];
+  }
+
+  public async getProgramByMemberId(memberId: string, programId: string, permissionId: string) {
+    let programByProgramPlanEnrollment: ProgramResponseDTO;
+    let programByProgramEnrollment: ProgramResponseDTO;
+    let programByProgramRoleAndPermission: ProgramResponseDTO;
+    let programByProgramPackageEnrollment: ProgramResponseDTO;
+
+    Promise.all([
+      (programByProgramPlanEnrollment = await this.programInfra.getProgramByProgramPlanEnrollment(
+        memberId,
+        programId,
+        this.entityManager,
+      )),
+      (programByProgramEnrollment = await this.programInfra.getProgramByProgramEnrollment(
+        memberId,
+        programId,
+        this.entityManager,
+      )),
+      (programByProgramRoleAndPermission = await this.programInfra.getProgramByProgramRoleAndPermission(
+        memberId,
+        programId,
+        permissionId,
+        this.entityManager,
+      )),
+      (programByProgramPackageEnrollment = await this.programInfra.getProgramByProgramPackageEnrollment(
+        memberId,
+        programId,
+        this.entityManager,
+      )),
+    ]);
+
+    const program = {
+      ...programByProgramPlanEnrollment,
+      ...programByProgramEnrollment,
+      ...programByProgramRoleAndPermission,
+      ...programByProgramPackageEnrollment,
+    };
+    return Object.keys(program).length !== 0 ? program : undefined;
+  }
+
+  public async getProgramByProgramId(programId: string) {
+    const programByProgramId = await this.programInfra.getProgramByProgramId(programId, this.entityManager);
+    return programByProgramId;
   }
 
   public async getExpiredProgramByMemberId(appId: string, memberId: string) {
@@ -163,6 +212,15 @@ export class ProgramService {
 
   public async getProgramContentsByProgramId(appId: string, programId: string) {
     return await this.programInfra.getProgramContentsByProgramId(programId, this.entityManager);
+  }
+
+  public async getProgramContentMaterialsByProgramId(programId: string) {
+    const programContentMaterialsByProgramId = await this.programInfra.getProgramContentMaterialsByProgramId(
+      programId,
+      this.entityManager,
+    );
+
+    return programContentMaterialsByProgramId;
   }
 
   private sortProgramRole(roles: { memberId: string; name: string; createdAt: string }[]) {

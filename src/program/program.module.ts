@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 
 import { ProgramService } from './program.service';
 import { ProgramPlanService } from './program-plan/program-plan.service';
@@ -23,6 +23,7 @@ import { UtilityModule } from '~/utility/utility.module';
     ProgramInfrastructure,
     UtilityService,
     PorterProgramService,
+    Logger,
   ],
   exports: [ProgramService, PorterProgramService, ProgramInfrastructure],
 })
