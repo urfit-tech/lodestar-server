@@ -119,6 +119,58 @@ export class ProgramInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
+  async getProgramPackageEnrollment(memberId: string, manager: EntityManager) {
+    const programs = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'program.id AS id',
+        'program.title AS title',
+        'program.cover_url AS cover_url',
+        'program.cover_mobile_url AS cover_mobile_url',
+        'program.cover_thumbnail_url AS cover_thumbnail_url',
+        'program.abstract AS abstract',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
+        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        'MAX(program_content_progress.updated_at) AS last_viewed_at',
+        'MIN(order_product.delivered_at) AS delivered_at',
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .innerJoin(
+        'order_product',
+        'order_product',
+        'order_product.delivered_at < NOW()' +
+          ' AND order_product.order_id = order_log.id' +
+          ' AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW())' +
+          ' AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
+        productType: 'Card',
+      })
+      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .leftJoin('program', 'program', 'program.id = program_plan.program_id')
+      .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .leftJoin('member', 'member', 'member.id = program_role.member_id')
+      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .leftJoin(
+        'program_content',
+        'program_content',
+        'program_content.content_section_id = program_content_section.id' +
+          ' AND program_content.published_at IS NOT NULL',
+      )
+      .leftJoin(
+        'program_content_progress',
+        'program_content_progress',
+        'program_content_progress.program_content_id = program_content.id' +
+          ' AND program_content_progress.member_id = :memberId',
+        { memberId },
+      )
+      .groupBy('program.id')
+      .getRawMany();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programs);
+  }
+
   async getOwnedProgramsDirectly(memberId: string, manager: EntityManager) {
     const programs = await manager
       .getRepository(OrderLog)
@@ -801,6 +853,52 @@ export class ProgramInfrastructure {
       )
       .getRawOne();
 
+    const programMembershipEnrollment = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.abstract AS abstract',
+        'program_content.content_body_id AS content_body_id',
+        'program_content.published_at AS published_at',
+        'program_content.duration AS duration',
+        'program_content.display_mode AS display_mode',
+        'program_content.content_type AS content_type',
+        'program_content_section.title AS content_section_title',
+        'program_content.metadata AS metadata',
+        'program_content.list_price AS list_price',
+        'program_content.sale_price AS sale_price',
+        'program_content.sold_at AS sold_at',
+        'program_content.pinned_status AS pinned_status',
+      ])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .innerJoin(
+        'order_product',
+        'order_product',
+        'order_product.delivered_at < NOW()' +
+          ' AND order_product.order_id = order_log.id' +
+          ' AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW())' +
+          ' AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
+        productType: 'Card',
+      })
+      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .leftJoin('program', 'program', 'program.id = program_plan.program_id')
+      .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .leftJoin('member', 'member', 'member.id = program_role.member_id')
+      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .innerJoin(
+        'program_content',
+        'program_content',
+        'program_content.content_section_id = program_content_section.id' +
+          ' AND program_content.published_at IS NOT NULL' +
+          ' AND program_content.id = :programContentId ',
+        { programContentId },
+      )
+      .getRawOne();
+
     const programContentAudio = await this.getProgramContentAudio(programContentId, manager);
 
     const programContentVideo = await this.getProgramContentVideo(programContentId, manager);
@@ -816,6 +914,7 @@ export class ProgramInfrastructure {
       ...programContentIdByProgramPlanEnrollmentSubscribedFromNowOrAll,
       ...programContentIdByProgramPlanEnrollment,
       ...programContentIdByProgramPackageEnrollment,
+      ...programMembershipEnrollment,
     });
 
     const isEquity = Object.keys(programContent).length > 0;
@@ -1132,6 +1231,35 @@ export class ProgramInfrastructure {
       )
       .getRawMany();
 
+    const programMembershipEnrollment = await manager
+      .getRepository(OrderLog)
+      .createQueryBuilder('order_log')
+      .select(['program_content.id AS program_content_id', 'program_content.display_mode AS display_mode'])
+      .where(`order_log.member_id = :memberId`, { memberId })
+      .innerJoin(
+        'order_product',
+        'order_product',
+        'order_product.delivered_at < NOW()' +
+          ' AND order_product.order_id = order_log.id' +
+          ' AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW())' +
+          ' AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())',
+      )
+      .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
+        productType: 'Card',
+      })
+      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .leftJoin('program', 'program', 'program.id = program_plan.program_id')
+      .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .leftJoin('member', 'member', 'member.id = program_role.member_id')
+      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .innerJoin(
+        'program_content',
+        'program_content',
+        'program_content.content_section_id = program_content_section.id' +
+          ' AND program_content.published_at IS NOT NULL',
+      )
+      .getRawMany();
+
     return this.utilityService.convertObjectKeysToCamelCase(
       Array.from(
         new Map(
@@ -1142,6 +1270,7 @@ export class ProgramInfrastructure {
             ...programContentIdByProgramPlanEnrollmentSubscribedFromNowOrAll,
             ...programContentIdByProgramPlanEnrollment,
             ...programContentIdByProgramPackageEnrollment,
+            ...programMembershipEnrollment,
           ].map((item) => [item.program_content_id, item]),
         ).values(),
       ),
