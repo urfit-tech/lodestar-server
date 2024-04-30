@@ -151,6 +151,7 @@ programContent.title = 'test program content title';
 programContent.position = 0;
 programContent.publishedAt = dayjs().subtract(1, 'day').toDate();
 programContent.displayMode = 'payToWatch';
+programContent.pinnedStatus = false;
 
 export const programContentPlan = new ProgramContentPlan();
 programContentPlan.id = v4();

@@ -71,6 +71,9 @@ export class ProgramContent {
   @Column('text', { name: 'display_mode' })
   displayMode: DisplayMode;
 
+  @Column('boolean', { name: 'pinned_status' })
+  pinnedStatus: boolean;
+
   @OneToMany(() => Exercise, (exercise) => exercise.programContent)
   exercises: Exercise[];
 
