@@ -10,7 +10,12 @@ import { EbookEncryptionError, EbookFileRetrievalError, KeyAndIVRetrievalError }
 export class EbookService {
   constructor(private readonly storageService: StorageService, private readonly utilityService: UtilityService) {}
 
-  async processEbook(appId: string, programContentId: string, req: Request, isTrial: boolean): Promise<Readable | undefined> {
+  async processEbook(
+    appId: string,
+    programContentId: string,
+    req: Request,
+    isTrial: boolean,
+  ): Promise<Readable | undefined> {
     let fileStream;
     let key: string;
     let iv: string;
@@ -19,7 +24,7 @@ export class EbookService {
       fileStream = await this.getEbookFile(appId, programContentId);
     } catch (error) {
       console.error('Error getting ebook file:', error);
-      throw new EbookFileRetrievalError("Unable to retrieve ebook file")
+      throw new EbookFileRetrievalError('Unable to retrieve ebook file');
     }
 
     try {
@@ -28,7 +33,7 @@ export class EbookService {
       iv = keyAndIv.iv;
     } catch (error) {
       console.error('Error getting key and IV:', error);
-      throw new KeyAndIVRetrievalError("Unable to retrieve key and IV")
+      throw new KeyAndIVRetrievalError('Unable to retrieve key and IV');
     }
 
     try {
@@ -36,27 +41,26 @@ export class EbookService {
       return encryptedFileStream;
     } catch (error) {
       console.error('Error encrypting ebook:', error);
-      throw new EbookEncryptionError("Error encrypting ebook")
+      throw new EbookEncryptionError('Error encrypting ebook');
     }
   }
 
-  async getEbookFile(appId: string, programContentId: string)  {
+  async getEbookFile(appId: string, programContentId: string) {
     const key = `ebook/${appId}/${programContentId}`;
     const response = await this.storageService.getFileFromBucketStorage({ Key: key });
     return response.Body;
   }
 
   public async encryptEbook(fileStream: Readable, key: string, iv: string): Promise<Readable | undefined> {
-
     return this.utilityService.encryptDataStream(fileStream, key, iv);
   }
 
-  async getStandardKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string; }> {
+  async getStandardKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string }> {
     const authorizationHeader = request.headers.authorization;
     let hashKey: string;
 
-    if(!authorizationHeader){
-      return undefined
+    if (!authorizationHeader) {
+      return undefined;
     }
 
     const [_, token] = authorizationHeader.split(' ');
@@ -65,16 +69,15 @@ export class EbookService {
     if (parts.length === 3) {
       hashKey = parts[2];
     } else {
-      throw new KeyAndIVRetrievalError("Unable to retrieve key and IV")
+      throw new KeyAndIVRetrievalError('Unable to retrieve key and IV');
     }
 
-    const iv = appId
+    const iv = appId;
 
     return { key: hashKey, iv: iv };
   }
 
-  async getTrialKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string; }> {
-    return { key: `trial_key_${process.env.ENCRYPT_DATA_STREAM_SALT}`, iv: appId};
+  async getTrialKeyAndIV(request: Request, appId?: string): Promise<{ key: string; iv: string }> {
+    return { key: `trial_key_${process.env.ENCRYPT_DATA_STREAM_SALT}`, iv: appId };
   }
 }
-
