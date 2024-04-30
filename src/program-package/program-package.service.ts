@@ -2,7 +2,6 @@ import { EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 
-import { OrderLog } from '~/order/entity/order_log.entity';
 import { MemberService } from '~/member/member.service';
 import { APIException } from '~/api.excetion';
 import { ProgramPackageInfrastructure } from './program-package.infra';
