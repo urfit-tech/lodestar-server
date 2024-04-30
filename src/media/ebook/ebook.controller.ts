@@ -1,12 +1,8 @@
 import { Controller, Get, Param, Req, Res, Headers, UnauthorizedException } from '@nestjs/common';
-import { AuthGuard } from '../../auth/auth.guard';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { APIException } from '~/api.excetion';
-import { Local } from '~/decorator';
-import { JwtMember } from '~/auth/auth.dto';
 import { EbookService } from './ebook.service';
 import { Request, Response } from 'express';
-import { Readable } from 'node:stream';
 import { EbookEncryptionError, EbookFileRetrievalError, KeyAndIVRetrievalError } from './ebook.errors';
 import { ProgramService } from '~/program/program.service';
 import { AuthService } from '~/auth/auth.service';
