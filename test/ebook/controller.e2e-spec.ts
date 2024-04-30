@@ -67,7 +67,6 @@ describe('EbookController (e2e)', () => {
       stream.on('end', () => resolve(Buffer.concat(chunks)));
     });
   }
-  
 
   async function fetchToken() {
     try {
@@ -139,21 +138,20 @@ describe('EbookController (e2e)', () => {
 
     programContentBody = new ProgramContentBody();
     programContentBody.id = v4();
-    await programContentBodyRepo.save(programContentBody)
+    await programContentBodyRepo.save(programContentBody);
 
     program = new Program();
     program.title = 'test ebook program';
     program.appId = 'test';
     program.id = v4();
-    await programRepo.save(program)
+    await programRepo.save(program);
 
     programContentSection = new ProgramContentSection();
     programContentSection.id = v4();
     programContentSection.program = program;
     programContentSection.title = 'test ebook program content section';
     programContentSection.position = 0;
-    await programContentSectionRepo.save(programContentSection)
-
+    await programContentSectionRepo.save(programContentSection);
 
     programContent = new ProgramContent();
     programContent.id = '5e50b600-5e1b-4094-bd4e-99e506e5ca98';
@@ -162,7 +160,7 @@ describe('EbookController (e2e)', () => {
     programContent.position = 0;
     programContent.contentBody = programContentBody;
     programContent.contentSection = programContentSection;
-    await programContentRepo.save(programContent)
+    await programContentRepo.save(programContent);
 
     await application.init();
   });
@@ -242,7 +240,7 @@ describe('EbookController (e2e)', () => {
         programContentPayToWatch.position = 0;
         programContentPayToWatch.contentBody = programContentBody;
         programContentPayToWatch.contentSection = programContentSection;
-        await programContentRepo.save(programContentPayToWatch)
+        await programContentRepo.save(programContentPayToWatch);
 
         const response = await request(application.getHttpServer())
           .get(`/ebook/${programContentPayToWatch.id}.epub`)
@@ -341,22 +339,22 @@ describe('EbookController (e2e)', () => {
 
     describe('EbookController KeyAndIV Retrieval Tests', () => {
       let requestHeader;
-    
+
       beforeEach(async () => {
         const tokenResponse = await fetchToken();
         requestHeader = tokenResponse.requestHeader;
       });
-    
+
       it('should return an error when key and IV cannot be retrieved', async () => {
         jest.spyOn(ebookService, 'getStandardKeyAndIV').mockImplementation(() => {
-          throw new Error("Key and IV retrieval failed");
+          throw new Error('Key and IV retrieval failed');
         });
-    
+
         const response = await request(application.getHttpServer())
           .get(`/ebook/${programContent.id}.epub`)
           .set(requestHeader)
           .expect(400);
-    
+
         expect(response.body.code).toBe('E_KEYANDIVRETRIEVALERROR');
         expect(response.body.message).toBe('Unable to retrieve key and IV');
       });
