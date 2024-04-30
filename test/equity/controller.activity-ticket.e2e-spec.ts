@@ -1,6 +1,6 @@
 import { EntityManager, Repository } from 'typeorm';
 import request from 'supertest';
-import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
@@ -40,11 +40,10 @@ import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
 import Joi from 'joi';
 import { FetchMemberRightActivityTicketDTO } from '~/equity/dto/equity-activity-ticket.dto';
+import { ProgramPlan } from '~/entity/ProgramPlan';
 interface RepositoryMap {
   [key: string]: Repository<any>;
 }
-
-const AUTH_TOKEN_ROUTE = '/auth/token';
 
 describe('EquityController (e2e)', () => {
   let application: INestApplication;
@@ -70,6 +69,7 @@ describe('EquityController (e2e)', () => {
       appRepo: manager.getRepository(App),
       appPlanRepo: manager.getRepository(AppPlan),
       roleRepo: manager.getRepository(Role),
+      programPlanRepo: manager.getRepository(ProgramPlan),
     };
   }
 
@@ -79,27 +79,6 @@ describe('EquityController (e2e)', () => {
         const repo = repositories[repoKey];
         await repo.delete({});
       }
-    }
-  }
-
-  async function fetchToken() {
-    try {
-      const tokenResponse = await request(application.getHttpServer())
-        .post(AUTH_TOKEN_ROUTE)
-        .set('host', appHost.host)
-        .send({ clientId: 'test', key: 'testKey', permissions: [] });
-
-      const { authToken } = tokenResponse.body.result;
-
-      const requestHeader = {
-        Authorization: `Bearer ${authToken}`,
-        host: 'test.something.com',
-      };
-
-      return { authToken, requestHeader };
-    } catch (error) {
-      console.error('Error fetching token:', error);
-      throw new Error('Failed to fetch token');
     }
   }
 
@@ -119,6 +98,11 @@ describe('EquityController (e2e)', () => {
     repositories = await initializeRepositories(manager);
     await clearRepositories(repositories);
 
+    await repositories.orderProductRepo.delete({});
+    await repositories.orderLogRepo.delete({});
+    await repositories.programPlanRepo.delete({});
+    await repositories.currencyRepo.delete({});
+
     await repositories.roleRepo.save(role);
     await repositories.appPlanRepo.save(appPlan);
     await repositories.appRepo.save(app);
@@ -130,6 +114,11 @@ describe('EquityController (e2e)', () => {
   });
 
   afterEach(async () => {
+    await repositories.orderProductRepo.delete({});
+    await repositories.orderLogRepo.delete({});
+    await repositories.programPlanRepo.delete({});
+    await repositories.currencyRepo.delete({});
+
     await clearRepositories(repositories);
 
     await application.close();
@@ -140,7 +129,6 @@ describe('EquityController (e2e)', () => {
       let insertedMember;
       let insertedActivity;
       let insertedCategory;
-      let insertedActivityCategory;
       let insertedActivitySession1;
       let insertedActivityTicket1;
       let insertedActivitySessionTicket1;
@@ -168,7 +156,7 @@ describe('EquityController (e2e)', () => {
           class: 'activity',
         });
 
-        insertedActivityCategory = await createTestActivityCategory(manager, {
+        await createTestActivityCategory(manager, {
           activity: insertedActivity,
           category: insertedCategory,
         });
@@ -370,7 +358,7 @@ describe('EquityController (e2e)', () => {
           endedAt: new Date('2020-01-02T00:00:00Z'),
         });
 
-        const insertedActivitySessionTicket2 = await createTestActivitySessionTicket(manager, {
+        await createTestActivitySessionTicket(manager, {
           activitySession: insertedActivitySession2,
           activityTicket: insertedActivityTicket1,
           activitySessionType: 'offline',
@@ -432,7 +420,7 @@ describe('EquityController (e2e)', () => {
           class: 'activity',
         });
 
-        const insertedActivityCategory = await createTestActivityCategory(manager, {
+        await createTestActivityCategory(manager, {
           activity: insertedActivity,
           category: insertedCategory2,
         });
@@ -474,7 +462,7 @@ describe('EquityController (e2e)', () => {
           endedAt: new Date('2020-01-02T00:00:00Z'),
         });
 
-        const insertedActivitySessionTicket2 = await createTestActivitySessionTicket(manager, {
+        await createTestActivitySessionTicket(manager, {
           activitySession: insertedActivitySession2,
           activityTicket: insertedActivityTicket1,
           activitySessionType: 'offline',
@@ -517,14 +505,13 @@ describe('EquityController (e2e)', () => {
       let insertedUnregisterMember;
       let insertedActivity;
       let insertedCategory;
-      let insertedActivityCategory;
+
       let insertedActivitySession1;
       let insertedActivityTicket1;
-      let insertedActivitySessionTicket1;
+
       let insertedOrderLog;
       let insertedProduct;
       let insertedCurrency;
-      let insertedOrderProduct;
 
       beforeEach(async () => {
         insertedMember = await createTestMember(manager, {
@@ -549,7 +536,7 @@ describe('EquityController (e2e)', () => {
           class: 'activity',
         });
 
-        insertedActivityCategory = await createTestActivityCategory(manager, {
+        await createTestActivityCategory(manager, {
           activity: insertedActivity,
           category: insertedCategory,
         });
@@ -566,7 +553,7 @@ describe('EquityController (e2e)', () => {
           endedAt: new Date('2020-01-02T00:00:00Z'),
         });
 
-        insertedActivitySessionTicket1 = await createTestActivitySessionTicket(manager, {
+        await createTestActivitySessionTicket(manager, {
           activitySession: insertedActivitySession1,
           activityTicket: insertedActivityTicket1,
           activitySessionType: 'offline',
@@ -587,7 +574,7 @@ describe('EquityController (e2e)', () => {
           id: 'TWD',
         });
 
-        insertedOrderProduct = await createTestOrderProduct(manager, {
+        await createTestOrderProduct(manager, {
           order: insertedOrderLog,
           product: insertedProduct,
           currency: insertedCurrency,
@@ -684,7 +671,7 @@ describe('EquityController (e2e)', () => {
             sessionId: 'non_uuid',
           };
 
-          const { body: res } = await request(application.getHttpServer())
+          await request(application.getHttpServer())
             .get(
               `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
                 dto.sessionId ? `&sessionId=${dto.sessionId}` : ''

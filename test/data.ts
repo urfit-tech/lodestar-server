@@ -114,6 +114,12 @@ program.abstract = 'test program abstract';
 program.appId = app.id;
 program.publishedAt = dayjs().subtract(1, 'day').toDate();
 
+export const currency = new Currency();
+currency.id = 'TWD';
+currency.label = '';
+currency.unit = '';
+currency.name = '';
+
 export const programPlan = new ProgramPlan();
 programPlan.id = v4();
 programPlan.programId = program.id;
@@ -121,6 +127,7 @@ programPlan.title = 'test program plan';
 programPlan.type = 3; // can view all program
 programPlan.listPrice = 0;
 programPlan.cardId = null;
+programPlan.currency = currency;
 
 export const programRole = new ProgramRole();
 programRole.id = v4();
@@ -232,12 +239,6 @@ export const podcastPlanProduct = new Product();
 podcastPlanProduct.type = 'PodcastPlan';
 podcastPlanProduct.id = `${podcastPlanProduct.type}_${podcastPlan.id}`;
 podcastPlanProduct.target = podcastPlan.id;
-
-export const currency = new Currency();
-currency.id = 'TWD';
-currency.label = '';
-currency.unit = '';
-currency.name = '';
 
 export const orderProduct = new OrderProduct();
 orderProduct.id = v4();
