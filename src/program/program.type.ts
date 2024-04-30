@@ -1,4 +1,4 @@
-export type DisplayMode = 'conceal' | 'trial' | 'loginToTrail' | 'payToWatch';
+export type DisplayMode = 'conceal' | 'trial' | 'loginToTrial' | 'payToWatch';
 export type OwnedProgram = {
   id: string;
   title: string;

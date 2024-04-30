@@ -9,6 +9,7 @@ import {
   MemberRightActivityTicketDataDto,
 } from './dto/equity-activity-ticket.dto';
 import { ActivityTicketService } from '~/activity/activity-ticket/activity-ticket.service';
+import { ProgramService } from '~/program/program.service';
 
 @UseGuards(AuthGuard)
 @Controller({
@@ -16,7 +17,11 @@ import { ActivityTicketService } from '~/activity/activity-ticket/activity-ticke
   version: '2',
 })
 export class EquityController {
-  constructor(private logger: Logger, private readonly activityTicketService: ActivityTicketService) {}
+  constructor(
+    private logger: Logger,
+    private readonly activityTicketService: ActivityTicketService,
+    private programService: ProgramService,
+  ) {}
 
   @Get('/activity_ticket')
   public async memberRightActivityTicket(
@@ -41,5 +46,10 @@ export class EquityController {
         message: `Activity ticket data not found, activity_ticket_id: ${dto.activityTicketId}, member_id: ${memberId}, session_id ${dto.sessionId}`,
       });
     }
+  }
+
+  @Get('/programs')
+  async getProgramsByMemberId(@Local('member') member: JwtMember, @Query('memberId') memberId: string) {
+    return this.programService.getProgramsByMemberId(member.appId, String(memberId || member.memberId));
   }
 }
