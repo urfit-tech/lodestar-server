@@ -1831,7 +1831,9 @@ CREATE TABLE public.program (
     cover_mobile_url text,
     cover_thumbnail_url text,
     metadata jsonb,
-    views numeric DEFAULT '0'::numeric NOT NULL
+    views numeric DEFAULT '0'::numeric NOT NULL,
+    display_header boolean DEFAULT true NOT NULL,
+    display_footer boolean DEFAULT true NOT NULL
 );
 CREATE TABLE public.program_content (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -8473,6 +8475,3 @@ ALTER TABLE ONLY public.voucher_plan_product
     ADD CONSTRAINT voucher_plan_product_voucher_plan_id_fkey FOREIGN KEY (voucher_plan_id) REFERENCES public.voucher_plan(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.voucher
     ADD CONSTRAINT voucher_voucher_code_id_fkey FOREIGN KEY (voucher_code_id) REFERENCES public.voucher_code(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
-
-alter table "public"."program_plan" add column "card_id" uuid
- null;
