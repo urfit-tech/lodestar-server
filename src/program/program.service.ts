@@ -92,6 +92,7 @@ export class ProgramService {
     let programByProgramEnrollment: ProgramResponseDTO;
     let programByProgramRoleAndPermission: ProgramResponseDTO;
     let programByProgramPackageEnrollment: ProgramResponseDTO;
+    let programByProgramCardEnrollment: ProgramResponseDTO;
 
     Promise.all([
       (programByProgramPlanEnrollment = await this.programInfra.getProgramByProgramPlanEnrollment(
@@ -115,6 +116,7 @@ export class ProgramService {
         programId,
         this.entityManager,
       )),
+      (programByProgramCardEnrollment = await this.programInfra.getOwnedProgramsFromCard(memberId, this.entityManager)),
     ]);
 
     const program = {
@@ -122,6 +124,7 @@ export class ProgramService {
       ...programByProgramEnrollment,
       ...programByProgramRoleAndPermission,
       ...programByProgramPackageEnrollment,
+      ...programByProgramCardEnrollment,
     };
     return Object.keys(program).length !== 0 ? program : undefined;
   }
