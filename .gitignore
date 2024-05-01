@@ -37,3 +37,8 @@ lerna-debug.log*
 *.env
 .env.development
 .env.production
+
+# automation of docker containers and migration 
+migration/hasura/metadata/*
+migration/hasura/migrations/*
+db.sh
