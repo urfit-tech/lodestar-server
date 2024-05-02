@@ -66,10 +66,6 @@ $ yarn run test:cov
 hasura migrate create Init --from-server --endpoint hasuraServerEndpoint --admin-secret secret --project migrations/hasura/
 ```
 
-
-以下為舊版內容，新手上路請執行 docker_database_setup.sh
-(WINDOWS 使用者請藉由 WSL 或 git bash 執行)
-
 用新的 migration sql 替換掉原本的 1680330156157_Init sql，再刪掉新的 migration sql，留 1680330156157_Init 就好
 
 套用最新資料庫結構前，需關閉所有容器並清除掛載（volume）
