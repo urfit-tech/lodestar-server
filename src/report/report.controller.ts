@@ -24,27 +24,7 @@ export class ReportController {
     let result;
     switch (type) {
       case 'metabase':
-        const payload = options.canViewSelfDataOnly
-          ? !!Object.keys(options.metabase.resource).includes('dashboard')
-            ? {
-                ...options.metabase,
-                params: {
-                  appid: appId,
-                  memberid: memberId,
-                  role,
-                },
-              }
-            : {
-                ...options.metabase,
-                params: {
-                  appId,
-                  memberId,
-                  role,
-                },
-              }
-          : options.metabase;
-
-        result = this.reportService.generateMetabaseSignedUrl(payload);
+        result = this.reportService.prepareMetabaseUrl(appId, memberId, role, options);
         break;
       default:
         throw new APIException({ code: 'E_REPORT_TYPE_ERROR', message: 'report type not found' });

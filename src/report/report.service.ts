@@ -38,4 +38,28 @@ export class ReportService {
     const iframeUrl = `${siteUrl}/embed/${metabaseType}/${token}`;
     return iframeUrl;
   }
+
+  prepareMetabaseUrl(appId: string, memberId: string, role: string, options: any): string {
+    const payload = options.canViewSelfDataOnly
+      ? !!Object.keys(options.metabase.resource).includes('dashboard')
+        ? {
+            ...options.metabase,
+            params: {
+              appid: appId,
+              memberid: memberId,
+              role,
+            },
+          }
+        : {
+            ...options.metabase,
+            params: {
+              appId,
+              memberId,
+              role,
+            },
+          }
+      : options.metabase;
+
+    return this.generateMetabaseSignedUrl(payload);
+  }
 }
