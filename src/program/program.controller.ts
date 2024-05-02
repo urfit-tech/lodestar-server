@@ -1,8 +1,9 @@
-import { Controller, Get, Logger, Param, Req, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Logger, Param, Req, UnauthorizedException, UseGuards, Headers } from '@nestjs/common';
 import { Request } from 'express';
+import { APIException } from '~/api.excetion';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
+import { AuthService } from '~/auth/auth.service';
 import { Local } from '~/decorator';
 import {
   MaterialsResponseDto,
@@ -17,7 +18,7 @@ import { ProgramService } from './program.service';
   version: '2',
 })
 export class ProgramController {
-  constructor(private logger: Logger, private programService: ProgramService) {}
+  constructor(private authService: AuthService, private logger: Logger, private programService: ProgramService) {}
 
   @UseGuards(AuthGuard)
   @Get('/expired')
@@ -41,56 +42,41 @@ export class ProgramController {
       : this.programService.getProgramByMemberId(member.memberId, programId, extraAllowPermission);
   }
 
-  @Get('/:programId/contents/:programContentId/trial')
-  async getProgramContentById(@Param('programContentId') programContentId: string): Promise<ProgramContentResponseDTO> {
-    let programContent: ProgramContentResponseDTO;
-
-    try {
-      programContent = await this.programService.getProgramContentById(programContentId);
-    } catch (error) {
-      this.logger.error(`Error fetching program content: ${error.message}`);
-      throw error;
-    }
-
-    return programContent.displayMode === 'trial'
-      ? this.programService.getTrialProgramContent(programContentId)
-      : programContent.displayMode === 'loginToTrial'
-      ? this.programService.getLoginToTrialProgramContent(programContentId)
-      : {};
-  }
-
-  @UseGuards(AuthGuard)
   @Get('/:programId/contents/:programContentId')
   async getEnrolledProgramContentById(
-    @Local('member') member: JwtMember,
-    @Req() request: Request,
     @Param('programId') programId: string,
     @Param('programContentId') programContentId: string,
+    @Headers('Authorization') authorization?: string,
   ): Promise<ProgramContentResponseDTO[]> {
-    const { memberId } = request.query;
     let programContent: ProgramContentResponseDTO;
-    let loginToTrialProgramContent: ProgramContentResponseDTO;
 
     try {
       programContent = await this.programService.getProgramContentById(programContentId);
-      loginToTrialProgramContent = await this.programService.getLoginToTrialProgramContent(programContentId);
-    } catch (error) {
-      this.logger.error(`Error fetching program content: ${error.message}`);
-      throw error;
+    } catch (err) {
+      throw new APIException(
+        { code: 'E_PROGRAM_CONTENT_NOT_FOUND', message: 'Unable to retrieve program content' },
+        400,
+      );
     }
-    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => member.permissions.includes(e));
 
-    return programContent.displayMode === 'loginToTrial'
-      ? { ...loginToTrialProgramContent, isEquity: true }
-      : ['PROGRAM_ADMIN'].find((e) => member.permissions.includes(e))
+    const isTrial = !authorization && programContent.displayMode === 'trial';
+    const isLoginToTrial = !!authorization && programContent.displayMode === 'loginToTrial';
+    const member = !!authorization && (await this._verifyAuthorization(authorization));
+
+    const extraAllowPermission = !!member && ['PROGRAM_NORMAL'].find((e) => member.permissions.includes(e));
+    const adminPermission = !!member && ['PROGRAM_ADMIN'].find((e) => member.permissions.includes(e));
+
+    return adminPermission || isLoginToTrial || isTrial
       ? { ...programContent, isEquity: true }
-      : this.programService.getEnrolledProgramContentById(
+      : !!member
+      ? this.programService.getEnrolledProgramContentById(
           member.appId,
-          String(memberId || member.memberId),
+          member.memberId,
           programId,
           programContentId,
           extraAllowPermission,
-        );
+        )
+      : this.programService.getProgramContentInfo(programContentId);
   }
 
   @UseGuards(AuthGuard)
@@ -121,5 +107,23 @@ export class ProgramController {
     @Param('programId') programId: string,
   ): Promise<MaterialsResponseDto[]> {
     return this.programService.getProgramContentMaterialsByProgramId(programId);
+  }
+
+  private _verifyAuthorization(authorization: string) {
+    const token = authorization.split(' ')[1];
+    let member;
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
+    }
+
+    try {
+      member = this.authService.verify(token);
+      if (!member) {
+        throw new UnauthorizedException('Invalid or expired token');
+      }
+      return member;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
   }
 }
