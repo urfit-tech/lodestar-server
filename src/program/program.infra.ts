@@ -1183,7 +1183,6 @@ export class ProgramInfrastructure {
         'program_content',
         'program_content.content_section_id = program_content_section.id' +
           ' AND program_content.published_at IS NOT NULL' +
-          ' AND program_content.id = program_content.id ' +
           ' AND (program_plan.type = 3 OR (program_content_plan.program_content_id = program_content.id))',
       )
       .getRawMany();
