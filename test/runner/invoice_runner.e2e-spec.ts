@@ -23,6 +23,7 @@ import { app, appPlan, role } from '../data';
 import { autoRollbackTransaction } from '../utils';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 import axios from 'axios';
+import { AppInvoiceGateway } from '~/entity/AppInvoiceGateway';
 
 jest.mock('axios', () => ({
   get: jest.fn(),
@@ -30,7 +31,7 @@ jest.mock('axios', () => ({
 
 describe('InvoiceRunner (e2e)', () => {
   let application: INestApplication;
-  let ezpayClient = {
+  const ezpayClient = {
     issue: jest.fn(),
   };
 
@@ -149,14 +150,14 @@ describe('InvoiceRunner (e2e)', () => {
       await expect(invoiceRunner.execute(manager)).rejects.toEqual(
         new Error(
           JSON.stringify([
-            { error: `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
+            { error: `App: ${notAllowedApp.id} invoice module is not enabled or missing settings/secrets.` },
           ]),
         ),
       );
       await expect(invoiceRunner.execute(manager)).rejects.toEqual(
         new Error(
           JSON.stringify([
-            { error: `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.` },
+            { error: `App: ${notAllowedApp.id} invoice module is not enabled or missing settings/secrets.` },
           ]),
         ),
       );
@@ -167,7 +168,7 @@ describe('InvoiceRunner (e2e)', () => {
         expect(each.invoiceIssuedAt).toBeNull();
         expect(each.invoiceOptions['status']).toEqual('LODESTAR_FAIL');
         expect(each.invoiceOptions['reason']).toEqual(
-          `App: ${notAllowedApp.id} invoice module is not enable or missing setting/secrets.`,
+          `App: ${notAllowedApp.id} invoice module is not enabled or missing settings/secrets.`,
         );
         expect(each.invoiceOptions['retry']).toEqual(2);
       }
@@ -224,6 +225,11 @@ describe('InvoiceRunner (e2e)', () => {
       payment.invoiceOptions = {};
       payment.invoiceGatewayId = v4();
 
+      const appInvoiceGateway = new AppInvoiceGateway();
+      appInvoiceGateway.app = app;
+      appInvoiceGateway.options = appSecretSet;
+      appInvoiceGateway.gatewayId = payment.invoiceGatewayId;
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -236,6 +242,7 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(member);
         await manager.save(order);
         await manager.save(payment);
+        await manager.save(appInvoiceGateway);
 
         await invoiceRunner.execute(manager);
 
@@ -296,6 +303,11 @@ describe('InvoiceRunner (e2e)', () => {
       payment.invoiceOptions = {};
       payment.invoiceGatewayId = v4();
 
+      const appInvoiceGateway = new AppInvoiceGateway();
+      appInvoiceGateway.app = app;
+      appInvoiceGateway.options = appSecretSet;
+      appInvoiceGateway.gatewayId = payment.invoiceGatewayId;
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -308,6 +320,7 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(member);
         await manager.save(order);
         await manager.save(payment);
+        await manager.save(appInvoiceGateway);
 
         await invoiceRunner.execute(manager);
 
@@ -452,6 +465,11 @@ describe('InvoiceRunner (e2e)', () => {
       payment.invoiceOptions = {};
       payment.invoiceGatewayId = v4();
 
+      const appInvoiceGateway = new AppInvoiceGateway();
+      appInvoiceGateway.app = app;
+      appInvoiceGateway.options = appSecretSet;
+      appInvoiceGateway.gatewayId = payment.invoiceGatewayId;
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -464,6 +482,7 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(member);
         await manager.save(order);
         await manager.save(payment);
+        await manager.save(appInvoiceGateway);
 
         await invoiceRunner.execute(manager);
         const failedOrderLog = await manager.getRepository(OrderLog).findOneBy({ paymentLogs: { no: payment.no } });
@@ -553,6 +572,11 @@ describe('InvoiceRunner (e2e)', () => {
       payment.invoiceOptions = {};
       payment.invoiceGatewayId = v4();
 
+      const appInvoiceGateway = new AppInvoiceGateway();
+      appInvoiceGateway.app = app;
+      appInvoiceGateway.options = appSecretSet;
+      appInvoiceGateway.gatewayId = payment.invoiceGatewayId;
+
       await autoRollbackTransaction(manager, async (manager) => {
         for (const key in appSecretSet) {
           const secret = new AppSecret();
@@ -565,6 +589,7 @@ describe('InvoiceRunner (e2e)', () => {
         await manager.save(member);
         await manager.save(order);
         await manager.save(payment);
+        await manager.save(appInvoiceGateway);
 
         let failedOrderLog: OrderLog, failedPaymentLog: PaymentLog;
         for (let i = 0; i < 4; i += 1) {

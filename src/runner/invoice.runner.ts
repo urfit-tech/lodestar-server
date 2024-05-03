@@ -1,6 +1,7 @@
 import { EntityManager } from 'typeorm';
 import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
+import axios from 'axios';
 
 import { InvoiceService } from '~/invoice/invoice.service';
 import { InvoiceModule } from '~/invoice/invoice.module';
@@ -11,7 +12,6 @@ import { DistributedLockService } from '~/utility/lock/distributed_lock.service'
 import { UtilityService } from '~/utility/utility.service';
 
 import { Runner } from './runner';
-import axios from 'axios';
 
 @Injectable()
 export class InvoiceRunner extends Runner {
@@ -56,7 +56,7 @@ export class InvoiceRunner extends Runner {
             message: `paymentNo: ${paymentNo}`,
           });
         }
-        await this.utilityService.sleep(100);
+        await this.utilityService.sleep(1000);
       }
     };
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));

@@ -123,14 +123,23 @@ describe('CanlendarController (e2e)', () => {
     const member = new Member();
     member.id = v4();
     member.appId = app.id;
-    member.email = 'calendar@example.com';
-    member.username = 'calendar';
+    member.email = 'general_member@example.com';
+    member.username = 'general_member';
     member.role = role.name;
-    member.name = 'calendar user';
+    member.name = 'general_member';
+
+    const executor = new Member();
+    executor.id = v4();
+    executor.appId = app.id;
+    executor.email = 'executor@example.com';
+    executor.username = 'executor';
+    executor.role = role.name;
+    executor.name = 'executor';
 
     const memberTask = new MemberTask();
     memberTask.id = v4();
     memberTask.memberId = member.id;
+    memberTask.executorId = executor.id;
     memberTask.title = 'Mock member task';
     memberTask.priority = 'high';
     memberTask.description = 'Mock member task description';
@@ -146,7 +155,7 @@ describe('CanlendarController (e2e)', () => {
 
     const appointmentPlan = new AppointmentPlan();
     appointmentPlan.id = v4();
-    appointmentPlan.creator = member;
+    appointmentPlan.creator = executor;
     appointmentPlan.title = 'appointment-plan';
     appointmentPlan.description = 'appointment plan description';
     appointmentPlan.price = 1;
@@ -168,18 +177,20 @@ describe('CanlendarController (e2e)', () => {
     orderProduct.currency = currency;
     orderProduct.startedAt = new Date('2023-12-02T01:00:00.000000');
     orderProduct.endedAt = new Date('2023-12-02T02:00:00.000000');
+    orderProduct.deliveredAt = new Date('2023-12-02T02:00:00.000000');
 
     it('Should get member task calendar with member id successfully', async () => {
       await memberRepo.save(member);
+      await memberRepo.save(executor);
       await memberTaskRepo.save(memberTask);
 
       const response = await request(application.getHttpServer())
-        .get(`/calendars/${member.id}`)
+        .get(`/calendars/${executor.id}`)
         .set('host', appHost.host)
         .expect(200);
 
       expect(response.headers['content-type']).toEqual('text/calendar; charset=utf-8');
-      expect(response.headers['content-disposition']).toEqual(`attachment; filename=\"${member.id}.ics\"`);
+      expect(response.headers['content-disposition']).toEqual(`attachment; filename=\"${executor.id}.ics\"`);
 
       const memberCalendar = createEvent({
         uid: memberTask.id,
@@ -197,18 +208,19 @@ describe('CanlendarController (e2e)', () => {
 
     it('Should get appointment plan calendar with member id successfully', async () => {
       await memberRepo.save(member);
+      await memberRepo.save(executor);
       await orderLogRepo.save(orderLog);
       await appointmentPlanRepo.save(appointmentPlan);
       await orderProductRepo.save(orderProduct);
       await productRepo.save(appointmentPlanProduct);
 
       const response = await request(application.getHttpServer())
-        .get(`/calendars/${member.id}`)
+        .get(`/calendars/${executor.id}`)
         .set('host', appHost.host)
         .expect(200);
 
       expect(response.headers['content-type']).toEqual('text/calendar; charset=utf-8');
-      expect(response.headers['content-disposition']).toEqual(`attachment; filename=\"${member.id}.ics\"`);
+      expect(response.headers['content-disposition']).toEqual(`attachment; filename=\"${executor.id}.ics\"`);
 
       const memberCalendar = createEvent({
         uid: orderProduct.id,

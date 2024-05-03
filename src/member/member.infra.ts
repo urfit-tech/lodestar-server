@@ -68,11 +68,17 @@ import { Property } from '~/definition/entity/property.entity';
 import { Category } from '~/definition/entity/category.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import MemberQueryObserveBase from './get-member-query/member-query-base';
-import { MemberCategoryObserver, MemberManagerObserver, MemberPermissionGroupObserver, MemberPhoneObserver, MemberPropertyObserver, MemberTagObserver } from './get-member-query/member-query-observer';
+import {
+  MemberCategoryObserver,
+  MemberManagerObserver,
+  MemberPermissionGroupObserver,
+  MemberPhoneObserver,
+  MemberPropertyObserver,
+  MemberTagObserver,
+} from './get-member-query/member-query-observer';
 
 @Injectable()
 export class MemberInfrastructure {
-
   async getSimpleMemberByConditions(
     appId: string,
     conditions: FindOptionsWhere<Member>,
@@ -82,7 +88,6 @@ export class MemberInfrastructure {
     limit = 10,
     entityManager: EntityManager,
   ): Promise<{ data: Array<Member>; cursor: Cursor }> {
-
     const memberQueryBase = new MemberQueryObserveBase();
 
     memberQueryBase.addObserver(new MemberManagerObserver());
@@ -92,7 +97,7 @@ export class MemberInfrastructure {
     memberQueryBase.addObserver(new MemberPermissionGroupObserver());
     memberQueryBase.addObserver(new MemberPropertyObserver());
 
-    let queryBuilder = await memberQueryBase.execute(appId , conditions , order, entityManager)
+    let queryBuilder = await memberQueryBase.execute(appId, conditions, order, entityManager);
 
     const paginator = buildPaginator({
       entity: Member,
@@ -122,7 +127,7 @@ export class MemberInfrastructure {
     memberQueryBase.addObserver(new MemberPermissionGroupObserver());
     memberQueryBase.addObserver(new MemberPropertyObserver());
 
-    let queryBuilder = await memberQueryBase.execute(appId , conditions , order, entityManager)
+    let queryBuilder = await memberQueryBase.execute(appId, conditions, order, entityManager);
 
     queryBuilder = queryBuilder
       .select('member.role', 'role')
@@ -131,7 +136,7 @@ export class MemberInfrastructure {
 
     const roleCounts = await queryBuilder.getRawMany();
 
-    return roleCounts.map(item => ({
+    return roleCounts.map((item) => ({
       role: item.role,
       count: parseInt(item.count, 10),
     }));
@@ -197,6 +202,12 @@ export class MemberInfrastructure {
   async getMemberTasks(memberId: string, manager: EntityManager): Promise<Array<MemberTask>> {
     const memberTaskRepo = manager.getRepository(MemberTask);
     const tasks = await memberTaskRepo.findBy({ memberId });
+    return tasks;
+  }
+
+  async getMemberTasksByExecutorId(executorId: string, manager: EntityManager): Promise<Array<MemberTask>> {
+    const memberTaskRepo = manager.getRepository(MemberTask);
+    const tasks = await memberTaskRepo.findBy({ executorId });
     return tasks;
   }
 
@@ -501,6 +512,50 @@ export class MemberInfrastructure {
       throw error;
     }
   }
+  async saveMember(manager: EntityManager, member: Member): Promise<Member> {
+    const memberRepo = manager.getRepository(Member);
+    return memberRepo.save(member);
+  }
+
+  async firstMemberByCondition(manager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<Member | null> {
+    const memberRepo = manager.getRepository(Member);
+    return memberRepo.findOneBy(conditions);
+  }
+
+  async upsertMemberProperty(manager: EntityManager, memberId: string, propertyId: string, value: string) {
+    const memberPropertyRepo = manager.getRepository(MemberProperty);
+    const property = await memberPropertyRepo.findOneBy({
+      memberId,
+      propertyId,
+    });
+    if (property) {
+      property.value = value;
+      return memberPropertyRepo.save(property);
+    }
+
+    const memberProperty = memberPropertyRepo.create({
+      memberId,
+      propertyId,
+      value,
+    });
+    return memberPropertyRepo.save(memberProperty);
+  }
+
+  async upsertMemberPhone(manager: EntityManager, memberId: string, phone: string) {
+    const memberPhoneRepo = manager.getRepository(MemberPhone);
+    const memberPhone = await memberPhoneRepo.findOneBy({
+      memberId,
+      phone,
+    });
+    if (memberPhone) {
+      return memberPhone;
+    }
+    const newMemberPhone = memberPhoneRepo.create({
+      memberId,
+      phone,
+    });
+    return memberPhoneRepo.save(newMemberPhone);
+  }
 
   async upsertMemberByEmail(
     appId: string,
@@ -547,55 +602,11 @@ export class MemberInfrastructure {
     });
     return memberRepo.save(member);
   }
-  async saveMember(manager: EntityManager, member: Member): Promise<Member> {
-    const memberRepo = manager.getRepository(Member);
-    return memberRepo.save(member);
-  }
-
-  async firstMemberByCondition(manager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<Member | null> {
-    const memberRepo = manager.getRepository(Member);
-    return memberRepo.findOneBy(conditions);
-  }
-
-  async upsertMemberProperty(manager: EntityManager, memberId: string, propertyId: string, value: string) {
-    const memberPropertyRepo = manager.getRepository(MemberProperty);
-    const property = await memberPropertyRepo.findOneBy({
-      memberId,
-      propertyId,
-    });
-    if (property) {
-      property.value = value;
-      return memberPropertyRepo.save(property);
-    }
-
-    const memberProperty = memberPropertyRepo.create({
-      memberId,
-      propertyId,
-      value,
-    });
-    return memberPropertyRepo.save(memberProperty);
-  }
-
-  async upsertMemberPhone(manager: EntityManager, memberId: string, phone: string) {
-    const memberPhoneRepo = manager.getRepository(MemberPhone);
-    const memberPhone = await memberPhoneRepo.findOneBy({
-      memberId,
-      phone,
-    });
-    if (memberPhone) {
-      return memberPhone;
-    }
-    const newMemberPhone = memberPhoneRepo.create({
-      memberId,
-      phone,
-    });
-    return memberPhoneRepo.save(newMemberPhone);
-  }
 
   private getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>) {
     const memberPropertyConditions = pick(conditions, ['memberProperties'])
       .memberProperties as MemberPropertiesCondition[];
-      
+
     const sqlCondition = memberPropertyConditions
       .map((property) => {
         const key = first(keys(property));
