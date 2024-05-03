@@ -878,7 +878,7 @@ export class ProgramInfrastructure {
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere(
-        `((program_plan.type = 1 AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())) OR (program_plan.type = 2 AND program_content.published_at > order_product.delivered_at AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())))`,
+        `((program_plan.type = 1 AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())) OR (program_plan.type = 2 AND program_content.published_at > order_product.delivered_at AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW()))) OR (program_plan.type = 3) `,
       )
       .innerJoin(
         'order_product',
@@ -896,19 +896,18 @@ export class ProgramInfrastructure {
       .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
       .leftJoin('member', 'member', 'member.id = program_role.member_id')
       .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
-      .innerJoin(
+      .leftJoin(
         'program_content_plan',
         'program_content_plan',
-        'program_content_plan.program_plan_id = program_plan.id' +
-          ' AND program_content_plan.program_content_id = :programContentId',
-        { programContentId },
+        'program_content_plan.program_plan_id = program_plan.id',
       )
       .innerJoin(
         'program_content',
         'program_content',
         'program_content.content_section_id = program_content_section.id' +
           ' AND program_content.published_at IS NOT NULL' +
-          ' AND program_content.id = :programContentId ',
+          ' AND program_content.id = :programContentId ' +
+          ' AND (program_plan.type = 3 OR ( program_content_plan.program_content_id = :programContentId))',
         { programContentId },
       )
       .getRawOne();
@@ -1149,10 +1148,14 @@ export class ProgramInfrastructure {
     const programMembershipEnrollment = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
-      .select(['program_content.id AS program_content_id', 'program_content.display_mode AS display_mode'])
+      .select([
+        'program_content.id AS program_content_id',
+        'program_content.display_mode AS display_mode',
+        'program_content_plan AS program_content_plan_id',
+      ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere(
-        `((program_plan.type = 1 AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())) OR (program_plan.type = 2 AND program_content.published_at > order_product.delivered_at AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())))`,
+        `((program_plan.type = 1 AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW())) OR (program_plan.type = 2 AND program_content.published_at > order_product.delivered_at AND (order_product.ended_at IS NULL OR order_product.ended_at > NOW()) AND (order_product.started_at IS NULL OR order_product.started_at <= NOW()))) OR (program_plan.type = 3) `,
       )
       .innerJoin(
         'order_product',
@@ -1170,7 +1173,7 @@ export class ProgramInfrastructure {
       .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
       .leftJoin('member', 'member', 'member.id = program_role.member_id')
       .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
-      .innerJoin(
+      .leftJoin(
         'program_content_plan',
         'program_content_plan',
         'program_content_plan.program_plan_id = program_plan.id',
@@ -1180,7 +1183,8 @@ export class ProgramInfrastructure {
         'program_content',
         'program_content.content_section_id = program_content_section.id' +
           ' AND program_content.published_at IS NOT NULL' +
-          ' AND program_content.id = program_content_plan.program_content_id',
+          ' AND program_content.id = program_content.id ' +
+          ' AND (program_plan.type = 3 OR (program_content_plan.program_content_id = program_content.id))',
       )
       .getRawMany();
 
