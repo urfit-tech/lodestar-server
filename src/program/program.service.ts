@@ -25,16 +25,12 @@ export class ProgramService {
     });
   }
 
+  public async getProgramContentInfo(programContentId: string) {
+    return this.programInfra.getProgramContentInfo(programContentId, this.entityManager);
+  }
+
   public async getProgramContentById(programContentId: string) {
     return this.programInfra.getProgramContentById(programContentId, this.entityManager);
-  }
-
-  public async getTrialProgramContent(programContentId: string) {
-    return this.programInfra.getTrialProgramContent(programContentId, this.entityManager);
-  }
-
-  public async getLoginToTrialProgramContent(programContentId: string) {
-    return this.programInfra.getLoginToTrialProgramContent(programContentId, this.entityManager);
   }
 
   public async getProgramsByMemberId(appId: string, memberId: string) {

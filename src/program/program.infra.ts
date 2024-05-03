@@ -484,6 +484,21 @@ export class ProgramInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
+  async getProgramContentInfo(programContentId: string, manager: EntityManager) {
+    const programContentInfo = await manager
+      .getRepository(ProgramContent)
+      .createQueryBuilder('program_content')
+      .select([
+        'program_content.id AS id',
+        'program_content.title AS title',
+        'program_content.display_mode AS display_mode',
+      ])
+      .where('program_content.id = :programContentId', { programContentId })
+      .getRawOne();
+
+    return this.utilityService.convertObjectKeysToCamelCase(programContentInfo);
+  }
+
   async getProgramContentById(programContentId: string, manager: EntityManager) {
     const programContent = await manager
       .getRepository(ProgramContent)
@@ -545,17 +560,6 @@ export class ProgramInfrastructure {
     manager: EntityManager,
     permissionId: string,
   ) {
-    const programContentById = await manager
-      .getRepository(ProgramContent)
-      .createQueryBuilder('program_content')
-      .select([
-        'program_content.id AS id',
-        'program_content.title AS title',
-        'program_content.display_mode AS display_mode',
-      ])
-      .where('program_content.id = :programContentId', { programContentId })
-      .getRawOne();
-
     const programContentIdByProgramEnrollment = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
@@ -926,118 +930,19 @@ export class ProgramInfrastructure {
       ...programContentIdByProgramPackageEnrollment,
       ...programMembershipEnrollment,
     });
+    console.log('programContent', programContent);
 
     const isEquity = Object.keys(programContent).length > 0;
 
-    return isEquity
-      ? {
-          ...programContent,
-          contentType: programContentBody.type,
-          audios: programContentAudio,
-          videos: programContentVideo,
-          attachment: programContentAttachment,
-          programContentBody,
-          isEquity,
-        }
-      : { ...programContentById, isEquity };
-  }
-
-  async getTrialProgramContent(programContentId: string, manager: EntityManager) {
-    const programContent = await manager
-      .getRepository(ProgramContent)
-      .createQueryBuilder('program_content')
-      .select([
-        'program.app_id AS appId',
-        'program_content.id AS id',
-        'program_content.title AS title',
-        'program_content.abstract AS abstract',
-        'program_content.content_body_id AS content_body_id',
-        'program_content.published_at AS published_at',
-        'program_content.duration AS duration',
-        'program_content.display_mode AS display_mode',
-        'program_content.content_type AS content_type',
-        'program_content_section.title AS content_section_title',
-      ])
-      .where('program_content.id = :programContentId', { programContentId })
-      .andWhere('program_content.display_mode = :displayMode', { displayMode: 'trial' })
-      .leftJoin(
-        'program_content_section',
-        'program_content_section',
-        'program_content_section.id = program_content.content_section_id',
-      )
-      .leftJoin('program', 'program', 'program.id = program_content_section.program_id')
-      .getRawOne();
-
-    const programContentAudio = await this.getProgramContentAudio(programContentId, manager);
-
-    const programContentVideo = await this.getProgramContentVideo(programContentId, manager);
-
-    const programContentAttachment = await this.getProgramContentAttachment(programContentId, manager);
-
-    const programContentBody = await this.getProgramContentBody(programContentId, manager);
-
-    return !!programContent
-      ? this.utilityService.convertObjectKeysToCamelCase({
-          ...programContent,
-          contentType: programContentBody.type,
-          audios: programContentAudio,
-          videos: programContentVideo,
-          attachment: programContentAttachment,
-          programContentBody,
-          isEquity: true,
-        })
-      : {};
-  }
-
-  async getLoginToTrialProgramContent(programContentId: string, manager: EntityManager) {
-    const programContent = await manager
-      .getRepository(ProgramContent)
-      .createQueryBuilder('program_content')
-      .select([
-        'program.app_id AS appId',
-        'program_content.id AS id',
-        'program_content.title AS title',
-        'program_content.abstract AS abstract',
-        'program_content.content_body_id AS content_body_id',
-        'program_content.published_at AS published_at',
-        'program_content.duration AS duration',
-        'program_content.display_mode AS display_mode',
-        'program_content.content_type AS content_type',
-        'program_content_section.title AS content_section_title',
-        'program_content.metadata AS metadata',
-        'program_content.list_price AS list_price',
-        'program_content.sale_price AS sale_price',
-        'program_content.sold_at AS sold_at',
-        'program_content.pinned_status AS pinned_status',
-      ])
-      .where('program_content.id = :programContentId', { programContentId })
-      .andWhere('program_content.display_mode = :displayMode', { displayMode: 'loginToTrial' })
-      .leftJoin(
-        'program_content_section',
-        'program_content_section',
-        'program_content_section.id = program_content.content_section_id',
-      )
-      .leftJoin('program', 'program', 'program.id = program_content_section.program_id')
-      .getRawOne();
-
-    const programContentAudio = await this.getProgramContentAudio(programContentId, manager);
-
-    const programContentVideo = await this.getProgramContentVideo(programContentId, manager);
-
-    const programContentAttachment = await this.getProgramContentAttachment(programContentId, manager);
-
-    const programContentBody = await this.getProgramContentBody(programContentId, manager);
-
-    return !!programContent
-      ? this.utilityService.convertObjectKeysToCamelCase({
-          ...programContent,
-          contentType: programContentBody.type,
-          audios: programContentAudio,
-          videos: programContentVideo,
-          attachment: programContentAttachment,
-          programContentBody,
-        })
-      : {};
+    return {
+      ...programContent,
+      contentType: programContentBody.type,
+      audios: programContentAudio,
+      videos: programContentVideo,
+      attachment: programContentAttachment,
+      programContentBody,
+      isEquity,
+    };
   }
 
   async getEnrolledProgramContentsByProgramId(
