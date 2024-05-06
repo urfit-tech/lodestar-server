@@ -44,6 +44,11 @@ import { PodcastPlan } from '~/entity/PodcastPlan';
 import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
 import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
 import { PodcastAlbumPodcastProgram } from '~/podcast/entity/PodcastAlbumPodcastProgram';
+import { createTestMember } from '../factory/member.factory';
+import { createTestOrderLog } from '../factory/oderLog.factory';
+import { v4 } from 'uuid';
+import { ConfigService } from '@nestjs/config';
+import jwt from 'jsonwebtoken';
 
 describe('PodcastController (e2e)', () => {
   let application: INestApplication;
@@ -204,6 +209,50 @@ describe('PodcastController (e2e)', () => {
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
       expect(200).toEqual(result.status);
+    });
+
+    it('Should exclude podcast which is not owned by member', async () => {
+      console.log({
+        appHost,
+        app,
+      });
+      const insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'general-member',
+      });
+
+      const insertedOrderLog = await createTestOrderLog(manager, {
+        member: insertedMember,
+        appId: app.id,
+      });
+
+      const orderProduct2 = new OrderProduct();
+      orderProduct2.id = v4();
+      orderProduct2.orderId = insertedOrderLog.id;
+      orderProduct2.deliveredAt = null;
+      orderProduct2.productId = podcastProduct.id;
+      orderProduct2.name = podcastProgram.title;
+      orderProduct2.price = podcastProgram.listPrice;
+      await orderProductRepo.save(orderProduct2);
+
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: insertedMember.id,
+          appId: insertedMember.appId,
+          permissions: [],
+        },
+        jwtSecret,
+      );
+
+      const header = { authorization: `Bearer ${token}`, host: appHost.host };
+
+      const { body: data } = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(data.length).toEqual(0);
     });
   });
 });
