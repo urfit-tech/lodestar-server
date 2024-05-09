@@ -5,15 +5,12 @@ import { UtilityService } from '~/utility/utility.service';
 import { Request } from 'express';
 import { Readable, Transform } from 'stream';
 import { readFileSync } from 'fs';
+import { EbookEncryptionError, EbookFileRetrievalError, KeyAndIVRetrievalError } from './ebook.errors';
 
 describe('EbookService', () => {
   let service: EbookService;
   let storageService: StorageService;
   let utilityService: UtilityService;
-  const mockStorageService = {
-    getFileFromBucketStorage: jest.fn(),
-    deleteFileAtBucketStorage: jest.fn(),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -22,31 +19,14 @@ describe('EbookService', () => {
         {
           provide: StorageService,
           useValue: {
-            getFileFromBucketStorage: jest.fn().mockImplementationOnce(() => {
-              const filePath = 'test/ebook/5e50b600-5e1b-4094-bd4e-99e506e5ca98.epub';
-              const testDataFile = readFileSync(filePath);
-              return Promise.resolve({
-                ContentType: 'application/epub+zip',
-                Body: {
-                  transformToByteArray: () => testDataFile,
-                },
-                ETag: '"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"',
-              });
-            }),
+            getFileFromBucketStorage: jest.fn(),
+            deleteFileAtBucketStorage: jest.fn(),
           },
         },
         {
           provide: UtilityService,
           useValue: {
-            encryptDataStream: jest.fn().mockImplementation(() => {
-              const transformStream = new Transform({
-                transform(chunk, encoding, callback) {
-                  this.push(chunk.toString().toUpperCase());
-                  callback();
-                },
-              });
-              return transformStream;
-            }),
+            encryptDataStream: jest.fn(),
           },
         },
       ],
@@ -59,57 +39,72 @@ describe('EbookService', () => {
 
   describe('getEbookFile', () => {
     it('should call storage service and return the file', async () => {
-      await service.getEbookFile('appId', 'programContentId');
+      const mockFile = new Readable();
+      storageService.getFileFromBucketStorage = jest.fn().mockResolvedValue({ Body: mockFile });
 
+      const result = await service.getEbookFile('appId', 'programContentId');
       expect(storageService.getFileFromBucketStorage).toHaveBeenCalledWith({ Key: 'ebook/appId/programContentId' });
+      expect(result).toBe(mockFile);
+    });
+
+    it('should throw EbookFileRetrievalError when storage service fails', async () => {
+      storageService.getFileFromBucketStorage = jest
+        .fn()
+        .mockRejectedValue(new EbookFileRetrievalError('Storage error'));
+
+      await expect(service.getEbookFile('appId', 'programContentId')).rejects.toThrow(EbookFileRetrievalError);
     });
   });
 
   describe('encryptEbook', () => {
-    it('should return undefined if no authorization header is present', async () => {
-      const request = { headers: {} } as Request;
+    it('should call utility service to encrypt data stream', async () => {
       const fileStream = new Readable();
+      const encryptedStream = new Readable();
+      utilityService.encryptDataStream = jest.fn().mockResolvedValue(encryptedStream);
 
-      const result = await service.encryptEbook(request, fileStream, 'appId');
-
-      expect(result).toBeUndefined();
+      const result = await service.encryptEbook(fileStream, 'key', 'iv');
+      expect(utilityService.encryptDataStream).toHaveBeenCalledWith(fileStream, 'key', 'iv');
+      expect(result).toBe(encryptedStream);
     });
 
-    it('should encrypt data stream if valid authorization token is provided', async () => {
-      const request = {
-        headers: {
-          authorization: Math.random().toString(36).substring(2, 15),
-        },
-      } as unknown as Request;
+    it('should throw EbookEncryptionError when encryption fails', async () => {
+      const fileStream = new Readable();
+      utilityService.encryptDataStream = jest.fn().mockRejectedValue(new EbookEncryptionError('Encryption error'));
 
-      const fileStream = new Readable({
-        read() {
-          this.push('some data');
-          this.push(null);
-        },
-      });
+      await expect(service.encryptEbook(fileStream, 'key', 'iv')).rejects.toThrow(EbookEncryptionError);
+    });
+  });
 
-      jest.spyOn(utilityService, 'encryptDataStream').mockImplementation((dataStream) => {
-        const transformStream = new Transform({
-          transform(chunk, encoding, callback) {
-            this.push(chunk.toString().toUpperCase());
-            callback();
-          },
-        });
-        dataStream.pipe(transformStream);
-        return transformStream;
-      });
+  describe('getStandardKeyAndIV', () => {
+    it('should return key and IV based on the token and appId', async () => {
+      const token = 'Bearer valid_token.part2.signature';
+      const request = { headers: { authorization: token } } as Request;
 
-      const result = await service.encryptEbook(request, fileStream, 'appId');
+      const result = await service.getStandardKeyAndIV(request, 'appId');
+      expect(result).toEqual({ key: 'signature', iv: 'appId' });
+    });
 
-      const data = await new Promise((resolve, reject) => {
-        let dataString = '';
-        result.on('data', (chunk) => (dataString += chunk));
-        result.on('end', () => resolve(dataString));
-        result.on('error', reject);
-      });
+    it('should throw KeyAndIVRetrievalError if token format is incorrect', async () => {
+      const invalidToken = 'Bearer invalid_token_format';
+      const request = { headers: { authorization: invalidToken } } as Request;
 
-      expect(data).toBe('SOME DATA');
+      await expect(service.getStandardKeyAndIV(request, 'appId')).rejects.toThrow(KeyAndIVRetrievalError);
+    });
+
+    it('should return undefined if no authorization header is present', async () => {
+      const request = { headers: {} } as Request;
+
+      const result = await service.getStandardKeyAndIV(request, 'appId');
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getTrialKeyAndIV', () => {
+    it('should return trial key and IV', async () => {
+      const request = { headers: {} } as Request;
+
+      const result = await service.getTrialKeyAndIV(request, 'appId');
+      expect(result).toEqual({ key: `trial_key_${process.env.ENCRYPT_DATA_STREAM_SALT}`, iv: 'appId' });
     });
   });
 });

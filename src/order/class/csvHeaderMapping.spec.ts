@@ -50,6 +50,7 @@ describe('Class OrderLogCsvHeaderMapping', () => {
         ['發票編號']: 'invoiceId',
         ['發票開立時間']: 'invoiceIssuedAt',
         ['發票狀態']: 'invoiceStatus',
+        ['商品備註']: 'specification',
       }).toEqual(header);
     });
   });

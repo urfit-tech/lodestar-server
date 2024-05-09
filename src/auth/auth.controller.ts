@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Body, Controller, Headers, Logger, Post, Req, Res, Session } from '@nestjs/common';
+import { Body, Controller, Headers, Logger, Post, Req, Res, Session, UseGuards } from '@nestjs/common';
 
 import { PublicMember } from '~/member/member.type';
 import { AppCache } from '~/app/app.type';
@@ -12,6 +12,10 @@ import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
 import { ApiTags, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import CrossServerTokenDTOProperty from './api_property/cross_server_token_dto';
+import { Permissions } from '~/decorators/permissions.decorator';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
+import { AuthGuard } from './auth.guard';
+import { PermissionGuard } from './permission.guard';
 
 @ApiTags('Auth')
 @Controller({
@@ -189,7 +193,8 @@ export class AuthController {
       result: { authToken },
     };
   }
-
+  @Permissions(PermissionSet.APP_TMP_PASSWORD_ADMIN)
+  @UseGuards(AuthGuard, PermissionGuard)
   @Post('password/temporary')
   @ApiExcludeEndpoint()
   async generateTmpPassword(@Body() body: GenerateTmpPasswordDTO) {

@@ -15,7 +15,7 @@ describe('VideoService', () => {
     CF_STREAMING_KEY_ID: 'your-cf-streaming-key-id',
     CF_STREAMING_JWK: 'your-cf-streaming-jwk',
     AWS_S3_BUCKET_STORAGE: 'your-aws-s3-bucket-storage',
-    AWS_STORAGE_CLOUDFRONT_URL: 'your-aws-storage-cloudfront-url',
+    AWS_STORAGE_CLOUDFRONT_URL: 'https://your-aws-storage-cloudfront-url',
   };
 
   beforeEach(async () => {
@@ -44,7 +44,7 @@ describe('VideoService', () => {
         key: 'vod/demo/a6/a63aa47f-4b8d-4364-a6e3-870a321b8758/output/hls/20240112155033_jvz-rxny-niu (2024-01-09 20_11 GMT+8)_1080/1080.m3u8 Expires=1705912183&Policy=test',
         signature: 'signature=test_signature',
       };
-      const expectedUrl = `${mockConfigValues.AWS_STORAGE_CLOUDFRONT_URL}/vod/demo/a6/a63aa47f-4b8d-4364-a6e3-870a321b8758/output/hls/20240112155033_jvz-rxny-niu %282024-01-09 20_11 GMT%2B8%29_1080/1080_01079.ts?${data.signature}`;
+      const expectedUrl = `${mockConfigValues.AWS_STORAGE_CLOUDFRONT_URL}/vod/demo/a6/a63aa47f-4b8d-4364-a6e3-870a321b8758/output/hls/20240112155033_jvz-rxny-niu%20%282024-01-09%2020_11%20GMT%2B8%29_1080/1080_01079.ts?${data.signature}`;
 
       const signedManifest = await service.parseManifestWithSignUrl(data.manifest, data.key, data.signature);
 

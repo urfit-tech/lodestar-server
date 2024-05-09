@@ -11,6 +11,9 @@ export class Property {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('text', { name: 'app_id' })
+  appId: string;
+
   @Column('text', { name: 'type' })
   type: string;
 
@@ -40,9 +43,6 @@ export class Property {
 
   @Column('boolean', { name: 'is_business', default: () => false })
   isBusiness: boolean;
-
-  @Column('text', { name: 'app_id', unique: true })
-  appId: string;
 
   @OneToMany(() => MemberProperty, (memberProperty) => memberProperty.property)
   memberProperties: MemberProperty[];

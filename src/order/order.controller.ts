@@ -15,8 +15,17 @@ import {
 import { Queue } from 'bull';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
+import { Permissions } from '~/decorators/permissions.decorator';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
+import { PermissionGuard } from '~/auth/permission.guard';
 
-@UseGuards(AuthGuard)
+const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
+  PermissionSet.SALES_RECORDS_NORMAL,
+  PermissionSet.SALES_RECORDS_ADMIN,
+];
+
+
+@UseGuards(AuthGuard, PermissionGuard)
 @Controller({
   path: 'orders',
   version: '2',
@@ -57,6 +66,7 @@ export class OrderController {
   }
 
   @Post('export')
+  @Permissions(...ORDER_PERMISSION_GROUP_ADMIN)
   public async exportOrderLogs(@Local('member') member: JwtMember, @Body() metadata: OrderExportDTO): Promise<void> {
     const { appId, memberId: invokerMemberId } = member;
 
@@ -72,6 +82,7 @@ export class OrderController {
   }
 
   @Post('export/products')
+  @Permissions(...ORDER_PERMISSION_GROUP_ADMIN)
   public async exportOrderProducts(
     @Local('member') member: JwtMember,
     @Body() metadata: OrderExportDTO,
@@ -89,6 +100,7 @@ export class OrderController {
   }
 
   @Post('export/discounts')
+  @Permissions(...ORDER_PERMISSION_GROUP_ADMIN)
   public async exportOrderDiscounts(
     @Local('member') member: JwtMember,
     @Body() metadata: OrderExportDTO,

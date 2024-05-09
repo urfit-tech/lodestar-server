@@ -61,7 +61,7 @@ export class AuthService {
       loggedInMembers: PublicMember[];
     },
     manager?: EntityManager,
-  ): Promise<{ status: LoginStatus; authToken?: string; member?: any; }> {
+  ): Promise<{ status: LoginStatus; authToken?: string; member?: any }> {
     const cb = async (manager: EntityManager) => {
       const { orgId } = appCache;
       // get possible members
@@ -98,8 +98,8 @@ export class AuthService {
     appCache: AppCache,
     options: {
       fingerPrintId: string;
-      sessionMemberId: string,
-      loggedInMembers: Array<PublicMember>,
+      sessionMemberId: string;
+      loggedInMembers: Array<PublicMember>;
     },
     manager?: EntityManager,
   ): Promise<{ status: RefreshStatus; fingerPrintId?: string; refreshedToken?: string }> {
@@ -116,8 +116,9 @@ export class AuthService {
       }
 
       const { modules: appModules } = appCache;
-      const isLoginAndDeviceModuleEnable = appModules.includes('login_restriction') || appModules.includes('device_management');
-      
+      const isLoginAndDeviceModuleEnable =
+        appModules.includes('login_restriction') || appModules.includes('device_management');
+
       if (member.role !== 'app-owner' && isLoginAndDeviceModuleEnable) {
         const device: MemberDevice | undefined = await this.deviceService.getByFingerprintId(member.id, fingerPrintId);
         if (device && !device.isLogin) {
@@ -180,7 +181,6 @@ export class AuthService {
       email: member.email,
       username: member.username,
       name: member.name,
-      pictureUrl: member.pictureUrl,
       isBusiness: member.isBusiness,
     };
 
@@ -202,18 +202,12 @@ export class AuthService {
       phoneNumber: phones && phones.length > 0 ? phones.pop().phone : '',
       isBusiness: member.isBusiness,
       loggedInMembers: [...loggedInMembers, publicMember],
-      pictureUrl: member.pictureUrl,
       options: oauths || {},
     };
     return plainToInstance(JwtDTO, plain);
   }
 
-  private async signJWT(
-    appCache: AppCache,
-    payload: JwtDTO,
-    expiresIn = '1 day',
-    manager: EntityManager,
-  ) {
+  private async signJWT(appCache: AppCache, payload: JwtDTO, expiresIn = '1 day', manager: EntityManager) {
     const { defaultPermissions } = appCache;
     const isFinishedSignUpProperty = payload?.memberId
       ? await this.checkUndoneSignUpProperty(payload.appId, payload.memberId, manager)
@@ -265,20 +259,18 @@ export class AuthService {
     return true;
   }
 
-  private async sendResetPasswordEmail(
-    appCache: AppCache, member: Member, manager: EntityManager,
-  ) {
+  private async sendResetPasswordEmail(appCache: AppCache, member: Member, manager: EntityManager) {
     const { id: appId, name: appName, host: appHost } = appCache;
 
     // create reset password token
-    const currentTimePer30min = Math.floor(Date.now() / 3000 / 600)
+    const currentTimePer30min = Math.floor(Date.now() / 3000 / 600);
     const resetPasswordToken = this.utilityService.generateMD5Hash(`${currentTimePer30min}${member.id}`);
 
     const subject = `[${appName}] 重設您的密碼 ${this.nodeEnv !== 'production' ? '(測試)' : ''}`;
     const partials = {
       appTitle: appName,
       url: `https://${appHost}/reset-password?token=${resetPasswordToken}&member=${member.id}`,
-    }
+    };
 
     await this.mailService.insertEmailJobIntoQueue({
       appId,
@@ -291,14 +283,7 @@ export class AuthService {
   }
 
   private async insertLastLoginJobIntoQueue(memberId: string) {
-    return this.cacheService
-      .getClient()
-      .set(
-        `last-logged-in:${memberId}`,
-        new Date().toISOString(),
-        'EX',
-        7 * 86400,
-      );
+    return this.cacheService.getClient().set(`last-logged-in:${memberId}`, new Date().toISOString(), 'EX', 7 * 86400);
   }
 
   async generateTmpPassword(appId: string, email: string, applicant: string, purpose: string) {

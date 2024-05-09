@@ -25,10 +25,8 @@ describe('ApplicationController (e2e)', () => {
     const route = '/healthz';
 
     it('Should return health check', async () => {
-      const { text } = await request(application.getHttpServer())
-        .get(route)
-        .expect(200);
-      expect(new Date(text)).not.toBeNull;
+      const { text } = await request(application.getHttpServer()).get(route).expect(200);
+      expect(text).toEqual('OK');
     });
-  });  
+  });
 });

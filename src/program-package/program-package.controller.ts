@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
@@ -27,6 +27,21 @@ export class ProgramPackageController {
     return this.programPackageService.getExpiredProgramPackageByMemberId(
       member.appId,
       String(memberId || member.memberId),
+    );
+  }
+
+  @Get('/:programPackageId')
+  async getEnrolledProgramPackageById(
+    @Local('member') member: JwtMember,
+    @Param('programPackageId') programPackageId: string,
+    @Req() request: Request,
+  ) {
+    const { memberId } = request.query;
+
+    return this.programPackageService.getEnrolledProgramPackageById(
+      member.appId,
+      String(memberId || member.memberId),
+      programPackageId,
     );
   }
 }

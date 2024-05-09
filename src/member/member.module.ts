@@ -16,6 +16,7 @@ import { CacheService } from '~/utility/cache/cache.service';
 import { AuthInfrastructure } from '~/auth/auth.infra';
 import { UtilityService } from '~/utility/utility.service';
 import { AuthModule } from '~/auth/auth.module';
+import { AccessControlService } from '~/auth/access-control.service';
 
 @Module({
   controllers: [MemberController],
@@ -32,6 +33,7 @@ import { AuthModule } from '~/auth/auth.module';
     MemberInfrastructure,
     MemberService,
     AuthService,
+    AccessControlService,
     CacheService,
     AuthInfrastructure,
     UtilityService,

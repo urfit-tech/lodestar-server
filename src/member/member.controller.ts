@@ -26,6 +26,7 @@ import { ApiBearerAuth, ApiExcludeEndpoint, ApiHideProperty, ApiTags } from '@ne
 import {
   MemberDeleteResultDTO,
   MemberExportDTO,
+  MemberGetConditionDTO,
   MemberGetDTO,
   MemberGetResultDTO,
   MemberImportDTO,
@@ -35,8 +36,39 @@ import {
 import { MemberService } from './member.service';
 import { APIException } from '~/api.excetion';
 import { ExecutorInfo, DeleteMemberInfo } from './member.type';
+import { Permissions } from '~/decorators/permissions.decorator';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
+import { PermissionGuard } from '~/auth/permission.guard';
 
-@UseGuards(AuthGuard)
+const MEMBER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
+  PermissionSet.MEMBER_ADMIN,
+  PermissionSet.POST_ADMIN,
+  PermissionSet.SALES_RECORDS_NORMAL,
+  PermissionSet.SALES_RECORDS_ADMIN,
+  PermissionSet.PROGRAM_ADMIN,
+  PermissionSet.PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN,
+  PermissionSet.APPOINTMENT_PLAN_ADMIN,
+  PermissionSet.COIN_ADMIN,
+  PermissionSet.SALES_LEAD_SELECTOR_ADMIN,
+  PermissionSet.SHIPPING_ADMIN,
+  PermissionSet.SHIPPING_NORMAL,
+  PermissionSet.MEMBER_PHONE_ADMIN,
+  PermissionSet.PROJECT_PORTFOLIO_ADMIN,
+  PermissionSet.SALES_PERFORMANCE_ADMIN,
+  PermissionSet.SALES_LEAD_ADMIN,
+  PermissionSet.SALES_LEAD_NORMAL,
+  PermissionSet.MATERIAL_AUDIT_LOG_ADMIN,
+];
+
+const MEMBER_DOWNLOAD_PERMISSION_GROUP: PermissionSet[] = [
+  PermissionSet.MEMBER_ADMIN,
+  PermissionSet.MEMBER_CREATE,
+  PermissionSet.SALES_LEAD_ADMIN,
+  PermissionSet.SALES_LEAD_NORMAL,
+  PermissionSet.SALES_PERFORMANCE_ADMIN,
+]
+
+@UseGuards(AuthGuard, PermissionGuard)
 @ApiTags('Member')
 @ApiBearerAuth()
 @Controller({
@@ -60,6 +92,7 @@ export class MemberController {
 
   // TODO: Should be deprecated with proper design with query parameter
   @Post()
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembersByPost(
     @Local('member') member: JwtMember,
@@ -69,41 +102,13 @@ export class MemberController {
     if (option && option.nextToken && option.prevToken) {
       throw new BadRequestException('nextToken & prevToken cannot appear in the same request.');
     }
-
     const { appId, permissions } = member;
-
-    if (
-      ![
-        'MEMBER_ADMIN',
-        'POST_ADMIN',
-        'SALES_RECORDS_NORMAL',
-        'SALES_RECORDS_ADMIN',
-        'PROGRAM_ADMIN',
-        'PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN',
-        'APPOINTMENT_PLAN_ADMIN',
-        'COIN_ADMIN',
-        'SALES_LEAD_SELECTOR_ADMIN',
-        'SHIPPING_ADMIN',
-        'SHIPPING_NORMAL',
-        'MEMBER_PHONE_ADMIN',
-        'PROJECT_PORTFOLIO_NORMAL',
-        'PROJECT_PORTFOLIO_ADMIN',
-        'SALES_PERFORMANCE_ADMIN',
-        'SALES_LEAD_ADMIN',
-        'SALES_LEAD_NORMAL',
-        'MATERIAL_AUDIT_LOG_ADMIN',
-      ].some((e) => permissions.includes(e))
-    ) {
-      throw new UnauthorizedException(
-        { message: 'missing required permission' },
-        'User permission is not met required permissions.',
-      );
-    }
 
     return this.memberService.getMembersByCondition(appId, option, condition);
   }
 
   @Get()
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async getMembers(@Local('member') member: JwtMember, @Body() dto: MemberGetDTO): Promise<MemberGetResultDTO> {
     const { option, condition } = dto;
@@ -113,38 +118,25 @@ export class MemberController {
 
     const { appId, permissions } = member;
 
-    if (
-      ![
-        'MEMBER_ADMIN',
-        'POST_ADMIN',
-        'SALES_RECORDS_NORMAL',
-        'SALES_RECORDS_ADMIN',
-        'PROGRAM_ADMIN',
-        'PROGRAM_PACKAGE_TEMPO_DELIVERY_ADMIN',
-        'APPOINTMENT_PLAN_ADMIN',
-        'COIN_ADMIN',
-        'SALES_LEAD_SELECTOR_ADMIN',
-        'SHIPPING_ADMIN',
-        'SHIPPING_NORMAL',
-        'MEMBER_PHONE_ADMIN',
-        'PROJECT_PORTFOLIO_NORMAL',
-        'PROJECT_PORTFOLIO_ADMIN',
-        'SALES_PERFORMANCE_ADMIN',
-        'SALES_LEAD_ADMIN',
-        'SALES_LEAD_NORMAL',
-        'MATERIAL_AUDIT_LOG_ADMIN',
-      ].some((e) => permissions.includes(e))
-    ) {
-      throw new UnauthorizedException(
-        { message: 'missing required permission' },
-        'User permission is not met required permissions.',
-      );
-    }
-
     return this.memberService.getMembersByCondition(appId, option, condition);
   }
 
+  @Post('member-role-count')
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
+  @ApiExcludeEndpoint()
+  public async getMembersRoleCountList(
+    @Local('member') member: JwtMember,
+    @Body() condition: MemberGetConditionDTO,
+  ) {
+    const { appId } = member
+
+    const result = await this.memberService.getMembersRoleCountList(appId , condition);
+
+    return result;
+  }
+
   @Post('import')
+  @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
   public async importMembers(@Local('member') member: JwtMember, @Body() metadata: MemberImportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;
@@ -163,6 +155,7 @@ export class MemberController {
   }
 
   @Post('export')
+  @Permissions(...MEMBER_DOWNLOAD_PERMISSION_GROUP)
   @ApiExcludeEndpoint()
   public async exportMembers(@Local('member') member: JwtMember, @Body() metadata: MemberExportDTO): Promise<void> {
     const { memberId: invokerMemberId } = member;

@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { chunk, flatten, isNull } from 'lodash';
-import { EntityManager, Equal, FindOptionsWhere, ILike, In, DeleteResult } from 'typeorm';
+import { EntityManager, Equal, FindOptionsWhere, ILike, In, DeleteResult, DeepPartial } from 'typeorm';
 import { ValidationError, isDateString, isEmpty } from 'class-validator';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
@@ -113,6 +113,56 @@ export class MemberService {
           logined_at: loginedAt,
           manager_id: managerId,
         })),
+      };
+    };
+    return cb(this.entityManager);
+  }
+
+  async getMembersRoleCountList(
+    appId: string,
+    condition?: MemberGetConditionDTO,
+  ): Promise<{ data: { role: string; count: number }[] }> {
+    const cb = async (manager: EntityManager): Promise<{ data: { role: string; count: number }[] }> => {
+      const wrapCondition: FindOptionsWhere<Member> = condition
+        ? {
+            ...(condition.name && { name: ILike(condition.name) }),
+            ...(condition.email && { email: ILike(condition.email) }),
+            ...(condition.managerName && {
+              manager: {
+                name: ILike(condition.managerName),
+              },
+            }),
+            ...(condition.managerId && { managerId: Equal(condition.managerId) }),
+            ...(condition.phone && {
+              memberPhones: {
+                phone: condition.phone,
+              },
+            }),
+            ...(condition.tag && {
+              memberTags: {
+                tagName: condition.tag,
+              },
+            }),
+            ...(condition.category && {
+              memberCategories: {
+                category: { name: condition.category },
+              },
+            }),
+            ...(condition.permissionGroup && {
+              memberPermissionGroups: {
+                permissionGroup: { name: condition.permissionGroup },
+              },
+            }),
+            ...(condition.properties && {
+              memberProperties: condition.properties,
+            }),
+          }
+        : {};
+
+      const roleCounts = await this.memberInfra.getMemberRoleCounts(appId, wrapCondition, {}, manager);
+
+      return {
+        data: roleCounts,
       };
     };
     return cb(this.entityManager);
@@ -370,6 +420,10 @@ export class MemberService {
     return this.memberInfra.getMemberTasks(memberId, this.entityManager);
   }
 
+  async getMemberTasksByExecutorId(executorId: string): Promise<Array<MemberTask>> {
+    return this.memberInfra.getMemberTasksByExecutorId(executorId, this.entityManager);
+  }
+
   async timedMemberInfraFunction(name, memberInfraFunction, managerId, appId) {
     const formattedTimestamp = dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
     const start = performance.now();
@@ -472,5 +526,17 @@ export class MemberService {
 
   private mapMemberContract({ mc_member_id, mc_agreed_at, mc_revoked_at, mc_values }) {
     return { memberId: mc_member_id, agreed_at: mc_agreed_at, revoked_at: mc_revoked_at, values: mc_values };
+  }
+  async upsertMemberByEmail(
+    appId: string,
+    email: string,
+    name: string,
+    username: string,
+    role: string,
+  ): Promise<Member> {
+    return this.memberInfra.upsertMemberByEmail(appId, email, name, username, role, this.entityManager);
+  }
+  async upsertMemberBy(data: DeepPartial<Member>, by: FindOptionsWhere<Member>): Promise<Member> {
+    return this.memberInfra.upsertMemberBy(this.entityManager, data, by);
   }
 }

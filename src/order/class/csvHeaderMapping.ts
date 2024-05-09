@@ -152,6 +152,10 @@ export class OrderLogCsvHeaderMapping {
   @IsNotEmpty()
   invoiceStatus: string;
 
+  @IsString()
+  @IsNotEmpty()
+  specification: string;
+
   public async createHeader() {
     this.orderLogId = '訂單編號';
     this.paymentLogNo = '交易編號';
@@ -191,6 +195,7 @@ export class OrderLogCsvHeaderMapping {
     this.invoiceId = '發票編號';
     this.invoiceIssuedAt = '發票開立時間';
     this.invoiceStatus = '發票狀態';
+    this.specification = '商品備註';
 
     return this;
   }
@@ -235,6 +240,7 @@ export class OrderLogCsvHeaderMapping {
       ['發票編號']: 'invoiceId',
       ['發票開立時間']: 'invoiceIssuedAt',
       ['發票狀態']: 'invoiceStatus',
+      ['商品備註']: 'specification',
     };
   }
 }

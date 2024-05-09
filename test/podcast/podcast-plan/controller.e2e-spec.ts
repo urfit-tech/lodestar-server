@@ -80,7 +80,7 @@ describe('PodcastPlanController (e2e)', () => {
       .use(urlencoded({ extended: true, limit: '10mb' }))
       .use(
         session({
-          secret: 'kolable-test',
+          secret: process.env.SESSION_SECRET,
           store: new RedisStore({ client: cacheService.getClient() }),
           resave: false,
           saveUninitialized: false,

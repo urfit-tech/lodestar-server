@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { StorageService } from './storage.service';
 import {
   CompleteMultipartUploadDTO,
   CreateMultipartUploadDTO,
+  DownloadDTO,
   MultipartUploadSignUrlDTO,
   UploadDTO,
 } from './storage.dto';
@@ -11,7 +11,6 @@ import { MediaService } from '~/media/media.service';
 import { ConfigService } from '@nestjs/config';
 import { Attachment } from '~/media/attachment.entity';
 import { AuthGuard } from '~/auth/auth.guard';
-
 @Controller({
   path: 'storage',
   version: ['1', '2'],
@@ -35,6 +34,12 @@ export class StorageController {
   uploadFileToStorageBucket(@Body() body: UploadDTO) {
     const { appId, fileName, prefix } = body;
     return this.storageService.getSignedUrlForUploadStorage(appId, fileName, prefix, 60);
+  }
+
+  @Post('storage/download')
+  async getDownloadUrlFromStorageBucket(@Body() body: DownloadDTO) {
+    const { appId, fileName, prefix } = body;
+    return this.storageService.getSignedUrlForDownloadStorage(`${prefix}/${appId}/${fileName}`, 60);
   }
 
   @Post('/multipart/create')

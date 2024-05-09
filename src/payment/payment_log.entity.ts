@@ -65,6 +65,9 @@ export class PaymentLog {
   })
   invoiceOptions: object;
 
+  @Column('uuid', { name: 'invoice_gateway_id', nullable: true })
+  invoiceGatewayId: string | null;
+
   @ManyToOne(() => OrderLog, (orderLog) => orderLog.paymentLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

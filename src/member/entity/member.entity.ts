@@ -64,6 +64,7 @@ import { MemberDevice } from './member_device.entity';
 import { MemberOauth } from './member_oauth.entity';
 import { MemberPhone } from './member_phone.entity';
 import { MemberTag } from './member_tag.entity';
+import { ActivityTicketEnrollment } from '~/activity/view_entity/ActivityTicketEnrollment';
 
 @Index('member_line_user_id_app_id_key', ['appId', 'lineUserId'], {
   unique: true,
@@ -119,7 +120,7 @@ export class Member {
   passhash: string | null;
 
   @Column('text', { name: 'manager_id', nullable: true })
-  managerId: string;
+  managerId: string | null;
 
   @Column('text', { name: 'facebook_user_id', nullable: true })
   facebookUserId: string | null;
@@ -171,6 +172,12 @@ export class Member {
   })
   lastMemberNoteCreated: Date | null;
 
+  @Column('timestamp with time zone', {
+    name: 'last_member_note_called',
+    nullable: true,
+  })
+  lastMemberNoteCalled: Date | null;
+
   @Column('text', { name: 'status', default: () => "'verified'" })
   status: string;
 
@@ -179,6 +186,12 @@ export class Member {
     default: () => 'jsonb_build_array()',
   })
   verifiedEmails: object;
+
+  @Column('timestamp with time zone', {
+    name: 'last_member_note_answered',
+    nullable: true,
+  })
+  lastMemberNoteAnswered: Date | null;
 
   @Column('boolean', { name: 'is_business', default: () => false })
   isBusiness: boolean;
@@ -400,4 +413,7 @@ export class Member {
 
   @OneToMany(() => Voucher, (voucher) => voucher.member)
   vouchers: Voucher[];
+
+  @OneToMany(() => ActivityTicketEnrollment, (enrollment) => enrollment.member)
+  enrollments: ActivityTicketEnrollment[];
 }

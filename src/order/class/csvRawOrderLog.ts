@@ -125,6 +125,9 @@ export class CsvRawOrderLog {
   @IsString()
   invoiceStatus: string;
 
+  @IsString()
+  specification: string;
+
   public serializeToCsvRawRow(header: OrderLogCsvHeaderMapping): Record<string, string | number | string> {
     return {
       [header.orderLogId]: this.orderLogId,
@@ -165,6 +168,7 @@ export class CsvRawOrderLog {
       [header.invoiceId]: this.invoiceId,
       [header.invoiceIssuedAt]: this.invoiceIssuedAt,
       [header.invoiceStatus]: this.invoiceStatus,
+      [header.specification]: this.specification,
     };
   }
 }

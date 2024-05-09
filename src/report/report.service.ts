@@ -32,10 +32,34 @@ export class ReportService {
   generateMetabaseSignedUrl(payload: MetabasePayload) {
     const secretKey = this.configService.get('METABASE_SECRET_KEY');
     const siteUrl = this.configService.get('METABASE_SITE_URL');
-    const metabaseType = Object.keys(payload.resource)[0] === 'question' ? 'question' : ' dashboard';
+    const metabaseType = Object.keys(payload.resource)[0] === 'question' ? 'question' : 'dashboard';
     payload.exp = Math.round(Date.now() / 1000) + 10 * 60;
     const token = sign(payload, secretKey);
     const iframeUrl = `${siteUrl}/embed/${metabaseType}/${token}`;
     return iframeUrl;
+  }
+
+  prepareMetabaseUrl(appId: string, memberId: string, role: string, options: any): string {
+    const payload = options.canViewSelfDataOnly
+      ? !!Object.keys(options.metabase.resource).includes('dashboard')
+        ? {
+            ...options.metabase,
+            params: {
+              appid: appId,
+              memberid: memberId,
+              role,
+            },
+          }
+        : {
+            ...options.metabase,
+            params: {
+              appId,
+              memberId,
+              role,
+            },
+          }
+      : options.metabase;
+
+    return this.generateMetabaseSignedUrl(payload);
   }
 }

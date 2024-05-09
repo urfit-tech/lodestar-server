@@ -37,3 +37,6 @@ lerna-debug.log*
 *.env
 .env.development
 .env.production
+
+# automation of docker containers and migration 
+db.sh

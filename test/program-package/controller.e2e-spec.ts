@@ -92,7 +92,7 @@ describe('ProgramPackageController (e2e)', () => {
       .use(urlencoded({ extended: true, limit: '10mb' }))
       .use(
         session({
-          secret: 'kolable-test',
+          secret: process.env.SESSION_SECRET,
           store: new RedisStore({ client: cacheService.getClient() }),
           resave: false,
           saveUninitialized: false,
@@ -251,6 +251,39 @@ describe('ProgramPackageController (e2e)', () => {
     });
 
     it('Should successfully get expired program packages by member', async () => {
+      const {
+        body: {
+          result: { authToken },
+        },
+      } = await request(application.getHttpServer()).post('/auth/general-login').set('host', appHost.host).send({
+        appId,
+        account: email,
+        password: password,
+      });
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(200).toEqual(result.status);
+    });
+  });
+  describe('/program-packages/:programPackageId (GET)', () => {
+    const route = `/program-packages/${programPackage.id}`;
+    const appId = member.appId;
+    const email = member.email;
+    const password = 'test_password';
+
+    it('Should raise error due to unauthorized', async () => {
+      const header = { host: appHost.host };
+
+      request(application.getHttpServer())
+        .get(`${route}`)
+        .set(header)
+        .expect({ statusCode: 401, message: 'Unauthorized' });
+    });
+
+    it('Should successfully get owned program packages by program package id and member', async () => {
       const {
         body: {
           result: { authToken },

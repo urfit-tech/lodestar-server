@@ -38,6 +38,8 @@ import { CouponPlan } from '~/entity/CouponPlan';
 import { CouponCode } from '~/entity/CouponCode';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { CouponPlanProduct } from '~/entity/CouponPlanProduct';
+import { MemberNote } from '~/entity/MemberNote';
+import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -100,17 +102,32 @@ member.role = role.name;
 member.name = 'testMember';
 member.passhash = bcrypt.hashSync('test_password', 1);
 
+export const memberNote = new MemberNote();
+memberNote.id = v4();
+memberNote.authorId = member.id;
+memberNote.memberId = member.id;
+
 export const program = new Program();
 program.id = v4();
 program.title = 'test program';
 program.abstract = 'test program abstract';
 program.appId = app.id;
+program.publishedAt = dayjs().subtract(1, 'day').toDate();
+
+export const currency = new Currency();
+currency.id = 'TWD';
+currency.label = '';
+currency.unit = '';
+currency.name = '';
 
 export const programPlan = new ProgramPlan();
 programPlan.id = v4();
 programPlan.programId = program.id;
 programPlan.title = 'test program plan';
+programPlan.type = 3; // can view all program
 programPlan.listPrice = 0;
+programPlan.cardId = null;
+programPlan.currency = currency;
 
 export const programRole = new ProgramRole();
 programRole.id = v4();
@@ -132,7 +149,14 @@ programContent.contentSectionId = programContentSection.id;
 programContent.contentBodyId = programContentBody.id;
 programContent.title = 'test program content title';
 programContent.position = 0;
+programContent.publishedAt = dayjs().subtract(1, 'day').toDate();
 programContent.displayMode = 'payToWatch';
+programContent.pinnedStatus = false;
+
+export const programContentPlan = new ProgramContentPlan();
+programContentPlan.id = v4();
+programContentPlan.programPlanId = programPlan.id;
+programContentPlan.programContentId = programContent.id;
 
 export const programContentProgress = new ProgramContentProgress();
 programContentProgress.id = v4();
@@ -216,12 +240,6 @@ export const podcastPlanProduct = new Product();
 podcastPlanProduct.type = 'PodcastPlan';
 podcastPlanProduct.id = `${podcastPlanProduct.type}_${podcastPlan.id}`;
 podcastPlanProduct.target = podcastPlan.id;
-
-export const currency = new Currency();
-currency.id = 'TWD';
-currency.label = '';
-currency.unit = '';
-currency.name = '';
 
 export const orderProduct = new OrderProduct();
 orderProduct.id = v4();
