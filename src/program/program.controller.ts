@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Param, Req, UnauthorizedException, UseGuards, Headers } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Req, UnauthorizedException, UseGuards, Headers, Query } from '@nestjs/common';
 import { Request } from 'express';
 import { APIException } from '~/api.excetion';
 import { JwtMember } from '~/auth/auth.dto';
@@ -107,6 +107,12 @@ export class ProgramController {
     @Param('programId') programId: string,
   ): Promise<MaterialsResponseDto[]> {
     return this.programService.getProgramContentMaterialsByProgramId(programId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get()
+  async getProgramsByMemberId(@Local('member') member: JwtMember, @Query('memberId') memberId: string) {
+    return this.programService.getProgramsByMemberId(member.appId, String(memberId || member.memberId));
   }
 
   private _verifyAuthorization(authorization: string) {
