@@ -25,4 +25,10 @@ export const PostgresDataSourceConfig: DataSourceOptions = {
   synchronize: false,
   logging: true,
   entities: PostgresEntities,
+  ssl: true,
+  extra: {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  },
 };
