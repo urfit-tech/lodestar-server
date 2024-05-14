@@ -3,6 +3,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGenerat
 import { App } from '~/app/entity/app.entity';
 
 import { CardDiscount } from './CardDiscount';
+import { CardProduct } from './CardProduct';
 
 @Index('card_pkey', ['id'], { unique: true })
 @Entity('card', { schema: 'public' })
@@ -31,4 +32,7 @@ export class Card {
 
   @OneToMany(() => CardDiscount, (cardDiscount) => cardDiscount.card)
   cardDiscounts: CardDiscount[];
+
+  @OneToMany(() => CardProduct, (cardProduct) => cardProduct.card)
+  cardProducts: CardProduct[];
 }
