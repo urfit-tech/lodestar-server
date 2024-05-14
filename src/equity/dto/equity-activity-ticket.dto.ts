@@ -60,6 +60,9 @@ export class FetchMemberRightActivityTicketDTO {
   @IsOptional()
   @IsUUID()
   sessionId?: string;
+
+  @IsString()
+  memberId: string;
 }
 
 export class FetchMemberRightActivityTicketQuery {

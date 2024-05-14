@@ -23,12 +23,15 @@ export class EquityController {
     @Query() dto: FetchMemberRightActivityTicketDTO,
     @Local('member') member: JwtMember,
   ): Promise<MemberRightActivityTicketDataDto> {
-    const { memberId } = member;
+    const { memberId, role } = member;
+
+    // Use memberId from params for app-owners (verified identity), otherwise use token memberId for security.
+    const targetActivityTicketMemberId = role === 'app-owner' ? dto.memberId : memberId;
 
     const queryDto = new FetchMemberRightActivityTicketQuery();
     queryDto.activityTicketId = dto.activityTicketId;
     queryDto.sessionId = dto.sessionId;
-    queryDto.memberId = memberId;
+    queryDto.memberId = targetActivityTicketMemberId;
 
     try {
       return await this.activityTicketService.memberRightActivityTicket(queryDto);
