@@ -248,7 +248,7 @@ describe('ProgramController (e2e)', () => {
     },
   };
 
-  describe('/programs/:programId/contents/:programContentId (GET)', () => {
+  describe('GET /programs/:programId/contents/:programContentId', () => {
     const route = apiPath.program.programs + '/' + program.id + apiPath.content.contents + '/' + programContent.id;
     const password = 'test_password';
 
@@ -313,7 +313,7 @@ describe('ProgramController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
-    it(`Should return empty to member's role is general-member and haven't order`, async () => {
+    it(`Should return program basic info to member's role is general-member and haven't order`, async () => {
       await memberRepo.save(testGeneralMember);
 
       const { body } = await request(application.getHttpServer())
@@ -331,160 +331,11 @@ describe('ProgramController (e2e)', () => {
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return empty to member's permission is PROGRAM_NORMAL and member isn't program role`, async () => {
-      await permissionRepo.save(programNormalPermission);
-      await memberRepo.save(testGeneralMember);
-      await memberPermissionExtraRepo.save(testGeneralMemberProgramNormalPermission);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return empty to member's permission isn't PROGRAM_ADMIN or PROGRAM_NORMAL and program role is instructor`, async () => {
-      await memberRepo.save(testGeneralMember);
-      await programRoleRepo.save(testGeneralMemberProgramRoleInstructor);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return empty to member's permission isn't PROGRAM_ADMIN or PROGRAM_NORMAL and program role is owner`, async () => {
-      await memberRepo.save(testGeneralMember);
-      await programRoleRepo.save(testGeneralMemberProgramRoleOwner);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return successfully to member's role is app-owner`, async () => {
-      await memberRepo.save(member);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: member.appId,
-          account: member.email,
-          password: password,
-        })
-        .expect(201);
-
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(result.status).toEqual(200);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return successfully to member's role is general-member and have program plan order`, async () => {
-      programPlan.type = 3; // can view all program
-      testGeneralMemberOrderProduct.productId = programPlanProduct.id;
-
-      await memberRepo.save(testGeneralMember);
-      await programPlanRepo.save(programPlan);
-      await orderLogRepo.save(testGeneralMemberOrderLog);
-      await orderProductRepo.save(testGeneralMemberOrderProduct);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return successfully to member's role is general-member and have program plan order and program plan type is subscribed all`, async () => {
-      programPlan.type = 1; // only can view program_content_plan matched program
-      testGeneralMemberOrderProduct.productId = programPlanProduct.id;
-
-      await memberRepo.save(testGeneralMember);
-      await programPlanRepo.save(programPlan);
-      await orderLogRepo.save(testGeneralMemberOrderLog);
-      await orderProductRepo.save(testGeneralMemberOrderProduct);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
       expect(result.body).toEqual({
         id: programContent.id,
         title: programContent.title,
-        abstract: programContent.abstract,
-        contentBodyId: programContent.contentBodyId,
-        publishedAt: programContent.publishedAt.toISOString(),
-        duration: programContent.duration,
-        displayMode: programContent.displayMode,
         contentType: programContent.contentType,
-        contentSectionTitle: programContentSection.title,
+        displayMode: programContent.displayMode,
         audios: [],
         videos: [],
         attachment: [],
@@ -494,25 +345,14 @@ describe('ProgramController (e2e)', () => {
           id: programContentBody.id,
           type: programContentBody.type,
         },
-        isEquity: true,
-        listPrice: programContent.listPrice,
-        metadata: programContent.metadata,
-        pinnedStatus: programContent.pinnedStatus,
-        salePrice: programContent.salePrice,
-        soldAt: programContent.soldAt,
+        isEquity: false,
       });
     });
 
-    it(`Should return successfully to member's role is general-member and have program plan order and program plan type is subscribed from now`, async () => {
-      programPlan.type = 2; // only can view program_content_plan matched program and ProgramContent publish_at > orderProduct delivered_at
-      programContent.publishedAt = dayjs(orderProduct.deliveredAt).add(1, 'day').toDate();
-      testGeneralMemberOrderProduct.productId = programPlanProduct.id;
-
+    it(`Should return program basic info to member's permission is PROGRAM_NORMAL and member isn't program role`, async () => {
+      await permissionRepo.save(programNormalPermission);
       await memberRepo.save(testGeneralMember);
-      await programPlanRepo.save(programPlan);
-      await programContentRepo.save(programContent);
-      await orderLogRepo.save(testGeneralMemberOrderLog);
-      await orderProductRepo.save(testGeneralMemberOrderProduct);
+      await memberPermissionExtraRepo.save(testGeneralMemberProgramNormalPermission);
 
       const { body } = await request(application.getHttpServer())
         .post(apiPath.auth.generalLogin)
@@ -529,127 +369,27 @@ describe('ProgramController (e2e)', () => {
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
-      expect(200).toEqual(result.status);
+      expect(result.body).toEqual({
+        id: programContent.id,
+        title: programContent.title,
+        contentType: programContent.contentType,
+        displayMode: programContent.displayMode,
+        audios: [],
+        videos: [],
+        attachment: [],
+        programContentBody: {
+          data: programContentBody.data,
+          description: programContentBody.description,
+          id: programContentBody.id,
+          type: programContentBody.type,
+        },
+        isEquity: false,
+      });
     });
 
-    it(`Should return successfully to member's role is general-member and have program package plan order`, async () => {
-      programPackagePlan.isTempoDelivery = false;
-      testGeneralMemberOrderProduct.productId = programPackagePlanProduct.id;
-
-      await memberRepo.save(testGeneralMember);
-      await programPackagePlanRepo.save(programPackagePlan);
-      await orderLogRepo.save(testGeneralMemberOrderLog);
-      await orderProductRepo.save(testGeneralMemberOrderProduct);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return successfully to member's role is general-member and have program package plan order and program package plan is tempo delivery`, async () => {
-      programPackagePlan.isTempoDelivery = true;
-      testGeneralMemberOrderProduct.productId = programPackagePlanProduct.id;
-
-      const programTempoDelivery = new ProgramTempoDelivery();
-      programTempoDelivery.id = v4();
-      programTempoDelivery.memberId = testGeneralMember.id;
-      programTempoDelivery.programPackageProgramId = programPackageProgram.id;
-      programTempoDelivery.deliveredAt = dayjs().subtract(1, 'day').toDate();
-
-      await memberRepo.save(testGeneralMember);
-      await programPackagePlanRepo.save(programPackagePlan);
-      await orderLogRepo.save(testGeneralMemberOrderLog);
-      await orderProductRepo.save(testGeneralMemberOrderProduct);
-      await programTempoDeliveryRepo.save(programTempoDelivery);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return successfully to member's permission isn't PROGRAM_ADMIN or PROGRAM_NORMAL and program role is assistant`, async () => {
-      const testGeneralMemberProgramRoleAssistant = new ProgramRole();
-      testGeneralMemberProgramRoleAssistant.id = v4();
-      testGeneralMemberProgramRoleAssistant.programId = program.id;
-      testGeneralMemberProgramRoleAssistant.memberId = testGeneralMember.id;
-      testGeneralMemberProgramRoleAssistant.name = 'assistant';
-
-      await memberRepo.save(testGeneralMember);
-      await programRoleRepo.save(testGeneralMemberProgramRoleAssistant);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return successfully to member's permission is PROGRAM_ADMIN and isn't program role`, async () => {
-      await permissionRepo.save(programAdminPermission);
-      await memberRepo.save(testGeneralMember);
-      await memberPermissionExtraRepo.save(testGeneralMemberProgramAdminPermission);
-
-      const { body } = await request(application.getHttpServer())
-        .post(apiPath.auth.generalLogin)
-        .set('host', appHost.host)
-        .send({
-          appId: testGeneralMember.appId,
-          account: testGeneralMember.email,
-          password: password,
-        })
-        .expect(201);
-      const { authToken } = body.result;
-
-      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
-
-      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
-
-      expect(200).toEqual(result.status);
-    });
-
-    it(`Should return successfully to member's permission is PROGRAM_NORMAL and program role is instructor`, async () => {
+    it(`Should return program basic info to member's permission isn't PROGRAM_ADMIN or PROGRAM_NORMAL and program role is instructor`, async () => {
       await memberRepo.save(testGeneralMember);
       await programRoleRepo.save(testGeneralMemberProgramRoleInstructor);
-      await permissionRepo.save(programNormalPermission);
-      await memberPermissionExtraRepo.save(testGeneralMemberProgramNormalPermission);
 
       const { body } = await request(application.getHttpServer())
         .post(apiPath.auth.generalLogin)
@@ -666,14 +406,27 @@ describe('ProgramController (e2e)', () => {
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
-      expect(200).toEqual(result.status);
+      expect(result.body).toEqual({
+        id: programContent.id,
+        title: programContent.title,
+        contentType: programContent.contentType,
+        displayMode: programContent.displayMode,
+        audios: [],
+        videos: [],
+        attachment: [],
+        programContentBody: {
+          data: programContentBody.data,
+          description: programContentBody.description,
+          id: programContentBody.id,
+          type: programContentBody.type,
+        },
+        isEquity: false,
+      });
     });
 
-    it(`Should return successfully to member's permission is PROGRAM_NORMAL and program role is owner`, async () => {
-      await permissionRepo.save(programNormalPermission);
+    it(`Should return program basic info to member's permission isn't PROGRAM_ADMIN or PROGRAM_NORMAL and program role is owner`, async () => {
       await memberRepo.save(testGeneralMember);
       await programRoleRepo.save(testGeneralMemberProgramRoleOwner);
-      await memberPermissionExtraRepo.save(testGeneralMemberProgramNormalPermission);
 
       const { body } = await request(application.getHttpServer())
         .post(apiPath.auth.generalLogin)
@@ -690,7 +443,467 @@ describe('ProgramController (e2e)', () => {
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
-      expect(200).toEqual(result.status);
+      expect(result.body).toEqual({
+        id: programContent.id,
+        title: programContent.title,
+        contentType: programContent.contentType,
+        displayMode: programContent.displayMode,
+        audios: [],
+        videos: [],
+        attachment: [],
+        programContentBody: {
+          data: programContentBody.data,
+          description: programContentBody.description,
+          id: programContentBody.id,
+          type: programContentBody.type,
+        },
+        isEquity: false,
+      });
+    });
+
+    describe('program plan order', () => {
+      it(`Should return successfully to member's role is general-member and have program plan order`, async () => {
+        programPlan.type = 3; // can view all program
+        testGeneralMemberOrderProduct.productId = programPlanProduct.id;
+
+        await memberRepo.save(testGeneralMember);
+        await programPlanRepo.save(programPlan);
+        await orderLogRepo.save(testGeneralMemberOrderLog);
+        await orderProductRepo.save(testGeneralMemberOrderProduct);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(200).toEqual(result.status);
+      });
+
+      it(`Should return successfully to member's role is general-member and have program plan order and program plan type is subscribed all`, async () => {
+        programPlan.type = 1; // only can view program_content_plan matched program
+        testGeneralMemberOrderProduct.productId = programPlanProduct.id;
+
+        await memberRepo.save(testGeneralMember);
+        await programPlanRepo.save(programPlan);
+        await orderLogRepo.save(testGeneralMemberOrderLog);
+        await orderProductRepo.save(testGeneralMemberOrderProduct);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+      it(`Should return successfully to member's role is general-member and have program plan order and program plan type is subscribed from now`, async () => {
+        programPlan.type = 2; // only can view program_content_plan matched program and ProgramContent publish_at > orderProduct delivered_at
+        programContent.publishedAt = dayjs(orderProduct.deliveredAt).add(1, 'day').toDate();
+        testGeneralMemberOrderProduct.productId = programPlanProduct.id;
+
+        await memberRepo.save(testGeneralMember);
+        await programPlanRepo.save(programPlan);
+        await programContentRepo.save(programContent);
+        await orderLogRepo.save(testGeneralMemberOrderLog);
+        await orderProductRepo.save(testGeneralMemberOrderProduct);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+    });
+    describe('program package plan order', () => {
+      it(`Should return successfully to member's role is general-member and have program package plan order`, async () => {
+        programPackagePlan.isTempoDelivery = false;
+        testGeneralMemberOrderProduct.productId = programPackagePlanProduct.id;
+
+        await memberRepo.save(testGeneralMember);
+        await programPackagePlanRepo.save(programPackagePlan);
+        await orderLogRepo.save(testGeneralMemberOrderLog);
+        await orderProductRepo.save(testGeneralMemberOrderProduct);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(200).toEqual(result.status);
+      });
+
+      it(`Should return successfully to member's role is general-member and have program package plan order and program package plan is tempo delivery`, async () => {
+        programPackagePlan.isTempoDelivery = true;
+        testGeneralMemberOrderProduct.productId = programPackagePlanProduct.id;
+
+        const programTempoDelivery = new ProgramTempoDelivery();
+        programTempoDelivery.id = v4();
+        programTempoDelivery.memberId = testGeneralMember.id;
+        programTempoDelivery.programPackageProgramId = programPackageProgram.id;
+        programTempoDelivery.deliveredAt = dayjs().subtract(1, 'day').toDate();
+
+        await memberRepo.save(testGeneralMember);
+        await programPackagePlanRepo.save(programPackagePlan);
+        await orderLogRepo.save(testGeneralMemberOrderLog);
+        await orderProductRepo.save(testGeneralMemberOrderProduct);
+        await programTempoDeliveryRepo.save(programTempoDelivery);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(200).toEqual(result.status);
+      });
+    });
+    describe('program role', () => {
+      it(`Should return successfully to member's role is app-owner`, async () => {
+        await memberRepo.save(member);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: member.appId,
+            account: member.email,
+            password: password,
+          })
+          .expect(201);
+
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+
+      it(`Should return successfully to member's permission isn't PROGRAM_ADMIN or PROGRAM_NORMAL and program role is assistant`, async () => {
+        const testGeneralMemberProgramRoleAssistant = new ProgramRole();
+        testGeneralMemberProgramRoleAssistant.id = v4();
+        testGeneralMemberProgramRoleAssistant.programId = program.id;
+        testGeneralMemberProgramRoleAssistant.memberId = testGeneralMember.id;
+        testGeneralMemberProgramRoleAssistant.name = 'assistant';
+
+        await memberRepo.save(testGeneralMember);
+        await programRoleRepo.save(testGeneralMemberProgramRoleAssistant);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+
+      it(`Should return successfully to member's permission is PROGRAM_ADMIN and isn't program role`, async () => {
+        await permissionRepo.save(programAdminPermission);
+        await memberRepo.save(testGeneralMember);
+        await memberPermissionExtraRepo.save(testGeneralMemberProgramAdminPermission);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          appId: app.id,
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+
+      it(`Should return successfully to member's permission is PROGRAM_NORMAL and program role is instructor`, async () => {
+        await memberRepo.save(testGeneralMember);
+        await programRoleRepo.save(testGeneralMemberProgramRoleInstructor);
+        await permissionRepo.save(programNormalPermission);
+        await memberPermissionExtraRepo.save(testGeneralMemberProgramNormalPermission);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+
+      it(`Should return successfully to member's permission is PROGRAM_NORMAL and program role is owner`, async () => {
+        await permissionRepo.save(programNormalPermission);
+        await memberRepo.save(testGeneralMember);
+        await programRoleRepo.save(testGeneralMemberProgramRoleOwner);
+        await memberPermissionExtraRepo.save(testGeneralMemberProgramNormalPermission);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
     });
   });
 
