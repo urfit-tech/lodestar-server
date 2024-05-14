@@ -2,6 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGenerat
 import { Currency } from './Currency';
 import { Program } from './Program';
 import { ProgramContentPlan } from './ProgramContentPlan';
+import { CardProduct } from './CardProduct';
 
 @Index('program_plan_pkey', ['id'], { unique: true })
 @Index('program_plan_program_id', ['programId'], {})
@@ -108,4 +109,7 @@ export class ProgramPlan {
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
   program: Program;
+
+  @OneToMany(() => CardProduct, (cardProduct) => cardProduct.programPlan)
+  cardProducts: CardProduct[];
 }

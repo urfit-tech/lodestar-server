@@ -230,6 +230,7 @@ import { ProgramContentEbook } from './ProgramContentEbook';
 import { AppInvoiceGateway } from './AppInvoiceGateway';
 import { InvoiceGateway } from './InvoiceGateway';
 import { AppointmentEnrollmentView } from './AppointmentEnrollmentView';
+import { CardProduct } from './CardProduct';
 
 export const PostgresEntities = [
   Activity,
@@ -270,6 +271,7 @@ export const PostgresEntities = [
   BundleItem,
   Card,
   CardDiscount,
+  CardProduct,
   CartItem,
   CartProduct,
   Category,
