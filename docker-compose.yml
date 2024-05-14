@@ -39,6 +39,9 @@ services:
     profiles: ["test", "all"]
     ports:
       - 127.0.0.1:5432:5432
+    volumes:
+      - ./server.crt:/path/in/container/server.crt
+      - ./server.key:/path/in/container/server.key
     environment:
       POSTGRESQL_USERNAME: 'user'
       POSTGRESQL_DATABASE: 'test'
@@ -48,12 +51,19 @@ services:
       POSTGRESQL_REPLICATION_MODE: 'master'
       POSTGRESQL_REPLICATION_USER: 'repl_user'
       POSTGRESQL_REPLICATION_PASSWORD: 'repl_password'
+      POSTGRESQL_ENABLE_TLS: 'yes' 
+      POSTGRESQL_TLS_CERT_FILE: '/var/lib/postgresql/server.crt'
+      POSTGRESQL_TLS_KEY_FILE: '/var/lib/postgresql/server.key'
+      
   
   postgres-test-slave-1:
     <<: *postgres
     profiles: ["test", "all"]
     ports:
       - 127.0.0.1:5433:5432
+    volumes:
+      - ./server.crt:/path/in/container/server.crt
+      - ./server.key:/path/in/container/server.key
     environment:
       POSTGRESQL_USERNAME: 'user'
       POSTGRESQL_PASSWORD: '1234'
@@ -64,6 +74,10 @@ services:
       POSTGRESQL_REPLICATION_USER: 'repl_user'
       POSTGRESQL_REPLICATION_PASSWORD: 'repl_password'
       POSTGRESQL_MASTER_PORT_NUMBER: '5432'
+      POSTGRESQL_ENABLE_TLS: 'yes' 
+      POSTGRESQL_TLS_CERT_FILE: '/var/lib/postgresql/server.crt'
+      POSTGRESQL_TLS_KEY_FILE: '/var/lib/postgresql/server.key'
+      
 
   postgres-dev:
     <<: *postgres
