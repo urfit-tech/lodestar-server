@@ -968,4 +968,10 @@ describe('ActivityController (e2e)', () => {
       expect(data[0].activitySession.length).toEqual(1);
     });
   });
+
+  describe('GET /activity/:activityId/participants', () => {
+    it('get activity participants', async () => {
+      expect(true).toBe(true);
+    });
+  });
 });

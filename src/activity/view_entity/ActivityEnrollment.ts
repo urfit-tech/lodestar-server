@@ -30,7 +30,7 @@ export class ActivityEnrollment {
   activityId: string;
 
   @ViewColumn({ name: 'activity_session_id' })
-  activitySessionId: number;
+  activitySessionId: string;
 
   @ViewColumn({ name: 'activity_ticket_id' })
   activityTicketId: number;

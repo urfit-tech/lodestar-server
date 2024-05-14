@@ -53,7 +53,11 @@ export class AppInfrastructure {
     return founds;
   }
 
-  async getAppEmailTemplateByCatalog(appId: string, catalog: string, manager: EntityManager): Promise<Array<AppEmailTemplate>> {
+  async getAppEmailTemplateByCatalog(
+    appId: string,
+    catalog: string,
+    manager: EntityManager,
+  ): Promise<Array<AppEmailTemplate>> {
     const appEmailTemplateRepo = manager.getRepository(AppEmailTemplate);
     const founds = await appEmailTemplateRepo.find({
       where: { appId, catalog },
