@@ -183,7 +183,9 @@ export class ProgramService {
       permissionId,
     );
 
-    return enrolledProgramContentId;
+    const programContentInfo = await this.programInfra.getProgramContentInfo(programContentId, this.entityManager);
+
+    return { ...programContentInfo, ...enrolledProgramContentId };
   }
 
   public async getEnrolledProgramContentsByProgramId(
