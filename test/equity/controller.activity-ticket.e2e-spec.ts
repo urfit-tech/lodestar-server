@@ -223,11 +223,12 @@ describe('EquityController (e2e)', () => {
         const dto: FetchMemberRightActivityTicketDTO = {
           activityTicketId: insertedActivityTicket1.id,
           sessionId: '',
+          memberId: insertedMember.id,
         };
 
         const response = await request(application.getHttpServer())
           .get(
-            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
+            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
               dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
             }`,
           )
@@ -254,11 +255,12 @@ describe('EquityController (e2e)', () => {
         const dto: FetchMemberRightActivityTicketDTO = {
           activityTicketId: insertedActivityTicket1.id,
           sessionId: '',
+          memberId: insertedMember.id,
         };
 
         const { body: data } = await request(application.getHttpServer())
           .get(
-            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
+            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
               dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
             }`,
           )
@@ -379,11 +381,12 @@ describe('EquityController (e2e)', () => {
         const dto: FetchMemberRightActivityTicketDTO = {
           activityTicketId: insertedActivityTicket1.id,
           sessionId: '',
+          memberId: insertedMember.id,
         };
 
         const { body: data } = await request(application.getHttpServer())
           .get(
-            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
+            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
               dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
             }`,
           )
@@ -440,11 +443,12 @@ describe('EquityController (e2e)', () => {
         const dto: FetchMemberRightActivityTicketDTO = {
           activityTicketId: insertedActivityTicket1.id,
           sessionId: '',
+          memberId: insertedMember.id,
         };
 
         const { body: data } = await request(application.getHttpServer())
           .get(
-            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
+            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
               dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
             }`,
           )
@@ -483,11 +487,12 @@ describe('EquityController (e2e)', () => {
         const dto: FetchMemberRightActivityTicketDTO = {
           activityTicketId: insertedActivityTicket1.id,
           sessionId: insertedActivitySession2.id,
+          memberId: insertedMember.id,
         };
 
         const { body: data } = await request(application.getHttpServer())
           .get(
-            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
+            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
               dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
             }`,
           )
@@ -497,6 +502,129 @@ describe('EquityController (e2e)', () => {
 
         expect(data.sessions.length).toEqual(1);
         expect(data.sessions[0].id).toEqual(insertedActivitySession2.id);
+      });
+
+      it('app-owner should get any activity ticket data', async () => {
+        const insertedMember2 = await createTestMember(manager, {
+          appId: app.id,
+          role: 'app-owner',
+        });
+        console.log({
+          insertedMember: insertedMember.id,
+          insertedMember2: insertedMember2.id,
+        });
+
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember2.id,
+            role: 'app-owner',
+          },
+          jwtSecret,
+        );
+
+        const dto: FetchMemberRightActivityTicketDTO = {
+          activityTicketId: insertedActivityTicket1.id,
+          sessionId: '',
+          memberId: insertedMember.id,
+        };
+
+        const { body: data } = await request(application.getHttpServer())
+          .get(
+            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
+              dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
+            }`,
+          )
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+
+        const activitySchema = Joi.object({
+          id: Joi.string().required(),
+          title: Joi.string().required(),
+          coverUrl: Joi.string().allow(null),
+          categories: Joi.array().items(Joi.object()).required(),
+          isParticipantsVisible: Joi.boolean().required(),
+        });
+
+        const sessionSchema = Joi.object({
+          id: Joi.string().required(),
+          startedAt: Joi.date().iso(),
+          endedAt: Joi.date().iso(),
+          location: Joi.string().allow(''),
+          description: Joi.string().allow(''),
+          threshold: Joi.allow(null),
+          onlineLink: Joi.string().allow(null),
+          title: Joi.string().required(),
+          maxAmount: Joi.object(),
+          participants: Joi.object(),
+          isEnrolled: Joi.boolean(),
+          type: Joi.string(),
+          attended: Joi.boolean().required(),
+        });
+
+        const invoiceSchema = Joi.object({
+          name: Joi.string().required(),
+          email: Joi.string().required(),
+          phone: Joi.string().required(),
+          orderProductId: Joi.string().required(),
+        });
+
+        const responseSchema = Joi.object({
+          id: Joi.string().required(),
+          activity: activitySchema,
+          sessions: Joi.array().items(sessionSchema),
+          invoice: invoiceSchema,
+        });
+
+        const { error } = responseSchema.validate(data);
+        expect(error).toBeUndefined();
+        expect(data.id).toEqual(insertedActivityTicket1.id);
+        expect(data.activity).toEqual({
+          id: insertedActivity.id,
+          title: insertedActivity.title,
+          coverUrl: insertedActivity.coverUrl,
+          categories: [
+            {
+              id: insertedCategory.id,
+              name: insertedCategory.name,
+            },
+          ],
+          isParticipantsVisible: true,
+        });
+        expect(data.sessions).toEqual([
+          {
+            id: insertedActivitySession1.id,
+            startedAt: '2020-01-01T00:00:00.000Z',
+            endedAt: '2020-01-02T00:00:00.000Z',
+            location: insertedActivitySession1.location,
+            description: insertedActivitySession1.description,
+            threshold: insertedActivitySession1.threshold,
+            onlineLink: insertedActivitySession1.onlineLink,
+            title: insertedActivitySession1.title,
+            maxAmount: {
+              offline: 1,
+              online: 0,
+            },
+            participants: {
+              offline: 1,
+              online: 0,
+            },
+            isEnrolled: true,
+            type: insertedActivitySessionTicket1.activitySessionType,
+            attended: false,
+          },
+        ]);
+
+        expect(data.invoice).toEqual({
+          name: insertedOrderLog.invoiceOptions.name,
+          email: insertedOrderLog.invoiceOptions.email,
+          phone: insertedOrderLog.invoiceOptions.phone,
+          orderProductId: insertedOrderProduct.id,
+        });
       });
     });
 
@@ -605,11 +733,12 @@ describe('EquityController (e2e)', () => {
         const dto: FetchMemberRightActivityTicketDTO = {
           activityTicketId: insertedActivityTicket1.id,
           sessionId: '',
+          memberId: insertedMember.id,
         };
 
         const { body: res } = await request(application.getHttpServer())
           .get(
-            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
+            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
               dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
             }`,
           )
@@ -646,11 +775,12 @@ describe('EquityController (e2e)', () => {
         const dto: FetchMemberRightActivityTicketDTO = {
           activityTicketId: 'non_uuid',
           sessionId: 'non_uuid',
+          memberId: 'memberId',
         };
 
         const { body: res } = await request(application.getHttpServer())
           .get(
-            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
+            `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
               dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
             }`,
           )
@@ -669,11 +799,12 @@ describe('EquityController (e2e)', () => {
           const dto: FetchMemberRightActivityTicketDTO = {
             activityTicketId: 'non_uuid',
             sessionId: 'non_uuid',
+            memberId: 'string',
           };
 
           await request(application.getHttpServer())
             .get(
-              `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}${
+              `/equity/activity_ticket?&activityTicketId=${dto.activityTicketId}&memberId=${dto.memberId}${
                 dto.sessionId ? `&sessionId=${dto.sessionId}` : ''
               }`,
             )
