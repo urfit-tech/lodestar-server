@@ -95,7 +95,8 @@ export class ProgramInfrastructure {
       .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
         productType: 'Card',
       })
-      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .innerJoin('card_product', 'card_product', 'card_product.card_id::text = product.target')
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = card_product.target::text')
       .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .innerJoin('program_role', 'program_role', 'program_role.program_id = program.id')
       .innerJoin('member', 'member', 'member.id = program_role.member_id')
@@ -263,7 +264,8 @@ export class ProgramInfrastructure {
       .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
         productType: 'Card',
       })
-      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .innerJoin('card_product', 'card_product', 'card_product.card_id::text = product.target')
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = card_product.target::text')
       .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
       .leftJoin(
@@ -931,7 +933,8 @@ export class ProgramInfrastructure {
       .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
         productType: 'Card',
       })
-      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .innerJoin('card_product', 'card_product', 'card_product.card_id::text = product.target')
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = card_product.target::text')
       .leftJoin(
         'program_content_plan',
         'program_content_plan',
@@ -1201,7 +1204,8 @@ export class ProgramInfrastructure {
       .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
         productType: 'Card',
       })
-      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .innerJoin('card_product', 'card_product', 'card_product.card_id::text = product.target')
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = card_product.target::text')
       .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .innerJoin(
         'program_content_section',
