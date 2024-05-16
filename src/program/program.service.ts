@@ -53,7 +53,10 @@ export class ProgramService {
       this.entityManager,
     );
 
-    const ownedProgramsFromCard = await this.programInfra.getOwnedProgramsFromCard(memberId, this.entityManager);
+    const ownedProgramsFromCard = await this.programInfra.getOwnedProgramsFromMembershipCardEnrollment(
+      memberId,
+      this.entityManager,
+    );
 
     const ownedProgramPlans = this._mergeProgramPlans(ownedProgramsFromCard, ownedProgramsFromProgramPlan);
 

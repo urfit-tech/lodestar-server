@@ -67,8 +67,8 @@ export class ProgramInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase(programs);
   }
 
-  async getOwnedProgramsFromCard(memberId: string, manager: EntityManager) {
-    const programs = await manager
+  async getOwnedProgramsFromMembershipCardEnrollment(memberId: string, manager: EntityManager) {
+    const ownerProgramsFromMembershipCardEnrollment = await manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
       .select([
@@ -96,9 +96,9 @@ export class ProgramInfrastructure {
         productType: 'Card',
       })
       .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
-      .leftJoin('program', 'program', 'program.id = program_plan.program_id')
-      .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
-      .leftJoin('member', 'member', 'member.id = program_role.member_id')
+      .innerJoin('program', 'program', 'program.id = program_plan.program_id')
+      .innerJoin('program_role', 'program_role', 'program_role.program_id = program.id')
+      .innerJoin('member', 'member', 'member.id = program_role.member_id')
       .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
       .leftJoin(
         'program_content',
@@ -116,7 +116,7 @@ export class ProgramInfrastructure {
       .groupBy('program.id')
       .getRawMany();
 
-    return this.utilityService.convertObjectKeysToCamelCase(programs);
+    return this.utilityService.convertObjectKeysToCamelCase(ownerProgramsFromMembershipCardEnrollment);
   }
 
   async getOwnedProgramsDirectly(memberId: string, manager: EntityManager) {
@@ -264,7 +264,7 @@ export class ProgramInfrastructure {
         productType: 'Card',
       })
       .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
-      .leftJoin('program', 'program', 'program.id = program_plan.program_id')
+      .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
       .leftJoin(
         'program_content',
@@ -1149,8 +1149,12 @@ export class ProgramInfrastructure {
         productType: 'Card',
       })
       .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
-      .leftJoin('program', 'program', 'program.id = program_plan.program_id')
-      .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
+      .innerJoin('program', 'program', 'program.id = program_plan.program_id')
+      .innerJoin(
+        'program_content_section',
+        'program_content_section',
+        'program_content_section.program_id = program.id',
+      )
       .leftJoin(
         'program_content_plan',
         'program_content_plan',
@@ -1160,7 +1164,8 @@ export class ProgramInfrastructure {
         'program_content',
         'program_content',
         '(program_plan.type = 3 AND program_content.content_section_id = program_content_section.id)' +
-          'OR (program_plan.type != 3 AND program_content.id = program_content_plan.program_content_id)',
+          ' OR (program_plan.type != 3 AND program_content.id = program_content_plan.program_content_id)' +
+          ' AND program_content.published_at IS NOT NULL',
       )
       .getRawMany();
 
