@@ -112,7 +112,11 @@ export class ProgramService {
         programId,
         this.entityManager,
       )),
-      (programByProgramCardEnrollment = await this.programInfra.getOwnedProgramsFromCard(memberId, this.entityManager)),
+      (programByProgramCardEnrollment = await this.programInfra.getProgramByMembershipCardEnrollment(
+        memberId,
+        programId,
+        this.entityManager,
+      )),
     ]);
 
     const program = {
