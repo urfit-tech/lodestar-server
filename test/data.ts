@@ -128,7 +128,6 @@ programPlan.programId = program.id;
 programPlan.title = 'test program plan';
 programPlan.type = 3; // can view all program
 programPlan.listPrice = 0;
-programPlan.cardId = null;
 programPlan.currency = currency;
 
 export const programRole = new ProgramRole();
