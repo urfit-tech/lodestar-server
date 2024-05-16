@@ -162,7 +162,6 @@ describe('ProgramController (e2e)', () => {
     await productRepo.delete({});
     await programContentPlanRepo.delete({});
     await cardProductRepo.delete({});
-    await cardRepo.delete({});
     await programPlanRepo.delete({});
     await programTempoDeliveryRepo.delete({});
     await programPackageProgramRepo.delete({});
@@ -224,7 +223,6 @@ describe('ProgramController (e2e)', () => {
     await productRepo.delete({});
     await programContentPlanRepo.delete({});
     await cardProductRepo.delete({});
-    await cardRepo.delete({});
     await programPlanRepo.delete({});
     await currencyRepo.delete({});
     await programContentProgressRepo.delete({});
@@ -1055,6 +1053,7 @@ describe('ProgramController (e2e)', () => {
         programContentSection.programId = program.id;
         programContentPlan.programPlanId = programPlan.id;
         programContent.contentSectionId = programContentSection.id;
+        testMemberShipCardProduct.target = cardProduct.cardId;
 
         await memberRepo.save(testGeneralMember);
         await productRepo.save(testMemberShipCardProduct);
@@ -1119,6 +1118,7 @@ describe('ProgramController (e2e)', () => {
         programContentSection.programId = program.id;
         programContentPlan.programPlanId = programPlan.id;
         programContent.contentSectionId = programContentSection.id;
+        testMemberShipCardProduct.target = cardProduct.cardId;
 
         await memberRepo.save(testGeneralMember);
         await productRepo.save(testMemberShipCardProduct);
@@ -1184,6 +1184,7 @@ describe('ProgramController (e2e)', () => {
       programContentSection.programId = program.id;
       programContentPlan.programPlanId = programPlan.id;
       programContent.contentSectionId = programContentSection.id;
+      testMemberShipCardProduct.target = cardProduct.cardId;
 
       await memberRepo.save(testGeneralMember);
       await productRepo.save(testMemberShipCardProduct);
