@@ -24,6 +24,8 @@ import {
   programPackagePlanProduct,
   programPackageProgram,
   programContentPlan,
+  programRole,
+  card,
 } from '../data';
 import { EntityManager, Repository } from 'typeorm';
 import { ApiExceptionFilter } from '~/api.filter';
@@ -62,6 +64,7 @@ import { ProgramPackage } from '~/entity/ProgramPackage';
 import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
 import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
 import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
+import { Card } from '~/entity/Card';
 
 describe('ProgramController (e2e)', () => {
   let application: INestApplication;
@@ -92,6 +95,7 @@ describe('ProgramController (e2e)', () => {
   let permissionRepo: Repository<Permission>;
   let memberPermissionExtraRepo: Repository<MemberPermissionExtra>;
   let programRoleRepo: Repository<ProgramRole>;
+  let cardRepo: Repository<Card>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -147,6 +151,7 @@ describe('ProgramController (e2e)', () => {
     permissionRepo = manager.getRepository(Permission);
     memberPermissionExtraRepo = manager.getRepository(MemberPermissionExtra);
     programRoleRepo = manager.getRepository(ProgramRole);
+    cardRepo = manager.getRepository(Card);
 
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
@@ -170,6 +175,7 @@ describe('ProgramController (e2e)', () => {
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
     await appHostRepo.delete({});
+    await cardRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await roleRepo.delete({});
@@ -199,6 +205,7 @@ describe('ProgramController (e2e)', () => {
     orderProduct.name = programPlan.title;
     orderProduct.price = programPlan.listPrice;
     await orderProductRepo.save(orderProduct);
+    await cardRepo.save(card);
 
     await application.init();
   });
@@ -226,6 +233,7 @@ describe('ProgramController (e2e)', () => {
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
     await appHostRepo.delete({});
+    await cardRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await roleRepo.delete({});
@@ -303,6 +311,22 @@ describe('ProgramController (e2e)', () => {
     testGeneralMemberProgramRoleInstructor.programId = program.id;
     testGeneralMemberProgramRoleInstructor.memberId = testGeneralMember.id;
     testGeneralMemberProgramRoleInstructor.name = 'instructor';
+
+    const testMemberShipCardProduct = new Product();
+    testMemberShipCardProduct.id = `Card_${card.id}`;
+    testMemberShipCardProduct.type = 'Card';
+
+    const testMemberShipOrderLog = new OrderLog();
+    testMemberShipOrderLog.id = 'TES1234567890';
+    testMemberShipOrderLog.memberId = testGeneralMember.id;
+
+    const testMemberShipCardOrderProduct = new OrderProduct();
+    testMemberShipCardOrderProduct.id = v4();
+    testMemberShipCardOrderProduct.orderId = testMemberShipOrderLog.id;
+    testMemberShipCardOrderProduct.name = 'test';
+    testMemberShipCardOrderProduct.price = 0;
+    testMemberShipCardOrderProduct.deliveredAt = dayjs().subtract(1, 'day').toDate();
+    testMemberShipCardOrderProduct.productId = testMemberShipCardProduct.id;
 
     it('Should raise error due to unauthorized', async () => {
       const header = { host: appHost.host };
@@ -903,6 +927,309 @@ describe('ProgramController (e2e)', () => {
           salePrice: programContent.salePrice,
           soldAt: programContent.soldAt,
         });
+      });
+    });
+
+    describe('membership card plan', () => {
+      it(`Should return successfully to view trial programs`, async () => {
+        programContent.displayMode = 'trial';
+        programContent.contentSectionId = programContentSection.id;
+        programContentSection.programId = program.id;
+
+        await programContentRepo.save(programContent);
+        await programContentSectionRepo.save(programContentSection);
+        await programRepo.save(program);
+
+        const header = { host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          appId: app.id || undefined,
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+
+      it(`Should return successfully to view trial programs after logging in`, async () => {
+        programContent.displayMode = 'loginToTrial';
+        programContent.contentSectionId = programContentSection.id;
+        programContentSection.programId = program.id;
+
+        const testGeneralMemberProgramRoleAssistant = new ProgramRole();
+        testGeneralMemberProgramRoleAssistant.id = v4();
+        testGeneralMemberProgramRoleAssistant.programId = program.id;
+        testGeneralMemberProgramRoleAssistant.memberId = testGeneralMember.id;
+        testGeneralMemberProgramRoleAssistant.name = 'assistant';
+
+        await programContentRepo.save(programContent);
+        await programContentSectionRepo.save(programContentSection);
+        await programRepo.save(program);
+        await memberRepo.save(testGeneralMember);
+        await programRoleRepo.save(testGeneralMemberProgramRoleAssistant);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          appId: app.id || undefined,
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+
+      it(`Should return successfully to view all programs associated with the membership card identity scheme`, async () => {
+        programPlan.type = 3; // can view all program
+        programPlan.programId = program.id;
+        programRole.programId = program.id;
+        programRole.memberId = testGeneralMember.id;
+        programContentSection.programId = program.id;
+        programContentPlan.programPlanId = programPlan.id;
+        programContent.contentSectionId = programContentSection.id;
+        programPlan.cardId = card.id;
+        testMemberShipCardProduct.target = programPlan.cardId;
+
+        await memberRepo.save(testGeneralMember);
+        await productRepo.save(testMemberShipCardProduct);
+        await orderLogRepo.save(testMemberShipOrderLog);
+        await orderProductRepo.save(testMemberShipCardOrderProduct);
+        await programRepo.save(program);
+        await programRoleRepo.save(programRole);
+        await programPlanRepo.save(programPlan);
+        await programContentSectionRepo.save(programContentSection);
+        await programContentPlanRepo.save(programContentPlan);
+        await programContentRepo.save(programContent);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          appId: app.id || undefined,
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+
+      it(`Should return successfully to view programs associated with the specified scheme matching the membership card`, async () => {
+        programPlan.type = 1; // only can view program_content_plan matched program
+        programPlan.programId = program.id;
+        programRole.programId = program.id;
+        programRole.memberId = testGeneralMember.id;
+        programContentSection.programId = program.id;
+        programContentPlan.programPlanId = programPlan.id;
+        programContent.contentSectionId = programContentSection.id;
+        programPlan.cardId = card.id;
+        testMemberShipCardProduct.target = programPlan.cardId;
+
+        await memberRepo.save(testGeneralMember);
+        await productRepo.save(testMemberShipCardProduct);
+        await orderLogRepo.save(testMemberShipOrderLog);
+        await orderProductRepo.save(testMemberShipCardOrderProduct);
+        await programRepo.save(program);
+        await programRoleRepo.save(programRole);
+        await programPlanRepo.save(programPlan);
+        await programContentSectionRepo.save(programContentSection);
+        await programContentPlanRepo.save(programContentPlan);
+        await programContentRepo.save(programContent);
+
+        const { body } = await request(application.getHttpServer())
+          .post(apiPath.auth.generalLogin)
+          .set('host', appHost.host)
+          .send({
+            appId: testGeneralMember.appId,
+            account: testGeneralMember.email,
+            password: password,
+          })
+          .expect(201);
+        const { authToken } = body.result;
+
+        const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+        const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+        expect(result.body).toEqual({
+          appId: app.id || undefined,
+          id: programContent.id,
+          title: programContent.title,
+          abstract: programContent.abstract,
+          contentBodyId: programContent.contentBodyId,
+          publishedAt: programContent.publishedAt.toISOString(),
+          duration: programContent.duration,
+          displayMode: programContent.displayMode,
+          contentType: programContent.contentType,
+          contentSectionTitle: programContentSection.title,
+          audios: [],
+          videos: [],
+          attachment: [],
+          programContentBody: {
+            data: programContentBody.data,
+            description: programContentBody.description,
+            id: programContentBody.id,
+            type: programContentBody.type,
+          },
+          isEquity: true,
+          listPrice: programContent.listPrice,
+          metadata: programContent.metadata,
+          pinnedStatus: programContent.pinnedStatus,
+          salePrice: programContent.salePrice,
+          soldAt: programContent.soldAt,
+        });
+      });
+    });
+
+    it(`Should return successfully to only view future released programs associated with the specified scheme matching the membership card`, async () => {
+      programPlan.type = 2; // only can view program_content_plan matched program and ProgramContent publish_at > orderProduct delivered_at
+      programPlan.programId = program.id;
+      programRole.programId = program.id;
+      programRole.memberId = testGeneralMember.id;
+      programContentSection.programId = program.id;
+      programContentPlan.programPlanId = programPlan.id;
+      programContent.contentSectionId = programContentSection.id;
+      programPlan.cardId = card.id;
+      testMemberShipCardProduct.target = programPlan.cardId;
+
+      await memberRepo.save(testGeneralMember);
+      await productRepo.save(testMemberShipCardProduct);
+      await orderLogRepo.save(testMemberShipOrderLog);
+      await orderProductRepo.save(testMemberShipCardOrderProduct);
+      await programRepo.save(program);
+      await programRoleRepo.save(programRole);
+      await programPlanRepo.save(programPlan);
+      await programContentSectionRepo.save(programContentSection);
+      await programContentPlanRepo.save(programContentPlan);
+      await programContentRepo.save(programContent);
+
+      const { body } = await request(application.getHttpServer())
+        .post(apiPath.auth.generalLogin)
+        .set('host', appHost.host)
+        .send({
+          appId: testGeneralMember.appId,
+          account: testGeneralMember.email,
+          password: password,
+        })
+        .expect(201);
+      const { authToken } = body.result;
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      expect(result.body).toEqual({
+        appId: app.id || undefined,
+        id: programContent.id,
+        title: programContent.title,
+        abstract: programContent.abstract,
+        contentBodyId: programContent.contentBodyId,
+        publishedAt: programContent.publishedAt.toISOString(),
+        duration: programContent.duration,
+        displayMode: programContent.displayMode,
+        contentType: programContent.contentType,
+        contentSectionTitle: programContentSection.title,
+        audios: [],
+        videos: [],
+        attachment: [],
+        programContentBody: {
+          data: programContentBody.data,
+          description: programContentBody.description,
+          id: programContentBody.id,
+          type: programContentBody.type,
+        },
+        isEquity: true,
+        listPrice: programContent.listPrice,
+        metadata: programContent.metadata,
+        pinnedStatus: programContent.pinnedStatus,
+        salePrice: programContent.salePrice,
+        soldAt: programContent.soldAt,
       });
     });
   });
