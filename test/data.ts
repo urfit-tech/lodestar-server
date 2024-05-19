@@ -121,13 +121,20 @@ currency.label = '';
 currency.unit = '';
 currency.name = '';
 
+export const card = new Card();
+card.id = v4();
+card.title = 'test';
+card.appId = app.id;
+card.description = 'test';
+card.template = '<div />';
+
 export const programPlan = new ProgramPlan();
 programPlan.id = v4();
 programPlan.programId = program.id;
 programPlan.title = 'test program plan';
 programPlan.type = 3; // can view all program
 programPlan.listPrice = 0;
-programPlan.cardId = null;
+programPlan.cardId = card.id;
 programPlan.currency = currency;
 
 export const programRole = new ProgramRole();
@@ -299,10 +306,3 @@ export const couponPlanProduct = new CouponPlanProduct();
 couponPlanProduct.id = v4();
 couponPlanProduct.couponPlanId = couponPlan.id;
 couponPlanProduct.productId = programPlanProduct.id;
-
-export const card = new Card();
-card.id = v4();
-card.title = 'test';
-card.appId = app.id;
-card.description = 'test';
-card.template = '<div />';

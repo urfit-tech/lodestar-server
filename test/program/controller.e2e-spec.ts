@@ -157,6 +157,7 @@ describe('ProgramController (e2e)', () => {
     await orderLogRepo.delete({});
     await productRepo.delete({});
     await programContentPlanRepo.delete({});
+    await cardRepo.delete({});
     await programPlanRepo.delete({});
     await programTempoDeliveryRepo.delete({});
     await programPackageProgramRepo.delete({});
@@ -191,6 +192,7 @@ describe('ProgramController (e2e)', () => {
     await programRepo.save(program);
     await programPackageRepo.save(programPackage);
     await programPlanRepo.save(programPlan);
+    await cardRepo.save(card);
     await programPackageProgramRepo.save(programPackageProgram);
     await programPackagePlanRepo.save(programPackagePlan);
     await programContentBodyRepo.save(programContentBody);
@@ -215,6 +217,7 @@ describe('ProgramController (e2e)', () => {
     await orderLogRepo.delete({});
     await productRepo.delete({});
     await programContentPlanRepo.delete({});
+    await cardRepo.delete({});
     await programPlanRepo.delete({});
     await currencyRepo.delete({});
     await programContentProgressRepo.delete({});
@@ -253,6 +256,9 @@ describe('ProgramController (e2e)', () => {
     },
     material: {
       materials: '/materials',
+    },
+    expired: {
+      expired: '/expired',
     },
   };
 
@@ -1397,11 +1403,42 @@ describe('ProgramController (e2e)', () => {
     });
   });
 
-  describe('/programs/expired (GET)', () => {
-    const route = `/programs/expired`;
+  describe('GET /programs/expired', () => {
+    const route = apiPath.program.programs + apiPath.expired.expired;
     const appId = member.appId;
     const email = member.email;
     const password = 'test_password';
+
+    const testProgramRole = new ProgramRole();
+    testProgramRole.id = v4();
+    testProgramRole.programId = program.id;
+    testProgramRole.name = 'owner';
+    testProgramRole.memberId = member.id;
+
+    const testExpiredOrderLog = new OrderLog();
+    testExpiredOrderLog.id = 'TES1234567891';
+    testExpiredOrderLog.memberId = member.id;
+    testExpiredOrderLog.status = 'SUCCESS';
+    testExpiredOrderLog.appId = app.id;
+    testExpiredOrderLog.invoiceOptions = {};
+
+    const testProgramPlanOrderProduct = new OrderProduct();
+    testProgramPlanOrderProduct.id = v4();
+    testProgramPlanOrderProduct.productId = programPlanProduct.id;
+    testProgramPlanOrderProduct.name = programPlan.title;
+    testProgramPlanOrderProduct.price = programPlan.listPrice;
+    testProgramPlanOrderProduct.orderId = testExpiredOrderLog.id;
+    testProgramPlanOrderProduct.endedAt = dayjs().subtract(1, 'day').toDate();
+    testProgramPlanOrderProduct.deliveredAt = dayjs().subtract(2, 'day').toDate();
+
+    const testCardOrderProduct = new OrderProduct();
+    testCardOrderProduct.id = v4();
+    testCardOrderProduct.productId = `Card_${card.id}`;
+    testCardOrderProduct.name = programPlan.title;
+    testCardOrderProduct.price = programPlan.listPrice;
+    testCardOrderProduct.orderId = testExpiredOrderLog.id;
+    testCardOrderProduct.endedAt = dayjs().subtract(1, 'day').toDate();
+    testCardOrderProduct.deliveredAt = dayjs().subtract(2, 'day').toDate();
 
     it('Should raise error due to unauthorized', async () => {
       const header = { host: appHost.host };
@@ -1412,7 +1449,11 @@ describe('ProgramController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
-    it('Should successfully get expired programs by member', async () => {
+    it('Should get expired programs by program plan', async () => {
+      await orderLogRepo.save(testExpiredOrderLog);
+      await orderProductRepo.save(testProgramPlanOrderProduct);
+      await programRoleRepo.save(testProgramRole);
+
       const {
         body: {
           result: { authToken },
@@ -1427,9 +1468,78 @@ describe('ProgramController (e2e)', () => {
 
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
-      expect(200).toEqual(result.status);
+      const programRole = await programRoleRepo.findBy({ programId: program.id });
+
+      const roles = programRole.map((role) => ({
+        id: role.id,
+        memberId: role.memberId,
+        memberName: member.name,
+        name: role.name,
+        createdAt: role.createdAt.toISOString(),
+      }));
+
+      expect(result.body).toEqual([
+        {
+          id: program.id,
+          title: program.title,
+          coverUrl: program.coverUrl,
+          coverMobileUrl: program.coverMobileUrl,
+          coverThumbnailUrl: program.coverMobileUrl,
+          abstract: program.abstract,
+          roles,
+          viewRate: 1,
+          lastViewedAt: programContentProgress.updatedAt.toISOString(),
+          deliveredAt: testProgramPlanOrderProduct.deliveredAt.toISOString(),
+        },
+      ]);
+    });
+
+    it('Should get expired programs by membership card', async () => {
+      await orderLogRepo.save(testExpiredOrderLog);
+      await orderProductRepo.save(testCardOrderProduct);
+      await programRoleRepo.save(testProgramRole);
+
+      const {
+        body: {
+          result: { authToken },
+        },
+      } = await request(application.getHttpServer()).post('/auth/general-login').set('host', appHost.host).send({
+        appId,
+        account: email,
+        password: password,
+      });
+
+      const header = { authorization: `Bearer ${authToken}`, host: appHost.host };
+
+      const result = await request(application.getHttpServer()).get(`${route}`).set(header);
+
+      const programRole = await programRoleRepo.findBy({ programId: program.id });
+
+      const roles = programRole.map((role) => ({
+        id: role.id,
+        memberId: role.memberId,
+        memberName: member.name,
+        name: role.name,
+        createdAt: role.createdAt.toISOString(),
+      }));
+
+      expect(result.body).toEqual([
+        {
+          id: program.id,
+          title: program.title,
+          coverUrl: program.coverUrl,
+          coverMobileUrl: program.coverMobileUrl,
+          coverThumbnailUrl: program.coverMobileUrl,
+          abstract: program.abstract,
+          roles,
+          viewRate: 1,
+          lastViewedAt: programContentProgress.updatedAt.toISOString(),
+          deliveredAt: testCardOrderProduct.deliveredAt.toISOString(),
+        },
+      ]);
     });
   });
+
   describe('/programs/:programId/contents (GET)', () => {
     const route = apiPath.program.programs + '/' + program.id + apiPath.content.contents;
     const password = 'test_password';
