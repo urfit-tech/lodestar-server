@@ -359,7 +359,7 @@ export class ActivityInfrastructure {
       activity_enrollment.member_email AS participant_email,
       activity_enrollment.member_phone AS participant_phone,
       activity_enrollment.attended AS participant_attended,
-      activity_ticket.title AS participant_activity_title
+      activity.title AS participant_activity_title
     `,
       )
       .from('activity_session', 'activity_session')
@@ -369,6 +369,7 @@ export class ActivityInfrastructure {
         'activity_enrollment.activity_session_id = activity_session.id',
       )
       .leftJoin('activity_ticket', 'activity_ticket', 'activity_enrollment.activity_ticket_id = activity_ticket.id')
+      .leftJoin('activity', 'activity', 'activity.id = activity_ticket.activity_id')
       .where('activity_session.activity_id = :activityId', { activityId })
       .orderBy('activity_session.started_at', 'ASC')
       .getRawMany();
@@ -385,33 +386,29 @@ export class ActivityInfrastructure {
       }
 
       if (participantId && !participantDtoMap[activitySessionId].find((p) => p.id === participantId)) {
-        participantDtoMap[activitySessionId].push(
-          new ParticipantDto({
-            id: participantId,
-            name: row.participant_name,
-            phone: row.participant_phone,
-            email: row.participant_email,
-            orderLogId: row.participant_order_log_id,
-            attended: row.participant_attended,
-            activityTitle: row.participant_activity_title,
-          }),
-        );
+        participantDtoMap[activitySessionId].push({
+          id: participantId,
+          name: row.participant_name,
+          phone: row.participant_phone,
+          email: row.participant_email,
+          orderLogId: row.participant_order_log_id,
+          attended: row.participant_attended,
+          activityTitle: row.participant_activity_title,
+        } as ParticipantDto);
       }
 
       if (!activitySessionDtos.find((dto) => dto.id === activitySessionId)) {
-        activitySessionDtos.push(
-          new ActivitySessionDto({
-            id: activitySessionId,
-            title: row.activity_session_title,
-            participants: participantDtoMap[activitySessionId],
-          }),
-        );
+        activitySessionDtos.push({
+          id: activitySessionId,
+          title: row.activity_session_title,
+          participants: participantDtoMap[activitySessionId],
+        } as ActivitySessionDto);
       }
     });
 
-    const response = new ActivityParticipantResponse({
+    const response: ActivityParticipantResponse = {
       activitySessions: activitySessionDtos,
-    });
+    };
 
     return response;
   }

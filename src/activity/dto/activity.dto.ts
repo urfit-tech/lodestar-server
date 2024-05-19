@@ -69,6 +69,16 @@ export class ActivityCollectionDTO {
   categoryId: string;
 }
 
+export class ActivityParticipantResponse {
+  activitySessions: ActivitySessionDto[];
+}
+
+export class ActivitySessionDto {
+  id: string;
+  title: string;
+  participants: ParticipantDto[];
+}
+
 export class ParticipantDto {
   id: string;
   name: string;
@@ -77,34 +87,4 @@ export class ParticipantDto {
   orderLogId: string;
   attended: boolean;
   activityTitle: string;
-
-  constructor(data: any) {
-    this.id = data.id;
-    this.name = data.name;
-    this.phone = data.phone;
-    this.email = data.email;
-    this.orderLogId = data.orderLogId;
-    this.attended = data.attended;
-    this.activityTitle = data.activityTitle;
-  }
-}
-
-export class ActivitySessionDto {
-  id: string;
-  title: string;
-  participants: ParticipantDto[];
-
-  constructor(data: any) {
-    this.id = data.id;
-    this.title = data.title;
-    this.participants = data.participants.map((participant: any) => new ParticipantDto(participant));
-  }
-}
-
-export class ActivityParticipantResponse {
-  activitySessions: ActivitySessionDto[];
-
-  constructor(data: any) {
-    this.activitySessions = data.map((activitySession: any) => new ActivitySessionDto(activitySession));
-  }
 }

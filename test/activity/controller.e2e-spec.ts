@@ -39,7 +39,7 @@ import { Category } from '~/definition/entity/category.entity';
 import { ApiExceptionFilter } from '~/api.filter';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
-import Joi from 'joi';
+import { ActivityAttendance } from '~/activity/entity/ActivityAttendance';
 interface RepositoryMap {
   [key: string]: Repository<any>;
 }
@@ -60,6 +60,7 @@ describe('ActivityController (e2e)', () => {
       productRepo: manager.getRepository(Product),
       orderLogRepo: manager.getRepository(OrderLog),
       currencyRepo: manager.getRepository(Currency),
+      activityAttendanceRepo: manager.getRepository(ActivityAttendance),
       activitySessionTicketRepo: manager.getRepository(ActivitySessionTicket),
       activityTicketRepo: manager.getRepository(ActivityTicket),
       activitySessionRepo: manager.getRepository(ActivitySession),
@@ -970,8 +971,229 @@ describe('ActivityController (e2e)', () => {
   });
 
   describe('GET /activity/:activityId/participants', () => {
+    let insertedMember: Member;
+    let insertedMember2: Member;
+    let insertedMember3: Member;
+    let insertedActivity: Activity;
+    let insertedCategory: Category;
+
+    let insertedActivitySession1: ActivitySession;
+    let insertedActivityTicket1: ActivityTicket;
+
+    let insertedOrderLog: OrderLog;
+    let insertedOrderLog2: OrderLog;
+    let insertedOrderLog3: OrderLog;
+    let insertedProduct: Product;
+    let insertedCurrency: Currency;
+
+    beforeEach(async () => {
+      insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
+
+      insertedMember2 = await createTestMember(manager, {
+        appId: app.id,
+        role: 'general-member',
+      });
+
+      insertedMember3 = await createTestMember(manager, {
+        appId: app.id,
+        role: 'general-member',
+      });
+
+      insertedActivity = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+        isPrivate: false, // scenario: 'holding' condition
+        publishedAt: new Date(), // scenario: 'holding' condition
+      });
+
+      console.log('create', insertedActivity);
+
+      insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
+      await createTestActivityCategory(manager, {
+        activity: insertedActivity,
+        category: insertedCategory,
+      });
+
+      insertedActivitySession1 = await createTestActivitySession(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-01T00:00:00Z'),
+        endedAt: new Date('2020-01-02T00:00:00Z'),
+      });
+
+      insertedActivityTicket1 = await createTestActivityTicket(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-01T00:00:00Z'),
+        endedAt: new Date('2020-01-02T00:00:00Z'),
+      });
+
+      await createTestActivitySessionTicket(manager, {
+        activitySession: insertedActivitySession1,
+        activityTicket: insertedActivityTicket1,
+        activitySessionType: 'offline',
+      });
+
+      insertedOrderLog = await createTestOrderLog(manager, {
+        member: insertedMember,
+        invoiceOptions: {
+          name: insertedMember.name,
+          email: insertedMember.email,
+          phone: '0933433333',
+          donationCode: '1000',
+        },
+        appId: app.id,
+      });
+
+      insertedOrderLog2 = await createTestOrderLog(manager, {
+        member: insertedMember2,
+        invoiceOptions: {
+          name: insertedMember2.name,
+          email: insertedMember2.email,
+          phone: '0933433333',
+          donationCode: '1000',
+        },
+        appId: app.id,
+      });
+
+      insertedOrderLog3 = await createTestOrderLog(manager, {
+        member: insertedMember3,
+        invoiceOptions: {
+          name: insertedMember3.name,
+          email: insertedMember3.email,
+          phone: '0933433333',
+          donationCode: '1000',
+        },
+        appId: app.id,
+      });
+
+      insertedProduct = await createTestProduct(manager, {
+        id: `ActivityTicket_${insertedActivityTicket1.id}`,
+        type: 'ActivityTicket',
+        target: insertedActivityTicket1.id,
+      });
+
+      insertedCurrency = await createTestCurrency(manager, {
+        id: 'TWD',
+      });
+
+      await createTestOrderProduct(manager, {
+        order: insertedOrderLog,
+        product: insertedProduct,
+        currency: insertedCurrency,
+        productId: insertedActivity.id,
+        options: {
+          from: `/activities/${insertedActivity.id}`,
+          currencyId: insertedCurrency.id,
+          currencyPrice: 2000,
+        },
+      });
+      await createTestOrderProduct(manager, {
+        order: insertedOrderLog2,
+        product: insertedProduct,
+        currency: insertedCurrency,
+        productId: insertedActivity.id,
+        options: {
+          from: `/activities/${insertedActivity.id}`,
+          currencyId: insertedCurrency.id,
+          currencyPrice: 2000,
+        },
+      });
+      await createTestOrderProduct(manager, {
+        order: insertedOrderLog3,
+        product: insertedProduct,
+        currency: insertedCurrency,
+        productId: insertedActivity.id,
+        options: {
+          from: `/activities/${insertedActivity.id}`,
+          currencyId: insertedCurrency.id,
+          currencyPrice: 2000,
+        },
+      });
+    });
+
     it('get activity participants', async () => {
-      expect(true).toBe(true);
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: insertedMember.id,
+          permissions: ['ACTIVITY_ADMIN'],
+        },
+        jwtSecret,
+      );
+
+      const response = await request(application.getHttpServer())
+        .get(`/activity/${insertedActivity.id}/participants`)
+        .set('host', appHost.host)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        activitySessions: [
+          {
+            id: insertedActivitySession1.id,
+            title: insertedActivitySession1.title,
+            participants: [
+              {
+                id: insertedMember.id,
+                phone: '0933433333',
+                name: insertedMember.name,
+                email: insertedMember.email,
+                orderLogId: insertedOrderLog.id,
+                attended: false,
+                activityTitle: insertedActivity.title,
+              },
+              {
+                id: insertedMember2.id,
+                phone: '0933433333',
+                name: insertedMember2.name,
+                email: insertedMember2.email,
+                orderLogId: insertedOrderLog2.id,
+                attended: false,
+                activityTitle: insertedActivity.title,
+              },
+              {
+                id: insertedMember3.id,
+                name: insertedMember3.name,
+                phone: '0933433333',
+                email: insertedMember3.email,
+                orderLogId: insertedOrderLog3.id,
+                attended: false,
+                activityTitle: insertedActivity.title,
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('Block unauthorized requests', async () => {
+      const jwtSecret = application
+        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+        .getOrThrow('HASURA_JWT_SECRET');
+
+      const token = jwt.sign(
+        {
+          memberId: insertedMember.id,
+          permissions: ['WRONG_PERMISSION'],
+        },
+        jwtSecret,
+      );
+
+      await request(application.getHttpServer())
+        .get(`/activity/${insertedActivity.id}/participants`)
+        .set('host', appHost.host)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(401);
     });
   });
 });
