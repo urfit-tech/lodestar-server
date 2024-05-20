@@ -56,11 +56,11 @@ describe('ActivityController (e2e)', () => {
     return {
       activityCategoryRepo: manager.getRepository(ActivityCategory),
       categoryRepo: manager.getRepository(Category),
+      activityAttendanceRepo: manager.getRepository(ActivityAttendance),
       orderProductRepo: manager.getRepository(OrderProduct),
       productRepo: manager.getRepository(Product),
       orderLogRepo: manager.getRepository(OrderLog),
       currencyRepo: manager.getRepository(Currency),
-      activityAttendanceRepo: manager.getRepository(ActivityAttendance),
       activitySessionTicketRepo: manager.getRepository(ActivitySessionTicket),
       activityTicketRepo: manager.getRepository(ActivityTicket),
       activitySessionRepo: manager.getRepository(ActivitySession),
@@ -985,6 +985,7 @@ describe('ActivityController (e2e)', () => {
     let insertedOrderLog3: OrderLog;
     let insertedProduct: Product;
     let insertedCurrency: Currency;
+    let insertedOrderProduct2: OrderProduct;
 
     beforeEach(async () => {
       insertedMember = await createTestMember(manager, {
@@ -1093,7 +1094,7 @@ describe('ActivityController (e2e)', () => {
           currencyPrice: 2000,
         },
       });
-      await createTestOrderProduct(manager, {
+      insertedOrderProduct2 = await createTestOrderProduct(manager, {
         order: insertedOrderLog2,
         product: insertedProduct,
         currency: insertedCurrency,
@@ -1117,83 +1118,262 @@ describe('ActivityController (e2e)', () => {
       });
     });
 
-    it('get activity participants', async () => {
-      const jwtSecret = application
-        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
-        .getOrThrow('HASURA_JWT_SECRET');
+    describe('happy path', () => {
+      // Scenario 1: 1 activity, 1 activitySession, 3 participants
+      it('get activity participants', async () => {
+        // Test data setup:
+        // - 1 activity
+        // - 1 activitySession
+        // - 1 activityTicket
+        // - 3 members (1 organizer, 2 participants)
+        // - 3 orderLogs (1 for each member)
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign(
-        {
-          memberId: insertedMember.id,
-          permissions: ['ACTIVITY_ADMIN'],
-        },
-        jwtSecret,
-      );
-
-      const response = await request(application.getHttpServer())
-        .get(`/activity/${insertedActivity.id}/participants`)
-        .set('host', appHost.host)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        activitySessions: [
+        const token = jwt.sign(
           {
-            id: insertedActivitySession1.id,
-            title: insertedActivitySession1.title,
-            participants: [
-              {
-                id: insertedMember.id,
-                phone: '0933433333',
-                name: insertedMember.name,
-                email: insertedMember.email,
-                orderLogId: insertedOrderLog.id,
-                attended: false,
-                activityTitle: insertedActivity.title,
-              },
-              {
-                id: insertedMember2.id,
-                phone: '0933433333',
-                name: insertedMember2.name,
-                email: insertedMember2.email,
-                orderLogId: insertedOrderLog2.id,
-                attended: false,
-                activityTitle: insertedActivity.title,
-              },
-              {
-                id: insertedMember3.id,
-                name: insertedMember3.name,
-                phone: '0933433333',
-                email: insertedMember3.email,
-                orderLogId: insertedOrderLog3.id,
-                attended: false,
-                activityTitle: insertedActivity.title,
-              },
-            ],
+            memberId: insertedMember.id,
+            permissions: ['ACTIVITY_ADMIN'],
           },
-        ],
+          jwtSecret,
+        );
+
+        const response = await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          activitySessions: expect.arrayContaining([
+            expect.objectContaining({
+              id: insertedActivitySession1.id,
+              title: insertedActivitySession1.title,
+              participants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: insertedMember.id,
+                  phone: '0933433333',
+                  name: insertedMember.name,
+                  email: insertedMember.email,
+                  orderLogId: insertedOrderLog.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember2.id,
+                  phone: '0933433333',
+                  name: insertedMember2.name,
+                  email: insertedMember2.email,
+                  orderLogId: insertedOrderLog2.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember3.id,
+                  phone: '0933433333',
+                  name: insertedMember3.name,
+                  email: insertedMember3.email,
+                  orderLogId: insertedOrderLog3.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+              ]),
+            }),
+          ]),
+        });
+      });
+
+      // Scenario 2: 1 activity, multiple activitySessions
+      it('mutiple activity session', async () => {
+        // Additional test data setup:
+        // - Create a second activitySession
+        // - Associate the second activitySession with the existing activityTicket
+        // - Create an additional orderLog for the organizer member
+        const insertedActivitySession2 = await createTestActivitySession(manager, {
+          activity: insertedActivity,
+          startedAt: new Date('2020-01-01T00:00:00Z'),
+          endedAt: new Date('2020-01-02T00:00:00Z'),
+        });
+
+        await createTestActivitySessionTicket(manager, {
+          activitySession: insertedActivitySession2,
+          activityTicket: insertedActivityTicket1,
+          activitySessionType: 'offline',
+        });
+
+        const insertedOrderLog4 = await createTestOrderLog(manager, {
+          member: insertedMember,
+          invoiceOptions: {
+            name: insertedMember.name,
+            email: insertedMember.email,
+            phone: '0933433333',
+            donationCode: '1000',
+          },
+          appId: app.id,
+        });
+
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: ['ACTIVITY_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const response = await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          activitySessions: expect.arrayContaining([
+            expect.objectContaining({
+              id: insertedActivitySession1.id,
+              title: insertedActivitySession1.title,
+              participants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: insertedMember.id,
+                  phone: '0933433333',
+                  name: insertedMember.name,
+                  email: insertedMember.email,
+                  orderLogId: insertedOrderLog.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember2.id,
+                  phone: '0933433333',
+                  name: insertedMember2.name,
+                  email: insertedMember2.email,
+                  orderLogId: insertedOrderLog2.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember3.id,
+                  name: insertedMember3.name,
+                  phone: '0933433333',
+                  email: insertedMember3.email,
+                  orderLogId: insertedOrderLog3.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+              ]),
+            }),
+            expect.objectContaining({
+              id: insertedActivitySession2.id,
+              title: insertedActivitySession2.title,
+              participants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: insertedMember.id,
+                  phone: '0933433333',
+                  name: insertedMember.name,
+                  email: insertedMember.email,
+                  orderLogId: insertedOrderLog.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+              ]),
+            }),
+          ]),
+        });
+      });
+
+      // Scenario 3: 1 activity, 1 activitySession, 3 participants, and insertedMember2 have attended
+      it('some participants have attended', async () => {
+        const activityAttendance = new ActivityAttendance();
+        activityAttendance.activitySessionId = insertedActivitySession1.id;
+        activityAttendance.activitySession = insertedActivitySession1;
+        activityAttendance.orderProduct = insertedOrderProduct2;
+        await repositories.activityAttendanceRepo.save(activityAttendance);
+
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: ['ACTIVITY_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const response = await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          activitySessions: expect.arrayContaining([
+            expect.objectContaining({
+              id: insertedActivitySession1.id,
+              title: insertedActivitySession1.title,
+              participants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: insertedMember.id,
+                  phone: '0933433333',
+                  name: insertedMember.name,
+                  email: insertedMember.email,
+                  orderLogId: insertedOrderLog.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember2.id,
+                  phone: '0933433333',
+                  name: insertedMember2.name,
+                  email: insertedMember2.email,
+                  orderLogId: insertedOrderLog2.id,
+                  attended: true,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember3.id,
+                  phone: '0933433333',
+                  name: insertedMember3.name,
+                  email: insertedMember3.email,
+                  orderLogId: insertedOrderLog3.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+              ]),
+            }),
+          ]),
+        });
       });
     });
 
-    it('Block unauthorized requests', async () => {
-      const jwtSecret = application
-        .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
-        .getOrThrow('HASURA_JWT_SECRET');
+    describe('Unhappy Path', () => {
+      it('Block unauthorized requests', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
 
-      const token = jwt.sign(
-        {
-          memberId: insertedMember.id,
-          permissions: ['WRONG_PERMISSION'],
-        },
-        jwtSecret,
-      );
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: ['WRONG_PERMISSION'],
+          },
+          jwtSecret,
+        );
 
-      await request(application.getHttpServer())
-        .get(`/activity/${insertedActivity.id}/participants`)
-        .set('host', appHost.host)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(401);
+        await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(401);
+      });
     });
   });
 });

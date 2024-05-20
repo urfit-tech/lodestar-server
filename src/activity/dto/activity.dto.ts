@@ -86,5 +86,5 @@ export class ParticipantDto {
   email: string;
   orderLogId: string;
   attended: boolean;
-  activityTitle: string;
+  activityTicketTitle: string;
 }

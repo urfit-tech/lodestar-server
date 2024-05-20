@@ -350,20 +350,20 @@ export class ActivityInfrastructure {
       .createQueryBuilder()
       .select(
         `
-      activity_session.id AS activity_session_id,
-      activity_session.title AS activity_session_title,
-      activity_session.started_at AS activity_session_started_at,
-      activity_enrollment.order_log_id AS participant_order_log_id,
-      activity_enrollment.member_id AS participant_id,
-      activity_enrollment.member_name AS participant_name,
-      activity_enrollment.member_email AS participant_email,
-      activity_enrollment.member_phone AS participant_phone,
-      activity_enrollment.attended AS participant_attended,
-      activity.title AS participant_activity_title
-    `,
+          activity_session.id AS activity_session_id,
+          activity_session.title AS activity_session_title,
+          activity_session.started_at AS activity_session_started_at,
+          activity_enrollment.order_log_id AS participant_order_log_id,
+          activity_enrollment.member_id AS participant_id,
+          activity_enrollment.member_name AS participant_name,
+          activity_enrollment.member_email AS participant_email,
+          activity_enrollment.member_phone AS participant_phone,
+          activity_enrollment.attended AS participant_attended,
+          activity_ticket.title AS participant_activity_title
+        `,
       )
       .from('activity_session', 'activity_session')
-      .leftJoin(
+      .innerJoin(
         'activity_enrollment',
         'activity_enrollment',
         'activity_enrollment.activity_session_id = activity_session.id',
@@ -375,34 +375,39 @@ export class ActivityInfrastructure {
       .getRawMany();
 
     const activitySessionDtos: ActivitySessionDto[] = [];
-    const participantDtoMap: { [key: string]: ParticipantDto[] } = {};
 
     rawData.forEach((row) => {
       const activitySessionId = row.activity_session_id;
       const participantId = row.participant_id;
 
-      if (!participantDtoMap[activitySessionId]) {
-        participantDtoMap[activitySessionId] = [];
-      }
+      const activitySessionDto = activitySessionDtos.find((dto) => dto.id === activitySessionId);
 
-      if (participantId && !participantDtoMap[activitySessionId].find((p) => p.id === participantId)) {
-        participantDtoMap[activitySessionId].push({
+      if (activitySessionDto) {
+        activitySessionDto.participants.push({
           id: participantId,
           name: row.participant_name,
           phone: row.participant_phone,
           email: row.participant_email,
           orderLogId: row.participant_order_log_id,
           attended: row.participant_attended,
-          activityTitle: row.participant_activity_title,
-        } as ParticipantDto);
-      }
-
-      if (!activitySessionDtos.find((dto) => dto.id === activitySessionId)) {
+          activityTicketTitle: row.participant_activity_title,
+        });
+      } else {
         activitySessionDtos.push({
           id: activitySessionId,
           title: row.activity_session_title,
-          participants: participantDtoMap[activitySessionId],
-        } as ActivitySessionDto);
+          participants: [
+            {
+              id: participantId,
+              name: row.participant_name,
+              phone: row.participant_phone,
+              email: row.participant_email,
+              orderLogId: row.participant_order_log_id,
+              attended: row.participant_attended,
+              activityTicketTitle: row.participant_activity_title,
+            },
+          ],
+        });
       }
     });
 
