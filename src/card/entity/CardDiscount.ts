@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Card } from './Card';
-import { Product } from './Product';
+import { Product } from '../../entity/Product';
 
 @Index('card_discount_card_id_product_id_key', ['cardId', 'productId'], {
   unique: true,
