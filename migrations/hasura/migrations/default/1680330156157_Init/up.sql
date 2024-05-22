@@ -8475,3 +8475,17 @@ ALTER TABLE ONLY public.voucher_plan_product
     ADD CONSTRAINT voucher_plan_product_voucher_plan_id_fkey FOREIGN KEY (voucher_plan_id) REFERENCES public.voucher_plan(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.voucher
     ADD CONSTRAINT voucher_voucher_code_id_fkey FOREIGN KEY (voucher_code_id) REFERENCES public.voucher_code(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+CREATE TABLE "public"."card_product" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "card_id" uuid NOT NULL, "product_type" text NOT NULL, "target_id" uuid NOT NULL, PRIMARY KEY ("id") , FOREIGN KEY ("card_id") REFERENCES "public"."card"("id") ON UPDATE restrict ON DELETE restrict, FOREIGN KEY ("target_id") REFERENCES "public"."program_plan"("id") ON UPDATE restrict ON DELETE restrict, UNIQUE ("id"));
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+alter table "public"."card_product" rename column "target_id" to "target";
+comment on column "public"."card_product"."product_type" is E'ProgramPlan';
+alter table "public"."card_product" add column "is_delete" boolean
+ not null default 'false';
+alter table "public"."card_product" drop column "is_delete" cascade;
+alter table "public"."card_product" add column "is_delete" boolean
+ not null default 'false';
+alter table "public"."card_product" rename column "is_delete" to "is_deleted";
+alter table "public"."card_product" add column "created_at" timestamptz
+ not null default now();
+alter table "public"."card_product" add column "updated_at" timestamptz
+ null default now();

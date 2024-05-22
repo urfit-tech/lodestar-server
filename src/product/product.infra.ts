@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Activity } from '~/activity/entity/Activity';
 import { ActivityTicket } from '~/activity/entity/ActivityTicket';
 import { AppointmentPlan } from '~/entity/AppointmentPlan';
-import { Card } from '~/entity/Card';
+import { Card } from '~/card/entity/Card';
 import { ProgramRole } from '~/entity/ProgramRole';
 import { ProgramPlan } from '~/entity/ProgramPlan';
 import { ProjectPlan } from '~/entity/ProjectPlan';
@@ -15,7 +15,6 @@ import { Merchandise } from '~/entity/Merchandise';
 import { MerchandiseSpec } from '~/entity/MerchandiseSpec';
 import { Product } from '~/entity/Product';
 import { camelCase, isEmpty, mapKeys, uniq } from 'lodash';
-import { ProductOwner } from './product.type';
 
 @Injectable()
 export class ProductInfrastructure {
