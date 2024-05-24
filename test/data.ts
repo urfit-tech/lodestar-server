@@ -40,6 +40,7 @@ import { Coupon } from '~/coupon/entity/coupon.entity';
 import { CouponPlanProduct } from '~/entity/CouponPlanProduct';
 import { MemberNote } from '~/entity/MemberNote';
 import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
+import { Card } from '~/entity/Card';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -298,3 +299,10 @@ export const couponPlanProduct = new CouponPlanProduct();
 couponPlanProduct.id = v4();
 couponPlanProduct.couponPlanId = couponPlan.id;
 couponPlanProduct.productId = programPlanProduct.id;
+
+export const card = new Card();
+card.id = v4();
+card.title = 'test';
+card.appId = app.id;
+card.description = 'test';
+card.template = '<div />';

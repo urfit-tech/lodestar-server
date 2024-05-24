@@ -59,14 +59,14 @@ export class ProgramController {
       );
     }
 
-    const isTrial = !authorization && programContent.displayMode === 'trial';
-    const isLoginToTrial = !!authorization && programContent.displayMode === 'loginToTrial';
+    const isTrial = programContent.displayMode === 'trial';
+    const isLoginToTrial = programContent.displayMode === 'loginToTrial';
     const member = !!authorization && (await this._verifyAuthorization(authorization));
 
     const extraAllowPermission = !!member && ['PROGRAM_NORMAL'].find((e) => member.permissions.includes(e));
     const adminPermission = !!member && ['PROGRAM_ADMIN'].find((e) => member.permissions.includes(e));
 
-    return adminPermission || isLoginToTrial || isTrial
+    return adminPermission || (!!member && isLoginToTrial) || isTrial
       ? { ...programContent, isEquity: true }
       : !!member
       ? this.programService.getEnrolledProgramContentById(
