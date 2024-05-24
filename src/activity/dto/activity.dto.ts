@@ -68,3 +68,23 @@ export class ActivityCollectionDTO {
   @IsString()
   categoryId: string;
 }
+
+export class ActivityParticipantResponse {
+  activitySessions: ActivitySessionDto[];
+}
+
+export class ActivitySessionDto {
+  id: string;
+  title: string;
+  participants: ParticipantDto[];
+}
+
+export class ParticipantDto {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  orderLogId: string;
+  attended: boolean;
+  activityTicketTitle: string;
+}

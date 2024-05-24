@@ -1,8 +1,25 @@
-import { Controller, Get, Logger, Param, ParseIntPipe, Query, Req } from '@nestjs/common';
+import { Controller, Get, Logger, Param, ParseIntPipe, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ActivityService } from './activity.service';
-import { ActivityCollectionDTO, FetchActivitiesResponseDto } from './dto/activity.dto';
+import { ActivityCollectionDTO, ActivityParticipantResponse, FetchActivitiesResponseDto } from './dto/activity.dto';
 import { Request } from 'express';
+import { APIException } from '~/api.excetion';
+import { AuthGuard } from '~/auth/auth.guard';
+import { PermissionGuard } from '~/auth/permission.guard';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
+import { Permissions } from '~/decorators/permissions.decorator';
+
+const ACTIVITY_ADMIN_PERMISSION_GROUP: PermissionSet[] = [
+  PermissionSet.ACTIVITY_ADMIN,
+  PermissionSet.ACTIVITY_ENROLLMENT_READ,
+  PermissionSet.ACTIVITY_WRITE,
+  PermissionSet.ACTIVITY_SESSION_WRITE,
+  PermissionSet.ACTIVITY_TICKET_WRITE,
+  PermissionSet.ACTIVITY_PUBLISHED,
+  PermissionSet.ACTIVITY_CATEGORY_READ,
+  PermissionSet.ACTIVITY_CATEGORY_WRITE,
+  PermissionSet.ACTIVITY_CATEGORY_DELETE,
+];
 
 @ApiTags('Activity')
 @Controller({
@@ -49,6 +66,21 @@ export class ActivityController {
       String(memberId),
       includeDeleted && String(includeDeleted) === 'true',
     );
+  }
+
+  @Permissions(...ACTIVITY_ADMIN_PERMISSION_GROUP)
+  @UseGuards(AuthGuard, PermissionGuard)
+  @Get('/:activity_id/participants')
+  async getActivityParticipants(@Param('activity_id') activityId: string): Promise<ActivityParticipantResponse> {
+    try {
+      return await this.activityService.getActivityParticipants(activityId);
+    } catch (error) {
+      throw new APIException({
+        code: 'E_ACTIVITY_GET_PARTICIPANTS',
+        message: `Failed to get activity participants: ${error.message}`,
+        result: null,
+      });
+    }
   }
 
   @Get()
