@@ -1,8 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Currency } from './Currency';
-import { Program } from './Program';
-import { ProgramContentPlan } from './ProgramContentPlan';
-import { CardProduct } from '../card/entity/CardProduct';
+import { Currency } from '../../entity/Currency';
+import { Program } from '../../entity/Program';
+import { ProgramContentPlan } from '../../entity/ProgramContentPlan';
+import { CardProduct } from '../../card/entity/CardProduct';
 
 @Index('program_plan_pkey', ['id'], { unique: true })
 @Index('program_plan_program_id', ['programId'], {})

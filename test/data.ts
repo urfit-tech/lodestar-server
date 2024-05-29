@@ -19,7 +19,7 @@ import { ProgramContentSection } from '~/entity/ProgramContentSection';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { Product } from '~/entity/Product';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 import { Currency } from '~/entity/Currency';
 import dayjs from 'dayjs';
 import { ProgramPackage } from '~/entity/ProgramPackage';

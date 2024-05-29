@@ -41,7 +41,7 @@ import { VoucherPlan } from '~/entity/VoucherPlan';
 import { VoucherPlanProduct } from '~/entity/VoucherPlanProduct';
 import { Product } from '~/entity/Product';
 import { Program } from '~/entity/Program';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 
 describe('ProgramController (e2e)', () => {
   let application: INestApplication;
