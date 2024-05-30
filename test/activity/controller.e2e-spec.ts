@@ -1,7 +1,6 @@
 import { EntityManager, Repository } from 'typeorm';
 import request from 'supertest';
-import { v4 } from 'uuid';
-import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
@@ -39,7 +38,7 @@ import { Category } from '~/definition/entity/category.entity';
 import { ApiExceptionFilter } from '~/api.filter';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
-import Joi from 'joi';
+import { ActivityAttendance } from '~/activity/entity/ActivityAttendance';
 interface RepositoryMap {
   [key: string]: Repository<any>;
 }
@@ -56,6 +55,7 @@ describe('ActivityController (e2e)', () => {
     return {
       activityCategoryRepo: manager.getRepository(ActivityCategory),
       categoryRepo: manager.getRepository(Category),
+      activityAttendanceRepo: manager.getRepository(ActivityAttendance),
       orderProductRepo: manager.getRepository(OrderProduct),
       productRepo: manager.getRepository(Product),
       orderLogRepo: manager.getRepository(OrderLog),
@@ -226,7 +226,7 @@ describe('ActivityController (e2e)', () => {
           id: 'TWD',
         });
 
-        const insertedOrderProduct = await createTestOrderProduct(manager, {
+        await createTestOrderProduct(manager, {
           order: insertedOrderLog,
           product: insertedProduct,
           currency: insertedCurrency,
@@ -238,7 +238,7 @@ describe('ActivityController (e2e)', () => {
           },
         });
 
-        const insertedOrderProduct2 = await createTestOrderProduct(manager, {
+        await createTestOrderProduct(manager, {
           order: insertedOrderLog2,
           product: insertedProduct2,
           currency: insertedCurrency,
@@ -376,7 +376,7 @@ describe('ActivityController (e2e)', () => {
           role: 'app-owner',
         });
 
-        const insertedCategory = await createTestCategory(manager, {
+        await createTestCategory(manager, {
           appId: app.id,
           class: 'activity',
         });
@@ -436,7 +436,7 @@ describe('ActivityController (e2e)', () => {
           role: 'app-owner',
         });
 
-        const insertedCategory = await createTestCategory(manager, {
+        await createTestCategory(manager, {
           appId: app.id,
           class: 'activity',
         });
@@ -544,7 +544,7 @@ describe('ActivityController (e2e)', () => {
           activitySessions.push(insertedActivitySession);
         }
 
-        const insertedActivitySession = await createTestActivitySession(manager, {
+        await createTestActivitySession(manager, {
           activity: insertedActivityNotFinished,
           startedAt: new Date(),
           endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days after the current date
@@ -626,7 +626,7 @@ describe('ActivityController (e2e)', () => {
           activitySessions.push(insertedActivitySession);
         }
 
-        const insertedActivitySession = await createTestActivitySession(manager, {
+        await createTestActivitySession(manager, {
           activity: insertedActivityNotPublished,
           startedAt: new Date(),
           endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days after the current date
@@ -689,7 +689,7 @@ describe('ActivityController (e2e)', () => {
           activityCategories.push(insertedActivityCategory);
         }
 
-        const insertedActivityPrivateHoding = await createTestActivity(manager, {
+        const insertedActivityPrivateHolding = await createTestActivity(manager, {
           app: app,
           organizer: insertedMember,
           isPrivate: true,
@@ -708,8 +708,8 @@ describe('ActivityController (e2e)', () => {
           activitySessions.push(insertedActivitySession);
         }
 
-        const insertedActivitySession = await createTestActivitySession(manager, {
-          activity: insertedActivityPrivateHoding,
+        await createTestActivitySession(manager, {
+          activity: insertedActivityPrivateHolding,
           startedAt: new Date(),
           endedAt: new Date(currentDate.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days after the current date
         });
@@ -724,7 +724,7 @@ describe('ActivityController (e2e)', () => {
           .set(requestHeader)
           .expect(200);
 
-        expect(response.body.activities.map((v) => v.id).includes(insertedActivityPrivateHoding.id)).toBe(true);
+        expect(response.body.activities.map((v) => v.id).includes(insertedActivityPrivateHolding.id)).toBe(true);
         expect(response.body.activities.map((v) => v.id).includes(activities[0].id)).toBe(false);
 
         expect(response.body.totalCount).toBe(1);
@@ -777,13 +777,13 @@ describe('ActivityController (e2e)', () => {
         endedAt: new Date('2020-01-04T00:00:00Z'),
       });
 
-      const insertedActivitySessionTicket1 = await createTestActivitySessionTicket(manager, {
+      await createTestActivitySessionTicket(manager, {
         activitySession: insertedActivitySession1,
         activityTicket: insertedActivityTicket1,
         activitySessionType: 'offline',
       });
 
-      const insertedActivitySessionTicket2 = await createTestActivitySessionTicket(manager, {
+      await createTestActivitySessionTicket(manager, {
         activitySession: insertedActivitySession2,
         activityTicket: insertedActivityTicket2,
         activitySessionType: 'online',
@@ -815,7 +815,7 @@ describe('ActivityController (e2e)', () => {
         id: 'TWD',
       });
 
-      const insertedOrderProduct = await createTestOrderProduct(manager, {
+      await createTestOrderProduct(manager, {
         order: insertedOrderLog,
         product: insertedProduct,
         currency: insertedCurrency,
@@ -827,7 +827,7 @@ describe('ActivityController (e2e)', () => {
         },
       });
 
-      const insertedOrderProduct2 = await createTestOrderProduct(manager, {
+      await createTestOrderProduct(manager, {
         order: insertedOrderLog2,
         product: insertedProduct2,
         currency: insertedCurrency,
@@ -896,13 +896,13 @@ describe('ActivityController (e2e)', () => {
         endedAt: new Date('2020-01-04T00:00:00Z'),
       });
 
-      const insertedActivitySessionTicket1 = await createTestActivitySessionTicket(manager, {
+      await createTestActivitySessionTicket(manager, {
         activitySession: insertedActivitySession1,
         activityTicket: insertedActivityTicket1,
         activitySessionType: 'offline',
       });
 
-      const insertedActivitySessionTicket2 = await createTestActivitySessionTicket(manager, {
+      await createTestActivitySessionTicket(manager, {
         activitySession: insertedActivitySession2,
         activityTicket: insertedActivityTicket2,
         activitySessionType: 'online',
@@ -934,7 +934,7 @@ describe('ActivityController (e2e)', () => {
         id: 'TWD',
       });
 
-      const insertedOrderProduct = await createTestOrderProduct(manager, {
+      await createTestOrderProduct(manager, {
         order: insertedOrderLog,
         product: insertedProduct,
         currency: insertedCurrency,
@@ -946,7 +946,7 @@ describe('ActivityController (e2e)', () => {
         },
       });
 
-      const insertedOrderProduct2 = await createTestOrderProduct(manager, {
+      await createTestOrderProduct(manager, {
         order: insertedOrderLog2,
         product: insertedProduct2,
         currency: insertedCurrency,
@@ -966,6 +966,413 @@ describe('ActivityController (e2e)', () => {
       expect(data[0].activityTicketId).toEqual(insertedActivityTicket1.id);
       expect(data[0].orderId).toEqual(insertedOrderLog.id);
       expect(data[0].activitySession.length).toEqual(1);
+    });
+  });
+
+  describe('GET /activity/:activityId/participants', () => {
+    let insertedMember: Member;
+    let insertedMember2: Member;
+    let insertedMember3: Member;
+    let insertedActivity: Activity;
+    let insertedCategory: Category;
+
+    let insertedActivitySession1: ActivitySession;
+    let insertedActivityTicket1: ActivityTicket;
+
+    let insertedOrderLog: OrderLog;
+    let insertedOrderLog2: OrderLog;
+    let insertedOrderLog3: OrderLog;
+    let insertedProduct: Product;
+    let insertedCurrency: Currency;
+    let insertedOrderProduct2: OrderProduct;
+
+    beforeEach(async () => {
+      insertedMember = await createTestMember(manager, {
+        appId: app.id,
+        role: 'app-owner',
+      });
+
+      insertedMember2 = await createTestMember(manager, {
+        appId: app.id,
+        role: 'general-member',
+      });
+
+      insertedMember3 = await createTestMember(manager, {
+        appId: app.id,
+        role: 'general-member',
+      });
+
+      insertedActivity = await createTestActivity(manager, {
+        app: app,
+        organizer: insertedMember,
+        isPrivate: false, // scenario: 'holding' condition
+        publishedAt: new Date(), // scenario: 'holding' condition
+      });
+
+      console.log('create', insertedActivity);
+
+      insertedCategory = await createTestCategory(manager, {
+        appId: app.id,
+        class: 'activity',
+      });
+
+      await createTestActivityCategory(manager, {
+        activity: insertedActivity,
+        category: insertedCategory,
+      });
+
+      insertedActivitySession1 = await createTestActivitySession(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-01T00:00:00Z'),
+        endedAt: new Date('2020-01-02T00:00:00Z'),
+      });
+
+      insertedActivityTicket1 = await createTestActivityTicket(manager, {
+        activity: insertedActivity,
+        startedAt: new Date('2020-01-01T00:00:00Z'),
+        endedAt: new Date('2020-01-02T00:00:00Z'),
+      });
+
+      await createTestActivitySessionTicket(manager, {
+        activitySession: insertedActivitySession1,
+        activityTicket: insertedActivityTicket1,
+        activitySessionType: 'offline',
+      });
+
+      insertedOrderLog = await createTestOrderLog(manager, {
+        member: insertedMember,
+        invoiceOptions: {
+          name: insertedMember.name,
+          email: insertedMember.email,
+          phone: '0933433333',
+          donationCode: '1000',
+        },
+        appId: app.id,
+      });
+
+      insertedOrderLog2 = await createTestOrderLog(manager, {
+        member: insertedMember2,
+        invoiceOptions: {
+          name: insertedMember2.name,
+          email: insertedMember2.email,
+          phone: '0933433333',
+          donationCode: '1000',
+        },
+        appId: app.id,
+      });
+
+      insertedOrderLog3 = await createTestOrderLog(manager, {
+        member: insertedMember3,
+        invoiceOptions: {
+          name: insertedMember3.name,
+          email: insertedMember3.email,
+          phone: '0933433333',
+          donationCode: '1000',
+        },
+        appId: app.id,
+      });
+
+      insertedProduct = await createTestProduct(manager, {
+        id: `ActivityTicket_${insertedActivityTicket1.id}`,
+        type: 'ActivityTicket',
+        target: insertedActivityTicket1.id,
+      });
+
+      insertedCurrency = await createTestCurrency(manager, {
+        id: 'TWD',
+      });
+
+      await createTestOrderProduct(manager, {
+        order: insertedOrderLog,
+        product: insertedProduct,
+        currency: insertedCurrency,
+        productId: insertedActivity.id,
+        options: {
+          from: `/activities/${insertedActivity.id}`,
+          currencyId: insertedCurrency.id,
+          currencyPrice: 2000,
+        },
+      });
+      insertedOrderProduct2 = await createTestOrderProduct(manager, {
+        order: insertedOrderLog2,
+        product: insertedProduct,
+        currency: insertedCurrency,
+        productId: insertedActivity.id,
+        options: {
+          from: `/activities/${insertedActivity.id}`,
+          currencyId: insertedCurrency.id,
+          currencyPrice: 2000,
+        },
+      });
+      await createTestOrderProduct(manager, {
+        order: insertedOrderLog3,
+        product: insertedProduct,
+        currency: insertedCurrency,
+        productId: insertedActivity.id,
+        options: {
+          from: `/activities/${insertedActivity.id}`,
+          currencyId: insertedCurrency.id,
+          currencyPrice: 2000,
+        },
+      });
+    });
+
+    describe('happy path', () => {
+      // Scenario 1: 1 activity, 1 activitySession, 3 participants
+      it('get activity participants', async () => {
+        // Test data setup:
+        // - 1 activity
+        // - 1 activitySession
+        // - 1 activityTicket
+        // - 3 members (1 organizer, 2 participants)
+        // - 3 orderLogs (1 for each member)
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: ['ACTIVITY_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const response = await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          activitySessions: expect.arrayContaining([
+            expect.objectContaining({
+              id: insertedActivitySession1.id,
+              title: insertedActivitySession1.title,
+              participants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: insertedMember.id,
+                  phone: '0933433333',
+                  name: insertedMember.name,
+                  email: insertedMember.email,
+                  orderLogId: insertedOrderLog.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember2.id,
+                  phone: '0933433333',
+                  name: insertedMember2.name,
+                  email: insertedMember2.email,
+                  orderLogId: insertedOrderLog2.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember3.id,
+                  phone: '0933433333',
+                  name: insertedMember3.name,
+                  email: insertedMember3.email,
+                  orderLogId: insertedOrderLog3.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+              ]),
+            }),
+          ]),
+        });
+      });
+
+      // Scenario 2: 1 activity, multiple activitySessions
+      it('multiple activity session', async () => {
+        // Additional test data setup:
+        // - Create a second activitySession
+        // - Associate the second activitySession with the existing activityTicket
+        // - Create an additional orderLog for the organizer member
+        const insertedActivitySession2 = await createTestActivitySession(manager, {
+          activity: insertedActivity,
+          startedAt: new Date('2020-01-01T00:00:00Z'),
+          endedAt: new Date('2020-01-02T00:00:00Z'),
+        });
+
+        await createTestActivitySessionTicket(manager, {
+          activitySession: insertedActivitySession2,
+          activityTicket: insertedActivityTicket1,
+          activitySessionType: 'offline',
+        });
+
+        await createTestOrderLog(manager, {
+          member: insertedMember,
+          invoiceOptions: {
+            name: insertedMember.name,
+            email: insertedMember.email,
+            phone: '0933433333',
+            donationCode: '1000',
+          },
+          appId: app.id,
+        });
+
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: ['ACTIVITY_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const response = await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          activitySessions: expect.arrayContaining([
+            expect.objectContaining({
+              id: insertedActivitySession1.id,
+              title: insertedActivitySession1.title,
+              participants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: insertedMember.id,
+                  phone: '0933433333',
+                  name: insertedMember.name,
+                  email: insertedMember.email,
+                  orderLogId: insertedOrderLog.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember2.id,
+                  phone: '0933433333',
+                  name: insertedMember2.name,
+                  email: insertedMember2.email,
+                  orderLogId: insertedOrderLog2.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember3.id,
+                  name: insertedMember3.name,
+                  phone: '0933433333',
+                  email: insertedMember3.email,
+                  orderLogId: insertedOrderLog3.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+              ]),
+            }),
+            expect.objectContaining({
+              id: insertedActivitySession2.id,
+              title: insertedActivitySession2.title,
+              participants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: insertedMember.id,
+                  phone: '0933433333',
+                  name: insertedMember.name,
+                  email: insertedMember.email,
+                  orderLogId: insertedOrderLog.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+              ]),
+            }),
+          ]),
+        });
+      });
+
+      // Scenario 3: 1 activity, 1 activitySession, 3 participants, and insertedMember2 have attended
+      it('some participants have attended', async () => {
+        const activityAttendance = new ActivityAttendance();
+        activityAttendance.activitySessionId = insertedActivitySession1.id;
+        activityAttendance.activitySession = insertedActivitySession1;
+        activityAttendance.orderProduct = insertedOrderProduct2;
+        await repositories.activityAttendanceRepo.save(activityAttendance);
+
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: ['ACTIVITY_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const response = await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({
+          activitySessions: expect.arrayContaining([
+            expect.objectContaining({
+              id: insertedActivitySession1.id,
+              title: insertedActivitySession1.title,
+              participants: expect.arrayContaining([
+                expect.objectContaining({
+                  id: insertedMember.id,
+                  phone: '0933433333',
+                  name: insertedMember.name,
+                  email: insertedMember.email,
+                  orderLogId: insertedOrderLog.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember2.id,
+                  phone: '0933433333',
+                  name: insertedMember2.name,
+                  email: insertedMember2.email,
+                  orderLogId: insertedOrderLog2.id,
+                  attended: true,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+                expect.objectContaining({
+                  id: insertedMember3.id,
+                  phone: '0933433333',
+                  name: insertedMember3.name,
+                  email: insertedMember3.email,
+                  orderLogId: insertedOrderLog3.id,
+                  attended: false,
+                  activityTicketTitle: insertedActivityTicket1.title,
+                }),
+              ]),
+            }),
+          ]),
+        });
+      });
+    });
+
+    describe('Unhappy Path', () => {
+      it('Block unauthorized requests', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: ['WRONG_PERMISSION'],
+          },
+          jwtSecret,
+        );
+
+        await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(401);
+      });
     });
   });
 });

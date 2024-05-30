@@ -40,6 +40,8 @@ import { Coupon } from '~/coupon/entity/coupon.entity';
 import { CouponPlanProduct } from '~/entity/CouponPlanProduct';
 import { MemberNote } from '~/entity/MemberNote';
 import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
+import { Card } from '~/card/entity/Card';
+import { CardProduct } from '~/card/entity/CardProduct';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -120,13 +122,19 @@ currency.label = '';
 currency.unit = '';
 currency.name = '';
 
+export const card = new Card();
+card.id = v4();
+card.title = 'test';
+card.appId = app.id;
+card.description = 'test';
+card.template = '<div />';
+
 export const programPlan = new ProgramPlan();
 programPlan.id = v4();
 programPlan.programId = program.id;
 programPlan.title = 'test program plan';
 programPlan.type = 3; // can view all program
 programPlan.listPrice = 0;
-programPlan.cardId = null;
 programPlan.currency = currency;
 
 export const programRole = new ProgramRole();
@@ -298,3 +306,9 @@ export const couponPlanProduct = new CouponPlanProduct();
 couponPlanProduct.id = v4();
 couponPlanProduct.couponPlanId = couponPlan.id;
 couponPlanProduct.productId = programPlanProduct.id;
+
+export const cardProduct = new CardProduct();
+cardProduct.id = v4();
+cardProduct.cardId = card.id;
+cardProduct.target = programPlan.id;
+cardProduct.productType = 'ProgramPlan';
