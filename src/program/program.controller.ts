@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Param, Req, UnauthorizedException, UseGuards, Headers } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Req, UnauthorizedException, UseGuards, Headers, Query } from '@nestjs/common';
 import { Request } from 'express';
 import { APIException } from '~/api.excetion';
 import { JwtMember } from '~/auth/auth.dto';
@@ -59,14 +59,14 @@ export class ProgramController {
       );
     }
 
-    const isTrial = !authorization && programContent.displayMode === 'trial';
-    const isLoginToTrial = !!authorization && programContent.displayMode === 'loginToTrial';
+    const isTrial = programContent.displayMode === 'trial';
+    const isLoginToTrial = programContent.displayMode === 'loginToTrial';
     const member = !!authorization && (await this._verifyAuthorization(authorization));
 
     const extraAllowPermission = !!member && ['PROGRAM_NORMAL'].find((e) => member.permissions.includes(e));
     const adminPermission = !!member && ['PROGRAM_ADMIN'].find((e) => member.permissions.includes(e));
 
-    return adminPermission || isLoginToTrial || isTrial
+    return adminPermission || (!!member && isLoginToTrial) || isTrial
       ? { ...programContent, isEquity: true }
       : !!member
       ? this.programService.getEnrolledProgramContentById(
@@ -99,6 +99,12 @@ export class ProgramController {
           programId,
           extraAllowPermission,
         );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get()
+  async getProgramsByMemberId(@Local('member') member: JwtMember, @Query('memberId') memberId: string) {
+    return this.programService.getProgramsByMemberId(member.appId, String(memberId || member.memberId));
   }
 
   @UseGuards(AuthGuard)

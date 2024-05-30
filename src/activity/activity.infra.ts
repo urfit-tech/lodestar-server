@@ -5,6 +5,9 @@ import { ActivitySessionTicket } from './entity/ActivitySessionTicket';
 import { ActivitySessionTicketEnrollmentCount } from './view_entity/ActivitySessionTicketEnrollmentCount';
 import { UtilityService } from '~/utility/utility.service';
 import { OrderLog } from '~/order/entity/order_log.entity';
+import { ActivityParticipantResponse, ActivitySessionDto, ParticipantDto } from './dto/activity.dto';
+import { ActivityEnrollment } from './view_entity/ActivityEnrollment';
+import { ActivitySession } from './entity/ActivitySession';
 
 interface ActivityDuration {
   startedAt: Date;
@@ -340,5 +343,78 @@ export class ActivityInfrastructure {
       .getRawMany();
 
     return this.utilityService.convertObjectKeysToCamelCase(activityTicketCount);
+  }
+
+  async getActivityParticipants(activityId: string, manager: EntityManager): Promise<ActivityParticipantResponse> {
+    const rawData = await manager
+      .createQueryBuilder()
+      .select(
+        `
+          activity_session.id AS activity_session_id,
+          activity_session.title AS activity_session_title,
+          activity_session.started_at AS activity_session_started_at,
+          activity_enrollment.order_log_id AS participant_order_log_id,
+          activity_enrollment.member_id AS participant_id,
+          activity_enrollment.member_name AS participant_name,
+          activity_enrollment.member_email AS participant_email,
+          activity_enrollment.member_phone AS participant_phone,
+          activity_enrollment.attended AS participant_attended,
+          activity_ticket.title AS participant_activity_title
+        `,
+      )
+      .from('activity_session', 'activity_session')
+      .innerJoin(
+        'activity_enrollment',
+        'activity_enrollment',
+        'activity_enrollment.activity_session_id = activity_session.id',
+      )
+      .leftJoin('activity_ticket', 'activity_ticket', 'activity_enrollment.activity_ticket_id = activity_ticket.id')
+      .leftJoin('activity', 'activity', 'activity.id = activity_ticket.activity_id')
+      .where('activity_session.activity_id = :activityId', { activityId })
+      .orderBy('activity_session.started_at', 'ASC')
+      .getRawMany();
+
+    const activitySessionDtos: ActivitySessionDto[] = [];
+
+    rawData.forEach((row) => {
+      const activitySessionId = row.activity_session_id;
+      const participantId = row.participant_id;
+
+      const activitySessionDto = activitySessionDtos.find((dto) => dto.id === activitySessionId);
+
+      if (activitySessionDto) {
+        activitySessionDto.participants.push({
+          id: participantId,
+          name: row.participant_name,
+          phone: row.participant_phone,
+          email: row.participant_email,
+          orderLogId: row.participant_order_log_id,
+          attended: row.participant_attended,
+          activityTicketTitle: row.participant_activity_title,
+        });
+      } else {
+        activitySessionDtos.push({
+          id: activitySessionId,
+          title: row.activity_session_title,
+          participants: [
+            {
+              id: participantId,
+              name: row.participant_name,
+              phone: row.participant_phone,
+              email: row.participant_email,
+              orderLogId: row.participant_order_log_id,
+              attended: row.participant_attended,
+              activityTicketTitle: row.participant_activity_title,
+            },
+          ],
+        });
+      }
+    });
+
+    const response: ActivityParticipantResponse = {
+      activitySessions: activitySessionDtos,
+    };
+
+    return response;
   }
 }

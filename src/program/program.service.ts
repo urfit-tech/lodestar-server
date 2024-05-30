@@ -53,7 +53,10 @@ export class ProgramService {
       this.entityManager,
     );
 
-    const ownedProgramsFromCard = await this.programInfra.getOwnedProgramsFromCard(memberId, this.entityManager);
+    const ownedProgramsFromCard = await this.programInfra.getOwnedProgramsFromMembershipCardEnrollment(
+      memberId,
+      this.entityManager,
+    );
 
     const ownedProgramPlans = this._mergeProgramPlans(ownedProgramsFromCard, ownedProgramsFromProgramPlan);
 
@@ -112,7 +115,11 @@ export class ProgramService {
         programId,
         this.entityManager,
       )),
-      (programByProgramCardEnrollment = await this.programInfra.getOwnedProgramsFromCard(memberId, this.entityManager)),
+      (programByProgramCardEnrollment = await this.programInfra.getProgramByMembershipCardEnrollment(
+        memberId,
+        programId,
+        this.entityManager,
+      )),
     ]);
 
     const program = {
@@ -183,7 +190,9 @@ export class ProgramService {
       permissionId,
     );
 
-    return enrolledProgramContentId;
+    const programContentInfo = await this.programInfra.getProgramContentInfo(programContentId, this.entityManager);
+
+    return { ...programContentInfo, ...enrolledProgramContentId };
   }
 
   public async getEnrolledProgramContentsByProgramId(
