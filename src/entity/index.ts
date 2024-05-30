@@ -24,8 +24,8 @@ import { Attend } from './Attend';
 import { AuditLog } from './AuditLog';
 import { Bundle } from './Bundle';
 import { BundleItem } from './BundleItem';
-import { Card } from '../card/entity/Card';
-import { CardDiscount } from '../card/entity/CardDiscount';
+import { Card } from './Card';
+import { CardDiscount } from './CardDiscount';
 import { CartItem } from './CartItem';
 import { CartProduct } from './CartProduct';
 import { Category } from '~/definition/entity/category.entity';
@@ -230,7 +230,6 @@ import { ProgramContentEbook } from './ProgramContentEbook';
 import { AppInvoiceGateway } from './AppInvoiceGateway';
 import { InvoiceGateway } from './InvoiceGateway';
 import { AppointmentEnrollmentView } from './AppointmentEnrollmentView';
-import { CardProduct } from '../card/entity/CardProduct';
 
 export const PostgresEntities = [
   Activity,
@@ -271,7 +270,6 @@ export const PostgresEntities = [
   BundleItem,
   Card,
   CardDiscount,
-  CardProduct,
   CartItem,
   CartProduct,
   Category,

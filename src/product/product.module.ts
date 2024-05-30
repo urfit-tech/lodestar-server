@@ -5,7 +5,7 @@ import { PodcastModule } from '~/podcast/podcast.module';
 import { ProductService } from '~/product/product.service';
 import { ProgramModule } from '~/program/program.module';
 import { ProjectModule } from '~/project/project.module';
-import { CardService } from '../card/card.service';
+import { CardService } from './card/card.service';
 import { MerchandiseSpecService } from './merchandise-spec/merchandise-spec.service';
 import { ProductInfrastructure } from './product.infra';
 import { TokenService } from './token/token.service';
