@@ -5,7 +5,7 @@ import { ActivityTicket } from '~/activity/entity/ActivityTicket';
 import { AppointmentPlan } from '~/entity/AppointmentPlan';
 import { Card } from '~/card/entity/Card';
 import { ProgramRole } from '~/entity/ProgramRole';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 import { ProjectPlan } from '~/entity/ProjectPlan';
 import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
 import { Program } from '~/entity/Program';

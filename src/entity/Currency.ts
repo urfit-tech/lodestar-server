@@ -3,7 +3,7 @@ import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 
 import { AppointmentPlan } from './AppointmentPlan';
-import { ProgramPlan } from './ProgramPlan';
+import { ProgramPlan } from '../program/entity/ProgramPlan';
 
 @Index('currency_pkey', ['id'], { unique: true })
 @Entity('currency', { schema: 'public' })

@@ -1,6 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Card } from './Card';
-import { ProgramPlan } from '../../entity/ProgramPlan';
+import { ProgramPlan } from '../../program/entity/ProgramPlan';
 
 @Index('card_product_pkey', ['id'], { unique: true })
 @Entity('card_product', { schema: 'public' })

@@ -47,7 +47,7 @@ import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { ProgramPackage } from '~/entity/ProgramPackage';
 import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
 import { Program } from '~/entity/Program';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 import { Currency } from '~/entity/Currency';
 
 const apiPath = {
