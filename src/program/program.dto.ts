@@ -19,6 +19,18 @@ export class ProgramResponseDTO {
 
   @ApiProperty()
   abstract: string;
+
+  @ApiProperty()
+  roles: programRoleDto[];
+
+  @ApiProperty()
+  viewRate: number;
+
+  @ApiProperty()
+  lastViewedAt: Date;
+
+  @ApiProperty()
+  deliveredAt: Date;
 }
 
 class AudioDataDTO {
@@ -201,4 +213,21 @@ export class MaterialsResponseDto {
 
   @ApiProperty()
   createdAt: Date;
+}
+
+export class programRoleDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  memberId: string;
+
+  @ApiProperty()
+  createdAt: string;
+
+  @ApiProperty()
+  memberName: string;
 }

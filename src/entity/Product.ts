@@ -2,7 +2,7 @@ import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeor
 
 import { OrderProduct } from '~/order/entity/order_product.entity';
 
-import { CardDiscount } from './CardDiscount';
+import { CardDiscount } from '../card/entity/CardDiscount';
 import { CartProduct } from './CartProduct';
 import { CouponPlanProduct } from './CouponPlanProduct';
 import { GiftPlanProduct } from './GiftPlanProduct';
