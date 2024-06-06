@@ -150,11 +150,22 @@ export class ProgramService {
       });
     }
 
-    const expiredPrograms = await this.programInfra.getExpiredPrograms(memberId, this.entityManager);
+    const expiredPrograms: ProgramResponseDTO[] = await this.programInfra.getExpiredProgramsByProgramPlan(
+      memberId,
+      this.entityManager,
+    );
+
+    const expiredProgramsByMembershipCard: ProgramResponseDTO[] =
+      await this.programInfra.getExpiredProgramsByMembershipCard(memberId, this.entityManager);
 
     return [
       ...new Set([
         ...expiredPrograms.map((program) => ({
+          ...program,
+          viewRate: Number(program.viewRate || 0),
+          roles: this.sortProgramRole(program.roles),
+        })),
+        ...expiredProgramsByMembershipCard.map((program) => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
@@ -236,10 +247,15 @@ export class ProgramService {
   }
 
   private sortProgramRole(roles: { memberId: string; name: string; createdAt: string }[]) {
-    return roles.sort(
+    const sortRoles = roles.sort(
       (a: { createdAt: string }, b: { createdAt: string }) =>
         dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
     );
+    const resultRoles = sortRoles.map((role) => ({
+      ...role,
+      createdAt: dayjs(role.createdAt),
+    }));
+    return resultRoles;
   }
 
   private _mergeProgramPlans(primaryPlans: Record<string, any>[], secondaryPlans: Record<string, any>[]) {

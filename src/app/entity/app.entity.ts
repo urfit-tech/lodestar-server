@@ -10,7 +10,7 @@ import { AppNav } from '~/entity/AppNav';
 import { AppPlan } from '~/entity/AppPlan';
 import { AppUsage } from '~/entity/AppUsage';
 import { AppWebhook } from '~/entity/AppWebhook';
-import { Card } from '~/entity/Card';
+import { Card } from '~/card/entity/Card';
 import { CartItem } from '~/entity/CartItem';
 import { Comment } from '~/entity/Comment';
 import { Issue } from '~/entity/Issue';

@@ -2,6 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGenerat
 import { Currency } from './Currency';
 import { Program } from './Program';
 import { ProgramContentPlan } from './ProgramContentPlan';
+import { CardProduct } from '../card/entity/CardProduct';
 
 @Index('program_plan_pkey', ['id'], { unique: true })
 @Index('program_plan_program_id', ['programId'], {})
@@ -89,9 +90,6 @@ export class ProgramPlan {
   @Column('boolean', { name: 'is_deleted', default: () => false })
   isDeleted: boolean;
 
-  @Column('uuid', { name: 'card_id', default: () => null })
-  cardId: string;
-
   @OneToMany(() => ProgramContentPlan, (programContentPlan) => programContentPlan.programPlan)
   programContentPlans: ProgramContentPlan[];
 
@@ -108,4 +106,7 @@ export class ProgramPlan {
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
   program: Program;
+
+  @OneToMany(() => CardProduct, (cardProduct) => cardProduct.programPlan)
+  cardProducts: CardProduct[];
 }
