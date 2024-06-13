@@ -279,7 +279,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         for (const memberId of members) {
           const updatedMember = await memberRepo.findOne({ where: { id: memberId } });
@@ -308,7 +308,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         const updatedMember = await memberRepo.findOne({ where: { id: memberId } });
         expect(updatedMember.loginedAt).toEqual(new Date(now.getTime() + 2 * 1000));
@@ -321,7 +321,7 @@ describe('PorterRunner (e2e)', () => {
         expect(keyExists).toBe(1);
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         keyExists = await cacheService.getClient().exists(key);
         expect(keyExists).toBe(0);
@@ -341,7 +341,7 @@ describe('PorterRunner (e2e)', () => {
         const consoleSpy = jest.spyOn(console, 'error');
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         expect(consoleSpy).toHaveBeenCalledWith(
           expect.stringContaining(`No records updated for memberId: ${nonExistentMemberId}. Member might not exist.`),
@@ -363,7 +363,7 @@ describe('PorterRunner (e2e)', () => {
         const consoleSpy = jest.spyOn(console, 'error');
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         expect(consoleSpy).toHaveBeenCalled();
 
@@ -383,7 +383,7 @@ describe('PorterRunner (e2e)', () => {
     it('should correctly save program content log', async () => {
       const porterRunner = application.get<PorterRunner>(Runner);
 
-      await porterRunner.portPlayerEvent(manager, 30);
+      await porterRunner.execute(manager);
 
       const [latestLog] = await programContentLogRepo.find({
         order: { createdAt: 'DESC' },
@@ -412,7 +412,7 @@ describe('PorterRunner (e2e)', () => {
 
       const consoleSpy = jest.spyOn(console, 'error');
       const porterRunner = application.get<PorterRunner>(Runner);
-      await porterRunner.portPlayerEvent(manager);
+      await porterRunner.execute(manager);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid timestamp'));
 
@@ -439,7 +439,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPlayerEvent(manager, 20);
+        await porterRunner.execute(manager);
 
         const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
         expect(logs.length).toEqual(80);
@@ -468,7 +468,7 @@ describe('PorterRunner (e2e)', () => {
         }
         const consoleSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPlayerEvent(manager, 20);
+        await porterRunner.execute(manager);
 
         const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
         expect(logs.length).toEqual(79);
@@ -507,7 +507,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPlayerEvent(manager, 20);
+        await porterRunner.execute(manager);
 
         const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
         expect(logs.length).toEqual(79);
@@ -531,7 +531,7 @@ describe('PorterRunner (e2e)', () => {
 
         const porterRunner = application.get<PorterRunner>(Runner);
 
-        await expect(porterRunner.portPlayerEvent(manager)).resolves.not.toThrow();
+        await expect(porterRunner.execute(manager)).resolves.not.toThrow();
 
         const logs = await programContentLogRepo.find();
         expect(logs.length).toEqual(0);
@@ -576,7 +576,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPodcastProgram(manager);
+        await porterRunner.execute(manager);
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(1);
@@ -631,7 +631,7 @@ describe('PorterRunner (e2e)', () => {
         }
         const consoleSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPodcastProgram(manager);
+        await porterRunner.execute(manager);
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(2);
@@ -662,7 +662,7 @@ describe('PorterRunner (e2e)', () => {
           );
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPodcastProgram(manager);
+        await porterRunner.execute(manager);
 
         const savedRecord = await podcastProgramProgressRepo.findOne({
           where: {
@@ -685,7 +685,7 @@ describe('PorterRunner (e2e)', () => {
 
         const porterRunner = application.get<PorterRunner>(Runner);
 
-        await expect(porterRunner.portPodcastProgram(manager)).resolves.not.toThrow();
+        await expect(porterRunner.execute(manager)).resolves.not.toThrow();
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(0);
@@ -743,7 +743,7 @@ describe('PorterRunner (e2e)', () => {
 
         const consoleSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPodcastProgram(manager);
+        await porterRunner.execute(manager);
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(2);
@@ -782,7 +782,7 @@ describe('PorterRunner (e2e)', () => {
 
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).not.toHaveBeenCalled();
         logSpy.mockRestore();
 
@@ -801,7 +801,7 @@ describe('PorterRunner (e2e)', () => {
         );
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         const scanRedisKey = await cacheService.getClient().keys('PhoneService:*');
         const remainingKeysCount = scanRedisKey.length;
         expect(remainingKeysCount).toEqual(0);
@@ -817,7 +817,7 @@ describe('PorterRunner (e2e)', () => {
         );
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         const _member = await memberRepo.findOne({ where: { name: 'testMember' } });
         expect(_member.id).toBe(memberNote.authorId);
         expect(_member.id).toBe(memberNote.memberId);
@@ -836,7 +836,7 @@ describe('PorterRunner (e2e)', () => {
 
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).toHaveBeenCalled();
         expect(logSpy).toBeCalledTimes(1);
         logSpy.mockRestore();
@@ -860,7 +860,7 @@ describe('PorterRunner (e2e)', () => {
         );
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).toHaveBeenCalled();
         expect(logSpy).toBeCalledTimes(1);
         logSpy.mockRestore();
@@ -878,7 +878,7 @@ describe('PorterRunner (e2e)', () => {
         }
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).toBeCalledTimes(20);
         logSpy.mockRestore();
       });
@@ -888,7 +888,7 @@ describe('PorterRunner (e2e)', () => {
 
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).toHaveBeenCalled();
         expect(logSpy).toBeCalledTimes(1);
         logSpy.mockRestore();
