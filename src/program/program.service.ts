@@ -246,6 +246,40 @@ export class ProgramService {
     return programContentMaterialsByProgramId;
   }
 
+  public async trackProgramContentProgress(params: {
+    memberId: string;
+    programId: string;
+    programContentId: string;
+    progress: number;
+    lastProgress: number;
+  }): Promise<void> {
+    const { memberId, programId, programContentId, progress, lastProgress } = params;
+
+    const existingProgress = await this.programInfra.getProgramContentProgressByIdAndMemberId(
+      programContentId,
+      memberId,
+      this.entityManager,
+    );
+
+    const maxProgress = existingProgress ? Math.max(existingProgress.progress, progress) : progress;
+    console.log('maxProgress', maxProgress);
+
+    try {
+      await this.programInfra.trackProgramContentProgress(
+        {
+          memberId,
+          programId,
+          programContentId,
+          progress: maxProgress,
+          lastProgress,
+        },
+        this.entityManager,
+      );
+    } catch (error) {
+      throw new Error(`Failed to track progress for content ${programContentId}: ${error.message}`);
+    }
+  }
+
   private sortProgramRole(roles: { memberId: string; name: string; createdAt: string }[]) {
     const sortRoles = roles.sort(
       (a: { createdAt: string }, b: { createdAt: string }) =>
