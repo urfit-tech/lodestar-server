@@ -67,6 +67,8 @@ import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
 import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { Card } from '~/card/entity/Card';
 import { CardProduct } from '~/card/entity/CardProduct';
+import { ConfigService } from '@nestjs/config';
+import jwt from 'jsonwebtoken';
 
 describe('ProgramController (e2e)', () => {
   let application: INestApplication;
@@ -2101,6 +2103,199 @@ describe('ProgramController (e2e)', () => {
       const result = await request(application.getHttpServer()).get(`${route}`).set(header);
 
       expect(200).toEqual(result.status);
+    });
+  });
+
+  describe.only('POST /:programId/content/:contentId/track-process', () => {
+    beforeEach(async () => {
+      await programContentProgressRepo.delete({});
+    });
+    describe('happy path', () => {
+      it('When a member watches a new content unit for the first time, the system can create a corresponding progress record in the database.', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: member.id,
+            permissions: [],
+          },
+          jwtSecret,
+        );
+
+        const requestHeader = {
+          authorization: 'Bearer ' + token,
+          host: 'test.something.com',
+        };
+        await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/${programContent.id}/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.6,
+            lastProgress: 0.64555,
+          })
+          .expect(201);
+
+        const progress = await programContentProgressRepo.findOne({
+          where: {
+            memberId: member.id,
+            programContentId: programContent.id,
+          },
+        });
+
+        expect(progress.lastProgress).toEqual('0.64555');
+        expect(progress.progress).toEqual('0.6');
+      });
+
+      it('When a member has already watched the content unit, the system should update the existing progress record instead of inserting a new one.', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: member.id,
+            permissions: [],
+          },
+          jwtSecret,
+        );
+
+        const requestHeader = {
+          authorization: 'Bearer ' + token,
+          host: 'test.something.com',
+        };
+
+        await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/${programContent.id}/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.5,
+            lastProgress: 0.5,
+          })
+          .expect(201);
+
+        await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/${programContent.id}/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.8,
+            lastProgress: 0.8,
+          })
+          .expect(201);
+
+        const progresses = await programContentProgressRepo.find({
+          where: {
+            memberId: member.id,
+            programContentId: programContent.id,
+          },
+        });
+
+        expect(progresses.length).toEqual(1);
+
+        expect(progresses[0].lastProgress).toEqual('0.8');
+        expect(progresses[0].progress).toEqual('0.8');
+      });
+
+      it('When a member tries to record a progress that is less than the existing progress, the system should keep the existing progress. The last progress should be updated with the new value.', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: member.id,
+            permissions: [],
+          },
+          jwtSecret,
+        );
+
+        const requestHeader = {
+          authorization: 'Bearer ' + token,
+          host: 'test.something.com',
+        };
+
+        await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/${programContent.id}/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.5,
+            lastProgress: 0.5,
+          })
+          .expect(201);
+
+        await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/${programContent.id}/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.4,
+            lastProgress: 0.6,
+          })
+          .expect(201);
+
+        const progress = await programContentProgressRepo.findOne({
+          where: {
+            memberId: member.id,
+            programContentId: programContent.id,
+          },
+        });
+
+        expect(progress.lastProgress).toEqual('0.6');
+        expect(progress.progress).toEqual('0.5');
+
+        await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/${programContent.id}/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.2,
+            lastProgress: 0.4,
+          })
+          .expect(201);
+
+        const progress2 = await programContentProgressRepo.findOne({
+          where: {
+            memberId: member.id,
+            programContentId: programContent.id,
+          },
+        });
+
+        expect(progress2.lastProgress).toEqual('0.4');
+        expect(progress2.progress).toEqual('0.5');
+      });
+    });
+    describe.skip('Unauthorized access when recording progress', () => {
+      it('Should return 401 Unauthorized when no authorization token is provided', async () => {
+        const requestHeader = {
+          host: 'test.something.com',
+        };
+
+        await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/${programContent.id}/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.5,
+            lastProgress: 0.5,
+          })
+          .expect(401);
+      });
+
+      it('Should return 401 Unauthorized when an invalid authorization token is provided', async () => {
+        const invalidToken = 'invalid-token';
+
+        const requestHeader = {
+          authorization: 'Bearer ' + invalidToken,
+          host: 'test.something.com',
+        };
+
+        await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/${programContent.id}/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.5,
+            lastProgress: 0.5,
+          })
+          .expect(401);
+      });
     });
   });
 });

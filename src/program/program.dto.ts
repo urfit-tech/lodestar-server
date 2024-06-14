@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DisplayMode } from './program.type';
+import { IsNumber } from 'class-validator';
 
 export class ProgramResponseDTO {
   @ApiProperty()
@@ -230,4 +231,12 @@ export class programRoleDto {
 
   @ApiProperty()
   memberName: string;
+}
+
+export class TrackProgramProcessDto {
+  @IsNumber()
+  progress: number;
+
+  @IsNumber()
+  lastProgress: number;
 }
