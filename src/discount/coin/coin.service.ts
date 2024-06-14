@@ -12,6 +12,9 @@ export class CoinService {
   ) {}
 
   async claimCoin(coinId: string, memberId: string): Promise<{ success: boolean; message: string }> {
+    if (!memberId) {
+      return { success: false, message: '請輸入會員ID' };
+    }
     const coin = await this.coinInfra.getMemberCoin(coinId, memberId, this.entityManager);
 
     if (!coin) {
