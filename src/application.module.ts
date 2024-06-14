@@ -22,9 +22,9 @@ import { SwaggerConfigModule } from './swagger-config/swagger-config.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ActivityModule } from './activity/activity.module';
 import { WebhookModule } from './webhooks/webhook.module';
-import { EquityController } from './equity/equity.controller';
 import { EquityModule } from './equity/equity.module';
 import { MerchandiseModule } from './merchandise/merchandise.module';
+import { DiscountModule } from './discount/discount.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -92,6 +92,7 @@ import { MerchandiseModule } from './merchandise/merchandise.module';
     WebhookModule,
     EquityModule,
     MerchandiseModule,
+    DiscountModule,
   ],
 })
 export class ApplicationModule {

@@ -25,11 +25,14 @@ export class CoinLog {
   @Column('numeric', { name: 'amount' })
   amount: number;
 
-  @Column('timestamp with time zone', { name: 'started_at', nullable: true })
-  startedAt: Date | null;
+  @Column('timestamp with time zone', { name: 'claimed_at', nullable: true })
+  claimedAt: Date | null;
 
-  @Column('timestamp with time zone', { name: 'ended_at', nullable: true })
-  endedAt: Date | null;
+  @Column('timestamp with time zone', { name: 'claim_started_at', nullable: true })
+  claimStartedAt: Date | null;
+
+  @Column('timestamp with time zone', { name: 'claim_ended_at', nullable: true })
+  claimEndedAt: Date | null;
 
   @Column('text', { name: 'member_id' })
   memberId: string;
