@@ -2106,7 +2106,7 @@ describe('ProgramController (e2e)', () => {
     });
   });
 
-  describe.only('POST /:programId/content/:contentId/track-process', () => {
+  describe('POST /:programId/content/:contentId/track-process', () => {
     beforeEach(async () => {
       await programContentProgressRepo.delete({});
     });
