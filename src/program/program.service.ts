@@ -248,12 +248,19 @@ export class ProgramService {
 
   public async trackProgramContentProgress(params: {
     memberId: string;
-    programId: string;
     programContentId: string;
     progress: number;
     lastProgress: number;
   }): Promise<void> {
-    const { memberId, programId, programContentId, progress, lastProgress } = params;
+    const { memberId, programContentId, progress, lastProgress } = params;
+
+    if (!memberId || memberId === '') {
+      throw new Error('memberId must be provided');
+    }
+
+    if (!programContentId || programContentId === '') {
+      throw new Error('programContentId must be provided');
+    }
 
     const existingProgress = await this.programInfra.getProgramContentProgressByIdAndMemberId(
       programContentId,
@@ -261,17 +268,19 @@ export class ProgramService {
       this.entityManager,
     );
 
-    const maxProgress = existingProgress ? Math.max(existingProgress.progress, progress) : progress;
-    console.log('maxProgress', maxProgress);
+    const maxProgress = existingProgress
+      ? Math.max(existingProgress.progress, progress ?? existingProgress.progress)
+      : progress ?? 0;
+
+    const finalLastProgress = lastProgress ?? existingProgress?.lastProgress ?? 0;
 
     try {
       await this.programInfra.trackProgramContentProgress(
         {
           memberId,
-          programId,
           programContentId,
           progress: maxProgress,
-          lastProgress,
+          lastProgress: finalLastProgress,
         },
         this.entityManager,
       );

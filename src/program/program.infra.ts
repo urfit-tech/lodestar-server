@@ -1387,7 +1387,6 @@ export class ProgramInfrastructure {
   async trackProgramContentProgress(
     progressInfo: {
       memberId: string;
-      programId: string;
       programContentId: string;
       progress: number;
       lastProgress: number;

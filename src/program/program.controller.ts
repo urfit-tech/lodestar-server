@@ -126,14 +126,12 @@ export class ProgramController {
   @Post('/:programId/content/:contentId/track-process')
   async trackProgramContentProgress(
     @Local('member') member: JwtMember,
-    @Param('programId') programId: string,
     @Param('contentId') programContentId: string,
     @Body() requestDto: TrackProgramProcessDto,
   ) {
     try {
       await this.programService.trackProgramContentProgress({
         memberId: member.memberId,
-        programId,
         programContentId,
         progress: requestDto.progress,
         lastProgress: requestDto.lastProgress,
