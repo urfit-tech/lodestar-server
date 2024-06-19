@@ -14,11 +14,11 @@ import { PorterProgramService } from '~/program/porter-program.service';
 import { ProgramInfrastructure } from '~/program/program.infra';
 import { MemberInfrastructure } from '~/member/member.infra';
 import dayjs from 'dayjs';
-import { PortLastLoggedInCommand } from './porter-command/PortLastLoggedInCommand';
-import { PortPlayerEventCommand } from './porter-command/portPlayerEventCommand';
-import { PortPhoneServiceInsertEventCommand } from './porter-command/portPhoneServiceInsertEventCommand';
-import { PortPodcastProgramCommand } from './porter-command/portPodcastProgramCommand';
-import { PorterCommand } from './porter-command/porterCommandInterface';
+import { PortLastLoggedInCommand } from '~/runner/porter-command/portLastLoggedInCommand';
+import { PortPlayerEventCommand } from '~/runner/porter-command/portPlayerEventCommand';
+import { PortPhoneServiceInsertEventCommand } from '~/runner/porter-command/portPhoneServiceInsertEventCommand';
+import { PortPodcastProgramCommand } from '~/runner/porter-command/portPodcastProgramCommand';
+import { PorterCommand } from '~/runner/porter-command/porterCommandInterface';
 
 @Injectable()
 export class PorterRunner extends Runner {
