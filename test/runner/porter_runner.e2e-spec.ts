@@ -379,7 +379,7 @@ describe('PorterRunner (e2e)', () => {
     });
   });
 
-  describe('portPlayerEvent', () => {
+  describe('portPlayerEvent/program-content-log', () => {
     it('should correctly save program content log', async () => {
       const porterRunner = application.get<PorterRunner>(Runner);
 
@@ -461,7 +461,7 @@ describe('PorterRunner (e2e)', () => {
             .getClient()
             .set(
               `program-content-event:${memberId}:program-content:${programContent.id}:${Date.now() + i}`,
-              JSON.stringify({ playbackRate: 1.25, startedAt: 500 + i, endedAt: 600 + i }),
+              JSON.stringify({ playbackRate: 1.25, startedAt: 500 + i, endedAt: 600 + i, progress: 0.2 }),
               'EX',
               7 * 86400,
             );
@@ -536,6 +536,227 @@ describe('PorterRunner (e2e)', () => {
         const logs = await programContentLogRepo.find();
         expect(logs.length).toEqual(0);
       });
+    });
+  });
+
+  describe('portPlayerEvent/program-content-progress', () => {
+    it('Should correctly add a new progress record when content progress data does not exist', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.5 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await programContentProgressRepo.delete({});
+
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
+    });
+
+    it('Should correctly update content progress when Redis content progress is greater than existing content progress', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.5 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await programContentProgressRepo.delete({});
+      await programContentProgressRepo.save({
+        id: v4(),
+        memberId: member.id,
+        programContentId: programContent.id,
+        progress: 0.1,
+        lastProgress: 0,
+      });
+
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
+      expect(progresses[0].progress).toBe('0.5');
+    });
+
+    it('Should not update content progress when Redis content progress is lower than existing content progress', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.2 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await programContentProgressRepo.delete({});
+      await programContentProgressRepo.save({
+        id: v4(),
+        memberId: member.id,
+        programContentId: programContent.id,
+        progress: 0.8,
+        lastProgress: 0,
+      });
+
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
+      expect(progresses[0].progress).toBe('0.8');
+    });
+
+    it('Should correctly update content progress to the highest value when Redis contains multiple records, some lower and some higher than the existing content progress', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.2 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.7 }),
+          'EX',
+          7 * 86400,
+        );
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.1 }),
+          'EX',
+          7 * 86400,
+        );
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.9 }),
+          'EX',
+          7 * 86400,
+        );
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 1 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await programContentProgressRepo.delete({});
+      await programContentProgressRepo.save({
+        id: v4(),
+        memberId: member.id,
+        programContentId: programContent.id,
+        progress: 0.6,
+        lastProgress: 0,
+      });
+
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
+      expect(progresses[0].progress).toBe('1');
+    });
+
+    it('Should correctly save content progress and create log at the same time', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.2 }),
+          'EX',
+          7 * 86400,
+        );
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const [latestLog] = await programContentLogRepo.find({
+        order: { createdAt: 'DESC' },
+        take: 1,
+      });
+
+      expect(latestLog.playbackRate).toEqual('1.25');
+      expect(latestLog.startedAt).toEqual('496.957357');
+      expect(latestLog.endedAt).toEqual('502.26019');
+      expect(latestLog.memberId).toEqual(member.id);
+
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
     });
   });
 

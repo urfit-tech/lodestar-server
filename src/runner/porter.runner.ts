@@ -15,10 +15,11 @@ import { ProgramInfrastructure } from '~/program/program.infra';
 import { MemberInfrastructure } from '~/member/member.infra';
 import dayjs from 'dayjs';
 import { PortLastLoggedInCommand } from '~/runner/porter-command/portLastLoggedInCommand';
-import { PortPlayerEventCommand } from '~/runner/porter-command/portPlayerEventCommand';
 import { PortPhoneServiceInsertEventCommand } from '~/runner/porter-command/portPhoneServiceInsertEventCommand';
 import { PortPodcastProgramCommand } from '~/runner/porter-command/portPodcastProgramCommand';
 import { PorterCommand } from '~/runner/porter-command/porterCommandInterface';
+import { PortPlayerEventCommand } from './porter-command/portPlayerEventCommand';
+import { ProgramService } from '~/program/program.service';
 
 @Injectable()
 export class PorterRunner extends Runner {
@@ -32,9 +33,10 @@ export class PorterRunner extends Runner {
     private readonly programInfra: ProgramInfrastructure,
     private readonly memberInfra: MemberInfrastructure,
     private readonly podcastService: PodcastService,
+    private readonly programService: ProgramService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(PorterRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
+    super(PorterRunner.name, 1 * 10 * 1000, logger, distributedLockService, shutdownService);
   }
 
   async checkAndCallHeartbeat(): Promise<void> {
@@ -65,7 +67,7 @@ export class PorterRunner extends Runner {
 
     const commands: PorterCommand[] = [
       new PortLastLoggedInCommand(this.cacheService, this.memberService),
-      new PortPlayerEventCommand(this.porterProgramService, this.programInfra),
+      new PortPlayerEventCommand(this.porterProgramService, this.programInfra, this.programService),
       new PortPhoneServiceInsertEventCommand(this.memberInfra, this.cacheService),
       new PortPodcastProgramCommand(this.cacheService, this.podcastService),
     ];

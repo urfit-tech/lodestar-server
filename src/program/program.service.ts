@@ -250,7 +250,7 @@ export class ProgramService {
     memberId: string;
     programContentId: string;
     progress: number;
-    lastProgress: number;
+    lastProgress: number | null;
   }): Promise<void> {
     const { memberId, programContentId, progress, lastProgress } = params;
 
@@ -262,31 +262,33 @@ export class ProgramService {
       throw new Error('programContentId must be provided');
     }
 
-    const existingProgress = await this.programInfra.getProgramContentProgressByIdAndMemberId(
-      programContentId,
-      memberId,
-      this.entityManager,
-    );
-
-    const maxProgress = existingProgress
-      ? Math.max(existingProgress.progress, progress ?? existingProgress.progress)
-      : progress ?? 0;
-
-    const finalLastProgress = lastProgress ?? existingProgress?.lastProgress ?? 0;
-
-    try {
-      await this.programInfra.trackProgramContentProgress(
-        {
-          memberId,
-          programContentId,
-          progress: maxProgress,
-          lastProgress: finalLastProgress,
-        },
-        this.entityManager,
+    await this.entityManager.transaction(async (transactionalEntityManager) => {
+      const existingProgress = await this.programInfra.getProgramContentProgressByIdAndMemberId(
+        programContentId,
+        memberId,
+        transactionalEntityManager,
       );
-    } catch (error) {
-      throw new Error(`Failed to track progress for content ${programContentId}: ${error.message}`);
-    }
+
+      const maxProgress = existingProgress
+        ? Math.max(existingProgress.progress, progress ?? existingProgress.progress)
+        : progress ?? 0;
+
+      const finalLastProgress = lastProgress ?? existingProgress?.lastProgress ?? 0;
+
+      try {
+        await this.programInfra.trackProgramContentProgress(
+          {
+            memberId,
+            programContentId,
+            progress: maxProgress,
+            lastProgress: finalLastProgress,
+          },
+          transactionalEntityManager,
+        );
+      } catch (error) {
+        throw new Error(`Failed to track progress for content ${programContentId}: ${error.message}`);
+      }
+    });
   }
 
   private sortProgramRole(roles: { memberId: string; name: string; createdAt: string }[]) {
