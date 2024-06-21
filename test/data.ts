@@ -116,6 +116,10 @@ program.abstract = 'test program abstract';
 program.appId = app.id;
 program.publishedAt = dayjs().subtract(1, 'day').toDate();
 
+export const programTag = new Tag();
+programTag.type = 'program';
+programTag.name = 'test-program-tag';
+
 export const currency = new Currency();
 currency.id = 'TWD';
 currency.label = '';

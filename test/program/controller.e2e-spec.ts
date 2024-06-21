@@ -27,6 +27,7 @@ import {
   programRole,
   card,
   cardProduct,
+  programTag,
 } from '../data';
 import { EntityManager, Repository } from 'typeorm';
 import { ApiExceptionFilter } from '~/api.filter';
@@ -67,6 +68,8 @@ import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
 import { ProgramTempoDelivery } from '~/entity/ProgramTempoDelivery';
 import { Card } from '~/card/entity/Card';
 import { CardProduct } from '~/card/entity/CardProduct';
+import { ProgramTag } from '~/entity/ProgramTag';
+import { Tag } from '~/definition/entity/tag.entity';
 
 describe('ProgramController (e2e)', () => {
   let application: INestApplication;
@@ -99,6 +102,8 @@ describe('ProgramController (e2e)', () => {
   let programRoleRepo: Repository<ProgramRole>;
   let cardRepo: Repository<Card>;
   let cardProductRepo: Repository<CardProduct>;
+  let tagRepo: Repository<Tag>;
+  let programTagRepo: Repository<ProgramTag>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -156,6 +161,8 @@ describe('ProgramController (e2e)', () => {
     programRoleRepo = manager.getRepository(ProgramRole);
     cardRepo = manager.getRepository(Card);
     cardProductRepo = manager.getRepository(CardProduct);
+    tagRepo = manager.getRepository(Tag);
+    programTagRepo = manager.getRepository(ProgramTag);
 
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
@@ -185,6 +192,8 @@ describe('ProgramController (e2e)', () => {
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await roleRepo.delete({});
+    await tagRepo.delete({});
+    await programTagRepo.delete({});
 
     await currencyRepo.save(currency);
     await roleRepo.save(role);
@@ -214,6 +223,7 @@ describe('ProgramController (e2e)', () => {
     await orderProductRepo.save(orderProduct);
     await cardRepo.save(card);
     await cardProductRepo.save(cardProduct);
+    await tagRepo.save(programTag);
 
     await application.init();
   });
@@ -247,6 +257,8 @@ describe('ProgramController (e2e)', () => {
     await appRepo.delete({});
     await appPlanRepo.delete({});
     await roleRepo.delete({});
+    await tagRepo.delete({});
+    await programTagRepo.delete({});
 
     await application.close();
   });
@@ -1441,6 +1453,10 @@ describe('ProgramController (e2e)', () => {
     testCardOrderProduct.endedAt = dayjs().subtract(1, 'day').toDate();
     testCardOrderProduct.deliveredAt = dayjs().subtract(2, 'day').toDate();
 
+    const testTag = new ProgramTag();
+    testTag.program = program;
+    testTag.tagName2 = programTag;
+
     it('Should raise error due to unauthorized', async () => {
       const header = { host: appHost.host };
 
@@ -1454,6 +1470,7 @@ describe('ProgramController (e2e)', () => {
       await orderLogRepo.save(testExpiredOrderLog);
       await orderProductRepo.save(testProgramPlanOrderProduct);
       await programRoleRepo.save(testProgramRole);
+      await programTagRepo.save(testTag);
 
       const {
         body: {
@@ -1479,7 +1496,11 @@ describe('ProgramController (e2e)', () => {
         createdAt: role.createdAt.toISOString(),
       }));
 
-      expect(result.body).toEqual([
+      const programTags = await programTagRepo.findBy({ programId: program.id });
+
+      const tags = programTags.map((tag) => tag.tagName2);
+
+      await expect(result.body).toEqual([
         {
           id: program.id,
           title: program.title,
@@ -1491,6 +1512,7 @@ describe('ProgramController (e2e)', () => {
           viewRate: 1,
           lastViewedAt: programContentProgress.updatedAt.toISOString(),
           deliveredAt: testProgramPlanOrderProduct.deliveredAt.toISOString(),
+          tags,
         },
       ]);
     });
