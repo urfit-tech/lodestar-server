@@ -18,7 +18,7 @@ export class PorterProgramService {
 
   async fetchValuesFromCache(keys: string[]): Promise<string[]> {
     const client = this.cacheService.getClient();
-    // value format: {"playbackRate":1.25,"startedAt":575,"endedAt":675}
+    // value format: {"playbackRate":1.25,"startedAt":575,"endedAt":675, "progress": 0.67}
     return client.mget(keys);
   }
 
