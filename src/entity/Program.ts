@@ -8,7 +8,7 @@ import { ProgramApproval } from './ProgramApproval';
 import { ProgramCategory } from './ProgramCategory';
 import { ProgramContentSection } from './ProgramContentSection';
 import { ProgramPackageProgram } from './ProgramPackageProgram';
-import { ProgramPlan } from './ProgramPlan';
+import { ProgramPlan } from '../program/entity/ProgramPlan';
 import { ProgramRelatedItem } from './ProgramRelatedItem';
 import { ProgramRole } from './ProgramRole';
 import { ProgramTag } from './ProgramTag';
