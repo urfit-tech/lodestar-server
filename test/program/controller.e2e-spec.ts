@@ -192,7 +192,6 @@ describe('ProgramController (e2e)', () => {
     await appPlanRepo.delete({});
     await roleRepo.delete({});
     await tagRepo.delete({});
-    await programTagRepo.delete({});
 
     await currencyRepo.save(currency);
     await roleRepo.save(role);
@@ -244,6 +243,7 @@ describe('ProgramController (e2e)', () => {
     await programPackageProgramRepo.delete({});
     await programPackagePlanRepo.delete({});
     await programPackageRepo.delete({});
+    await programTagRepo.delete({});
     await programRepo.delete({});
     await memberPermissionExtraRepo.delete({});
     await permissionRepo.delete({});
@@ -1499,8 +1499,6 @@ describe('ProgramController (e2e)', () => {
 
       const programTags = await programTagRepo.findBy({ programId: program.id });
 
-      const tags = programTags.map((tag) => tag.tagName2);
-
       await expect(result.body).toEqual([
         {
           id: program.id,
@@ -1513,7 +1511,7 @@ describe('ProgramController (e2e)', () => {
           viewRate: 1,
           lastViewedAt: programContentProgress.updatedAt.toISOString(),
           deliveredAt: testProgramPlanOrderProduct.deliveredAt.toISOString(),
-          tags,
+          tags: programTags.map((v) => v.tagName),
         },
       ]);
     });
@@ -1559,6 +1557,7 @@ describe('ProgramController (e2e)', () => {
           viewRate: 1,
           lastViewedAt: programContentProgress.updatedAt.toISOString(),
           deliveredAt: testCardOrderProduct.deliveredAt.toISOString(),
+          tags: [null],
         },
       ]);
     });
