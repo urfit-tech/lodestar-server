@@ -9,8 +9,6 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
 import { RunnerModule } from './runner/runner.module';
 import { RunnerType } from './runner/runner.type';
 import { TaskerModule } from './tasker/tasker.module';
@@ -60,7 +58,7 @@ async function bootstrap() {
   } else {
     app = await NestFactory.create<NestExpressApplication>(ApplicationModule, {
       bufferLogs: true,
-      cors: corsOptionDelegate,
+      cors: async (req, callback) => await corsOptionDelegate(req, callback, app),
     });
     app.set('trust proxy', 1);
 
