@@ -49,6 +49,14 @@ import { ProgramPackageProgram } from '~/entity/ProgramPackageProgram';
 import { Program } from '~/entity/Program';
 import { ProgramPlan } from '~/program/entity/ProgramPlan';
 import { Currency } from '~/entity/Currency';
+import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
+import { CardProduct } from '~/card/entity/CardProduct';
+import { ProgramContentSection } from '~/entity/ProgramContentSection';
+import { ProgramContent } from '~/program/entity/program_content.entity';
+import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
+import { ProgramContentLog } from '~/program/entity/ProgramContentLog';
+import { ProgramRole } from '~/entity/ProgramRole';
+import { Card } from '~/card/entity/Card';
 
 const apiPath = {
   auth: {
@@ -76,6 +84,14 @@ describe('EquityController (e2e)', () => {
   let programPackageRepo: Repository<ProgramPackage>;
   let programPackageProgramRepo: Repository<ProgramPackageProgram>;
   let currencyRepo: Repository<Currency>;
+  let programContentPlanRepo: Repository<ProgramContentPlan>;
+  let cardProductRepo: Repository<CardProduct>;
+  let programContentSectionRepo: Repository<ProgramContentSection>;
+  let programContentRepo: Repository<ProgramContent>;
+  let programContentProgressRepo: Repository<ProgramContentProgress>;
+  let programContentLogRepo: Repository<ProgramContentLog>;
+  let programRoleRepo: Repository<ProgramRole>;
+  let cardRepo: Repository<Card>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -122,17 +138,32 @@ describe('EquityController (e2e)', () => {
     programTempoDeliveryRepo = manager.getRepository(ProgramTempoDelivery);
     programPackagePlanRepo = manager.getRepository(ProgramPackagePlan);
     currencyRepo = manager.getRepository(Currency);
+    programContentPlanRepo = manager.getRepository(ProgramContentPlan);
+    cardProductRepo = manager.getRepository(CardProduct);
+    programContentSectionRepo = manager.getRepository(ProgramContentSection);
+    programContentRepo = manager.getRepository(ProgramContent);
+    programContentProgressRepo = manager.getRepository(ProgramContentProgress);
+    programContentLogRepo = manager.getRepository(ProgramContentLog);
+    programRoleRepo = manager.getRepository(ProgramRole);
+    cardRepo = manager.getRepository(Card);
 
-    await orderProductRepo.delete({});
     await orderLogRepo.delete({});
+    await cardProductRepo.delete({});
+    await programContentLogRepo.delete({});
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programContentPlanRepo.delete({});
     await programPlanRepo.delete({});
     await programTempoDeliveryRepo.delete({});
     await programPackageProgramRepo.delete({});
     await programPackagePlanRepo.delete({});
     await programPackageRepo.delete({});
     await currencyRepo.delete({});
+    await programRoleRepo.delete({});
     await programRepo.delete({});
     await memberRepo.delete({});
+    await cardRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
     await appHostRepo.delete({});
@@ -164,14 +195,22 @@ describe('EquityController (e2e)', () => {
   afterEach(async () => {
     await orderProductRepo.delete({});
     await orderLogRepo.delete({});
+    await cardProductRepo.delete({});
+    await programContentLogRepo.delete({});
+    await programContentProgressRepo.delete({});
+    await programContentRepo.delete({});
+    await programContentSectionRepo.delete({});
+    await programContentPlanRepo.delete({});
     await programPlanRepo.delete({});
     await programTempoDeliveryRepo.delete({});
     await programPackageProgramRepo.delete({});
     await programPackagePlanRepo.delete({});
     await programPackageRepo.delete({});
     await currencyRepo.delete({});
+    await programRoleRepo.delete({});
     await programRepo.delete({});
     await memberRepo.delete({});
+    await cardRepo.delete({});
     await appSettingRepo.delete({});
     await appSecretRepo.delete({});
     await appHostRepo.delete({});
