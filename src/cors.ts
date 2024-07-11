@@ -1,17 +1,23 @@
 import { CorsOptionsDelegate, CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { fromUrl, parseDomain, ParseResultType } from 'parse-domain';
+import { AppService } from './app/app.service';
 
-const corsOptionDelegate: CorsOptionsDelegate<any> = (
+const corsOptionDelegate = async (
   req: any,
   callback: (error: Error | null, options: CorsOptions) => void,
-) => {
+  app: NestExpressApplication,
+): Promise<CorsOptionsDelegate<any>> => {
   const host = req.headers['host'];
   const origin = req.headers['origin'] || '';
+  console.log('host: ', host, 'origin: ', origin);
 
   if (!host || !origin) {
     callback(null, { credentials: false, origin: false });
     return;
   }
+
+  const appService = app.get(AppService);
 
   const hostParseResult = parseDomain(host);
   const originParseResult = parseDomain(fromUrl(origin));
@@ -23,11 +29,21 @@ const corsOptionDelegate: CorsOptionsDelegate<any> = (
     originParseResult.type === ParseResultType.Listed &&
     `${originParseResult.icann.domain}.${originParseResult.icann.topLevelDomains.join('.')}`;
 
+  let allowedDomains = [];
+  try {
+    const { settings } = await appService.getAppInfoByHost(new URL(origin).hostname);
+    allowedDomains = JSON.parse(settings['cors_allowed_domains'] || '[]');
+  } catch (error) {
+    console.log('GetAppInfoByHost Error: ', error);
+    allowedDomains = [];
+  }
+
   if (
     new URL(origin).hostname === 'localhost' ||
     new URL(origin).hostname.includes('ngrok') ||
     host.startsWith('localhost') ||
-    hostDomain === originDomain
+    hostDomain === originDomain ||
+    allowedDomains.includes(new URL(origin).hostname)
   ) {
     callback(null, { credentials: true, origin: true });
     return;
