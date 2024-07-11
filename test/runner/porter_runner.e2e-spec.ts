@@ -38,7 +38,7 @@ import { ProgramContentSection } from '~/entity/ProgramContentSection';
 import { Program } from '~/entity/Program';
 import { ProgramContentBody } from '~/entity/ProgramContentBody';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { Currency } from '~/entity/Currency';
 import { ProgramContentLog } from '~/program/entity/ProgramContentLog';

@@ -152,7 +152,7 @@ import { ProgramPackageCategory } from './ProgramPackageCategory';
 import { ProgramPackagePlan } from './ProgramPackagePlan';
 import { ProgramPackageProgram } from './ProgramPackageProgram';
 import { ProgramPackageTag } from './ProgramPackageTag';
-import { ProgramPlan } from './ProgramPlan';
+import { ProgramPlan } from '../program/entity/ProgramPlan';
 import { ProgramRelatedItem } from './ProgramRelatedItem';
 import { ProgramRole } from './ProgramRole';
 import { ProgramTag } from './ProgramTag';

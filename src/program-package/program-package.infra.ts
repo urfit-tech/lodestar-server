@@ -16,6 +16,7 @@ export class ProgramPackageInfrastructure {
         'program_package.cover_url AS cover_url',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
+        'JSONB_AGG(DISTINCT program_package_tag.tag_name) as tags',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -51,6 +52,11 @@ export class ProgramPackageInfrastructure {
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
       )
+      .leftJoin(
+        'program_package_tag',
+        'program_package_tag',
+        'program_package_tag.program_package_id = program_package.id',
+      )
       .groupBy('program_package.id')
       .getRawMany();
 
@@ -67,6 +73,7 @@ export class ProgramPackageInfrastructure {
         'program_package.cover_url AS cover_url',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
+        'JSONB_AGG(DISTINCT program_package_tag.tag_name) as tags',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere('order_log.status = :orderStatus', { orderStatus: 'SUCCESS' })
@@ -101,6 +108,11 @@ export class ProgramPackageInfrastructure {
         'program_content_progress.program_content_id = program_content.id' +
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
+      )
+      .leftJoin(
+        'program_package_tag',
+        'program_package_tag',
+        'program_package_tag.program_package_id = program_package.id',
       )
       .groupBy('program_package.id')
       .getRawMany();

@@ -39,7 +39,7 @@ import { ProgramContentSection } from '~/entity/ProgramContentSection';
 import { ProgramContentBody } from '~/entity/ProgramContentBody';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 import { Product } from '~/entity/Product';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
