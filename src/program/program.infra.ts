@@ -30,6 +30,7 @@ export class ProgramInfrastructure {
         '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
+        'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -61,6 +62,7 @@ export class ProgramInfrastructure {
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
       )
+      .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
       .groupBy('program.id')
       .getRawMany();
 
@@ -82,6 +84,7 @@ export class ProgramInfrastructure {
         '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
+        'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -95,7 +98,8 @@ export class ProgramInfrastructure {
       .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
         productType: 'Card',
       })
-      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .innerJoin('card_product', 'card_product', 'card_product.card_id::text = product.target')
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = card_product.target::text')
       .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .innerJoin('program_role', 'program_role', 'program_role.program_id = program.id')
       .innerJoin('member', 'member', 'member.id = program_role.member_id')
@@ -113,6 +117,7 @@ export class ProgramInfrastructure {
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
       )
+      .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
       .groupBy('program.id')
       .getRawMany();
 
@@ -134,6 +139,7 @@ export class ProgramInfrastructure {
         '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
+        'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -164,6 +170,7 @@ export class ProgramInfrastructure {
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
       )
+      .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
       .groupBy('program.id')
       .getRawMany();
     return this.utilityService.convertObjectKeysToCamelCase(programs);
@@ -184,6 +191,7 @@ export class ProgramInfrastructure {
         'NULL AS view_rate',
         'NULL AS last_viewed_at',
         'NULL AS delivered_at',
+        'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
       ])
       .innerJoin(
         'program_role',
@@ -193,6 +201,7 @@ export class ProgramInfrastructure {
       )
       .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
       .leftJoin('member', 'member', 'member.id = program_role.member_id')
+      .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
       .groupBy('program.id')
       .getRawMany();
 
@@ -263,7 +272,8 @@ export class ProgramInfrastructure {
       .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
         productType: 'Card',
       })
-      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .innerJoin('card_product', 'card_product', 'card_product.card_id::text = product.target')
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = card_product.target::text')
       .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .leftJoin('program_content_section', 'program_content_section', 'program_content_section.program_id = program.id')
       .leftJoin(
@@ -434,6 +444,7 @@ export class ProgramInfrastructure {
         '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
+        'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere('order_log.status = :orderStatus', { orderStatus: 'SUCCESS' })
@@ -465,6 +476,7 @@ export class ProgramInfrastructure {
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
       )
+      .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
       .groupBy('program.id')
       .getRawMany();
 
@@ -486,6 +498,7 @@ export class ProgramInfrastructure {
         '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
+        'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .andWhere('order_log.status = :orderStatus', { orderStatus: 'SUCCESS' })
@@ -518,6 +531,7 @@ export class ProgramInfrastructure {
           ' AND program_content_progress.member_id = :memberId',
         { memberId },
       )
+      .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
       .groupBy('program.id')
       .getRawMany();
 
@@ -931,7 +945,8 @@ export class ProgramInfrastructure {
       .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
         productType: 'Card',
       })
-      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .innerJoin('card_product', 'card_product', 'card_product.card_id::text = product.target')
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = card_product.target::text')
       .leftJoin(
         'program_content_plan',
         'program_content_plan',
@@ -1201,7 +1216,8 @@ export class ProgramInfrastructure {
       .innerJoin('product', 'product', 'product.id = order_product.product_id' + ` AND product.type = :productType`, {
         productType: 'Card',
       })
-      .innerJoin('program_plan', 'program_plan', 'program_plan.card_id::text = product.target')
+      .innerJoin('card_product', 'card_product', 'card_product.card_id::text = product.target')
+      .innerJoin('program_plan', 'program_plan', 'program_plan.id::text = card_product.target::text')
       .innerJoin('program', 'program', 'program.id = program_plan.program_id')
       .innerJoin(
         'program_content_section',

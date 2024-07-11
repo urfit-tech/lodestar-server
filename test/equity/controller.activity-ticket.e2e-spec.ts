@@ -40,7 +40,7 @@ import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
 import Joi from 'joi';
 import { FetchMemberRightActivityTicketDTO } from '~/equity/dto/equity-activity-ticket.dto';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 interface RepositoryMap {
   [key: string]: Repository<any>;
 }

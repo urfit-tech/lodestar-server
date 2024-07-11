@@ -38,7 +38,7 @@ import { json, urlencoded } from 'express';
 
 import { Product } from '~/entity/Product';
 import { Program } from '~/entity/Program';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { CouponCode } from '~/entity/CouponCode';
 import { CouponPlan } from '~/entity/CouponPlan';

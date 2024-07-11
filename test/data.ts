@@ -19,7 +19,7 @@ import { ProgramContentSection } from '~/entity/ProgramContentSection';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { Product } from '~/entity/Product';
-import { ProgramPlan } from '~/entity/ProgramPlan';
+import { ProgramPlan } from '~/program/entity/ProgramPlan';
 import { Currency } from '~/entity/Currency';
 import dayjs from 'dayjs';
 import { ProgramPackage } from '~/entity/ProgramPackage';
@@ -115,6 +115,10 @@ program.title = 'test program';
 program.abstract = 'test program abstract';
 program.appId = app.id;
 program.publishedAt = dayjs().subtract(1, 'day').toDate();
+
+export const programTag = new Tag();
+programTag.type = 'program';
+programTag.name = 'test-program-tag';
 
 export const currency = new Currency();
 currency.id = 'TWD';

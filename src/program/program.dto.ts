@@ -31,6 +31,9 @@ export class ProgramResponseDTO {
 
   @ApiProperty()
   deliveredAt: Date;
+
+  @ApiProperty()
+  tags: string[];
 }
 
 class AudioDataDTO {
