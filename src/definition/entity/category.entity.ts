@@ -4,7 +4,7 @@ import { MemberCategory } from '~/member/entity/member_category.entity';
 import { ActivityCategory } from '~/activity/entity/ActivityCategory';
 import { CreatorCategory } from '~/entity/CreatorCategory';
 import { MemberTask } from '~/entity/MemberTask';
-import { MerchandiseCategory } from '~/entity/MerchandiseCategory';
+import { MerchandiseCategory } from '~/merchandise/entity/MerchandiseCategory';
 import { PodcastAlbumCategory } from '~/entity/PodcastAlbumCategory';
 import { PodcastProgramCategory } from '~/entity/PodcastProgramCategory';
 import { PostCategory } from '~/entity/PostCategory';

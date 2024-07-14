@@ -33,7 +33,7 @@ import { MemberSocial } from '~/entity/MemberSocial';
 import { MemberSpeciality } from '~/entity/MemberSpeciality';
 import { MemberTask } from '~/entity/MemberTask';
 import { MemberTrackingLog } from '~/entity/MemberTrackingLog';
-import { Merchandise } from '~/entity/Merchandise';
+import { Merchandise } from '~/merchandise/entity/Merchandise';
 import { Notification } from '~/entity/Notification';
 import { OrderContact } from '~/entity/OrderContact';
 import { OrderExecutor } from '~/order/entity/order_executor.entity';
