@@ -10,7 +10,6 @@ const corsOptionDelegate = async (
 ): Promise<CorsOptionsDelegate<any>> => {
   const host = req.headers['host'];
   const origin = req.headers['origin'] || '';
-  console.log('host: ', host, 'origin: ', origin);
 
   if (!host || !origin) {
     callback(null, { credentials: false, origin: false });
@@ -29,6 +28,16 @@ const corsOptionDelegate = async (
     originParseResult.type === ParseResultType.Listed &&
     `${originParseResult.icann.domain}.${originParseResult.icann.topLevelDomains.join('.')}`;
 
+  if (
+    new URL(origin).hostname === 'localhost' ||
+    new URL(origin).hostname.includes('ngrok') ||
+    host.startsWith('localhost') ||
+    hostDomain === originDomain
+  ) {
+    callback(null, { credentials: true, origin: true });
+    return;
+  }
+
   let allowedDomains = [];
   try {
     const { settings } = await appService.getAppInfoByHost(new URL(origin).hostname);
@@ -37,14 +46,7 @@ const corsOptionDelegate = async (
     console.log('GetAppInfoByHost Error: ', error);
     allowedDomains = [];
   }
-
-  if (
-    new URL(origin).hostname === 'localhost' ||
-    new URL(origin).hostname.includes('ngrok') ||
-    host.startsWith('localhost') ||
-    hostDomain === originDomain ||
-    allowedDomains.includes(new URL(origin).hostname)
-  ) {
+  if (allowedDomains.includes(new URL(origin).hostname)) {
     callback(null, { credentials: true, origin: true });
     return;
   }

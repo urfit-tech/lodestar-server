@@ -1,12 +1,16 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Merchandise } from './Merchandise';
 import { MerchandiseSpecFile } from './MerchandiseSpecFile';
+import { MerchandiseSpecInventoryStatusView } from './MerchandiseSpecInventoryStatusView';
 
 @Index('merchandise_spec_pkey', ['id'], { unique: true })
 @Entity('merchandise_spec', { schema: 'public' })
 export class MerchandiseSpec {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column('uuid', { name: 'merchandise_id' })
+  merchandiseId: string;
 
   @Column('text', { name: 'title', default: () => "'Untitled'" })
   title: string;
