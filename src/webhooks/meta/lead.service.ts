@@ -34,12 +34,17 @@ export class LeadService {
     );
 
     await this.entityManager.transaction(async (entityManager) => {
-      const member = await this.upsertMember(entityManager, app.id, {
-        email: body.email,
-        name: body.full_name,
-        username: body.email,
-        role: 'general-member',
-      });
+      const member = await this.upsertMember(
+        entityManager,
+        app.id,
+        {
+          email: body.email,
+          name: body.full_name,
+          username: body.email,
+          role: 'general-member',
+        },
+        body.id,
+      );
       await Promise.all(
         properties.map((property) => {
           return this.memberInfra.upsertMemberProperty(
@@ -64,6 +69,7 @@ export class LeadService {
       username: string;
       role: string;
     },
+    leadgenId: string,
   ) {
     let member = await this.memberInfra.firstMemberByCondition(entityManager, {
       appId,
@@ -73,6 +79,7 @@ export class LeadService {
       const metadata = member.metadata as { is_distributed?: boolean; from_lead_webhook_at: string };
       member.metadata = {
         ...metadata,
+        leadgenId,
         is_distributed: metadata.is_distributed ?? false,
         from_lead_webhook_at: metadata.from_lead_webhook_at ?? new Date().toISOString(),
       };
@@ -88,6 +95,7 @@ export class LeadService {
         metadata: {
           is_distributed: false,
           from_lead_webhook_at: new Date().toISOString(),
+          leadgenId,
         },
       });
     }

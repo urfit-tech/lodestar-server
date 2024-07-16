@@ -98,7 +98,7 @@ export class Member {
   pictureUrl: string | null;
 
   @Column('jsonb', { name: 'metadata', default: () => 'jsonb_build_object()' })
-  metadata: object;
+  metadata: any;
 
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
