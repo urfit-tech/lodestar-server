@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager, FindOptionsWhere, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { AuthService } from '~/auth/auth.service';
+import { EntityManager, FindOptionsWhere, LessThanOrEqual } from 'typeorm';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { UtilityService } from '~/utility/utility.service';
 import { MerchandiseSpec } from '../entity/MerchandiseSpec';
@@ -12,7 +11,6 @@ export class MerchandiseSpecService {
   constructor(
     @InjectEntityManager() private readonly entityManager: EntityManager,
     private merchandiseSpecInfrastructure: MerchandiseSpecInfrastructure,
-    private readonly authService: AuthService,
     private readonly utilityService: UtilityService,
   ) {}
 
@@ -36,7 +34,6 @@ export class MerchandiseSpecService {
         merchandise: { isDeleted: false, appId, publishedAt: LessThanOrEqual(new Date()) },
       };
     }
-    console.log(conditions);
 
     const merchandiseSpec = await this.merchandiseSpecInfrastructure.getMerchandiseSpec(conditions, this.entityManager);
     const inventoryStatus = await this.merchandiseSpecInfrastructure.getMerchandiseSpecInventoryStatus(
