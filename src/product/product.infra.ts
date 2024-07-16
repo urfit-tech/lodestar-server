@@ -11,8 +11,8 @@ import { ProgramPackagePlan } from '~/entity/ProgramPackagePlan';
 import { Program } from '~/entity/Program';
 import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
 import { PodcastPlan } from '~/entity/PodcastPlan';
-import { Merchandise } from '~/entity/Merchandise';
-import { MerchandiseSpec } from '~/entity/MerchandiseSpec';
+import { Merchandise } from '~/merchandise/entity/Merchandise';
+import { MerchandiseSpec } from '~/merchandise/entity/MerchandiseSpec';
 import { Product } from '~/entity/Product';
 import { camelCase, isEmpty, mapKeys, uniq } from 'lodash';
 

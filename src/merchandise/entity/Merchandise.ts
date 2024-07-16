@@ -3,19 +3,22 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGenerat
 import { App } from '~/app/entity/app.entity';
 import { Member } from '~/member/entity/member.entity';
 
-import { MemberShop } from './MemberShop';
+import { MemberShop } from '../../entity/MemberShop';
 import { MerchandiseCategory } from './MerchandiseCategory';
 import { MerchandiseFile } from './MerchandiseFile';
 import { MerchandiseImg } from './MerchandiseImg';
 import { MerchandiseSpec } from './MerchandiseSpec';
 import { MerchandiseTag } from './MerchandiseTag';
-import { PostMerchandise } from './PostMerchandise';
+import { PostMerchandise } from '../../entity/PostMerchandise';
 
 @Index('merchandise_pkey', ['id'], { unique: true })
 @Entity('merchandise', { schema: 'public' })
 export class Merchandise {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column('text', { name: 'app_id' })
+  appId: string;
 
   @Column('text', { name: 'title' })
   title: string;

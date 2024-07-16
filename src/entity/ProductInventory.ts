@@ -7,6 +7,9 @@ export class ProductInventory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('uuid', { name: 'product_id' })
+  productId: string;
+
   @Column('text', { name: 'specification', nullable: true })
   specification: string | null;
 
