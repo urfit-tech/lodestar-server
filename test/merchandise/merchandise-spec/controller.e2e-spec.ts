@@ -122,7 +122,7 @@ describe('MerchandiseSpecController (e2e)', () => {
           cookie: {
             httpOnly: true,
             sameSite: 'strict',
-            secure: false,
+            secure: true,
             maxAge: 30 * 86400 * 1000,
           },
         }),
@@ -164,7 +164,7 @@ describe('MerchandiseSpecController (e2e)', () => {
     it('Should throw error with status 400 cause wrong authorization', async () => {
       const response = await request(application.getHttpServer())
         .get(route)
-        .set({ Authorization: 'Berear wrong_token', host: appHost.host })
+        .set({ Authorization: 'Bearer wrong_token', host: appHost.host })
         .expect(400);
 
       expect(response.body.code).toEqual('E_MERCHANDISE_SPEC_GET_INVENTORY_STATUS');
