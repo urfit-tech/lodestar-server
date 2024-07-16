@@ -155,7 +155,7 @@ describe('LeadController (e2e)', () => {
     it('Should store lead to database', async () => {
       const header = { host: appHost.host };
       const body: LeadWebhookBody = {
-        id: 1,
+        id: '1',
         created_time: '2021-01-01',
         ad_id: 1,
         ad_name: 'ad_name',
@@ -179,13 +179,17 @@ describe('LeadController (e2e)', () => {
         .send(body)
         .expect(204);
       expect(noContent).toBe(true);
+
+      const member = await memberRepo.findOne({ where: { email: body.email } });
+
+      expect(member.metadata.leadgenId).toEqual(body.id);
     });
 
     it('Should throw error if app not found', async () => {
       const header = { host: appHost.host };
       const appId = 'wrong_app_id';
       const payload: LeadWebhookBody = {
-        id: 1,
+        id: '1',
         created_time: '2021-01-01',
         ad_id: 1,
         ad_name: 'ad_name',
