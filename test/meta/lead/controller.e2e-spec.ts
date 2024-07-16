@@ -181,7 +181,6 @@ describe('LeadController (e2e)', () => {
       expect(noContent).toBe(true);
 
       const member = await memberRepo.findOne({ where: { email: body.email } });
-      console.log(member);
 
       expect(member.metadata.leadgenId).toEqual(body.id);
     });
