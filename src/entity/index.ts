@@ -86,13 +86,13 @@ import { MemberSocial } from './MemberSocial';
 import { MemberSpeciality } from './MemberSpeciality';
 import { MemberTask } from './MemberTask';
 import { MemberTrackingLog } from './MemberTrackingLog';
-import { Merchandise } from './Merchandise';
-import { MerchandiseCategory } from './MerchandiseCategory';
-import { MerchandiseFile } from './MerchandiseFile';
-import { MerchandiseImg } from './MerchandiseImg';
-import { MerchandiseSpec } from './MerchandiseSpec';
-import { MerchandiseSpecFile } from './MerchandiseSpecFile';
-import { MerchandiseTag } from './MerchandiseTag';
+import { Merchandise } from '../merchandise/entity/Merchandise';
+import { MerchandiseCategory } from '../merchandise/entity/MerchandiseCategory';
+import { MerchandiseFile } from '../merchandise/entity/MerchandiseFile';
+import { MerchandiseImg } from '../merchandise/entity/MerchandiseImg';
+import { MerchandiseSpec } from '../merchandise/entity/MerchandiseSpec';
+import { MerchandiseSpecFile } from '../merchandise/entity/MerchandiseSpecFile';
+import { MerchandiseTag } from '../merchandise/entity/MerchandiseTag';
 import { Migrations } from './Migrations';
 import { Module } from './Module';
 import { Notification } from './Notification';
@@ -231,6 +231,7 @@ import { AppInvoiceGateway } from './AppInvoiceGateway';
 import { InvoiceGateway } from './InvoiceGateway';
 import { AppointmentEnrollmentView } from './AppointmentEnrollmentView';
 import { CardProduct } from '../card/entity/CardProduct';
+import { MerchandiseSpecInventoryStatusView } from '~/merchandise/entity/MerchandiseSpecInventoryStatusView';
 
 export const PostgresEntities = [
   Activity,
@@ -348,6 +349,7 @@ export const PostgresEntities = [
   MerchandiseSpec,
   MerchandiseSpecFile,
   MerchandiseTag,
+  MerchandiseSpecInventoryStatusView,
   Migrations,
   Module,
   Notification,

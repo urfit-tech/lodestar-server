@@ -14,7 +14,7 @@ import { Card } from '~/card/entity/Card';
 import { CartItem } from '~/entity/CartItem';
 import { Comment } from '~/entity/Comment';
 import { Issue } from '~/entity/Issue';
-import { Merchandise } from '~/entity/Merchandise';
+import { Merchandise } from '~/merchandise/entity/Merchandise';
 import { Package } from '~/entity/Package';
 import { Podcast } from '~/entity/Podcast';
 import { Post } from '~/entity/Post';

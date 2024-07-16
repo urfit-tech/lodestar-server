@@ -3,7 +3,7 @@ import { Column, Entity, Index, OneToMany, PrimaryColumn } from 'typeorm';
 import { MemberTag } from '~/member/entity/member_tag.entity';
 import { ActivityTag } from '~/activity/entity/ActivityTag';
 import { MemberSpeciality } from '~/entity/MemberSpeciality';
-import { MerchandiseTag } from '~/entity/MerchandiseTag';
+import { MerchandiseTag } from '~/merchandise/entity/MerchandiseTag';
 import { PodcastProgramTag } from '~/entity/PodcastProgramTag';
 import { PostTag } from '~/entity/PostTag';
 import { ProgramTag } from '~/entity/ProgramTag';

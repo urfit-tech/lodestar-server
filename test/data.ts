@@ -42,6 +42,9 @@ import { MemberNote } from '~/entity/MemberNote';
 import { ProgramContentPlan } from '~/entity/ProgramContentPlan';
 import { Card } from '~/card/entity/Card';
 import { CardProduct } from '~/card/entity/CardProduct';
+import { MerchandiseSpec } from '~/merchandise/entity/MerchandiseSpec';
+import { Merchandise } from '~/merchandise/entity/Merchandise';
+import { ProductInventory } from '~/entity/ProductInventory';
 
 export const role = new Role();
 role.name = 'app-owner';
@@ -316,3 +319,30 @@ cardProduct.id = v4();
 cardProduct.cardId = card.id;
 cardProduct.target = programPlan.id;
 cardProduct.productType = 'ProgramPlan';
+
+export const merchandise = new Merchandise();
+merchandise.id = v4();
+merchandise.appId = app.id;
+merchandise.title = 'test merchandise title';
+merchandise.memberId = member.id;
+
+export const merchandiseSpec = new MerchandiseSpec();
+merchandiseSpec.id = v4();
+merchandiseSpec.merchandiseId = merchandise.id;
+
+export const merchandiseSpecProduct = new Product();
+merchandiseSpecProduct.type = 'MerchandiseSpec';
+merchandiseSpecProduct.id = `${merchandiseSpecProduct.type}_${merchandiseSpec.id}`;
+merchandiseSpecProduct.target = merchandiseSpec.id;
+
+export const productInventory = new ProductInventory();
+productInventory.id = v4();
+productInventory.productId = merchandiseSpecProduct.id;
+
+export const merchandiseSpecOrderProduct = new OrderProduct();
+merchandiseSpecOrderProduct.id = v4();
+merchandiseSpecOrderProduct.orderId = orderLog.id;
+merchandiseSpecOrderProduct.deliveredAt = dayjs().subtract(1, 'day').toDate();
+merchandiseSpecOrderProduct.productId = merchandiseSpecProduct.id;
+merchandiseSpecOrderProduct.name = 'test merchandise spec order product';
+merchandiseSpecOrderProduct.price = 0;
