@@ -1,5 +1,5 @@
 export interface LeadWebhookBody {
-  id: number;
+  id: string;
   created_time: string;
   ad_id: number;
   ad_name: string;
