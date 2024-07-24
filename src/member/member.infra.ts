@@ -11,9 +11,8 @@ import {
   ObjectId,
   EntityTarget,
 } from 'typeorm';
-import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
-import { first, keys, omit, pick, values } from 'lodash';
+import { first, keys, pick, values } from 'lodash';
 import * as uuid from 'uuid';
 import { Member } from './entity/member.entity';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
@@ -64,8 +63,6 @@ import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
 import { ReviewReply } from '~/entity/ReviewReply';
-import { Property } from '~/definition/entity/property.entity';
-import { Category } from '~/definition/entity/category.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import MemberQueryObserveBase from './get-member-query/member-query-base';
 import {
@@ -76,9 +73,13 @@ import {
   MemberPropertyObserver,
   MemberTagObserver,
 } from './get-member-query/member-query-observer';
+import { Cursor } from '~/utility/pagination/pagination.type';
+import { PaginationService } from '~/utility/pagination/pagination.service';
 
 @Injectable()
 export class MemberInfrastructure {
+  constructor(private readonly paginationService: PaginationService) {}
+
   async getSimpleMemberByConditions(
     appId: string,
     conditions: FindOptionsWhere<Member>,
@@ -97,9 +98,9 @@ export class MemberInfrastructure {
     memberQueryBase.addObserver(new MemberPermissionGroupObserver());
     memberQueryBase.addObserver(new MemberPropertyObserver());
 
-    let queryBuilder = await memberQueryBase.execute(appId, conditions, order, entityManager);
+    const queryBuilder = await memberQueryBase.execute(appId, conditions, order, entityManager);
 
-    const paginator = buildPaginator({
+    const paginator = this.paginationService.buildPaginator({
       entity: Member,
       paginationKeys: ['createdAt', 'id'],
       query: {

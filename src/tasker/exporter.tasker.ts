@@ -24,6 +24,7 @@ import { ProductInfrastructure } from '~/product/product.infra';
 import { EmailService } from '~/mailer/email/email.service';
 import { AppInfrastructure } from '~/app/app.infra';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
+import { PaginationService } from '~/utility/pagination/pagination.service';
 
 dayjs.extend(timezone);
 dayjs.tz.setDefault('Asia/Taipei');
@@ -81,6 +82,7 @@ export class ExporterTasker extends Tasker {
         PaymentInfrastructure,
         SharingCodeInfrastructure,
         ProductInfrastructure,
+        PaginationService,
       ],
     };
   }
