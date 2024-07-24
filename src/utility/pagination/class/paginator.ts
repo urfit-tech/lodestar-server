@@ -7,27 +7,7 @@ import {
   WhereExpressionBuilder,
 } from 'typeorm';
 import { PaginationService } from '../pagination.service';
-
-export enum Order {
-  ASC = 'ASC',
-  DESC = 'DESC',
-}
-
-export type EscapeFn = (name: string) => string;
-
-export interface CursorParam {
-  [key: string]: any;
-}
-
-export interface Cursor {
-  beforeCursor: string | null;
-  afterCursor: string | null;
-}
-
-export interface PagingResult<Entity> {
-  data: Entity[];
-  cursor: Cursor;
-}
+import { Cursor, CursorParam, Order, PagingResult } from '../pagination.type';
 
 export default class Paginator<Entity extends ObjectLiteral> {
   private paginationService: PaginationService = new PaginationService();
