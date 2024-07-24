@@ -5,7 +5,7 @@ import { ProgramPackageInfrastructure } from './program-package.infra';
 import { EntityManager } from 'typeorm';
 import { ProgramInfrastructure } from '~/program/program.infra';
 import { APIException } from '~/api.excetion';
-import { Cursor } from 'typeorm-cursor-pagination';
+import { Cursor } from '~/utility/pagination/pagination.type';
 
 describe('ProgramPackageService', () => {
   let service: ProgramPackageService;

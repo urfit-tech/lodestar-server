@@ -15,6 +15,7 @@ import { CalendarController } from './calendar.controller';
 import { CalendarService } from './calendar.service';
 import { AppointmentInfrastructure } from '~/appointment/appointment.infra';
 import { AppointmentService } from '~/appointment/appointment.service';
+import { PaginationService } from '~/utility/pagination/pagination.service';
 
 @Module({
   controllers: [CalendarController],
@@ -33,6 +34,7 @@ import { AppointmentService } from '~/appointment/appointment.service';
     VoucherInfrastructure,
     AppointmentInfrastructure,
     AppointmentService,
+    PaginationService,
   ],
   exports: [],
 })

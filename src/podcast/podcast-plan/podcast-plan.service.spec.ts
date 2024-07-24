@@ -3,6 +3,7 @@ import { EntityManager } from 'typeorm';
 import { DefinitionInfrastructure } from '~/definition/definition.infra';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { MemberService } from '~/member/member.service';
+import { PaginationService } from '~/utility/pagination/pagination.service';
 import { UtilityService } from '~/utility/utility.service';
 import { PodcastPlanInfrastructure } from './podcast-plan.infra';
 import { PodcastPlanService } from './podcast-plan.service';
@@ -20,6 +21,7 @@ describe('PodcastPlanService', () => {
         UtilityService,
         DefinitionInfrastructure,
         MemberInfrastructure,
+        PaginationService,
       ],
     }).compile();
 
