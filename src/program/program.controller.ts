@@ -1,4 +1,16 @@
-import { Controller, Get, Logger, Param, Req, UnauthorizedException, UseGuards, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+  Headers,
+  Patch,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { APIException } from '~/api.excetion';
 import { JwtMember } from '~/auth/auth.dto';
@@ -10,6 +22,7 @@ import {
   ProgramContentResponseDTO,
   ProgramContentsResponseDto,
   ProgramResponseDTO,
+  TrackProgramProcessDto,
 } from './program.dto';
 import { ProgramService } from './program.service';
 
@@ -107,6 +120,30 @@ export class ProgramController {
     @Param('programId') programId: string,
   ): Promise<MaterialsResponseDto[]> {
     return this.programService.getProgramContentMaterialsByProgramId(programId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/:programId/content/:contentId/track-process')
+  async trackProgramContentProgress(
+    @Local('member') member: JwtMember,
+    @Param('contentId') programContentId: string,
+    @Body() requestDto: TrackProgramProcessDto,
+  ) {
+    try {
+      await this.programService.trackProgramContentProgress({
+        memberId: member.memberId,
+        programContentId,
+        progress: requestDto.progress,
+        lastProgress: requestDto.lastProgress,
+      });
+      return { code: 'TRACK_PROGRESS_SUCCESS', message: `${programContentId} Progress tracked successfully` };
+    } catch (error) {
+      throw new APIException({
+        code: 'TRACK_PROGRESS_FAILED',
+        message: `${programContentId} Failed to track program content progress`,
+        result: error.message,
+      });
+    }
   }
 
   private _verifyAuthorization(authorization: string) {

@@ -246,6 +246,49 @@ export class ProgramService {
     return programContentMaterialsByProgramId;
   }
 
+  public async trackProgramContentProgress(params: {
+    memberId: string;
+    programContentId: string;
+    progress: number;
+    lastProgress: number;
+  }): Promise<void> {
+    const { memberId, programContentId, progress, lastProgress } = params;
+
+    if (!memberId) {
+      throw new Error('memberId must be provided');
+    }
+
+    if (!programContentId || programContentId === '') {
+      throw new Error('programContentId must be provided');
+    }
+
+    const existingProgress = await this.programInfra.getProgramContentProgressByIdAndMemberId(
+      programContentId,
+      memberId,
+      this.entityManager,
+    );
+
+    const maxProgress = existingProgress
+      ? Math.max(existingProgress.progress, progress ?? existingProgress.progress)
+      : progress ?? 0;
+
+    const finalLastProgress = lastProgress ?? existingProgress?.lastProgress ?? 0;
+
+    try {
+      await this.programInfra.trackProgramContentProgress(
+        {
+          memberId,
+          programContentId,
+          progress: maxProgress,
+          lastProgress: finalLastProgress,
+        },
+        this.entityManager,
+      );
+    } catch (error) {
+      throw new Error(`Failed to track progress for content ${programContentId}: ${error.message}`);
+    }
+  }
+
   private sortProgramRole(roles: { memberId: string; name: string; createdAt: string }[]) {
     const sortRoles = roles.sort(
       (a: { createdAt: string }, b: { createdAt: string }) =>
