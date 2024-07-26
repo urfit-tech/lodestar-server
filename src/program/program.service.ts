@@ -254,7 +254,7 @@ export class ProgramService {
   }): Promise<void> {
     const { memberId, programContentId, progress, lastProgress } = params;
 
-    if (!memberId || memberId === '') {
+    if (!memberId) {
       throw new Error('memberId must be provided');
     }
 

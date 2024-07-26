@@ -136,11 +136,11 @@ export class ProgramController {
         progress: requestDto.progress,
         lastProgress: requestDto.lastProgress,
       });
-      return { status: 'ok' };
+      return { code: 'TRACK_PROGRESS_SUCCESS', message: `${programContentId} Progress tracked successfully` };
     } catch (error) {
       throw new APIException({
         code: 'TRACK_PROGRESS_FAILED',
-        message: 'Failed to track program content progress',
+        message: `${programContentId} Failed to track program content progress`,
         result: error.message,
       });
     }
