@@ -9,6 +9,10 @@ describe('ProgramService', () => {
   let service: ProgramService;
   let manager: EntityManager;
 
+  const mockEntityManager = {
+    transaction: jest.fn((callback) => callback(mockEntityManager)),
+  };
+
   const mockMemberService = {
     getMembersByCondition: jest.fn(),
   };
@@ -32,7 +36,7 @@ describe('ProgramService', () => {
         },
         {
           provide: getEntityManagerToken(),
-          useValue: jest.fn(),
+          useValue: mockEntityManager,
         },
       ],
     }).compile();
