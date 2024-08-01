@@ -279,7 +279,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         for (const memberId of members) {
           const updatedMember = await memberRepo.findOne({ where: { id: memberId } });
@@ -308,7 +308,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         const updatedMember = await memberRepo.findOne({ where: { id: memberId } });
         expect(updatedMember.loginedAt).toEqual(new Date(now.getTime() + 2 * 1000));
@@ -321,7 +321,7 @@ describe('PorterRunner (e2e)', () => {
         expect(keyExists).toBe(1);
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         keyExists = await cacheService.getClient().exists(key);
         expect(keyExists).toBe(0);
@@ -341,7 +341,7 @@ describe('PorterRunner (e2e)', () => {
         const consoleSpy = jest.spyOn(console, 'error');
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         expect(consoleSpy).toHaveBeenCalledWith(
           expect.stringContaining(`No records updated for memberId: ${nonExistentMemberId}. Member might not exist.`),
@@ -363,7 +363,7 @@ describe('PorterRunner (e2e)', () => {
         const consoleSpy = jest.spyOn(console, 'error');
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portLastLoggedIn(manager, 20);
+        await porterRunner.execute(manager);
 
         expect(consoleSpy).toHaveBeenCalled();
 
@@ -379,11 +379,11 @@ describe('PorterRunner (e2e)', () => {
     });
   });
 
-  describe('portPlayerEvent', () => {
+  describe('portPlayerEvent/program-content-log', () => {
     it('should correctly save program content log', async () => {
       const porterRunner = application.get<PorterRunner>(Runner);
 
-      await porterRunner.portPlayerEvent(manager, 30);
+      await porterRunner.execute(manager);
 
       const [latestLog] = await programContentLogRepo.find({
         order: { createdAt: 'DESC' },
@@ -412,7 +412,7 @@ describe('PorterRunner (e2e)', () => {
 
       const consoleSpy = jest.spyOn(console, 'error');
       const porterRunner = application.get<PorterRunner>(Runner);
-      await porterRunner.portPlayerEvent(manager);
+      await porterRunner.execute(manager);
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid timestamp'));
 
@@ -439,7 +439,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPlayerEvent(manager, 20);
+        await porterRunner.execute(manager);
 
         const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
         expect(logs.length).toEqual(80);
@@ -461,14 +461,14 @@ describe('PorterRunner (e2e)', () => {
             .getClient()
             .set(
               `program-content-event:${memberId}:program-content:${programContent.id}:${Date.now() + i}`,
-              JSON.stringify({ playbackRate: 1.25, startedAt: 500 + i, endedAt: 600 + i }),
+              JSON.stringify({ playbackRate: 1.25, startedAt: 500 + i, endedAt: 600 + i, progress: 0.2 }),
               'EX',
               7 * 86400,
             );
         }
         const consoleSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPlayerEvent(manager, 20);
+        await porterRunner.execute(manager);
 
         const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
         expect(logs.length).toEqual(79);
@@ -507,7 +507,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPlayerEvent(manager, 20);
+        await porterRunner.execute(manager);
 
         const logs = await programContentLogRepo.find({ order: { createdAt: 'ASC' } });
         expect(logs.length).toEqual(79);
@@ -531,11 +531,232 @@ describe('PorterRunner (e2e)', () => {
 
         const porterRunner = application.get<PorterRunner>(Runner);
 
-        await expect(porterRunner.portPlayerEvent(manager)).resolves.not.toThrow();
+        await expect(porterRunner.execute(manager)).resolves.not.toThrow();
 
         const logs = await programContentLogRepo.find();
         expect(logs.length).toEqual(0);
       });
+    });
+  });
+
+  describe('portPlayerEvent/program-content-progress', () => {
+    it('Should correctly add a new progress record when content progress data does not exist', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.5 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await programContentProgressRepo.delete({});
+
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
+    });
+
+    it('Should correctly update content progress when Redis content progress is greater than existing content progress', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.5 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await programContentProgressRepo.delete({});
+      await programContentProgressRepo.save({
+        id: v4(),
+        memberId: member.id,
+        programContentId: programContent.id,
+        progress: 0.1,
+        lastProgress: 0,
+      });
+
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
+      expect(progresses[0].progress).toBe('0.5');
+    });
+
+    it('Should not update content progress when Redis content progress is lower than existing content progress', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.2 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await programContentProgressRepo.delete({});
+      await programContentProgressRepo.save({
+        id: v4(),
+        memberId: member.id,
+        programContentId: programContent.id,
+        progress: 0.8,
+        lastProgress: 0,
+      });
+
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
+      expect(progresses[0].progress).toBe('0.8');
+    });
+
+    it('Should correctly update content progress to the highest value when Redis contains multiple records, some lower and some higher than the existing content progress', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.2 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.7 }),
+          'EX',
+          7 * 86400,
+        );
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.1 }),
+          'EX',
+          7 * 86400,
+        );
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.9 }),
+          'EX',
+          7 * 86400,
+        );
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 1 }),
+          'EX',
+          7 * 86400,
+        );
+
+      await programContentProgressRepo.delete({});
+      await programContentProgressRepo.save({
+        id: v4(),
+        memberId: member.id,
+        programContentId: programContent.id,
+        progress: 0.6,
+        lastProgress: 0,
+      });
+
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
+      expect(progresses[0].progress).toBe('1');
+    });
+
+    it('Should correctly save content progress and create log at the same time', async () => {
+      // Arrange
+      await cacheService
+        .getClient()
+        .set(
+          `program-content-event:${member.id}:program-content:${programContent.id}:${Date.now()}`,
+          JSON.stringify({ playbackRate: 1.25, startedAt: 496.957357, endedAt: 502.26019, progress: 0.2 }),
+          'EX',
+          7 * 86400,
+        );
+      // Act
+      const porterRunner = application.get<PorterRunner>(Runner);
+
+      await porterRunner.execute(manager);
+
+      // Assert
+      const [latestLog] = await programContentLogRepo.find({
+        order: { createdAt: 'DESC' },
+        take: 1,
+      });
+
+      expect(latestLog.playbackRate).toEqual('1.25');
+      expect(latestLog.startedAt).toEqual('496.957357');
+      expect(latestLog.endedAt).toEqual('502.26019');
+      expect(latestLog.memberId).toEqual(member.id);
+
+      const progresses = await programContentProgressRepo.find({
+        where: {
+          memberId: member.id,
+          programContentId: programContent.id,
+        },
+      });
+
+      expect(progresses.length).toBe(1);
+      expect(progresses[0].memberId).toBe(member.id);
+      expect(progresses[0].programContentId).toBe(programContent.id);
     });
   });
 
@@ -576,7 +797,7 @@ describe('PorterRunner (e2e)', () => {
         }
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPodcastProgram(manager);
+        await porterRunner.execute(manager);
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(1);
@@ -631,7 +852,7 @@ describe('PorterRunner (e2e)', () => {
         }
         const consoleSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPodcastProgram(manager);
+        await porterRunner.execute(manager);
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(2);
@@ -662,7 +883,7 @@ describe('PorterRunner (e2e)', () => {
           );
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPodcastProgram(manager);
+        await porterRunner.execute(manager);
 
         const savedRecord = await podcastProgramProgressRepo.findOne({
           where: {
@@ -685,7 +906,7 @@ describe('PorterRunner (e2e)', () => {
 
         const porterRunner = application.get<PorterRunner>(Runner);
 
-        await expect(porterRunner.portPodcastProgram(manager)).resolves.not.toThrow();
+        await expect(porterRunner.execute(manager)).resolves.not.toThrow();
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(0);
@@ -743,7 +964,7 @@ describe('PorterRunner (e2e)', () => {
 
         const consoleSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await porterRunner.portPodcastProgram(manager);
+        await porterRunner.execute(manager);
 
         const progressRecords = await podcastProgramProgressRepo.find();
         expect(progressRecords.length).toEqual(2);
@@ -782,7 +1003,7 @@ describe('PorterRunner (e2e)', () => {
 
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).not.toHaveBeenCalled();
         logSpy.mockRestore();
 
@@ -801,7 +1022,7 @@ describe('PorterRunner (e2e)', () => {
         );
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         const scanRedisKey = await cacheService.getClient().keys('PhoneService:*');
         const remainingKeysCount = scanRedisKey.length;
         expect(remainingKeysCount).toEqual(0);
@@ -817,7 +1038,7 @@ describe('PorterRunner (e2e)', () => {
         );
 
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         const _member = await memberRepo.findOne({ where: { name: 'testMember' } });
         expect(_member.id).toBe(memberNote.authorId);
         expect(_member.id).toBe(memberNote.memberId);
@@ -836,7 +1057,7 @@ describe('PorterRunner (e2e)', () => {
 
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).toHaveBeenCalled();
         expect(logSpy).toBeCalledTimes(1);
         logSpy.mockRestore();
@@ -860,7 +1081,7 @@ describe('PorterRunner (e2e)', () => {
         );
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).toHaveBeenCalled();
         expect(logSpy).toBeCalledTimes(1);
         logSpy.mockRestore();
@@ -878,7 +1099,7 @@ describe('PorterRunner (e2e)', () => {
         }
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).toBeCalledTimes(20);
         logSpy.mockRestore();
       });
@@ -888,7 +1109,7 @@ describe('PorterRunner (e2e)', () => {
 
         const logSpy = jest.spyOn(console, 'error');
         const porterRunner = application.get<PorterRunner>(Runner);
-        await expect(porterRunner.portPhoneServiceInsertEvent(manager, 1)).resolves.toBeUndefined();
+        await expect(porterRunner.execute(manager)).resolves.toBeUndefined();
         expect(logSpy).toHaveBeenCalled();
         expect(logSpy).toBeCalledTimes(1);
         logSpy.mockRestore();

@@ -10,6 +10,7 @@ import { ProgramContentAudio } from '~/entity/ProgramContentAudio';
 import { ProgramContentVideo } from '~/entity/ProgramContentVideo';
 import { Attachment } from '~/media/attachment.entity';
 import { ProgramContentBody } from '~/entity/ProgramContentBody';
+import { ProgramContentProgress } from '~/entity/ProgramContentProgress';
 
 @Injectable()
 export class ProgramInfrastructure {
@@ -1371,5 +1372,40 @@ export class ProgramInfrastructure {
       .getRawOne();
 
     return this.utilityService.convertObjectKeysToCamelCase(programContentBody);
+  }
+
+  async getProgramContentProgressByIdAndMemberId(programContentId: string, memberId: string, manager: EntityManager) {
+    const programContentProgressRepo = manager.getRepository(ProgramContentProgress);
+    return await programContentProgressRepo.findOne({
+      where: {
+        memberId: memberId,
+        programContentId: programContentId,
+      },
+    });
+  }
+
+  async trackProgramContentProgress(
+    progressInfo: {
+      memberId: string;
+      programContentId: string;
+      progress: number;
+      lastProgress: number;
+    },
+    manager: EntityManager,
+  ): Promise<void> {
+    const repo = manager.getRepository(ProgramContentProgress);
+    try {
+      await repo.upsert(
+        {
+          memberId: progressInfo.memberId,
+          programContentId: progressInfo.programContentId,
+          progress: progressInfo.progress,
+          lastProgress: progressInfo.lastProgress,
+        },
+        ['memberId', 'programContentId'],
+      );
+    } catch (error) {
+      throw new Error(`Failed to upsert program content progress ${error}`);
+    }
   }
 }
