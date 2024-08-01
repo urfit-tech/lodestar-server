@@ -21,6 +21,15 @@ const corsOptionDelegate = async (
   const origin = req.headers['origin'] || '';
 
   if (!host || !origin || !isValidUrl(origin) || !isValidUrl(host)) {
+    console.log(
+      '[CORS-INFO] Validation failed: Invalid host or origin.',
+      JSON.stringify({
+        host,
+        origin,
+        isValidUrl_origin: isValidUrl(origin),
+        isValidUrl_host: isValidUrl(host),
+      }),
+    );
     callback(null, { credentials: false, origin: false });
     return;
   }
@@ -43,6 +52,7 @@ const corsOptionDelegate = async (
     host.startsWith('localhost') ||
     hostDomain === originDomain
   ) {
+    console.log('[CORS-INFO] CORS allowed: localhost or matching domain.', { host, origin });
     callback(null, { credentials: true, origin: true });
     return;
   }
@@ -52,14 +62,17 @@ const corsOptionDelegate = async (
     const { settings } = await appService.getAppInfoByHost(new URL(origin).hostname);
     allowedDomains = JSON.parse(settings['cors_allowed_domains'] || '[]');
   } catch (error) {
-    console.log('GetAppInfoByHost Error: ', error);
+    console.log('[CORS-INFO] GetAppInfoByHost Error:', error);
     allowedDomains = [];
   }
+
   if (allowedDomains.includes(new URL(origin).hostname)) {
+    console.log('[CORS-INFO] CORS allowed: Origin is in allowed domains.', { origin, allowedDomains });
     callback(null, { credentials: true, origin: true });
     return;
   }
 
+  console.log('[CORS-INFO] CORS validation failed: Origin not allowed.', { host, origin, allowedDomains });
   callback(null, { credentials: false, origin: false });
 };
 
