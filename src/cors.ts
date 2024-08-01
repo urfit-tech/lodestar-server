@@ -3,15 +3,6 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { fromUrl, parseDomain, ParseResultType } from 'parse-domain';
 import { AppService } from './app/app.service';
 
-const isValidUrl = (string: string) => {
-  try {
-    new URL(string);
-    return true;
-  } catch (err) {
-    return false;
-  }
-};
-
 const corsOptionDelegate = async (
   req: any,
   callback: (error: Error | null, options: CorsOptions) => void,
@@ -20,16 +11,11 @@ const corsOptionDelegate = async (
   const host = req.headers['host'];
   const origin = req.headers['origin'] || '';
 
-  if (!host || !origin || !isValidUrl(origin) || !isValidUrl(host)) {
-    console.log(
-      '[CORS-INFO] Validation failed: Invalid host or origin.',
-      JSON.stringify({
-        host,
-        origin,
-        isValidUrl_origin: isValidUrl(origin),
-        isValidUrl_host: isValidUrl(host),
-      }),
-    );
+  if (!host || !origin) {
+    console.log(`[CORS-INFO] [${new Date().toISOString()}] CORS validation failed: Missing host or origin.`, {
+      host,
+      origin,
+    });
     callback(null, { credentials: false, origin: false });
     return;
   }
@@ -52,7 +38,10 @@ const corsOptionDelegate = async (
     host.startsWith('localhost') ||
     hostDomain === originDomain
   ) {
-    console.log('[CORS-INFO] CORS allowed: localhost or matching domain.', { host, origin });
+    console.log(
+      `[CORS-INFO] [${new Date().toISOString()}] CORS allowed: Origin is localhost, ngrok, or matching domain.`,
+      { host, origin },
+    );
     callback(null, { credentials: true, origin: true });
     return;
   }
@@ -62,17 +51,27 @@ const corsOptionDelegate = async (
     const { settings } = await appService.getAppInfoByHost(new URL(origin).hostname);
     allowedDomains = JSON.parse(settings['cors_allowed_domains'] || '[]');
   } catch (error) {
-    console.log('[CORS-INFO] GetAppInfoByHost Error:', error);
+    console.error(
+      `[CORS-ERROR] [${new Date().toISOString()}] Error retrieving allowed domains from app service:`,
+      error,
+    );
     allowedDomains = [];
   }
 
   if (allowedDomains.includes(new URL(origin).hostname)) {
-    console.log('[CORS-INFO] CORS allowed: Origin is in allowed domains.', { origin, allowedDomains });
+    console.log(`[CORS-INFO] [${new Date().toISOString()}] CORS allowed: Origin is in allowed domains.`, {
+      origin,
+      allowedDomains,
+    });
     callback(null, { credentials: true, origin: true });
     return;
   }
 
-  console.log('[CORS-INFO] CORS validation failed: Origin not allowed.', { host, origin, allowedDomains });
+  console.warn(`[CORS-WARN] [${new Date().toISOString()}] CORS validation failed: Origin not allowed.`, {
+    host,
+    origin,
+    allowedDomains,
+  });
   callback(null, { credentials: false, origin: false });
 };
 
