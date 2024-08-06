@@ -5,6 +5,9 @@ import { CheckoutOrderDto } from './dto/product.dto';
 import { flatten } from 'ramda';
 import { DiscountFactoryRegistry } from './factories/discount-factory.registry';
 import { Discount } from './domain/discount.model';
+import { MerchandiseSpecInfrastructure } from '~/merchandise/merchandise-spec/merchandise-spec.infra';
+import { InjectEntityManager } from '@nestjs/typeorm';
+import { EntityManager } from 'typeorm';
 
 type ProductOptions = { [productId: string]: any };
 
@@ -15,6 +18,8 @@ export class ProductService {
     private readonly productFactoryRegistry: ProductFactoryRegistry,
     @Inject('DISCOUNT_FACTORIES')
     private readonly discountFactoryRegistry: DiscountFactoryRegistry,
+    private readonly merchandiseSpecInfra: MerchandiseSpecInfrastructure,
+    @InjectEntityManager() private entityManager: EntityManager,
   ) {}
 
   async checkoutOrder(checkoutOrderDto: CheckoutOrderDto) {
@@ -33,7 +38,15 @@ export class ProductService {
     // Combine product discounts with order discounts
     const concatOrderProductDiscount = orderDiscounts.concat(orderProductDiscounts);
 
-    return { orderProducts, orderDiscounts: concatOrderProductDiscount };
+    // shipping option
+    let shippingOption = null;
+    if (shipping && productIds.length > 0) {
+      const memberShop = await this.getMemberShop(productIds[0]);
+      const shippingMethods = memberShop?.shippingMethods || [];
+      shippingOption = shippingMethods.find((shippingMethod) => shippingMethod.id == shipping.shippingMethod);
+    }
+
+    return { orderProducts, orderDiscounts: concatOrderProductDiscount, shippingOption };
   }
 
   private async getProductInstances(productIds: string[]): Promise<OrderProductStruct[]> {
@@ -55,10 +68,19 @@ export class ProductService {
     productInstances: OrderProductStruct[],
     productOptions: ProductOptions,
   ): Promise<OrderProductStructType[]> {
-    const results = await Promise.all(
+    const results = await Promise.allSettled(
       productInstances.map((instance, idx) => instance.checkout(appId, productOptions[productIds[idx]])),
     );
-    return results.filter(notNull);
+
+    const mappedResults = results.map((result) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      } else {
+        return null;
+      }
+    });
+
+    return mappedResults.filter(notNull);
   }
 
   private async checkoutOrderProductDiscounts(productInstances: OrderProductStruct[]): Promise<any[]> {
@@ -80,6 +102,21 @@ export class ProductService {
       throw new Error(`Discount factory not found for type: ${type}`);
     }
     return factory.createDiscount(target, products);
+  }
+
+  private async getMemberShop(productId) {
+    const [type, target] = productId;
+    if (type !== 'MerchandiseSpec') {
+      return null;
+    }
+
+    const memberShop = await this.merchandiseSpecInfra.getMemberShop(target, this.entityManager);
+    return {
+      id: memberShop.id,
+      title: memberShop.title,
+      shippingMethods: memberShop.shippingMethods,
+      publishedAt: memberShop.publishedAt,
+    };
   }
 }
 

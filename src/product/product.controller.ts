@@ -14,7 +14,9 @@ export class ProductController {
   @UseGuards(AuthGuard)
   async checkoutOrder(@Body() checkoutOrderDto: CheckoutOrderDto, @Req() req, @Local('member') member: JwtMember) {
     try {
-      const { orderProducts, orderDiscounts } = await this.productService.checkoutOrder(checkoutOrderDto);
+      const { orderProducts, orderDiscounts, shippingOption } = await this.productService.checkoutOrder(
+        checkoutOrderDto,
+      );
 
       return {
         code: 'SUCCESS',
@@ -22,7 +24,7 @@ export class ProductController {
         result: {
           orderProducts,
           orderDiscounts,
-          // shippingOption,
+          shippingOption,
         },
       };
     } catch (error) {
