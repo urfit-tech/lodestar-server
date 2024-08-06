@@ -1,9 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { OrderLog } from '~/order/entity/order_log.entity';
-
 import { CouponCode } from '../../entity/CouponCode';
 import { Member } from '~/member/entity/member.entity';
+import { CouponStatus } from '~/coupon/entity/CouponStatus';
 
 @Index('coupon_member_id_coupon_code_id_key', ['couponCodeId', 'memberId'], {
   unique: true,
@@ -42,4 +41,7 @@ export class Coupon {
 
   @OneToMany(() => OrderLog, (orderLog) => orderLog.discountCoupon)
   orderLogs: OrderLog[];
+
+  @OneToOne(() => CouponStatus, (couponStatus) => couponStatus.coupon)
+  couponStatus: CouponStatus;
 }

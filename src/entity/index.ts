@@ -51,7 +51,7 @@ import { ExamMemberTimeLimit } from './ExamMemberTimeLimit';
 import { ExamQuestionGroup } from './ExamQuestionGroup';
 import { Exercise } from './Exercise';
 import { File } from './File';
-import { GiftPlan } from './GiftPlan';
+import { GiftPlan } from '../gift/entity/GiftPlan';
 import { GiftPlanProduct } from './GiftPlanProduct';
 import { Identity } from './Identity';
 import { Issue } from './Issue';

@@ -15,6 +15,8 @@ import { Merchandise } from '~/merchandise/entity/Merchandise';
 import { MerchandiseSpec } from '~/merchandise/entity/MerchandiseSpec';
 import { Product } from '~/entity/Product';
 import { camelCase, isEmpty, mapKeys, uniq } from 'lodash';
+import { ProductGiftPlan } from '~/entity/ProductGiftPlan';
+import { AppSetting } from '~/app/entity/app_setting.entity';
 
 @Injectable()
 export class ProductInfrastructure {
@@ -276,5 +278,12 @@ export class ProductInfrastructure {
       .where(`(merchandiseSpec.id IN (${this.targetsToSql(targets)}))`);
 
     return productOwner;
+  }
+
+  async getProductGiftPlanByProductId(productId: string, manager: EntityManager) {
+    return manager.getRepository(ProductGiftPlan).findOne({
+      where: { product: { id: productId } },
+      relations: ['giftPlan', 'giftPlan.giftPlanProducts', 'giftPlan.giftPlanProducts.product'],
+    });
   }
 }

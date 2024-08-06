@@ -26,4 +26,17 @@ export class CouponInfrastructure {
       order: { createdAt: 'DESC' },
     });
   }
+
+  async getCouponById(id: string, manager: EntityManager) {
+    return await manager.getRepository(Coupon).findOne({
+      where: { id },
+      relations: [
+        'member',
+        'couponCode',
+        'couponCode.couponPlan',
+        'couponCode.couponPlan.couponPlanProducts',
+        'couponStatus',
+      ],
+    });
+  }
 }

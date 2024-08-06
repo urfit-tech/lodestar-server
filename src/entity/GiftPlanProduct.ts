@@ -1,5 +1,5 @@
 import { Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { GiftPlan } from './GiftPlan';
+import { GiftPlan } from '../gift/entity/GiftPlan';
 import { Product } from './Product';
 
 @Index('gift_plan_product_pkey', ['id'], { unique: true })

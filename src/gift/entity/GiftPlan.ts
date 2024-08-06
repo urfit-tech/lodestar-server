@@ -1,6 +1,6 @@
 import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { GiftPlanProduct } from './GiftPlanProduct';
-import { ProductGiftPlan } from './ProductGiftPlan';
+import { GiftPlanProduct } from '../../entity/GiftPlanProduct';
+import { ProductGiftPlan } from '../../entity/ProductGiftPlan';
 
 @Index('gift_plan_pkey', ['id'], { unique: true })
 @Entity('gift_plan', { schema: 'public' })

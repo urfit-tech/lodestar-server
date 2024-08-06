@@ -26,6 +26,6 @@ import { AccessControlService } from '~/auth/access-control.service';
     VoucherModule,
   ],
   exports: [OrderInfrastructure],
-  providers: [OrderService, OrderInfrastructure,AccessControlService,],
+  providers: [OrderService, OrderInfrastructure, AccessControlService],
 })
 export class OrderModule {}
