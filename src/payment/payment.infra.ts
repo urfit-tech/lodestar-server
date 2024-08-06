@@ -16,7 +16,7 @@ export class PaymentInfrastructure {
         invoiceIssuedAt: IsNull(),
         invoiceOptions: Raw(
           (alias) =>
-            `(${alias} ->> 'status' IS NULL OR (${alias} ->> 'status' != 'SUCCESS' AND (${alias} ->> 'retry')::numeric < 5))`,
+            `(${alias} ->> 'status' IS NULL OR (${alias} ->> 'status' != 'SUCCESS' AND (${alias} ->> 'retry')::numeric < 5)) AND (invoice_options ->'skipIssueInvoice' IS NULL OR invoice_options ->>'skipIssueInvoice' != true)`,
         ),
         paidAt: And(LessThan(dayjs.utc().toDate()), MoreThan(dayjs.utc().subtract(3, 'day').toDate())),
         gateway: Not(In(['lodestar', 'manual'])),
