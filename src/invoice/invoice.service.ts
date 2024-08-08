@@ -60,7 +60,7 @@ export class InvoiceService {
       this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`);
       const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
 
-      const { Amt, invServiceResponse } = await this.issueInvoice(appInvoiceGateway.options, paymentNo, price, {
+      const { TaxAmt, invServiceResponse } = await this.issueInvoice(appInvoiceGateway.options, paymentNo, price, {
         appId,
         name: invoiceOptions['name'] || member.name,
         email: invoiceOptions['email'] || member.email,
@@ -113,7 +113,7 @@ export class InvoiceService {
       if (invServiceResponse.Status === 'SUCCESS') {
         const orderId = orderLogs[0].id;
         if (orderId && invoiceNumber) {
-          await this.insertInvoice(orderId, invoiceNumber, Amt, manager);
+          await this.insertInvoice(orderId, invoiceNumber, TaxAmt, manager);
           this.logger.log(`Invoice ${invoiceNumber} issued with order_log_id ${orderId}`);
         }
       }
@@ -249,6 +249,7 @@ export class InvoiceService {
     return {
       Amt,
       invServiceResponse,
+      TaxAmt,
     };
   }
 
