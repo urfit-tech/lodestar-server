@@ -11,6 +11,7 @@ import { TokenService } from './token/token.service';
 import { ProgramPlanFactory } from './factories/product/program-plan.factory';
 import { ProductFactoryRegistry } from './factories/product-factory.registry';
 import { TokenInfrastructure } from './token/token.infra';
+import { DiscountInfrastructure } from './discount.infra';
 
 @Module({
   imports: [ProgramModule, ProjectModule, ActivityModule, AppointmentModule, PodcastModule],
@@ -20,6 +21,7 @@ import { TokenInfrastructure } from './token/token.infra';
     TokenService,
     ProductInfrastructure,
     TokenInfrastructure,
+    DiscountInfrastructure,
     ProgramPlanFactory,
     ProductFactoryRegistry,
     ProductService,
@@ -40,6 +42,6 @@ import { TokenInfrastructure } from './token/token.infra';
       inject: [ProductFactoryRegistry, ProgramPlanFactory],
     },
   ],
-  exports: [ProductInfrastructure, ProductService, TokenInfrastructure],
+  exports: [ProductInfrastructure, ProductService, TokenInfrastructure, DiscountInfrastructure],
 })
 export class ProductModule {}
