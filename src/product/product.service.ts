@@ -32,7 +32,11 @@ export class ProductService {
 
     // 2. Process discounts
     const filteredProductIds = orderProducts.map((product) => product.productId);
-    const orderDiscountInstance = await this.getDiscountInstance(discountId, orderProducts);
+    let afterProcessDiscountId: string;
+    if (discountId === 'Coin') {
+      afterProcessDiscountId = `Coin_${memberId}`;
+    }
+    const orderDiscountInstance = await this.getDiscountInstance(afterProcessDiscountId, orderProducts);
     const orderDiscounts = await orderDiscountInstance.checkout(memberId, filteredProductIds, productOptions);
 
     // Combine product discounts with order discounts

@@ -39,20 +39,12 @@ export abstract class OrderProductStruct {
   currencyPrice: number;
   options: { [key: string]: any };
   productGiftPlanData: any;
-  coinExChangeRateAppSetting: string;
 
-  constructor(
-    currencyId: string,
-    currencyPrice: number,
-    options: { [key: string]: any },
-    productGiftPlanData: any,
-    coinExChangeRateAppSetting: string,
-  ) {
+  constructor(currencyId: string, currencyPrice: number, options: { [key: string]: any }, productGiftPlanData: any) {
     this.currencyId = currencyId;
     this.currencyPrice = currencyPrice;
     this.options = options;
     this.productGiftPlanData = productGiftPlanData;
-    this.coinExChangeRateAppSetting = coinExChangeRateAppSetting;
   }
 
   abstract getDateFromPeriod(periodType: string, periodAmount: number): Date | null;
@@ -62,20 +54,11 @@ export abstract class OrderProductStruct {
   async checkoutDiscounts(): Promise<OrderDiscount[]> {
     return [];
   }
-
-  protected convertPrice(appId: string, price: number, fromCurrency: string, toCurrency: string) {
-    let exchangeRate = 1;
-    if (fromCurrency === 'LSC') {
-      exchangeRate = parseInt(this.coinExChangeRateAppSetting) || 1;
-    }
-    const systemPrice = price * exchangeRate;
-    const targetPrice = systemPrice * 1;
-    return targetPrice;
-  }
 }
 
 export class ProgramPlanModel extends OrderProductStruct {
-  private programPlan: ProgramPlan;
+  programPlan: ProgramPlan;
+  coinExChangeRateAppSetting: string;
 
   constructor(
     programPlan: ProgramPlan,
@@ -85,10 +68,11 @@ export class ProgramPlanModel extends OrderProductStruct {
     productGiftPlanData: any,
     coinExChangeRateAppSetting: string,
   ) {
-    super(currencyId, currencyPrice, options, productGiftPlanData, coinExChangeRateAppSetting);
+    super(currencyId, currencyPrice, options, productGiftPlanData);
     this.programPlan = programPlan;
     this.id = `ProgramPlan_${programPlan.id}`;
     this.description = '課程方案';
+    this.coinExChangeRateAppSetting = coinExChangeRateAppSetting;
   }
 
   getDateFromPeriod(periodType: string, periodAmount: number): Date | null {
@@ -141,5 +125,15 @@ export class ProgramPlanModel extends OrderProductStruct {
       });
     }
     return orderDiscounts;
+  }
+
+  private convertPrice(appId: string, price: number, fromCurrency: string, toCurrency: string) {
+    let exchangeRate = 1;
+    if (fromCurrency === 'LSC') {
+      exchangeRate = parseInt(this.coinExChangeRateAppSetting) || 1;
+    }
+    const systemPrice = price * exchangeRate;
+    const targetPrice = systemPrice * 1;
+    return targetPrice;
   }
 }
