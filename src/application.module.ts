@@ -25,6 +25,7 @@ import { WebhookModule } from './webhooks/webhook.module';
 import { EquityController } from './equity/equity.controller';
 import { EquityModule } from './equity/equity.module';
 import { MerchandiseModule } from './merchandise/merchandise.module';
+import { EventModule } from './event/event.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -41,15 +42,15 @@ import { MerchandiseModule } from './merchandise/merchandise.module';
         return ['production', 'staging'].includes(nodeEnv)
           ? {}
           : {
-              pinoHttp: {
-                transport: {
-                  target: 'pino-pretty',
-                  options: {
-                    ignore: 'pid,context,hostname',
-                  },
+            pinoHttp: {
+              transport: {
+                target: 'pino-pretty',
+                options: {
+                  ignore: 'pid,context,hostname',
                 },
               },
-            };
+            },
+          };
       },
       inject: [ConfigService],
     }),
@@ -92,6 +93,7 @@ import { MerchandiseModule } from './merchandise/merchandise.module';
     WebhookModule,
     EquityModule,
     MerchandiseModule,
+    EventModule,
   ],
 })
 export class ApplicationModule {
