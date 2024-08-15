@@ -26,6 +26,7 @@ import { EquityController } from './equity/equity.controller';
 import { EquityModule } from './equity/equity.module';
 import { MerchandiseModule } from './merchandise/merchandise.module';
 import { InvoiceModule } from './invoice/invoice.module';
+import { EventModule } from './event/event.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -94,6 +95,7 @@ import { InvoiceModule } from './invoice/invoice.module';
     EquityModule,
     MerchandiseModule,
     InvoiceModule,
+    EventModule,
   ],
 })
 export class ApplicationModule {

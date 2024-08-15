@@ -1,12 +1,10 @@
 import { Injectable, } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { TemporallyExclusiveResource } from './entities/temporally-exclusive-resource.entity'
 import {
   TemporallyExclusiveResourceType,
-  GetTemporallyExclusiveResourceByPermissionGroupsDTO,
   CreateTemporallyExclusiveResourceDto,
-} from './dto/temporally-exclusive-resource.dto';
+} from './temporally-exclusive-resource.dto';
 
 @Injectable()
 export class TemporallyExclusiveResourceService {
@@ -74,12 +72,23 @@ export class TemporallyExclusiveResourceService {
     }
   }
 
-  async findOne(id) { }
+  findByTarget(type: TemporallyExclusiveResourceType) {
+    return async (targets: Array<string>) => await this.entityManager.query(`
+        SELECT * FROM temporally_exclusive_resource
+          WHERE type = $1 AND target = ANY($2)
+      `,
+      [type, targets]
+    )
+  }
 
   async create(createTemporallyExclusiveResourceDto: CreateTemporallyExclusiveResourceDto) {
-    return await this.entityManager.getRepository(TemporallyExclusiveResource)
-      .createQueryBuilder('temporally_exclusive_resource')
-      .insert().values(createTemporallyExclusiveResourceDto);
+    const { type, target, appId } = createTemporallyExclusiveResourceDto
+    return await this.entityManager.query(`
+        INSERT INTO temporally_exclusive_resource (type, target, app_id)
+          VALUES ($1, $2, $3)
+        RETURNING *
+      `,
+      [type, target, appId])
   }
 
   // update(id: number, updateTemporallyExclusiveResourceDto: UpdateTemporallyExclusiveResourceDto) {
