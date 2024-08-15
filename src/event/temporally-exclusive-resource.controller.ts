@@ -15,9 +15,10 @@ export class TemporallyExclusiveResourceController {
 
   @Get('permission-group')
   async findByPermissionGroupIds(
+    @Local('member') member: JwtMember,
     @Query('ids') permission_group_ids: string,
     @Query('member_properties') member_properties?: string,
-    @Query('type') type?: 'member' | 'physical_space'
+    @Query('type') type?: 'member' | 'physical_space',
   ) {
     const [permissionGroupIds, memberProperties] =
       [permission_group_ids, member_properties].map(str => str ? str?.split(',') : undefined)
@@ -30,7 +31,7 @@ export class TemporallyExclusiveResourceController {
     @Param('type') type: TemporallyExclusiveResourceType,
     @Param('target') target: string
   ) {
-    return await this.TemporallyExclusiveResourceService.findByTarget(type)([target]);
+    return await this.TemporallyExclusiveResourceService.findByTarget(member.appId)(type)([target]);
   }
 
   @Post('/batch/get/:type')
@@ -40,23 +41,14 @@ export class TemporallyExclusiveResourceController {
     @Body() targets: Array<string>
   ) {
     console.log(`targets: ${targets}`)
-    return await this.TemporallyExclusiveResourceService.findByTarget(type)(targets);
+    return await this.TemporallyExclusiveResourceService.findByTarget(member.appId)(type)(targets);
   }
 
   @Post('')
-  async create(@Body() createTemporallyExclusiveResourceDto: any) {
-    // ought to be amended when testing via lodestar-app-admin
-    createTemporallyExclusiveResourceDto.appId = 'tli1956'
-    return await this.TemporallyExclusiveResourceService.create(createTemporallyExclusiveResourceDto);
+  async create(
+    @Local('member') member: JwtMember,
+    @Body() createTemporallyExclusiveResourceDto: CreateTemporallyExclusiveResourceDto
+  ) {
+    return await this.TemporallyExclusiveResourceService.create(member.appId)(createTemporallyExclusiveResourceDto);
   }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateTemporallyExclusiveResourceDto: UpdateTemporallyExclusiveResourceDto) {
-  //   return this.TemporallyExclusiveResourceService.update(+id, updateTemporallyExclusiveResourceDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.TemporallyExclusiveResourceService.remove(+id);
-  // }
 }
