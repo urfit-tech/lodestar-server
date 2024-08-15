@@ -17,5 +17,4 @@ export type GetTemporallyExclusiveResourceByPermissionGroupsDTO =
 export class CreateTemporallyExclusiveResourceDto {
     type: TemporallyExclusiveResourceType
     target: string
-    appId: string
 }

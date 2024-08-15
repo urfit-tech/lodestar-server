@@ -72,25 +72,27 @@ export class TemporallyExclusiveResourceService {
     }
   }
 
-  findByTarget(type: TemporallyExclusiveResourceType) {
-    return async (targets: Array<string>) => await this.entityManager.query(`
+  findByTarget(appId: string) {
+    return (type: TemporallyExclusiveResourceType) =>
+      async (targets: Array<string>) => await this.entityManager.query(`
         SELECT * FROM temporally_exclusive_resource
-          WHERE type = $1 AND target = ANY($2)
+          WHERE type = $1 AND target = ANY($2) AND app_id = $3
       `,
-      [type, targets]
-    )
+        [type, targets, appId]
+      )
   }
 
-  async create(createTemporallyExclusiveResourceDto: CreateTemporallyExclusiveResourceDto) {
-    const { type, target, appId } = createTemporallyExclusiveResourceDto
-    return await this.entityManager.query(`
+  create(appId: string) {
+    return async (createTemporallyExclusiveResourceDto: CreateTemporallyExclusiveResourceDto) => {
+      const { type, target } = createTemporallyExclusiveResourceDto
+      return await this.entityManager.query(`
         INSERT INTO temporally_exclusive_resource (type, target, app_id)
           VALUES ($1, $2, $3)
         RETURNING *
       `,
-      [type, target, appId])
+        [type, target, appId])
+    }
   }
-
   // update(id: number, updateTemporallyExclusiveResourceDto: UpdateTemporallyExclusiveResourceDto) {
   //   return `This action updates a #${id} TemporallyExclusiveResource`;
   // }

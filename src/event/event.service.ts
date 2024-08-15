@@ -131,11 +131,6 @@ export class EventService {
     return (ids: Array<string>) => (payload) => async (returningColumns: Array<string>) => {
       const returningString = returningColumns?.join?.('') ?? '*'
       const setString = this.generateUpdateString(payload)
-      console.log(`
-      UPDATE ${tableName} SET ${setString}
-      WHERE id = ANY($1)
-      RETURNING ${returningString}
-    `)
       return await this.entityManager.query(`
       UPDATE ${tableName} SET ${setString}
       WHERE id = ANY($1)
@@ -159,7 +154,6 @@ export class EventService {
 
   async insertEventResources(insertEventResourceDTO: InsertEventResourceDTO) {
     const { eventResources } = insertEventResourceDTO
-    console.log(152, eventResources)
     return await this.batchInsert('event_temporally_exclusive_resource')(eventResources)(['id'])
   }
 
