@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsDate, IsInt, IsObject, IsPositive, IsString, IsUUID } from "class-validator";
+import { IsArray, IsBoolean, IsDate, IsDateString, IsInt, IsJSON, IsObject, IsPositive, IsString, IsUUID } from "class-validator";
 import { IsValidRRule } from './validator/event.validator'
 
 export class UpdateEventDTO {
@@ -14,23 +14,23 @@ export class UpdateEventDTO {
     @IsObject()
     metadata?: object
 
-    @IsDate()
-    started_at?: Date
+    @IsDateString()
+    started_at?: string
 
-    @IsDate()
-    ended_at?: Date
+    @IsDateString()
+    ended_at?: string
 
-    @IsDate()
-    published_at?: Date
+    @IsDateString()
+    published_at?: string
 
-    @IsDate()
-    deleted_at?: Date
+    @IsDateString()
+    deleted_at?: string
 
     @IsValidRRule()
     rrule?: string
 
-    @IsDate()
-    until?: Date
+    @IsDateString()
+    until?: string
 
     @IsString()
     title?: string
@@ -43,11 +43,11 @@ export class EventDTO extends UpdateEventDTO {
     @IsString()
     app_id: string
 
-    @IsDate()
-    started_at: Date
+    @IsDateString()
+    started_at?: string
 
-    @IsDate()
-    ended_at: Date
+    @IsDateString()
+    ended_at?: string
 }
 
 export class InsertEventsDTO {

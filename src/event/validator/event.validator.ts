@@ -9,7 +9,7 @@ export function IsValidRRule(validationOptions?: ValidationOptions) {
             propertyName: propertyName,
             options: validationOptions,
             validator: {
-                validate(value: any, args: ValidationArguments) {
+                validate(value: string, args: ValidationArguments) {
                     try {
                         const rrule = rrulestr(value);
                         return rrule.all().length > 0;

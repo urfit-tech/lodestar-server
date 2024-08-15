@@ -2,11 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Logger, UseGu
 import { AuthGuard } from '~/auth/auth.guard';
 import { EventService } from './event.service';
 import {
+    InsertEventsDTO,
+    UpdateEventDTO,
     InviteResourcesDTO,
     DeliverEventsDTOBase,
-    InsertEventsDTO,
-    InsertEventResourceDTO,
-    UpdateEventDTO
 } from './event.dto'
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
@@ -63,10 +62,10 @@ export class EventController {
     @Patch(':id')
     async updateEvent(
         @Param('id') id: string,
-        @Body() updateEventDTO: any /*UpdateEventDTO*/,
+        // @Body() updateEventDTO: UpdateEventDTO,
+        @Body() updateEventDTO: any,
         @Local('member') member: JwtMember,
     ) {
-        console.log(69, id, updateEventDTO)
         const adaptedUpdateEventDTO = {
             ...updateEventDTO,
             metadata: JSON.stringify(updateEventDTO)
@@ -79,7 +78,7 @@ export class EventController {
         @Param('id')
         id: string
     ) {
-        return await this.EventService.updateEvent({ "deleted_at": new Date() })(id)
+        return await this.EventService.updateEvent({ "deleted_at": new Date().toDateString() })(id)
     }
 
     @Get('products/member/:memberId')
