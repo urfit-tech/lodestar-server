@@ -84,7 +84,7 @@ class PortPlayerEventCommand implements PorterCommand {
   ) {
     this.commands = [
       new CreateProgramContentLogsCommand(this.porterProgramService, this.programInfra),
-      new SyncProgramContentProgress(this.programService),
+      // new SyncProgramContentProgress(this.programService),
     ];
   }
 
