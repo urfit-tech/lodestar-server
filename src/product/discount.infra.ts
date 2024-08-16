@@ -7,6 +7,7 @@ import { AppSetting } from '~/app/entity/app_setting.entity';
 import { Member } from '~/member/entity/member.entity';
 import { Coupon } from '~/coupon/entity/coupon.entity';
 import { Voucher } from '~/voucher/entity/voucher.entity';
+import { PointLog } from '~/entity/PointLog';
 
 @Injectable()
 export class DiscountInfrastructure {
@@ -60,6 +61,11 @@ export class DiscountInfrastructure {
   }
 
   async getVoucherById(id: string, manager: EntityManager) {
-    return await manager.getRepository(Voucher).findOne({ where: { id } });
+    return await manager.getRepository(Voucher).findOne({ where: { id }, relations: ['voucherCode', 'voucherPlan'] });
+  }
+
+  async getRemaingPoints(id: string, manager: EntityManager) {
+    const pointRepo = await manager.getRepository(PointLog);
+    return pointRepo.find({ where: { memberId: id } });
   }
 }

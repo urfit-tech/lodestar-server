@@ -28,6 +28,9 @@ export class PointLog {
   @Column('text', { name: 'note', nullable: true })
   note: string | null;
 
+  @Column('text', { name: 'member_id' })
+  memberId: string;
+
   @ManyToOne(() => Member, (member) => member.pointLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

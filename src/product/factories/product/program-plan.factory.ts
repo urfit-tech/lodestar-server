@@ -13,7 +13,6 @@ export class ProgramPlanFactory implements IProductFactory {
   constructor(
     private programPlanInfra: ProgramPlanInfrastructure,
     private productInfra: ProductInfrastructure,
-    private tokenInfrastructure: TokenInfrastructure,
     private appInfrastructure: AppInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
@@ -32,7 +31,7 @@ export class ProgramPlanFactory implements IProductFactory {
     if (isProductGiftPlanAvailable && productGiftPlan.giftPlan.giftPlanProducts) {
       gifts = await Promise.all(
         productGiftPlan.giftPlan.giftPlanProducts.map(async (giftPlanProduct) => {
-          const gift = await this.tokenInfrastructure.getGiftById(giftPlanProduct.product.target, this.entityManager);
+          const gift = await this.productInfra.getGiftById(giftPlanProduct.product.target, this.entityManager);
           return {
             id: gift.id,
             type: giftPlanProduct.product.type,

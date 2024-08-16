@@ -1,8 +1,9 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { Member } from '~/member/entity/member.entity';
 
 import { VoucherCode } from '../../entity/VoucherCode';
+import { VoucherStatus } from './voucherStatus.entity';
 
 @Index('voucher_pkey', ['id'], { unique: true })
 @Index('voucher_voucher_code_id_member_id_key', ['memberId', 'voucherCodeId'], {
@@ -41,4 +42,8 @@ export class Voucher {
   })
   @JoinColumn([{ name: 'voucher_code_id', referencedColumnName: 'id' }])
   voucherCode: VoucherCode;
+
+  @OneToOne(() => VoucherStatus, (voucherStatus) => voucherStatus.voucherId)
+  @JoinColumn([{ name: 'id', referencedColumnName: 'voucher_id' }])
+  voucherStatus: VoucherStatus;
 }

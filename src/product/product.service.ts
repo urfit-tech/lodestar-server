@@ -36,6 +36,9 @@ export class ProductService {
     if (discountId === 'Coin') {
       afterProcessDiscountId = `Coin_${memberId}`;
     }
+    if (discountId === 'Point') {
+      afterProcessDiscountId = `Point_${memberId}`;
+    }
     const orderDiscountInstance = await this.getDiscountInstance(afterProcessDiscountId, orderProducts);
     const orderDiscounts = await orderDiscountInstance.checkout(memberId, filteredProductIds, productOptions);
 
