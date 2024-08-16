@@ -2284,7 +2284,7 @@ describe('ProgramController (e2e)', () => {
         expect(progress2.progress).toEqual('0.5');
       });
     });
-    describe.skip('Unauthorized access when recording progress', () => {
+    describe('Unauthorized access when recording progress', () => {
       it('Should return 401 Unauthorized when no authorization token is provided', async () => {
         const requestHeader = {
           host: 'test.something.com',
@@ -2301,10 +2301,8 @@ describe('ProgramController (e2e)', () => {
       });
 
       it('Should return 401 Unauthorized when an invalid authorization token is provided', async () => {
-        const invalidToken = 'invalid-token';
-
         const requestHeader = {
-          authorization: 'Bearer ' + invalidToken,
+          authorization: 'Bearer ' + '',
           host: 'test.something.com',
         };
 
