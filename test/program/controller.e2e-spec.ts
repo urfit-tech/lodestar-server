@@ -2316,5 +2316,37 @@ describe('ProgramController (e2e)', () => {
           .expect(401);
       });
     });
+
+    describe('upsert progress error', () => {
+      it('Should return 400 Bad Request ', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: member.id,
+            permissions: [],
+          },
+          jwtSecret,
+        );
+
+        const requestHeader = {
+          authorization: 'Bearer ' + token,
+          host: 'test.something.com',
+        };
+        const response = await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/non-content-id/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.6,
+            lastProgress: 0.64555,
+          })
+          .expect(400);
+
+        expect(response.body.message).toEqual('non-content-id Failed to track program content progress');
+        expect(response.body.code).toEqual('TRACK_PROGRESS_FAILED');
+      });
+    });
   });
 });
