@@ -4,6 +4,7 @@ import { MemberNote } from '~/entity/MemberNote';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { Member } from '~/member/entity/member.entity';
 import { PorterCommand } from './porterCommandInterface';
+import dayjs from 'dayjs';
 
 type LastMemberNotesType = {
   criteria: {
@@ -100,7 +101,11 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
           async (data) =>
             await manager.transaction(async (manager) => {
               try {
-                const { memberNotes, lastMemberNotes, key } = data;
+                const { lastMemberNotes, key } = data;
+                const memberNotes = data.memberNotes.map((note) => ({
+                  ...note,
+                  createdAt: dayjs(note.createdAt).toDate(),
+                }));
                 const {
                   criteria: { id, appId },
                   lastMemberRecord: { lastMemberNoteCreated, lastMemberNoteCalled, lastMemberNoteAnswered },
