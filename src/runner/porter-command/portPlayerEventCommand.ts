@@ -30,49 +30,49 @@ class CreateProgramContentLogsCommand implements PorterPlayerEventCommand {
   }
 }
 
-class SyncProgramContentProgress implements PorterPlayerEventCommand {
-  constructor(private readonly programService: ProgramService) {}
+// class SyncProgramContentProgress implements PorterPlayerEventCommand {
+//   constructor(private readonly programService: ProgramService) {}
 
-  public async execute(events: ProgramContentEvent[]): Promise<void> {
-    const progressDataList = events
-      .map(this._parseProgramPlayerDataValueString)
-      .filter((data) => data !== null) as ParsedProgressData[];
+//   public async execute(events: ProgramContentEvent[]): Promise<void> {
+//     const progressDataList = events
+//       .map(this._parseProgramPlayerDataValueString)
+//       .filter((data) => data !== null) as ParsedProgressData[];
 
-    for (const progressData of progressDataList) {
-      await this._trackProgress(progressData);
-    }
-  }
+//     for (const progressData of progressDataList) {
+//       await this._trackProgress(progressData);
+//     }
+//   }
 
-  private _parseProgramPlayerDataValueString(event: ProgramContentEvent): ParsedProgressData | null {
-    const { progress } = JSON.parse(event.valueString);
-    if (!progress) {
-      return null;
-    }
-    return {
-      memberId: event.memberId,
-      programContentId: event.programContentId,
-      progress: progress,
-      lastProgress: null,
-    };
-  }
+//   private _parseProgramPlayerDataValueString(event: ProgramContentEvent): ParsedProgressData | null {
+//     const { progress } = JSON.parse(event.valueString);
+//     if (!progress) {
+//       return null;
+//     }
+//     return {
+//       memberId: event.memberId,
+//       programContentId: event.programContentId,
+//       progress: progress,
+//       lastProgress: null,
+//     };
+//   }
 
-  private async _trackProgress(progressData: ParsedProgressData): Promise<void> {
-    try {
-      await this.programService.trackProgramContentProgress(progressData);
-    } catch (error) {
-      this._handleTrackingError(progressData, error);
-    }
-  }
+//   private async _trackProgress(progressData: ParsedProgressData): Promise<void> {
+//     try {
+//       await this.programService.trackProgramContentProgress(progressData);
+//     } catch (error) {
+//       this._handleTrackingError(progressData, error);
+//     }
+//   }
 
-  private _handleTrackingError(progressData: ParsedProgressData, error: any): void {
-    console.error('Failed to track progress:', {
-      memberId: progressData.memberId,
-      programContentId: progressData.programContentId,
-      progress: progressData.progress,
-      error: error,
-    });
-  }
-}
+//   private _handleTrackingError(progressData: ParsedProgressData, error: any): void {
+//     console.error('Failed to track progress:', {
+//       memberId: progressData.memberId,
+//       programContentId: progressData.programContentId,
+//       progress: progressData.progress,
+//       error: error,
+//     });
+//   }
+// }
 
 class PortPlayerEventCommand implements PorterCommand {
   private readonly commands: PorterPlayerEventCommand[];
@@ -84,7 +84,7 @@ class PortPlayerEventCommand implements PorterCommand {
   ) {
     this.commands = [
       new CreateProgramContentLogsCommand(this.porterProgramService, this.programInfra),
-      new SyncProgramContentProgress(this.programService),
+      // new SyncProgramContentProgress(this.programService),
     ];
   }
 
