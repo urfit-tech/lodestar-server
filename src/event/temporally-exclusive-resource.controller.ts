@@ -40,7 +40,6 @@ export class TemporallyExclusiveResourceController {
     @Param('type') type: TemporallyExclusiveResourceType,
     @Body() targets: Array<string>
   ) {
-    console.log(`targets: ${targets}`)
     return await this.TemporallyExclusiveResourceService.findByTarget(member.appId)(type)(targets);
   }
 

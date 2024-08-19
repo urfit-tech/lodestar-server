@@ -139,9 +139,13 @@ export class EventService {
     }
   }
 
-  async insertEvents(insertEventsDTO: InsertEventsDTO) {
-    const { events } = insertEventsDTO
-    return await this.batchInsert('event')(events)(['id'])
+  insertEvents(appId: string) {
+    return async (insertEventsDTO: InsertEventsDTO) => {
+      const { events } = insertEventsDTO
+      const adaptedEvents = events.map(event => ({ ...event, app_id: appId }))
+      console.log(146, adaptedEvents)
+      return await this.batchInsert('event')(adaptedEvents)(['id'])
+    }
   }
 
   updateEvents(updateEventDTO: UpdateEventDTO) {
@@ -175,7 +179,7 @@ export class EventService {
     const { source_type, source_target, member_id, amount, app_id } = deliverEventsDTO
     const temporally_exclusive_resource_id = await this.registerMemberAsResource(app_id)(member_id)
     const events = Array(amount).fill({ source_type, source_target })
-    const eventIds = (await this.insertEvents({ events })).map(returning => returning.id)
+    const eventIds = (await this.insertEvents(app_id)({ events })).map(returning => returning.id)
     const eventResources = eventIds.map(eventId => ({ event_id: eventId, temporally_exclusive_resource_id: temporally_exclusive_resource_id }))
     const eventResourceIds = (await this.insertEventResources({ eventResources })).map(returning => returning.id)
     return { eventIds: eventIds, eventResourceIds: eventResourceIds }
