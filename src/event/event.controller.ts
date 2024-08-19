@@ -51,12 +51,11 @@ export class EventController {
         @Body() insertEventsDTO: InsertEventsDTO,
         @Local('member') member: JwtMember,
     ) {
-        if (insertEventsDTO.events.every(event => event.app_id))
-            try {
-                return this.EventService.insertEvents(insertEventsDTO)
-            } catch (e) {
-                return e
-            }
+        try {
+            return this.EventService.insertEvents(member.appId)(insertEventsDTO)
+        } catch (e) {
+            return e
+        }
     }
 
     @Patch(':id')
