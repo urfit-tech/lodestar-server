@@ -12,7 +12,10 @@ import { JwtMember } from '~/auth/auth.dto';
 
 
 @UseGuards(AuthGuard)
-@Controller('event')
+@Controller({
+    path: 'event',
+    version: '2'
+})
 export class EventController {
 
     constructor(
