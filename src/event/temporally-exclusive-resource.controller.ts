@@ -9,7 +9,10 @@ import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
 
 @UseGuards(AuthGuard)
-@Controller('temporally-exclusive-resource')
+@Controller({
+  path: 'temporally-exclusive-resource',
+  version: '2',
+})
 export class TemporallyExclusiveResourceController {
   constructor(private readonly TemporallyExclusiveResourceService: TemporallyExclusiveResourceService) { }
 
