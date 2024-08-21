@@ -36,6 +36,13 @@ export class PaymentInfrastructure {
     const paymentLogRepo = manager.getRepository(PaymentLog);
     const paymentLog = await paymentLogRepo.findOne({
       where: { no: Equal(no) },
+      relations: {
+        order: {
+          member: true,
+          orderProducts: true,
+          orderDiscounts: true,
+        },
+      },
     });
     return paymentLog;
   }

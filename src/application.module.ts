@@ -25,6 +25,7 @@ import { WebhookModule } from './webhooks/webhook.module';
 import { EquityController } from './equity/equity.controller';
 import { EquityModule } from './equity/equity.module';
 import { MerchandiseModule } from './merchandise/merchandise.module';
+import { InvoiceModule } from './invoice/invoice.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -92,6 +93,7 @@ import { MerchandiseModule } from './merchandise/merchandise.module';
     WebhookModule,
     EquityModule,
     MerchandiseModule,
+    InvoiceModule,
   ],
 })
 export class ApplicationModule {
