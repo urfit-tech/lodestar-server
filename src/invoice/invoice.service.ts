@@ -113,7 +113,7 @@ export class InvoiceService {
       if (invServiceResponse.Status === 'SUCCESS') {
         const orderId = orderLogs[0].id;
         if (orderId && invoiceNumber) {
-          await this.insertInvoice(orderId, invoiceNumber, Amt, manager);
+          await this.insertInvoice(orderId, invoiceNumber, price, manager);
           this.logger.log(`Invoice ${invoiceNumber} issued with order_log_id ${orderId}`);
         }
       }

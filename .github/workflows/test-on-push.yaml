@@ -18,20 +18,25 @@ jobs:
         uses: actions/checkout@main
 
       - name: Install Docker
-        # uses: docker-practice/actions-setup-docker@master
-        # docker-practice/actions-setup-docker@master waiting for PR
-        # REF: https://github.com/docker-practice/actions-setup-docker/pull/33
-        uses: DimosthenisK/actions-setup-docker@fc48ecc37a6c3fe57342c08b4bc548926a27aa4a
-      
+        uses: docker-practice/actions-setup-docker@master
+
+      - name: Install Docker Compose
+        run: |
+          curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+
+      - name: Verify Docker Compose Installation
+        run: docker-compose --version
+
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: yarn
-      
+
       - name: Install Yarn
         run: npm install -g yarn
-      
+
       - name: Set resolutions to correct typescript version
         uses: jossef/action-set-json-field@v2
         with:
@@ -39,9 +44,8 @@ jobs:
           field: resolutions
           value: "{ \"typescript\": \"${{ matrix.typescript-version }}\"}"
           parse_json: true
-      
+
       - name: Install
-        # bcrypt depends on post-scripts since --ignore-scripts flag will disable it.
         run: |
           yarn add bcrypt
           yarn install --ignore-scripts --netwrok-timeout 100000
@@ -57,7 +61,7 @@ jobs:
         run: hasura version
 
       - name: Build Docker Stack
-        run: docker-compose --profile test -f docker-compose.yml up -d
+        run: docker compose --profile test -f docker-compose.yml up -d
 
       - name: Docker status
         run: |

@@ -2284,7 +2284,7 @@ describe('ProgramController (e2e)', () => {
         expect(progress2.progress).toEqual('0.5');
       });
     });
-    describe.skip('Unauthorized access when recording progress', () => {
+    describe('Unauthorized access when recording progress', () => {
       it('Should return 401 Unauthorized when no authorization token is provided', async () => {
         const requestHeader = {
           host: 'test.something.com',
@@ -2301,10 +2301,8 @@ describe('ProgramController (e2e)', () => {
       });
 
       it('Should return 401 Unauthorized when an invalid authorization token is provided', async () => {
-        const invalidToken = 'invalid-token';
-
         const requestHeader = {
-          authorization: 'Bearer ' + invalidToken,
+          authorization: 'Bearer ' + '',
           host: 'test.something.com',
         };
 
@@ -2316,6 +2314,38 @@ describe('ProgramController (e2e)', () => {
             lastProgress: 0.5,
           })
           .expect(401);
+      });
+    });
+
+    describe('upsert progress error', () => {
+      it('Should return 400 Bad Request ', async () => {
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: member.id,
+            permissions: [],
+          },
+          jwtSecret,
+        );
+
+        const requestHeader = {
+          authorization: 'Bearer ' + token,
+          host: 'test.something.com',
+        };
+        const response = await request(application.getHttpServer())
+          .post(`/programs/${program.id}/content/non-content-id/track-process`)
+          .set(requestHeader)
+          .send({
+            progress: 0.6,
+            lastProgress: 0.64555,
+          })
+          .expect(400);
+
+        expect(response.body.message).toEqual('non-content-id Failed to track program content progress');
+        expect(response.body.code).toEqual('TRACK_PROGRESS_FAILED');
       });
     });
   });
