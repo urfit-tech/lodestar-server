@@ -63,7 +63,7 @@ export class PaymentLog {
     name: 'invoice_options',
     default: () => 'jsonb_build_object()',
   })
-  invoiceOptions: object;
+  invoiceOptions: any | null;
 
   @Column('uuid', { name: 'invoice_gateway_id', nullable: true })
   invoiceGatewayId: string | null;
