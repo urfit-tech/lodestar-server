@@ -41,13 +41,14 @@ export class InvoiceService {
   ) {}
 
   public async issueInvoiceByPayment(payment: PaymentLog, manager: EntityManager) {
-    const { order, no: paymentNo, options, price } = payment;
+    const { order, no: paymentNo, options, price, invoiceOptions: invoiceInfo } = payment;
 
     try {
       const { member } = order;
       const appId = member.appId;
       const card4No = options?.card4No;
-      const invoiceComment = card4No ? `信用卡末四碼 ${card4No}` : options?.paymentType || '';
+      const comment = invoiceInfo?.invoiceComment;
+      const invoiceComment = `${comment ? comment : card4No ? `信用卡末四碼 ${card4No}` : options?.paymentType || ''}`;
 
       const appSettings = await this.appService.getAppSettings(appId, manager);
       const appInvoiceGateway = await this.invoiceInfra.getAppInvoiceGateway(appId, payment.invoiceGatewayId, manager);

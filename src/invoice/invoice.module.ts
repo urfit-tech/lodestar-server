@@ -8,10 +8,14 @@ import { UtilityModule } from '~/utility/utility.module';
 import { EzpayClient } from './ezpay_client';
 import { InvoiceService } from './invoice.service';
 import { InvoiceInfrastructure } from './invoice.infra';
+import { InvoiceController } from './invoice.controller';
+import { AuthModule } from '~/auth/auth.module';
+import { PaymentService } from '~/payment/payment.service';
 
 @Module({
-  imports: [AppModule, OrderModule, PaymentModule, UtilityModule],
-  providers: [Logger, EzpayClient, InvoiceService, InvoiceInfrastructure],
+  controllers: [InvoiceController],
+  imports: [AuthModule, AppModule, OrderModule, PaymentModule, UtilityModule],
+  providers: [Logger, EzpayClient, InvoiceService, InvoiceInfrastructure, PaymentService],
   exports: [EzpayClient, InvoiceService, InvoiceInfrastructure],
 })
 export class InvoiceModule {}

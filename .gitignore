@@ -40,3 +40,5 @@ lerna-debug.log*
 
 # automation of docker containers and migration 
 db.sh
+
+dump.rdb
