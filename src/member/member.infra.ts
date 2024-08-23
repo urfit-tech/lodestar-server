@@ -147,13 +147,9 @@ export class MemberInfrastructure {
     return memberRepo.findOneBy({ appId, id: memberId });
   }
 
-  async insertData<T>(
-    data: QueryDeepPartialEntity<T> | QueryDeepPartialEntity<T>[],
-    table: EntityTarget<T>,
-    entityManager: EntityManager,
-  ): Promise<InsertResult> {
-    const memberRepo = entityManager.getRepository(table);
-    return await memberRepo.insert(data);
+  async insertData(data: MemberNote[], entityManager: EntityManager) {
+    const memberNoteRepo = entityManager.getRepository(MemberNote);
+    return await memberNoteRepo.insert(data);
   }
 
   async updateData<T>(

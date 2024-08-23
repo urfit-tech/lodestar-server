@@ -996,7 +996,7 @@ describe('PorterRunner (e2e)', () => {
         await cacheService.getClient().set(
           `PhoneService:*${new Date().getTime()}`,
           JSON.stringify({
-            memberNotes: memberNote,
+            memberNotes: [memberNote],
             lastMemberNotes,
           }),
         );
@@ -1016,7 +1016,7 @@ describe('PorterRunner (e2e)', () => {
         await cacheService.getClient().set(
           `PhoneService:*${new Date().getTime()}`,
           JSON.stringify({
-            memberNotes: memberNote,
+            memberNotes: [memberNote],
             lastMemberNotes,
           }),
         );
@@ -1032,7 +1032,7 @@ describe('PorterRunner (e2e)', () => {
         await cacheService.getClient().set(
           `PhoneService:*${new Date().getTime()}`,
           JSON.stringify({
-            memberNotes: memberNote,
+            memberNotes: [memberNote],
             lastMemberNotes,
           }),
         );

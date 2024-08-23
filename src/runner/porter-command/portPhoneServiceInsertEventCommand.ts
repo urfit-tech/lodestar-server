@@ -102,10 +102,21 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
             await manager.transaction(async (manager) => {
               try {
                 const { lastMemberNotes, key } = data;
-                const memberNotes = data.memberNotes.map((note) => ({
-                  ...note,
-                  createdAt: dayjs(note.createdAt).toDate(),
-                }));
+                const memberNotes = data.memberNotes
+                  ? data.memberNotes.map((note) => {
+                      const memberNote = new MemberNote();
+                      memberNote.authorId = note?.authorId || '';
+                      memberNote.metadata = note?.metadata || null;
+                      memberNote.duration = note?.duration || 0;
+                      memberNote.memberId = note?.memberId || '';
+                      memberNote.status = note?.status;
+                      memberNote.type = note?.type;
+                      memberNote.createdAt = dayjs(note?.createdAt).isValid()
+                        ? dayjs(note.createdAt).toDate()
+                        : new Date();
+                      return memberNote;
+                    })
+                  : null;
                 const {
                   criteria: { id, appId },
                   lastMemberRecord: { lastMemberNoteCreated, lastMemberNoteCalled, lastMemberNoteAnswered },
@@ -113,7 +124,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
                 let errorLog = createErrorLog(key);
 
                 try {
-                  await this.memberInfra.insertData<MemberNote>(memberNotes, MemberNote, manager);
+                  await this.memberInfra.insertData(memberNotes, manager);
                 } catch (error) {
                   errorLog = {
                     ...errorLog,
@@ -162,7 +173,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
 
       if (errorLogs.length > 0) {
         for (const errorItem of errorLogs) {
-          console.error(`Saving phone service failed:${errorItem}`);
+          console.error(`Saving phone service failed:${JSON.stringify(errorItem)}`);
         }
       }
       redisDataArray.length = 0;
