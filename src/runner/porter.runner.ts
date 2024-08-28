@@ -64,6 +64,10 @@ export class PorterRunner extends Runner {
     const currentTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
     console.log(`start porter runner ${currentTime}`);
     await this.checkAndCallHeartbeat();
+    if (!this.cacheService.checkRedisConnection()) {
+      console.error('Redis connection failed');
+      return;
+    }
 
     const commands: PorterCommand[] = [
       new PortLastLoggedInCommand(this.cacheService, this.memberService),

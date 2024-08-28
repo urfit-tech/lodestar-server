@@ -12,21 +12,20 @@ export class CacheService implements OnApplicationShutdown {
     this.cacheRedisUri = configService.getOrThrow('CACHE_REDIS_URI');
     this.client = new Redis(this.cacheRedisUri);
     this.client.client('SETNAME', 'lodestar-server');
-
-    this.checkRedisConnection();
   }
 
   public getClient() {
     return this.client;
   }
 
-  private async checkRedisConnection(): Promise<void> {
+  public async checkRedisConnection(): Promise<boolean> {
     try {
       const result = await this.client.ping();
-      console.log(result);
       this.logger.log(`Redis connected successfully: ${result}`);
+      return true;
     } catch (error) {
       this.logger.error('Failed to connect to Redis:', error);
+      return false;
     }
   }
 
