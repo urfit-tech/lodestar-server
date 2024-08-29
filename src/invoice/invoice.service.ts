@@ -123,6 +123,7 @@ export class InvoiceService {
         invServiceResponse.Status === 'SUCCESS'
           ? {
               invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
+              invoiceRandomNumber: invServiceResponse.Result?.['RandomNum'],
               invoiceNumber: invoiceNumber,
             }
           : {
