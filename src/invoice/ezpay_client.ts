@@ -30,6 +30,11 @@ export type EzpayCredentials = {
 
 type EzpayIssueParams = Record<string, any>;
 
+type EzpaySearchParams = {
+  invoiceNumber: string;
+  invoiceRandomNumber: string;
+};
+
 type EzpayRevokeParams = {
   invoiceNumber: string;
   invalidReason: string;
@@ -127,6 +132,38 @@ export class EzpayClient {
     return {
       ...data,
       Result: JSON.parse(data.Result),
+    };
+  }
+
+  async search(credentials: EzpayCredentials, params: EzpaySearchParams): Promise<EzpayClientResponse> {
+    const { merchantId, hashKey, hashIV, options } = credentials;
+    const { data } = await axios.post(
+      `${this.endpoint(options ? options.dryRun : true)}/invoice_search`,
+      querystring.stringify({
+        MerchantID_: merchantId,
+        PostData_: this.buildPostParams(hashKey, hashIV, {
+          RespondType: 'JSON',
+          Version: '1.3',
+          TimeStamp: ~~(dayjs().toDate().getTime() / 1000),
+          InvoiceNumber: params.invoiceNumber,
+          RandomNum: params.invoiceRandomNumber,
+        }),
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      },
+    );
+
+    let result = null;
+    try {
+      result = JSON.parse(data.Result);
+    } catch {}
+    return {
+      Status: data.Status,
+      Message: data.Message,
+      Result: result,
     };
   }
 }
