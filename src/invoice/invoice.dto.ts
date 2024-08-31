@@ -16,16 +16,16 @@ export type InvoiceInfo = {
   LoveCode?: string;
   PrintFlag: string;
   ItemName: string;
-  ItemCount: number;
+  ItemCount: string;
   ItemUnit: string;
-  ItemPrice: number;
-  ItemAmt: number;
-  ItemTaxType?: number;
+  ItemPrice: string;
+  ItemAmt: string;
+  ItemTaxType?: string;
   Comment?: string;
-  AmtFree: number;
-  AmtZero: number;
-  CustomsClearance: string;
-  AmtSales: number;
+  AmtFree?: number;
+  AmtZero?: number;
+  CustomsClearance?: string;
+  AmtSales?: number;
 };
 export class IssueInvoiceBodyDTO {
   @IsString()
