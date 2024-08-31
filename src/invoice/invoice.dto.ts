@@ -1,5 +1,32 @@
 import { IsObject, IsString } from 'class-validator';
 
+export type InvoiceInfo = {
+  MerchantOrderNo: string;
+  BuyerName: string;
+  BuyerUBN?: string;
+  BuyerAddress?: string;
+  BuyerPhone?: string;
+  BuyerEmail?: string;
+  Category: string;
+  TaxType: string;
+  TaxRate: number;
+  Amt: number;
+  TaxAmt: string;
+  TotalAmt: number;
+  LoveCode?: string;
+  PrintFlag: string;
+  ItemName: string;
+  ItemCount: number;
+  ItemUnit: string;
+  ItemPrice: number;
+  ItemAmt: number;
+  ItemTaxType?: number;
+  Comment?: string;
+  AmtFree: number;
+  AmtZero: number;
+  CustomsClearance: string;
+  AmtSales: number;
+};
 export class IssueInvoiceBodyDTO {
   @IsString()
   appId: string;
@@ -8,29 +35,10 @@ export class IssueInvoiceBodyDTO {
   invoiceGatewayId: string;
 
   @IsObject()
-  invoiceInfo: {
-    MerchantOrderNo: string;
-    BuyerName: string;
-    BuyerUBN?: string;
-    BuyerAddress?: string;
-    BuyerPhone?: string;
-    BuyerEmail?: string;
-    Category: string;
-    TaxType: string;
-    TaxRate: string;
-    Amt: string;
-    TaxAmt: string;
-    TotalAmt: string;
-    LoveCode?: string;
-    PrintFlag: string;
-    ItemName: string;
-    ItemCount: string;
-    ItemUnit: string;
-    ItemPrice: string;
-    ItemAmt: string;
-    ItemTaxType?: string;
-    Comment?: string;
-  };
+  invoiceInfo: InvoiceInfo;
+
+  @IsString()
+  orderId: string;
 }
 
 export class SearchInvoiceBodyDTO {
