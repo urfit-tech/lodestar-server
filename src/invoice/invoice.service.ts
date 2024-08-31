@@ -9,8 +9,9 @@ import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { Invoice } from '~/invoice/invoice.entity';
 
-import { EzpayClient } from './ezpay_client';
+import { EzpayClient, EzpayClientResponse } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
+import { InvoiceInfo } from './invoice.dto';
 
 type InvoiceOptions = {
   appId: string;
@@ -42,36 +43,20 @@ export class InvoiceService {
 
   public async issueInvoiceDirectly(
     appId: string,
+    orderId: string,
     invoiceGatewayId: string,
-    invoiceInfo: {
-      MerchantOrderNo: string;
-      BuyerName?: string;
-      BuyerUBN?: string;
-      BuyerAddress?: string;
-      BuyerPhone?: string;
-      BuyerEmail?: string;
-      Category: string;
-      TaxType: string;
-      TaxRate: string;
-      Amt: string;
-      TaxAmt: string;
-      TotalAmt: string;
-      LoveCode?: string;
-      PrintFlag: string;
-      ItemName: string;
-      ItemCount: string;
-      ItemUnit: string;
-      ItemPrice: string;
-      ItemAmt: string;
-      ItemTaxType?: string;
-      Comment?: string;
-    },
+    invoiceInfo: InvoiceInfo,
     manager: EntityManager,
   ) {
     const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
     const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
 
-    return await this.ezpayClient.issue(ezpayCredentials, invoiceInfo);
+    const result = await this.ezpayClient.issue(ezpayCredentials, invoiceInfo);
+    if (result.Status === 'SUCCESS') {
+      await this.insertInvoice(orderId, result.Result?.['InvoiceNumber'], result.Result?.['TotalAmt'], result, manager);
+    }
+
+    return result;
   }
 
   public async issueInvoiceByPayment(payment: PaymentLog, manager: EntityManager) {
@@ -144,7 +129,7 @@ export class InvoiceService {
       if (invServiceResponse.Status === 'SUCCESS') {
         const orderId = orderLogs[0].id;
         if (orderId && invoiceNumber) {
-          await this.insertInvoice(orderId, invoiceNumber, price, invServiceResponse.Result.RandomNum, manager);
+          await this.insertInvoice(orderId, invoiceNumber, price, invServiceResponse, manager);
           this.logger.log(`Invoice ${invoiceNumber} issued with order_log_id ${orderId}`);
         }
       }
@@ -185,7 +170,12 @@ export class InvoiceService {
     const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
 
     const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
-    return this.ezpayClient.revoke(ezpayCredentials, { invoiceNumber, invalidReason });
+    const result = await this.ezpayClient.revoke(ezpayCredentials, { invoiceNumber, invalidReason });
+    if (result.Status === 'SUCCESS') {
+      await this.updateInvoiceRevokedAt(invoiceNumber, manager);
+    }
+
+    return result;
   }
 
   private async issueInvoice(invoiceGatewayConfig: object, paymentNo: string, amount: number, options: InvoiceOptions) {
@@ -344,7 +334,7 @@ export class InvoiceService {
     orderId: string,
     invoiceNumber: string,
     price: number,
-    invoiceRandomNumber: string,
+    invoiceResponse: EzpayClientResponse,
     manager: EntityManager,
   ): Promise<void> {
     const invoice = new Invoice();
@@ -353,10 +343,16 @@ export class InvoiceService {
     invoice.no = invoiceNumber;
     invoice.price = price;
     invoice.options = {
-      invoiceRandomNumber: invoiceRandomNumber,
+      ...invoiceResponse,
     };
 
     await this.invoiceInfra.save(invoice, manager);
+  }
+
+  private async updateInvoiceRevokedAt(invoiceNumber: string, manager: EntityManager): Promise<void> {
+    const invoice = manager.getRepository(Invoice);
+
+    await invoice.update({ no: invoiceNumber }, { revokedAt: new Date() });
   }
 
   private isAllowUseInvoiceModule(invoiceGatewayConfig: object | null, appModules: Array<string>): boolean {

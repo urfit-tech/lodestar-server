@@ -25,6 +25,12 @@ export class Invoice {
   options: object | null;
 
   @Column('timestamp with time zone', {
+    name: 'revoked_at',
+    nullable: true,
+  })
+  revokedAt: Date;
+
+  @Column('timestamp with time zone', {
     name: 'updated_at',
     default: () => 'now()',
   })
