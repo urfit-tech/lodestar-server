@@ -18,10 +18,11 @@ export class InvoiceController {
 
   @Post('issue')
   async issueInvoice(@Body() dto: IssueInvoiceBodyDTO) {
-    const { invoiceGatewayId, invoiceInfo, appId } = dto;
+    const { invoiceGatewayId, invoiceInfo, appId, orderId } = dto;
 
     const result = await this.invoiceService.issueInvoiceDirectly(
       appId,
+      orderId,
       invoiceGatewayId,
       invoiceInfo,
       this.entityManager,
