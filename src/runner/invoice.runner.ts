@@ -33,7 +33,7 @@ export class InvoiceRunner extends Runner {
     private readonly utilityService: UtilityService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(InvoiceRunner.name, 10 * 1000, logger, distributedLockService, shutdownService);
+    super(InvoiceRunner.name, 1 * 60 * 1000, logger, distributedLockService, shutdownService);
     this.batchSize = 200;
   }
 
