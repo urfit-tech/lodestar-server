@@ -52,6 +52,7 @@ export class InvoiceService {
     const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
 
     const result = await this.ezpayClient.issue(ezpayCredentials, invoiceInfo);
+
     if (result.Status === 'SUCCESS') {
       await this.insertInvoice(orderId, result.Result?.['InvoiceNumber'], result.Result?.['TotalAmt'], result, manager);
     }
