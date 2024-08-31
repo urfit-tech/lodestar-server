@@ -33,7 +33,7 @@ export class InvoiceRunner extends Runner {
     private readonly utilityService: UtilityService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(InvoiceRunner.name, 1 * 60 * 1000, logger, distributedLockService, shutdownService);
+    super(InvoiceRunner.name, 10 * 1000, logger, distributedLockService, shutdownService);
     this.batchSize = 200;
   }
 
@@ -47,7 +47,20 @@ export class InvoiceRunner extends Runner {
       for (const paymentLog of paymentLogs) {
         const { no: paymentNo } = paymentLog;
         try {
-          await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
+          if (paymentLog.invoiceOptions?.invoices && paymentLog.invoiceOptions?.invoices?.length > 0) {
+            paymentLog.invoiceOptions.invoices.map(
+              async (invoice) =>
+                await this.invoiceService.issueInvoiceDirectly(
+                  paymentLog.order.appId,
+                  paymentLog.orderId,
+                  paymentLog.invoiceGatewayId,
+                  invoice,
+                  this.entityManager,
+                ),
+            );
+          } else {
+            await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
+          }
         } catch (error) {
           errors.push({ error: error.message });
           this.logger.error({
