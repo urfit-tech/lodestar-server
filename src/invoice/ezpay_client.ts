@@ -5,7 +5,7 @@ import querystring from 'querystring';
 
 import { UtilityService } from '~/utility/utility.service';
 
-type EzpayClientResponse = {
+export type EzpayClientResponse = {
   Status: string;
   Message: string;
   Result: {
@@ -16,6 +16,10 @@ type EzpayClientResponse = {
     InvoiceNumber: string;
     RandomNum: string;
     BarCode: string;
+    QRcodeL: string;
+    QRcodeR: string;
+    CheckCode: string;
+    CreateTime: string;
   } | null;
 };
 
