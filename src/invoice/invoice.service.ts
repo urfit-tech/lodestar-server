@@ -47,12 +47,35 @@ export class InvoiceService {
     invoiceGatewayId: string,
     invoiceInfo: InvoiceInfo,
     manager: EntityManager,
+    paymentNo?: string,
   ) {
     try {
       const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
       const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
 
       const result = await this.ezpayClient.issue(ezpayCredentials, invoiceInfo);
+      const toUpdateInvoiceOptions =
+        result.Status === 'SUCCESS'
+          ? {
+              invoiceTransNo: result.Result?.['InvoiceTransNo'],
+              invoiceRandomNumber: result.Result?.['RandomNum'],
+              invoiceNumber: result.Result?.['InvoiceNumber'],
+            }
+          : {
+              reason: result.Message,
+            };
+      if (paymentNo) {
+        const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptions(
+          paymentNo,
+          {
+            status: result.Status,
+            ...toUpdateInvoiceOptions,
+          },
+          result.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
+          manager,
+        );
+        this.logger.log(`[PaymentNo: ${paymentNo}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
+      }
 
       if (result.Status === 'SUCCESS') {
         await this.insertInvoice(
@@ -66,7 +89,17 @@ export class InvoiceService {
 
       return result;
     } catch (error) {
-      console.log(error.message);
+      if (paymentNo) {
+        await this.updateOrderAndPaymentLogInvoiceOptions(
+          paymentNo,
+          {
+            status: 'LODESTAR_FAIL',
+            reason: error.message,
+          },
+          undefined,
+          manager,
+        );
+      }
       throw error;
     }
   }
