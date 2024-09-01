@@ -46,28 +46,37 @@ export class InvoiceRunner extends Runner {
 
       for (const paymentLog of paymentLogs) {
         const { no: paymentNo } = paymentLog;
-        try {
-          if (paymentLog.invoiceOptions?.invoices && paymentLog.invoiceOptions?.invoices?.length > 0) {
-            paymentLog.invoiceOptions.invoices.map(
-              async (invoice) =>
-                await this.invoiceService.issueInvoiceDirectly(
-                  paymentLog.order.appId,
-                  paymentLog.orderId,
-                  paymentLog.invoiceGatewayId,
-                  invoice,
-                  this.entityManager,
-                ),
-            );
-          } else {
-            await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
-          }
-        } catch (error) {
-          errors.push({ error: error.message });
-          this.logger.error({
-            error: JSON.stringify(error),
-            title: '開立發票失敗',
-            message: `paymentNo: ${paymentNo}`,
+        if (paymentLog.invoiceOptions?.invoices && paymentLog.invoiceOptions?.invoices?.length > 0) {
+          paymentLog.invoiceOptions.invoices.map(async (invoice) => {
+            try {
+              await this.invoiceService.issueInvoiceDirectly(
+                paymentLog.order.appId,
+                paymentLog.orderId,
+                paymentLog.invoiceGatewayId,
+                invoice,
+                this.entityManager,
+                paymentNo,
+              );
+            } catch (error) {
+              errors.push({ error: error.message });
+              this.logger.error({
+                error: JSON.stringify(error),
+                title: '開立發票失敗',
+                message: `paymentNo: ${paymentNo}`,
+              });
+            }
           });
+        } else {
+          try {
+            await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
+          } catch (error) {
+            errors.push({ error: error.message });
+            this.logger.error({
+              error: JSON.stringify(error),
+              title: '開立發票失敗',
+              message: `paymentNo: ${paymentNo}`,
+            });
+          }
         }
         await this.utilityService.sleep(1000);
       }
