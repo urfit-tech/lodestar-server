@@ -48,16 +48,27 @@ export class InvoiceService {
     invoiceInfo: InvoiceInfo,
     manager: EntityManager,
   ) {
-    const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
-    const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
+    try {
+      const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
+      const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
 
-    const result = await this.ezpayClient.issue(ezpayCredentials, invoiceInfo);
+      const result = await this.ezpayClient.issue(ezpayCredentials, invoiceInfo);
 
-    if (result.Status === 'SUCCESS') {
-      await this.insertInvoice(orderId, result.Result?.['InvoiceNumber'], result.Result?.['TotalAmt'], result, manager);
+      if (result.Status === 'SUCCESS') {
+        await this.insertInvoice(
+          orderId,
+          result.Result?.['InvoiceNumber'],
+          result.Result?.['TotalAmt'],
+          result,
+          manager,
+        );
+      }
+
+      return result;
+    } catch (error) {
+      console.log(error.message);
+      throw error;
     }
-
-    return result;
   }
 
   public async issueInvoiceByPayment(payment: PaymentLog, manager: EntityManager) {
