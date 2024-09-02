@@ -46,8 +46,9 @@ export class InvoiceRunner extends Runner {
 
       for (const paymentLog of paymentLogs) {
         const { no: paymentNo } = paymentLog;
+
         if (paymentLog.invoiceOptions?.invoices && paymentLog.invoiceOptions?.invoices?.length > 0) {
-          paymentLog.invoiceOptions.invoices.map(async (invoice) => {
+          for (const invoice of paymentLog.invoiceOptions.invoices) {
             try {
               await this.invoiceService.issueInvoiceDirectly(
                 paymentLog.order.appId,
@@ -65,7 +66,7 @@ export class InvoiceRunner extends Runner {
                 message: `paymentNo: ${paymentNo}`,
               });
             }
-          });
+          }
         } else {
           try {
             await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
