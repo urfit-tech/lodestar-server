@@ -106,7 +106,9 @@ class PortPlayerEventCommand implements PorterCommand {
         manager,
       );
 
-      await Promise.all(this.commands.map((command) => command.execute(events, programContentsMap, keys, manager)));
+      for (const command of this.commands) {
+        await command.execute(events, programContentsMap, keys, manager);
+      }
 
       await this.porterProgramService.deleteProcessedKeysFromCache(keys);
     } while (cursor !== '0');
