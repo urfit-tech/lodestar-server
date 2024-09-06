@@ -88,16 +88,11 @@ export class TemporallyExclusiveResourceService {
       return await this.entityManager.query(`
         INSERT INTO temporally_exclusive_resource (type, target, app_id)
           VALUES ($1, $2, $3)
+        ON CONFLICT (type, target)
+          DO UPDATE SET target = EXCLUDED.target
         RETURNING *
       `,
         [type, target, appId])
     }
-  }
-  // update(id: number, updateTemporallyExclusiveResourceDto: UpdateTemporallyExclusiveResourceDto) {
-  //   return `This action updates a #${id} TemporallyExclusiveResource`;
-  // }
-
-  remove(id: number) {
-    return `This action removes a #${id} TemporallyExclusiveResource`;
   }
 }
