@@ -70,7 +70,7 @@ export class EventController {
     ) {
         const adaptedUpdateEventDTO = {
             ...updateEventDTO,
-            metadata: JSON.stringify(updateEventDTO)
+            metadata: JSON.stringify(updateEventDTO.metadata)
         }
         return await this.EventService.updateEvent(adaptedUpdateEventDTO)(id)
     }

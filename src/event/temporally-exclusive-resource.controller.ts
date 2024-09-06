@@ -49,7 +49,7 @@ export class TemporallyExclusiveResourceController {
   @Post('')
   async create(
     @Local('member') member: JwtMember,
-    @Body() createTemporallyExclusiveResourceDto: CreateTemporallyExclusiveResourceDto
+    @Body() createTemporallyExclusiveResourceDto: any
   ) {
     return await this.TemporallyExclusiveResourceService.create(member.appId)(createTemporallyExclusiveResourceDto);
   }
