@@ -82,7 +82,7 @@ export class InvoiceService {
           orderId,
           result.Result?.['InvoiceNumber'],
           result.Result?.['TotalAmt'],
-          result,
+          { ...result, Result: { ...invoiceInfo, ...result.Result } },
           manager,
         );
       }
