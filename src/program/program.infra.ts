@@ -27,11 +27,14 @@ export class ProgramInfrastructure {
         'program.cover_mobile_url AS cover_mobile_url',
         'program.cover_thumbnail_url AS cover_thumbnail_url',
         'program.abstract AS abstract',
+        'order_product.ended_at AS ended_at',
+        `JSONB_AGG(DISTINCT order_product.options) AS options`,
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
         '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', category.id, 'name', category.name)) AS categories`,
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -64,7 +67,9 @@ export class ProgramInfrastructure {
         { memberId },
       )
       .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
-      .groupBy('program.id')
+      .leftJoin('program_category', 'program_category', 'program_category.program_id = program.id')
+      .leftJoin('category', 'category', 'category.id = program_category.category_id')
+      .groupBy('program.id, order_product.ended_at')
       .getRawMany();
 
     return this.utilityService.convertObjectKeysToCamelCase(programs);
@@ -86,6 +91,7 @@ export class ProgramInfrastructure {
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', category.id, 'name', category.name)) AS categories`,
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -119,6 +125,8 @@ export class ProgramInfrastructure {
         { memberId },
       )
       .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
+      .leftJoin('program_category', 'program_category', 'program_category.program_id = program.id')
+      .leftJoin('category', 'category', 'category.id = program_category.category_id')
       .groupBy('program.id')
       .getRawMany();
 
@@ -141,6 +149,7 @@ export class ProgramInfrastructure {
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', category.id, 'name', category.name)) AS categories`,
       ])
       .where(`order_log.member_id = :memberId`, { memberId })
       .innerJoin(
@@ -172,6 +181,8 @@ export class ProgramInfrastructure {
         { memberId },
       )
       .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
+      .leftJoin('program_category', 'program_category', 'program_category.program_id = program.id')
+      .leftJoin('category', 'category', 'category.id = program_category.category_id')
       .groupBy('program.id')
       .getRawMany();
     return this.utilityService.convertObjectKeysToCamelCase(programs);
@@ -193,6 +204,7 @@ export class ProgramInfrastructure {
         'NULL AS last_viewed_at',
         'NULL AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
+        `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', category.id, 'name', category.name)) AS categories`,
       ])
       .innerJoin(
         'program_role',
@@ -203,6 +215,8 @@ export class ProgramInfrastructure {
       .leftJoin('program_role', 'program_role', 'program_role.program_id = program.id')
       .leftJoin('member', 'member', 'member.id = program_role.member_id')
       .leftJoin('program_tag', 'program_tag', 'program_tag.program_id = program.id')
+      .leftJoin('program_category', 'program_category', 'program_category.program_id = program.id')
+      .leftJoin('category', 'category', 'category.id = program_category.category_id')
       .groupBy('program.id')
       .getRawMany();
 
