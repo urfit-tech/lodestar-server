@@ -15,54 +15,61 @@ export class TemporallyExclusiveResourceService {
   findByPermissionGroupIds(type: TemporallyExclusiveResourceType) {
     return async ({
       permissionGroupIds,
-      memberProperties
+      properties
     }: {
       permissionGroupIds: Array<string>,
-      memberProperties?: Array<string>
+      properties?: Array<string>
     }) => {
+      console.log(23, type, permissionGroupIds, properties)
       switch (type) {
         case 'member': {
           return await this.entityManager.query(`
           WITH
-          resource_to_member AS (
-            SELECT member.id AS member_id, member.email, member.name FROM temporally_exclusive_resource
+          member_info AS (
+            SELECT temporally_exclusive_resource.id AS temporally_exclusive_resource_id, member.id AS member_id, member.email, member.name FROM temporally_exclusive_resource
               LEFT JOIN member ON temporally_exclusive_resource.target = member.id
             WHERE temporally_exclusive_resource.type = 'member'
           ),
-          member_to_permission_group AS (
-            SELECT * FROM member
-              LEFT JOIN member_permission_group ON member.id = member_permission_group.member_id
-              WHERE member_permission_group.permission_group_id = ANY($1 :: uuid[])
+          member_belonging_to_permission_group AS (
+            SELECT member_id FROM member_permission_group
+              WHERE ARRAY[permission_group_id] <@ $1 :: uuid[]
+          ),
+          permission_group_member_belongs_to AS (
+            SELECT member_id, jsonb_agg(permission_group_id) AS permission_group_ids FROM member_permission_group
+            GROUP BY member_id
           ),
           member_to_property AS (
             SELECT member_id, jsonb_object_agg(property_id, value) AS target_properties FROM member_property
-              WHERE property_id = ANY($2 :: uuid[])
+            WHERE property_id = ANY($2 :: uuid[])
             GROUP BY member_id
           )
           SELECT
-            resource_to_member.member_id AS member_id,
-            resource_to_member.email AS email,
-            resource_to_member.name AS name,
+            member_belonging_to_permission_group.member_id AS member_id,
+            member_info.email AS email,
+            member_info.name AS name,
+            permission_group_member_belongs_to.permission_group_ids,
             member_to_property.target_properties AS properties
-            FROM resource_to_member 
-                JOIN member_to_permission_group USING (member_id)
-                JOIN member_to_property USING (member_id)
+            FROM member_belonging_to_permission_group
+                JOIN permission_group_member_belongs_to USING (member_id)
+                LEFT JOIN member_info USING (member_id)
+                LEFT JOIN member_to_property USING (member_id)
           `,
             [
               permissionGroupIds,
-              memberProperties
+              properties
             ])
         }
         case 'physical_space': {
+          console.log(63)
           return await this.entityManager.query(`
             SELECT physical_space.id AS physical_space_id, 
               physical_space.capacity_amount, 
               physical_space.name, 
-              physical_space.metadata ->> 'permission_group_id' AS permission_group_id
+              physical_space.metadata -> 'permission_group_id' AS permission_group_id
             FROM temporally_exclusive_resource
               LEFT JOIN physical_space ON temporally_exclusive_resource.target = physical_space.id :: text
             WHERE temporally_exclusive_resource.type = 'physical_space'
-              AND physical_space.metadata ->> 'permission_group_id' = ANY($1)
+              AND physical_space.metadata -> 'permission_group_id' @> array_to_json($1 :: text[]) :: jsonb
           `,
             [
               permissionGroupIds

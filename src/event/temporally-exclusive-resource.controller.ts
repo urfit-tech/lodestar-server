@@ -18,14 +18,15 @@ export class TemporallyExclusiveResourceController {
 
   @Get('permission-group')
   async findByPermissionGroupIds(
-    @Local('member') member: JwtMember,
+    // @Local('member') member: JwtMember,
+    @Query('type') type: 'member' | 'physical_space',
     @Query('ids') permission_group_ids: string,
-    @Query('member_properties') member_properties?: string,
-    @Query('type') type?: 'member' | 'physical_space',
+    @Query('properties') properties?: string,
   ) {
-    const [permissionGroupIds, memberProperties] =
-      [permission_group_ids, member_properties].map(str => str ? str?.split(',') : undefined)
-    return await this.TemporallyExclusiveResourceService.findByPermissionGroupIds(type)({ permissionGroupIds, memberProperties });
+    const [permissionGroupIds, adaptedProperties] =
+      [permission_group_ids, properties].map(str => str ? str?.split(',') : undefined)
+    console.log(28, permissionGroupIds, adaptedProperties)
+    return await this.TemporallyExclusiveResourceService.findByPermissionGroupIds(type)({ permissionGroupIds, properties: adaptedProperties });
   }
 
   @Get(':type/:target')
