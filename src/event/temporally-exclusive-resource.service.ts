@@ -75,7 +75,7 @@ export class TemporallyExclusiveResourceService {
               temporally_exclusive_resource.type,
               physical_space.capacity_amount, 
               physical_space.name, 
-              physical_space.metadata -> 'permission_group_id' AS permission_group_id
+              physical_space.metadata -> 'permission_group_id' AS permission_group_ids
             FROM temporally_exclusive_resource
               LEFT JOIN physical_space ON temporally_exclusive_resource.target = physical_space.id :: text
             WHERE temporally_exclusive_resource.type = 'physical_space'
