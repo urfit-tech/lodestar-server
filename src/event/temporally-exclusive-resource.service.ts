@@ -26,7 +26,13 @@ export class TemporallyExclusiveResourceService {
           return await this.entityManager.query(`
           WITH
           member_info AS (
-            SELECT temporally_exclusive_resource.id AS temporally_exclusive_resource_id, member.id AS member_id, member.email, member.name FROM temporally_exclusive_resource
+            SELECT 
+              temporally_exclusive_resource.id AS temporally_exclusive_resource_id,
+              temporally_exclusive_resource.type,
+              member.id AS member_id, 
+              member.email, 
+              member.name 
+            FROM temporally_exclusive_resource
               LEFT JOIN member ON temporally_exclusive_resource.target = member.id
             WHERE temporally_exclusive_resource.type = 'member'
           ),
@@ -44,7 +50,9 @@ export class TemporallyExclusiveResourceService {
             GROUP BY member_id
           )
           SELECT
-            member_belonging_to_permission_group.member_id AS member_id,
+            member_belonging_to_permission_group.member_id AS id,
+            member_info.temporally_exclusive_resource_id,
+            member_info.type,
             member_info.email AS email,
             member_info.name AS name,
             permission_group_member_belongs_to.permission_group_ids,
@@ -62,7 +70,9 @@ export class TemporallyExclusiveResourceService {
         case 'physical_space': {
           console.log(63)
           return await this.entityManager.query(`
-            SELECT physical_space.id AS physical_space_id, 
+            SELECT physical_space.id AS id, 
+              temporally_exclusive_resource.id AS temporally_exclusive_resource_id,
+              temporally_exclusive_resource.type,
               physical_space.capacity_amount, 
               physical_space.name, 
               physical_space.metadata -> 'permission_group_id' AS permission_group_id
