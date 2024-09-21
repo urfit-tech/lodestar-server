@@ -5,6 +5,7 @@ import {
   TemporallyExclusiveResourceType,
   CreateTemporallyExclusiveResourceDto,
 } from './temporally-exclusive-resource.dto';
+import { batchUpsert } from './batchHelpers';
 
 @Injectable()
 export class TemporallyExclusiveResourceService {
@@ -29,7 +30,8 @@ export class TemporallyExclusiveResourceService {
             SELECT 
               temporally_exclusive_resource.id AS temporally_exclusive_resource_id,
               temporally_exclusive_resource.type,
-              member.id AS member_id, 
+              temporally_exclusive_resource.target,
+              member.id AS member_id,
               member.email, 
               member.name 
             FROM temporally_exclusive_resource
@@ -41,20 +43,18 @@ export class TemporallyExclusiveResourceService {
               WHERE ARRAY[permission_group_id] <@ $1 :: uuid[]
           ),
           permission_group_member_belongs_to AS (
-            SELECT member_id, jsonb_agg(permission_group_id) AS permission_group_ids FROM member_permission_group
+            SELECT member_id, jsonb_agg(permission_group_id) AS permission_group_ids 
+            FROM member_permission_group
             GROUP BY member_id
           ),
           member_to_property AS (
-            SELECT member_id, jsonb_object_agg(property_id, value) AS target_properties FROM member_property
+            SELECT member_id, jsonb_object_agg(property_id, value) AS target_properties 
+            FROM member_property
             WHERE property_id = ANY($2 :: uuid[])
             GROUP BY member_id
           )
           SELECT
-            member_belonging_to_permission_group.member_id AS id,
-            member_info.temporally_exclusive_resource_id,
-            member_info.type,
-            member_info.email AS email,
-            member_info.name AS name,
+            member_info.*,
             permission_group_member_belongs_to.permission_group_ids,
             member_to_property.target_properties AS properties
             FROM member_belonging_to_permission_group
@@ -68,11 +68,11 @@ export class TemporallyExclusiveResourceService {
             ])
         }
         case 'physical_space': {
-          console.log(63)
           return await this.entityManager.query(`
-            SELECT physical_space.id AS id, 
+            SELECT
               temporally_exclusive_resource.id AS temporally_exclusive_resource_id,
               temporally_exclusive_resource.type,
+              temporally_exclusive_resource.target,
               physical_space.capacity_amount, 
               physical_space.name, 
               physical_space.metadata -> 'permission_group_id' AS permission_group_ids
@@ -92,24 +92,19 @@ export class TemporallyExclusiveResourceService {
   findByTarget(appId: string) {
     return (type: TemporallyExclusiveResourceType) =>
       async (targets: Array<string>) => await this.entityManager.query(`
-        SELECT * FROM temporally_exclusive_resource
+        SELECT
+          temporally_exclusive_resource.id AS temporally_exclusive_resource_id,
+          temporally_exclusive_resource.type,
+          temporally_exclusive_resource.target 
+        FROM temporally_exclusive_resource
           WHERE type = $1 AND target = ANY($2) AND app_id = $3
       `,
         [type, targets, appId]
       )
   }
 
-  create(appId: string) {
-    return async (createTemporallyExclusiveResourceDto: CreateTemporallyExclusiveResourceDto) => {
-      const { type, target } = createTemporallyExclusiveResourceDto
-      return await this.entityManager.query(`
-        INSERT INTO temporally_exclusive_resource (type, target, app_id)
-          VALUES ($1, $2, $3)
-        ON CONFLICT (type, target)
-          DO UPDATE SET target = EXCLUDED.target
-        RETURNING *
-      `,
-        [type, target, appId])
-    }
-  }
+  create = async (payload: Array<{ type: string, target: string, app_id: string }>) =>
+    await batchUpsert(this.entityManager)('temporally_exclusive_resource')(['type', 'target'])(['target'])(payload)(null)
+
 }
+

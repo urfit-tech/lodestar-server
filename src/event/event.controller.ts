@@ -103,10 +103,10 @@ export class EventController {
         }
     }
 
-    @Post('/deliver')
-    async deliver(@Body() deliverEventsDTBase: DeliverEventsDTOBase) {
-        const adaptedDeliverEventsDTO = { ...deliverEventsDTBase, is_exclusive: true }
-        return await this.EventService.deliverEvents(adaptedDeliverEventsDTO);
-    }
+    // @Post('/deliver')
+    // async deliver(@Body() deliverEventsDTBase: DeliverEventsDTOBase) {
+    //     const adaptedDeliverEventsDTO = { ...deliverEventsDTBase, is_exclusive: true }
+    //     return await this.EventService.deliverEvents(adaptedDeliverEventsDTO);
+    // }
 
 }

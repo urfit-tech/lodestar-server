@@ -8,6 +8,7 @@ import {
   DeliverEventsDTO,
   UpdateEventDTO
 } from './event.dto'
+import { batchInsert, batchUpdate } from './batchHelpers';
 
 @Injectable()
 export class EventService {
@@ -93,63 +94,16 @@ export class EventService {
     return async (memberId) => (await this.upsertTemprotallyExclusiveResource('member')(appId)(memberId))
   }
 
-  private generateInsertString(payload) {
-    const unique = arr => arr.filter((v, i, a) => a.indexOf(v) === i)
-    const keys = unique(payload.flatMap(Object.keys))
-    const keysString = `(${keys.join(', ')})`
-    const keysToValueString = keys => obj => `(${keys.map(key => obj?.[key] ?? 'null')
-      .map(val => typeof val === 'object' ? JSON.stringify(val) : val)
-      .map(val => typeof val === 'number' ? val : `'${val}'`).join(', ')})`
-    const valueString = payload.map(obj => keysToValueString(keys)(obj)).join(', ')
-    return { keysString, valueString }
-  }
-
-  private batchInsert(tableName: string) {
-    return (payload) => async (returningColumns: Array<string>) => {
-      const returningString = returningColumns?.join?.(', ') ?? '*'
-      const { keysString, valueString } = this.generateInsertString(payload)
-      return await this.entityManager.query(`
-      INSERT INTO ${tableName} ${keysString === '()' ?
-          'DEFAULT VALUES' :
-          `${keysString} VALUES ${valueString}`}
-      RETURNING ${returningString}
-    `)
-    }
-  }
-
-  private generateUpdateString(payload) {
-    return Object.entries(payload).map(([key, value]) => {
-      switch (typeof value) {
-        case 'object': return `${key}=${JSON.stringify(value)}`
-        case 'number': return `${key}=${value}`
-        default: return `${key}='${value}'`
-      }
-    }).join(', ')
-  }
-
-  private batchUpdate(tableName: string) {
-    return (ids: Array<string>) => (payload) => async (returningColumns: Array<string>) => {
-      const returningString = returningColumns?.join?.('') ?? '*'
-      const setString = this.generateUpdateString(payload)
-      return await this.entityManager.query(`
-      UPDATE ${tableName} SET ${setString}
-      WHERE id = ANY($1)
-      RETURNING ${returningString}
-    `, [ids])
-    }
-  }
-
   insertEvents(appId: string) {
     return async (insertEventsDTO: InsertEventsDTO) => {
       const { events } = insertEventsDTO
       const adaptedEvents = events.map(event => ({ ...event, app_id: appId }))
-      console.log(146, adaptedEvents)
-      return await this.batchInsert('event')(adaptedEvents)(['id'])
+      return await batchInsert(this.entityManager)('event')(adaptedEvents)(['id'])
     }
   }
 
   updateEvents(updateEventDTO: UpdateEventDTO) {
-    return async (ids: Array<string>) => await this.batchUpdate('event')(ids)(updateEventDTO)(['id'])
+    return async (ids: Array<string>) => await batchUpdate(this.entityManager)('event')(ids)(updateEventDTO)(['id'])
   }
 
   updateEvent(updateEventDTO: UpdateEventDTO) {
@@ -158,7 +112,7 @@ export class EventService {
 
   async insertEventResources(insertEventResourceDTO: InsertEventResourceDTO) {
     const { eventResources } = insertEventResourceDTO
-    return await this.batchInsert('event_temporally_exclusive_resource')(eventResources)(['id'])
+    return await batchInsert(this.entityManager)('event_temporally_exclusive_resource')(eventResources)(['id'])
   }
 
   async inviteResource(inviteResourcesDTO: InviteResourcesDTO) {
