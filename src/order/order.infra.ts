@@ -19,6 +19,9 @@ export class OrderInfrastructure {
     const orderLogRepo = manager.getRepository(OrderLog);
     const orderLog = await orderLogRepo.findOne({
       where: { id: Equal(orderId) },
+      relations: {
+        paymentLogs: true,
+      },
     });
     return orderLog;
   }
