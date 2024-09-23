@@ -3,7 +3,7 @@ import { AuthGuard } from '~/auth/auth.guard';
 import { TemporallyExclusiveResourceService } from './temporally-exclusive-resource.service';
 import {
   CreateTemporallyExclusiveResourceDto,
-  TemporallyExclusiveResourceType
+  TemporallyExclusiveResourceType,
 } from './temporally-exclusive-resource.dto';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
@@ -14,25 +14,29 @@ import { JwtMember } from '~/auth/auth.dto';
   version: '2',
 })
 export class TemporallyExclusiveResourceController {
-  constructor(private readonly TemporallyExclusiveResourceService: TemporallyExclusiveResourceService) { }
+  constructor(private readonly TemporallyExclusiveResourceService: TemporallyExclusiveResourceService) {}
 
   @Get('permission-group')
   async findByPermissionGroupIds(
-    @Local('member') member: JwtMember,
+    // @Local('member') member: JwtMember,
+    @Query('type') type: 'member' | 'physical_space',
     @Query('ids') permission_group_ids: string,
-    @Query('member_properties') member_properties?: string,
-    @Query('type') type?: 'member' | 'physical_space',
+    @Query('properties') properties?: string,
   ) {
-    const [permissionGroupIds, memberProperties] =
-      [permission_group_ids, member_properties].map(str => str ? str?.split(',') : undefined)
-    return await this.TemporallyExclusiveResourceService.findByPermissionGroupIds(type)({ permissionGroupIds, memberProperties });
+    const [permissionGroupIds, adaptedProperties] = [permission_group_ids, properties].map((str) =>
+      str ? str?.split(',') : undefined,
+    );
+    return await this.TemporallyExclusiveResourceService.findByPermissionGroupIds(type)({
+      permissionGroupIds,
+      properties: adaptedProperties,
+    });
   }
 
   @Get(':type/:target')
   async findByTarget(
     @Local('member') member: JwtMember,
     @Param('type') type: TemporallyExclusiveResourceType,
-    @Param('target') target: string
+    @Param('target') target: string,
   ) {
     return await this.TemporallyExclusiveResourceService.findByTarget(member.appId)(type)([target]);
   }
@@ -41,16 +45,18 @@ export class TemporallyExclusiveResourceController {
   async findByTargets(
     @Local('member') member: JwtMember,
     @Param('type') type: TemporallyExclusiveResourceType,
-    @Body() targets: Array<string>
+    @Body() targets: Array<string>,
   ) {
     return await this.TemporallyExclusiveResourceService.findByTarget(member.appId)(type)(targets);
   }
 
   @Post('')
-  async create(
-    @Local('member') member: JwtMember,
-    @Body() createTemporallyExclusiveResourceDto: any
-  ) {
-    return await this.TemporallyExclusiveResourceService.create(member.appId)(createTemporallyExclusiveResourceDto);
+  async create(@Local('member') member: JwtMember, @Body() createTemporallyExclusiveResourceDto: any) {
+    const { type, targets } = createTemporallyExclusiveResourceDto;
+    const adaptedPayload = targets.map((target) => ({ type, target, app_id: member.appId }));
+    return (await this.TemporallyExclusiveResourceService.create(adaptedPayload)).map((resource) => {
+      const { id, ...rest } = resource;
+      return { ...rest, temporally_exclusive_resource_id: id };
+    });
   }
 }
