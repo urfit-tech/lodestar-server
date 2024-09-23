@@ -15,6 +15,14 @@ export class OrderInfrastructure {
     return orderLogs;
   }
 
+  async getOneByOrderId(orderId: string, manager: EntityManager): Promise<OrderLog> {
+    const orderLogRepo = manager.getRepository(OrderLog);
+    const orderLog = await orderLogRepo.findOne({
+      where: { id: Equal(orderId) },
+    });
+    return orderLog;
+  }
+
   async save(orderLogs: OrderLog | Array<OrderLog>, manager: EntityManager): Promise<Array<OrderLog>> {
     const orderLogRepo = manager.getRepository(OrderLog);
     return orderLogRepo.save(isArray(orderLogs) ? orderLogs : [orderLogs]);

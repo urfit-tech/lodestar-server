@@ -65,7 +65,7 @@ export class InvoiceService {
               reason: result.Message,
             };
       if (paymentNo) {
-        const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptions(
+        const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptionsByPaymentNo(
           paymentNo,
           {
             status: result.Status,
@@ -75,6 +75,17 @@ export class InvoiceService {
           manager,
         );
         this.logger.log(`[PaymentNo: ${paymentNo}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
+      } else {
+        const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptionsByOrderId(
+          orderId,
+          {
+            status: result.Status,
+            ...toUpdateInvoiceOptions,
+          },
+          result.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
+          manager,
+        );
+        this.logger.log(`[OrderId: ${orderId}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
       }
 
       if (result.Status === 'SUCCESS') {
@@ -90,7 +101,7 @@ export class InvoiceService {
       return result;
     } catch (error) {
       if (paymentNo) {
-        await this.updateOrderAndPaymentLogInvoiceOptions(
+        await this.updateOrderAndPaymentLogInvoiceOptionsByPaymentNo(
           paymentNo,
           {
             status: 'LODESTAR_FAIL',
@@ -160,7 +171,7 @@ export class InvoiceService {
               reason: invServiceResponse.Message,
             };
 
-      const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptions(
+      const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptionsByPaymentNo(
         paymentNo,
         {
           status: invServiceResponse.Status,
@@ -179,7 +190,7 @@ export class InvoiceService {
         }
       }
     } catch (error) {
-      await this.updateOrderAndPaymentLogInvoiceOptions(
+      await this.updateOrderAndPaymentLogInvoiceOptionsByPaymentNo(
         paymentNo,
         {
           status: 'LODESTAR_FAIL',
@@ -344,7 +355,7 @@ export class InvoiceService {
     };
   }
 
-  private updateOrderAndPaymentLogInvoiceOptions(
+  private updateOrderAndPaymentLogInvoiceOptionsByPaymentNo(
     paymentNo: string,
     invoiceOptions: any,
     invoiceIssueAt: Date,
@@ -371,6 +382,36 @@ export class InvoiceService {
 
       await this.paymentInfra.save(paymentLog, manager);
       return await this.orderInfra.save(orderLogs, manager);
+    };
+    return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
+  }
+
+  private updateOrderAndPaymentLogInvoiceOptionsByOrderId(
+    orderId: string,
+    invoiceOptions: any,
+    invoiceIssueAt: Date,
+    entityManager?: EntityManager,
+  ) {
+    const cb = async (manager: EntityManager) => {
+      const orderLog = await this.orderInfra.getOneByOrderId(orderId, manager);
+
+      for (const paymentLog of orderLog.paymentLogs) {
+        paymentLog.invoiceOptions = {
+          ...paymentLog.invoiceOptions,
+          ...invoiceOptions,
+          retry: paymentLog.invoiceOptions['retry'] ? parseInt(paymentLog.invoiceOptions['retry']) + 1 : 1,
+        };
+        paymentLog.invoiceIssuedAt = invoiceIssueAt;
+        await this.paymentInfra.save(paymentLog, manager);
+      }
+      orderLog.invoiceOptions = {
+        ...orderLog.invoiceOptions,
+        ...invoiceOptions,
+        retry: orderLog.invoiceOptions['retry'] ? parseInt(orderLog.invoiceOptions['retry']) + 1 : 1,
+      };
+      orderLog.invoiceIssuedAt = invoiceIssueAt;
+
+      return await this.orderInfra.save(orderLog, manager);
     };
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
   }
