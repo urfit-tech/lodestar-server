@@ -9,8 +9,9 @@ import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { PaymentLog } from '~/payment/payment_log.entity';
 import { Invoice } from '~/invoice/invoice.entity';
 
-import { EzpayClient } from './ezpay_client';
+import { EzpayClient, EzpayClientResponse } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
+import { InvoiceInfo } from './invoice.dto';
 
 type InvoiceOptions = {
   appId: string;
@@ -40,27 +41,86 @@ export class InvoiceService {
     private readonly appService: AppService,
   ) {}
 
+  public async issueInvoiceDirectly(
+    appId: string,
+    orderId: string,
+    invoiceGatewayId: string,
+    invoiceInfo: InvoiceInfo,
+    manager: EntityManager,
+    paymentNo?: string,
+  ) {
+    try {
+      const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
+      const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
+
+      const result = await this.ezpayClient.issue(ezpayCredentials, invoiceInfo);
+      const toUpdateInvoiceOptions =
+        result.Status === 'SUCCESS'
+          ? {
+              invoiceTransNo: result.Result?.['InvoiceTransNo'],
+              invoiceRandomNumber: result.Result?.['RandomNum'],
+              invoiceNumber: result.Result?.['InvoiceNumber'],
+            }
+          : {
+              reason: result.Message,
+            };
+      if (paymentNo) {
+        const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptions(
+          paymentNo,
+          {
+            status: result.Status,
+            ...toUpdateInvoiceOptions,
+          },
+          result.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
+          manager,
+        );
+        this.logger.log(`[PaymentNo: ${paymentNo}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
+      }
+
+      if (result.Status === 'SUCCESS') {
+        await this.insertInvoice(
+          orderId,
+          result.Result?.['InvoiceNumber'],
+          result.Result?.['TotalAmt'],
+          { ...result, Result: { ...invoiceInfo, ...result.Result } },
+          manager,
+        );
+      }
+
+      return result;
+    } catch (error) {
+      if (paymentNo) {
+        await this.updateOrderAndPaymentLogInvoiceOptions(
+          paymentNo,
+          {
+            status: 'LODESTAR_FAIL',
+            reason: error.message,
+          },
+          undefined,
+          manager,
+        );
+      }
+      throw error;
+    }
+  }
+
   public async issueInvoiceByPayment(payment: PaymentLog, manager: EntityManager) {
-    const { order, no: paymentNo, options, price } = payment;
+    const { order, no: paymentNo, options, price, invoiceOptions: invoiceInfo } = payment;
 
     try {
       const { member } = order;
       const appId = member.appId;
       const card4No = options?.card4No;
-      const invoiceComment = card4No ? `信用卡末四碼 ${card4No}` : options?.paymentType || '';
+      const comment = invoiceInfo?.invoiceComment;
+      const invoiceComment = `${comment ? comment : card4No ? `信用卡末四碼 ${card4No}` : options?.paymentType || ''}`;
 
       const appSettings = await this.appService.getAppSettings(appId, manager);
-      const appInvoiceGateway = await this.invoiceInfra.getAppInvoiceGateway(appId, payment.invoiceGatewayId, manager);
-      const appModules = await this.appService.getAppModules(appId, manager);
-
-      if (!appInvoiceGateway || !this.isAllowUseInvoiceModule(appInvoiceGateway.options, appModules)) {
-        throw new Error(`App: ${appId} invoice module is not enabled or missing settings/secrets.`);
-      }
+      const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, payment.invoiceGatewayId, manager);
 
       this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`);
       const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
 
-      const { Amt, invServiceResponse } = await this.issueInvoice(appInvoiceGateway.options, paymentNo, price, {
+      const { invServiceResponse } = await this.issueInvoice(appInvoiceGateway.options, paymentNo, price, {
         appId,
         name: invoiceOptions['name'] || member.name,
         email: invoiceOptions['email'] || member.email,
@@ -93,6 +153,7 @@ export class InvoiceService {
         invServiceResponse.Status === 'SUCCESS'
           ? {
               invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
+              invoiceRandomNumber: invServiceResponse.Result?.['RandomNum'],
               invoiceNumber: invoiceNumber,
             }
           : {
@@ -113,7 +174,7 @@ export class InvoiceService {
       if (invServiceResponse.Status === 'SUCCESS') {
         const orderId = orderLogs[0].id;
         if (orderId && invoiceNumber) {
-          await this.insertInvoice(orderId, invoiceNumber, price, manager);
+          await this.insertInvoice(orderId, invoiceNumber, price, invServiceResponse, manager);
           this.logger.log(`Invoice ${invoiceNumber} issued with order_log_id ${orderId}`);
         }
       }
@@ -129,6 +190,37 @@ export class InvoiceService {
       );
       throw error;
     }
+  }
+
+  public async searchInvoice(
+    appId: string,
+    invoiceGatewayId: string,
+    invoiceNumber: string,
+    invoiceRandomNumber: string,
+    manager: EntityManager,
+  ) {
+    const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
+
+    const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
+    return this.ezpayClient.search(ezpayCredentials, { invoiceNumber, invoiceRandomNumber });
+  }
+
+  public async revokeInvoice(
+    appId: string,
+    invoiceGatewayId: string,
+    invoiceNumber: string,
+    invalidReason: string,
+    manager: EntityManager,
+  ) {
+    const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
+
+    const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
+    const result = await this.ezpayClient.revoke(ezpayCredentials, { invoiceNumber, invalidReason });
+    if (result.Status === 'SUCCESS') {
+      await this.updateInvoiceRevokedAt(invoiceNumber, manager);
+    }
+
+    return result;
   }
 
   private async issueInvoice(invoiceGatewayConfig: object, paymentNo: string, amount: number, options: InvoiceOptions) {
@@ -287,6 +379,7 @@ export class InvoiceService {
     orderId: string,
     invoiceNumber: string,
     price: number,
+    invoiceResponse: EzpayClientResponse,
     manager: EntityManager,
   ): Promise<void> {
     const invoice = new Invoice();
@@ -294,8 +387,17 @@ export class InvoiceService {
     invoice.orderId = orderId;
     invoice.no = invoiceNumber;
     invoice.price = price;
+    invoice.options = {
+      ...invoiceResponse,
+    };
 
     await this.invoiceInfra.save(invoice, manager);
+  }
+
+  private async updateInvoiceRevokedAt(invoiceNumber: string, manager: EntityManager): Promise<void> {
+    const invoice = manager.getRepository(Invoice);
+
+    await invoice.update({ no: invoiceNumber }, { revokedAt: new Date() });
   }
 
   private isAllowUseInvoiceModule(invoiceGatewayConfig: object | null, appModules: Array<string>): boolean {
@@ -306,5 +408,16 @@ export class InvoiceService {
         invoiceGatewayConfig['invoice.hash_iv'] &&
         appModules.includes('invoice'),
     );
+  }
+
+  private async checkInvoiceGatewayConfig(appId: string, invoiceGatewayId: string, manager: EntityManager) {
+    const appInvoiceGateway = await this.invoiceInfra.getAppInvoiceGateway(appId, invoiceGatewayId, manager);
+    const appModules = await this.appService.getAppModules(appId, manager);
+
+    if (!appInvoiceGateway || !this.isAllowUseInvoiceModule(appInvoiceGateway.options, appModules)) {
+      throw new Error(`App: ${appId} invoice module is not enabled or missing settings/secrets.`);
+    }
+
+    return appInvoiceGateway;
   }
 }
