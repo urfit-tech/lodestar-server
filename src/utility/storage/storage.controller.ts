@@ -11,6 +11,8 @@ import { MediaService } from '~/media/media.service';
 import { ConfigService } from '@nestjs/config';
 import { Attachment } from '~/media/attachment.entity';
 import { AuthGuard } from '~/auth/auth.guard';
+import { Local } from '~/decorator';
+import { JwtMember } from '~/auth/auth.dto';
 @Controller({
   path: 'storage',
   version: ['1', '2'],
@@ -31,15 +33,21 @@ export class StorageController {
   }
 
   @Post('storage/upload')
-  uploadFileToStorageBucket(@Body() body: UploadDTO) {
-    const { appId, fileName, prefix } = body;
-    return this.storageService.getSignedUrlForUploadStorage(appId, fileName, prefix, 60);
+  uploadFileToStorageBucket(
+    @Body() body: UploadDTO,
+    @Local('member') member: JwtMember,
+  ) {
+    const { fileName, prefix } = body;
+    return this.storageService.getSignedUrlForUploadStorage(member.appId, fileName, prefix, 60);
   }
 
   @Post('storage/download')
-  async getDownloadUrlFromStorageBucket(@Body() body: DownloadDTO) {
-    const { appId, fileName, prefix } = body;
-    return this.storageService.getSignedUrlForDownloadStorage(`${prefix}/${appId}/${fileName}`, 60);
+  async getDownloadUrlFromStorageBucket(
+    @Body() body: UploadDTO,
+    @Local('member') member: JwtMember,
+  ) {
+    const { fileName, prefix } = body;
+    return this.storageService.getSignedUrlForDownloadStorage(`${prefix}/${member.appId}/${fileName}`, 60);
   }
 
   @Post('/multipart/create')
