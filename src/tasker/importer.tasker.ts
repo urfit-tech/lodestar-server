@@ -15,8 +15,10 @@ import { StorageService } from '~/utility/storage/storage.service';
 
 import { Tasker } from './tasker';
 import { MailJob } from './mailer.tasker';
+import { CoinService } from '~/coin/coin.service';
+import { CoinImportResultDTO } from '~/coin/coin.dto';
 
-export type ImportCategory = 'member';
+export type ImportCategory = 'member' | 'coin';
 
 export class ImportJob {
   appId: string;
@@ -39,7 +41,7 @@ export class ImporterTasker extends Tasker {
         // BullModule.registerQueue({ name: MailerTasker.name }),
         BullModule.registerQueue({ name: 'mailer' }),
       ],
-      providers: [StorageService, MemberService, MemberInfrastructure],
+      providers: [StorageService, MemberService, MemberInfrastructure, CoinService],
     };
   }
 
@@ -48,6 +50,7 @@ export class ImporterTasker extends Tasker {
     private readonly storageService: StorageService,
     private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
+    private readonly coinService: CoinService,
     // @InjectQueue(MailerTasker.name) private readonly mailerQueue: Queue,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager() private readonly entityManager: EntityManager,
@@ -69,7 +72,7 @@ export class ImporterTasker extends Tasker {
         this.entityManager,
       );
       const admins = await this.memberInfra.getMembersByConditions(appId, { role: 'app-owner' }, this.entityManager);
-      const processResult: Record<string, MemberImportResultDTO | Error> = {};
+      const processResult: Record<string, MemberImportResultDTO | CoinImportResultDTO | Error> = {};
 
       for (const fileInfo of fileInfos) {
         const { checksumETag, fileName } = fileInfo;
@@ -95,7 +98,7 @@ export class ImporterTasker extends Tasker {
       await this.putEmailQueue(
         appId,
         [...invokers, ...admins],
-        '匯入結果(MemberImport)',
+        `匯入結果(${category === 'member' ? 'MemberImport' : 'CoinImport'})`,
         JSON.stringify(processResult),
       );
       await job.moveToCompleted(undefined, undefined, true);
@@ -113,7 +116,7 @@ export class ImporterTasker extends Tasker {
     fileName: string,
     checksumETag: string,
     category: ImportCategory,
-  ): Promise<MemberImportResultDTO> {
+  ): Promise<MemberImportResultDTO | CoinImportResultDTO> {
     const { ContentType, Body, ETag } = await this.storageService.getFileFromBucketStorage({
       Key: `import/${appId}/${fileName}`,
     });
@@ -131,7 +134,7 @@ export class ImporterTasker extends Tasker {
     category: ImportCategory,
     mimeType: string,
     rawBin: Buffer,
-  ): Promise<MemberImportResultDTO> {
+  ): Promise<MemberImportResultDTO | CoinImportResultDTO> {
     let rawRows: Array<Record<string, any>> = [];
     let data: XLSX.WorkBook;
 
@@ -148,10 +151,11 @@ export class ImporterTasker extends Tasker {
     }
     const { Sheets, SheetNames } = data;
     rawRows = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '', raw: false });
-
     switch (category) {
       case 'member':
         return this.memberService.processImportFromFile(appId, rawRows);
+      case 'coin':
+        return this.coinService.processImportFromFile(appId, rawRows);
     }
   }
 
