@@ -21,13 +21,6 @@ export class PaymentInfrastructure {
         paidAt: And(LessThan(dayjs.utc().toDate()), MoreThan(dayjs.utc().subtract(3, 'day').toDate())),
         gateway: Not(In(['lodestar', 'manual'])),
       },
-      relations: {
-        order: {
-          member: true,
-          orderProducts: true,
-          orderDiscounts: true,
-        },
-      },
       take: limit,
     });
   }
