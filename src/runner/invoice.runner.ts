@@ -106,6 +106,7 @@ export class InvoiceRunner extends Runner {
             });
           }
         }
+        await this.utilityService.sleep(1000);
       }
     };
 
