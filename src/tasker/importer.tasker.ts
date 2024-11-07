@@ -17,6 +17,7 @@ import { Tasker } from './tasker';
 import { MailJob } from './mailer.tasker';
 import { CoinService } from '~/coin/coin.service';
 import { CoinImportResultDTO } from '~/coin/coin.dto';
+import { CoinInfrastructure } from '~/coin/coin.infra';
 
 export type ImportCategory = 'member' | 'coin';
 
@@ -41,7 +42,7 @@ export class ImporterTasker extends Tasker {
         // BullModule.registerQueue({ name: MailerTasker.name }),
         BullModule.registerQueue({ name: 'mailer' }),
       ],
-      providers: [StorageService, MemberService, MemberInfrastructure, CoinService],
+      providers: [StorageService, MemberService, MemberInfrastructure, CoinInfrastructure, CoinService],
     };
   }
 
@@ -51,6 +52,7 @@ export class ImporterTasker extends Tasker {
     private readonly memberService: MemberService,
     private readonly memberInfra: MemberInfrastructure,
     private readonly coinService: CoinService,
+    private readonly coinInfra: CoinInfrastructure,
     // @InjectQueue(MailerTasker.name) private readonly mailerQueue: Queue,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager() private readonly entityManager: EntityManager,
@@ -87,12 +89,11 @@ export class ImporterTasker extends Tasker {
           processResult[fileName] = err;
         }
       }
-      await this.memberInfra.insertMemberAuditLog(
-        invokers,
-        fileInfos.map(({ fileName }) => fileName).join(', '),
-        'upload',
-        this.entityManager,
-      );
+
+      if (category === 'member' || category === 'coin') {
+        await this.insertAuditLog(category, invokers, fileInfos);
+      }
+
       this.logger.log(`import process result: ${JSON.stringify(processResult)}`);
 
       await this.putEmailQueue(
@@ -108,6 +109,25 @@ export class ImporterTasker extends Tasker {
       this.logger.error(error);
     } finally {
       this.postProcess();
+    }
+  }
+
+  private async insertAuditLog(
+    category: ImportCategory,
+    invokers: Array<Member>,
+    fileInfos: Array<{ fileName: string }>,
+  ): Promise<void> {
+    const fileNames = fileInfos.map(({ fileName }) => fileName).join(', ');
+
+    switch (category) {
+      case 'member':
+        await this.memberInfra.insertMemberAuditLog(invokers, fileNames, 'upload', this.entityManager);
+        break;
+      case 'coin':
+        await this.coinInfra.insertCoinLogAuditLog(invokers, fileNames, 'upload', this.entityManager);
+        break;
+      default:
+        this.logger.log(`No audit log handler for category: ${category}`);
     }
   }
 

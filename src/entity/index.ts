@@ -232,6 +232,7 @@ import { InvoiceGateway } from './InvoiceGateway';
 import { AppointmentEnrollmentView } from './AppointmentEnrollmentView';
 import { CardProduct } from '../card/entity/CardProduct';
 import { MerchandiseSpecInventoryStatusView } from '~/merchandise/entity/MerchandiseSpecInventoryStatusView';
+import { CoinLogAuditLog } from '~/coin/entity/coin_log_audit_log.entity';
 
 export const PostgresEntities = [
   Activity,
@@ -279,6 +280,7 @@ export const PostgresEntities = [
   Certificate,
   CertificateTemplate,
   CoinLog,
+  CoinLogAuditLog,
   Comment,
   CommentReaction,
   CommentReply,
