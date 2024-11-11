@@ -12,6 +12,7 @@ import { Invoice } from '~/invoice/invoice.entity';
 import { EzpayClient, EzpayClientResponse } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
 import { InvoiceInfo } from './invoice.dto';
+import { OrderLog } from '~/order/entity/order_log.entity';
 
 type InvoiceOptions = {
   appId: string;
@@ -170,19 +171,28 @@ export class InvoiceService {
           : {
               reason: invServiceResponse.Message,
             };
+      let orderLogs: OrderLog[];
+      try {
+        orderLogs = await this.updateOrderAndPaymentLogInvoiceOptionsByPaymentNo(
+          paymentNo,
+          {
+            status: invServiceResponse.Status,
+            ...toUpdateInvoiceOptions,
+          },
+          invServiceResponse.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
+          manager,
+        );
 
-      const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptionsByPaymentNo(
-        paymentNo,
-        {
-          status: invServiceResponse.Status,
-          ...toUpdateInvoiceOptions,
-        },
-        invServiceResponse.Status === 'SUCCESS' ? dayjs().toDate() : undefined,
-        manager,
-      );
-      this.logger.log(`[PaymentNo: ${paymentNo}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
+        if (orderLogs && orderLogs.length > 0) {
+          this.logger.log(`[PaymentNo: ${paymentNo}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
+        }
+      } catch (error) {
+        this.logger.error(`[PaymentNo: ${paymentNo}] failed to update order logs. Error: ${error.message}`);
+      }
 
-      if (invServiceResponse.Status === 'SUCCESS') {
+      console.log(`${paymentNo} after running updateOrderAndPaymentLogInvoiceOptionsByPaymentNo`);
+
+      if (invServiceResponse.Status === 'SUCCESS' && orderLogs) {
         const orderId = orderLogs[0].id;
         if (orderId && invoiceNumber) {
           await this.insertInvoice(orderId, invoiceNumber, price, invServiceResponse, manager);
