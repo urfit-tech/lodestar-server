@@ -372,27 +372,58 @@ export class InvoiceService {
     entityManager?: EntityManager,
   ) {
     const cb = async (manager: EntityManager) => {
-      const orderLogs = await this.orderInfra.getManyByPaymentNo(paymentNo, manager);
-      const paymentLog = await this.paymentInfra.getOneByNo(paymentNo, manager);
+      this.logger.log(`[PaymentNo: ${paymentNo}] Start updating order and payment logs`);
 
-      for (const orderLog of orderLogs) {
-        orderLog.invoiceOptions = {
-          ...orderLog.invoiceOptions,
+      try {
+        const orderLogs = await this.orderInfra.getManyByPaymentNo(paymentNo, manager);
+        this.logger.log(`[PaymentNo: ${paymentNo}] Fetched ${orderLogs.length} order logs`);
+
+        const paymentLog = await this.paymentInfra.getOneByNo(paymentNo, manager);
+        this.logger.log(`[PaymentNo: ${paymentNo}] Fetched payment log`);
+
+        for (const orderLog of orderLogs) {
+          const updatedInvoiceOptions = {
+            ...orderLog.invoiceOptions,
+            ...invoiceOptions,
+            retry: orderLog.invoiceOptions['retry'] ? parseInt(orderLog.invoiceOptions['retry']) + 1 : 1,
+          };
+
+          console.log(
+            JSON.stringify({
+              orderLogId: orderLog.id,
+              updatedInvoiceOptions,
+              invoiceIssuedAt: invoiceIssueAt,
+            }),
+          );
+
+          orderLog.invoiceOptions = updatedInvoiceOptions;
+          orderLog.invoiceIssuedAt = invoiceIssueAt;
+        }
+
+        paymentLog.invoiceOptions = {
+          ...paymentLog.invoiceOptions,
           ...invoiceOptions,
-          retry: orderLog.invoiceOptions['retry'] ? parseInt(orderLog.invoiceOptions['retry']) + 1 : 1,
+          retry: paymentLog.invoiceOptions['retry'] ? parseInt(paymentLog.invoiceOptions['retry']) + 1 : 1,
         };
-        orderLog.invoiceIssuedAt = invoiceIssueAt;
-      }
-      paymentLog.invoiceOptions = {
-        ...paymentLog.invoiceOptions,
-        ...invoiceOptions,
-        retry: paymentLog.invoiceOptions['retry'] ? parseInt(paymentLog.invoiceOptions['retry']) + 1 : 1,
-      };
-      paymentLog.invoiceIssuedAt = invoiceIssueAt;
+        paymentLog.invoiceIssuedAt = invoiceIssueAt;
 
-      await this.paymentInfra.save(paymentLog, manager);
-      return await this.orderInfra.save(orderLogs, manager);
+        // Log before saving
+        this.logger.log(`[PaymentNo: ${paymentNo}] Saving updated payment log`);
+        await this.paymentInfra.save(paymentLog, manager);
+        this.logger.log(`[PaymentNo: ${paymentNo}] Payment log saved successfully`);
+
+        // Log before saving order logs
+        this.logger.log(`[PaymentNo: ${paymentNo}] Saving updated order logs`);
+        await this.orderInfra.save(orderLogs, manager);
+        this.logger.log(`[PaymentNo: ${paymentNo}] Order logs saved successfully`);
+
+        return orderLogs;
+      } catch (error) {
+        this.logger.error(`[PaymentNo: ${paymentNo}] Failed to update logs. Error: ${error.message}`);
+        throw error; // Re-throw to propagate the error
+      }
     };
+
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
   }
 
