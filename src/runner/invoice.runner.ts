@@ -34,7 +34,7 @@ export class InvoiceRunner extends Runner {
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
     super(InvoiceRunner.name, 1 * 60 * 1000, logger, distributedLockService, shutdownService);
-    this.batchSize = 200;
+    this.batchSize = 10;
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
