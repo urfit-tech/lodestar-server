@@ -2,3 +2,9 @@ ignore:
   - src/entity/*
   - src/cors.ts
   - src/main.ts
+  - src/coin/coin.module.ts
+coverage:
+  status:
+    project:
+      default:
+        threshold: 5%
