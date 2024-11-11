@@ -409,12 +409,33 @@ export class InvoiceService {
 
         // Log before saving
         this.logger.log(`[PaymentNo: ${paymentNo}] Saving updated payment log`);
-        await this.paymentInfra.save(paymentLog, manager);
+        const savedPaymentLog = await this.paymentInfra.save(paymentLog, manager);
+        if (savedPaymentLog.length > 0) {
+          console.log(
+            `savedPaymentLog`,
+            JSON.stringify({
+              paymentLogno: savedPaymentLog[0].no,
+              invoiceOptions: savedPaymentLog[0].invoiceOptions,
+            }),
+          );
+        }
+
         this.logger.log(`[PaymentNo: ${paymentNo}] Payment log saved successfully`);
 
         // Log before saving order logs
         this.logger.log(`[PaymentNo: ${paymentNo}] Saving updated order logs`);
-        await this.orderInfra.save(orderLogs, manager);
+        const savedOrderLog = await this.orderInfra.save(orderLogs, manager);
+        if (savedOrderLog.length > 0) {
+          console.log(
+            `savedOrderLog`,
+            JSON.stringify({
+              orderId: savedOrderLog[0].id,
+              orderInnvoiceIssuedAt: savedOrderLog[0].invoiceIssuedAt,
+              orderInvoiceOptions: savedOrderLog[0].invoiceOptions,
+            }),
+          );
+        }
+
         this.logger.log(`[PaymentNo: ${paymentNo}] Order logs saved successfully`);
 
         return orderLogs;
