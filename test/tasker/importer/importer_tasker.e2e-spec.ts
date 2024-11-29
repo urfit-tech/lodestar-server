@@ -1,9 +1,9 @@
 import { v4 } from 'uuid';
 import { readFileSync } from 'fs';
-import { Job } from 'bull';
+import { Job, Queue } from 'bull';
 import { join } from 'path';
 import { EntityManager, Equal, Not, Repository } from 'typeorm';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getEntityManagerToken } from '@nestjs/typeorm';
 
@@ -19,16 +19,23 @@ import { MemberPhone } from '~/member/entity/member_phone.entity';
 import { MemberProperty } from '~/member/entity/member_property.entity';
 import { MemberTag } from '~/member/entity/member_tag.entity';
 import { TaskerModule } from '~/tasker/tasker.module';
-import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
+import { ImportJob, ImporterTasker, ImportCategory } from '~/tasker/importer.tasker';
 import { Tasker } from '~/tasker/tasker';
 import { StorageService } from '~/utility/storage/storage.service';
 import { CacheService } from '~/utility/cache/cache.service';
 
 import { app, appPlan, category, memberTag, memberProperty } from '../../data';
+import { CoinLog } from '~/entity/CoinLog';
+import { CoinLogAuditLog } from '~/coin/entity/coin_log_audit_log.entity';
+import { MemberInfrastructure } from '~/member/member.infra';
+import { CoinInfrastructure } from '~/coin/coin.infra';
+import { MemberService } from '~/member/member.service';
+import { CoinService } from '~/coin/coin.service';
 
 describe('ImporterTasker', () => {
   let application: INestApplication;
   let cacheService: CacheService;
+
   const mockStorageService = {
     getFileFromBucketStorage: jest.fn(),
     deleteFileAtBucketStorage: jest.fn(),
@@ -44,11 +51,13 @@ describe('ImporterTasker', () => {
   let memberTagRepo: Repository<MemberTag>;
   let memberRepo: Repository<Member>;
   let memberAuditLogRepo: Repository<MemberAuditLog>;
+  let coinLogAuditLogRepo: Repository<CoinLogAuditLog>;
   let appPlanRepo: Repository<AppPlan>;
   let appRepo: Repository<App>;
   let categoryRepo: Repository<Category>;
   let propertyRepo: Repository<Property>;
   let tagRepo: Repository<Tag>;
+  let coinLogRepo: Repository<CoinLog>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -74,23 +83,27 @@ describe('ImporterTasker', () => {
     memberTagRepo = manager.getRepository(MemberTag);
     memberRepo = manager.getRepository(Member);
     memberAuditLogRepo = manager.getRepository(MemberAuditLog);
+    coinLogAuditLogRepo = manager.getRepository(CoinLogAuditLog);
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
     categoryRepo = manager.getRepository(Category);
     propertyRepo = manager.getRepository(Property);
     tagRepo = manager.getRepository(Tag);
+    coinLogRepo = manager.getRepository(CoinLog);
 
+    await coinLogRepo.delete({});
     await memberPhoneRepo.delete({});
     await memberCategoryRepo.delete({});
     await memberPropertyRepo.delete({});
     await memberTagRepo.delete({});
     await memberRepo.delete({});
     await memberAuditLogRepo.delete({});
+    await coinLogAuditLogRepo.delete({});
+    await propertyRepo.delete({});
+    await categoryRepo.delete({});
+    await tagRepo.delete({});
     await appRepo.delete({});
     await appPlanRepo.delete({});
-    await categoryRepo.delete({});
-    await propertyRepo.delete({});
-    await tagRepo.delete({});
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -103,6 +116,8 @@ describe('ImporterTasker', () => {
   });
 
   afterEach(async () => {
+    await coinLogRepo.delete({});
+    await coinLogAuditLogRepo.delete({});
     await memberPhoneRepo.delete({});
     await memberCategoryRepo.delete({});
     await memberPropertyRepo.delete({});
@@ -160,6 +175,7 @@ describe('ImporterTasker', () => {
           },
           moveToCompleted: mockJobFunction.moveToCompleted as unknown,
         } as Job<ImportJob>);
+
         const members = await memberRepo.find({
           where: { username: Not(Equal(invoker.username)) },
           relations: {
@@ -422,6 +438,91 @@ describe('ImporterTasker', () => {
 
         const importedMember = members.find((member) => member.name === 'tolowercase@example.com');
         expect(importedMember).toBeUndefined();
+      });
+    });
+  });
+  describe('CoinLog import', () => {
+    describe('Csv file', () => {
+      it('Should import with skip invalid note, description, startedAt, endedAt, claimedAt, createdAt data', async () => {
+        const importerTasker = application.get<ImporterTasker>(Tasker);
+
+        mockStorageService.getFileFromBucketStorage.mockImplementationOnce(() => {
+          const testDataFile = readFileSync(join(__dirname, 'test-coin_log-import-data.csv'));
+          return {
+            ContentType: 'text/csv',
+            Body: {
+              transformToByteArray: () => testDataFile,
+            },
+            ETag: '"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"',
+          };
+        });
+
+        const invoker = new Member();
+        invoker.id = v4();
+        invoker.app = app;
+        invoker.name = 'invoker';
+        invoker.username = 'invoker_account';
+        invoker.email = 'invoker_email@example.com';
+        invoker.role = 'general-member';
+        invoker.loginedAt = new Date();
+
+        const kkMember = new Member();
+        kkMember.id = v4();
+        kkMember.app = app;
+        kkMember.name = 'kk';
+        kkMember.username = 'kk_account';
+        kkMember.email = 'kk@example.com';
+        kkMember.role = 'general-member';
+        kkMember.loginedAt = new Date();
+
+        const zzMember = new Member();
+        zzMember.id = v4();
+        zzMember.app = app;
+        zzMember.name = 'zz';
+        zzMember.username = 'zz_account';
+        zzMember.email = 'zz@example.com';
+        zzMember.role = 'general-member';
+        zzMember.loginedAt = new Date();
+
+        await manager.save(invoker);
+        await manager.save(kkMember);
+        await manager.save(zzMember);
+
+        await importerTasker.process({
+          data: {
+            appId: app.id,
+            invokerMemberId: invoker.id,
+            category: 'coin',
+            fileInfos: [
+              {
+                fileName: 'test-data.csv',
+                checksumETag: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+              },
+            ],
+          },
+          moveToCompleted: mockJobFunction.moveToCompleted as unknown,
+        } as Job<ImportJob>);
+        const coinLogs = await coinLogRepo.find();
+        expect(coinLogs.length).toBe(2);
+
+        const kkCoinLog = coinLogs.find((coinLog) => coinLog.memberId === kkMember.id);
+        const zzCoinLog = coinLogs.find((coinLog) => coinLog.memberId === zzMember.id);
+
+        expect(kkCoinLog.memberId).toBe(kkMember.id);
+        expect(zzCoinLog.memberId).toBe(zzMember.id);
+        expect(kkCoinLog.title).toBe('test');
+        expect(zzCoinLog.title).toBe('test negative number');
+        expect(kkCoinLog.amount).toBe('100');
+        expect(zzCoinLog.amount).toBe('-0.2');
+        expect(kkCoinLog.startedAt).toBe(null);
+        expect(zzCoinLog.startedAt).toEqual(new Date('2024-11-4'));
+
+        const auditLogs = await coinLogAuditLogRepo.find({});
+        expect(auditLogs.length).toBe(1);
+        const [auditLog] = auditLogs;
+        expect(auditLog.memberId).toBe(invoker.id);
+        expect(auditLog.target).toBe('test-data.csv');
+        expect(auditLog.action).toBe('upload');
       });
     });
   });
