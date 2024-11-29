@@ -27,6 +27,7 @@ import { EquityModule } from './equity/equity.module';
 import { MerchandiseModule } from './merchandise/merchandise.module';
 import { EventModule } from './event/event.module';
 import { InvoiceModule } from './invoice/invoice.module';
+import { CoinModule } from './coin/coin.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -43,15 +44,15 @@ import { InvoiceModule } from './invoice/invoice.module';
         return ['production', 'staging'].includes(nodeEnv)
           ? {}
           : {
-            pinoHttp: {
-              transport: {
-                target: 'pino-pretty',
-                options: {
-                  ignore: 'pid,context,hostname',
+              pinoHttp: {
+                transport: {
+                  target: 'pino-pretty',
+                  options: {
+                    ignore: 'pid,context,hostname',
+                  },
                 },
               },
-            },
-          };
+            };
       },
       inject: [ConfigService],
     }),
@@ -80,6 +81,7 @@ import { InvoiceModule } from './invoice/invoice.module';
     AuthModule,
     AppModule,
     MemberModule,
+    CoinModule,
     MediaModule,
     UtilityModule,
     // TriggerModule,
