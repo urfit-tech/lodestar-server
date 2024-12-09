@@ -23,7 +23,8 @@ export class EventController {
     try {
       return this.EventService.getEventsByResourceId(started_at, until)(resourceId);
     } catch (e) {
-      return e;
+      Logger.error('Error in getEventsByResourceId', e.stack);
+      return { message: 'An error occurred while fetching events by resource ID' };
     }
   }
 
@@ -36,7 +37,8 @@ export class EventController {
     try {
       return this.EventService.getEventsByResourceIds(started_at, until)(resourceIds);
     } catch (e) {
-      return e;
+      Logger.error('Error in getEventsByResourceIds', e.stack);
+      return { message: 'An error occurred while fetching events by resource IDs' };
     }
   }
 
@@ -45,7 +47,8 @@ export class EventController {
     try {
       return this.EventService.insertEvents(member.appId)(insertEventsDTO);
     } catch (e) {
-      return e;
+      Logger.error('Error in createEvents', e.stack);
+      return { message: 'An error occurred while creating events' };
     }
   }
 
@@ -76,7 +79,8 @@ export class EventController {
     try {
       return this.EventService.getEventRelatedProducts(memberId);
     } catch (e) {
-      return e;
+      Logger.error('Error in getEventRelatedProducts', e.stack);
+      return { message: 'An error occurred while fetching event-related products' };
     }
   }
 
@@ -85,7 +89,8 @@ export class EventController {
     try {
       return await this.EventService.inviteResource(inviteResourcesDTO);
     } catch (e) {
-      return e;
+      Logger.error('Error in batchInviteResource', e.stack);
+      return { message: 'An error occurred while inviting resources' };
     }
   }
 
