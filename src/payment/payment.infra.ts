@@ -16,17 +16,10 @@ export class PaymentInfrastructure {
         invoiceIssuedAt: IsNull(),
         invoiceOptions: Raw(
           (alias) =>
-            `(${alias} ->> 'status' IS NULL OR (${alias} ->> 'status' != 'SUCCESS' AND (${alias} ->> 'retry')::numeric < 5))`,
+            `(${alias} ->> 'status' IS NULL OR (${alias} ->> 'status' != 'SUCCESS' AND (${alias} ->> 'retry')::numeric < 5)) AND (${alias} ->'skipIssueInvoice' IS NULL OR ${alias} ->>'skipIssueInvoice' != 'true')`,
         ),
         paidAt: And(LessThan(dayjs.utc().toDate()), MoreThan(dayjs.utc().subtract(3, 'day').toDate())),
         gateway: Not(In(['lodestar', 'manual'])),
-      },
-      relations: {
-        order: {
-          member: true,
-          orderProducts: true,
-          orderDiscounts: true,
-        },
       },
       take: limit,
     });
@@ -36,6 +29,13 @@ export class PaymentInfrastructure {
     const paymentLogRepo = manager.getRepository(PaymentLog);
     const paymentLog = await paymentLogRepo.findOne({
       where: { no: Equal(no) },
+      relations: {
+        order: {
+          member: true,
+          orderProducts: true,
+          orderDiscounts: true,
+        },
+      },
     });
     return paymentLog;
   }

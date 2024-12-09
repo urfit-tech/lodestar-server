@@ -25,6 +25,8 @@ import { WebhookModule } from './webhooks/webhook.module';
 import { EquityController } from './equity/equity.controller';
 import { EquityModule } from './equity/equity.module';
 import { MerchandiseModule } from './merchandise/merchandise.module';
+import { EventModule } from './event/event.module';
+import { InvoiceModule } from './invoice/invoice.module';
 import { CoinModule } from './coin/coin.module';
 
 @Module({
@@ -94,6 +96,8 @@ import { CoinModule } from './coin/coin.module';
     WebhookModule,
     EquityModule,
     MerchandiseModule,
+    InvoiceModule,
+    EventModule,
   ],
 })
 export class ApplicationModule {

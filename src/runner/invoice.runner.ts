@@ -12,6 +12,9 @@ import { DistributedLockService } from '~/utility/lock/distributed_lock.service'
 import { UtilityService } from '~/utility/utility.service';
 
 import { Runner } from './runner';
+import { PaymentLog } from '~/payment/payment_log.entity';
+
+const DB_LOCK_ERROR_CODE = '55P03';
 
 @Injectable()
 export class InvoiceRunner extends Runner {
@@ -33,7 +36,7 @@ export class InvoiceRunner extends Runner {
     private readonly utilityService: UtilityService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(InvoiceRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
+    super(InvoiceRunner.name, 1 * 60 * 1000, logger, distributedLockService, shutdownService);
     this.batchSize = 200;
   }
 
@@ -46,20 +49,69 @@ export class InvoiceRunner extends Runner {
 
       for (const paymentLog of paymentLogs) {
         const { no: paymentNo } = paymentLog;
+
         try {
-          await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
-        } catch (error) {
-          errors.push({ error: error.message });
-          this.logger.error({
-            error: JSON.stringify(error),
-            title: '開立發票失敗',
-            message: `paymentNo: ${paymentNo}`,
+          await manager.transaction(async (transactionalManager) => {
+            this.logger.log(`paymentNo: ${paymentNo} start`);
+            const lockedPaymentRecord = await transactionalManager.getRepository(PaymentLog).findOne({
+              where: { no: paymentNo },
+              lock: { mode: 'pessimistic_write', onLocked: 'nowait' },
+            });
+
+            if (!lockedPaymentRecord) {
+              this.logger.log(`Skipping locked payment record: ${paymentNo}`);
+              return;
+            }
+
+            const paymentWithRelations = await transactionalManager.getRepository(PaymentLog).findOne({
+              where: { no: paymentNo },
+              relations: {
+                order: {
+                  member: true,
+                  orderProducts: true,
+                  orderDiscounts: true,
+                },
+              },
+            });
+
+            const completePaymentRecord = { ...paymentWithRelations, ...lockedPaymentRecord };
+
+            if (
+              completePaymentRecord.invoiceOptions?.invoices &&
+              completePaymentRecord.invoiceOptions?.invoices?.length > 0
+            ) {
+              for (const invoice of completePaymentRecord.invoiceOptions.invoices) {
+                await this.invoiceService.issueInvoiceDirectly(
+                  completePaymentRecord.order.appId,
+                  completePaymentRecord.orderId,
+                  completePaymentRecord.invoiceGatewayId,
+                  invoice,
+                  transactionalManager,
+                  paymentNo,
+                );
+              }
+            } else {
+              await this.invoiceService.issueInvoiceByPayment(completePaymentRecord, transactionalManager);
+            }
           });
+        } catch (error) {
+          if (error.code === DB_LOCK_ERROR_CODE) {
+            this.logger.log(`Could not obtain lock for payment record: ${paymentNo}, skipping...`);
+          } else {
+            errors.push({ error: error.message });
+            this.logger.error({
+              error: JSON.stringify(error),
+              title: '開立發票失敗',
+              message: `paymentNo: ${paymentNo}`,
+            });
+          }
         }
         await this.utilityService.sleep(1000);
       }
     };
+
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));
+
     if (errors.length > 0) {
       throw new Error(JSON.stringify(errors));
     }
