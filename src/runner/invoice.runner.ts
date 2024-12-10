@@ -13,13 +13,12 @@ import { UtilityService } from '~/utility/utility.service';
 
 import { Runner } from './runner';
 import { PaymentLog } from '~/payment/payment_log.entity';
+import { RunnerInfrastructure } from './runner.infra';
 
 const DB_LOCK_ERROR_CODE = '55P03';
 
 @Injectable()
 export class InvoiceRunner extends Runner {
-  private readonly batchSize: number;
-
   static forRoot(): DynamicModule {
     return {
       module: InvoiceRunner,
@@ -35,17 +34,26 @@ export class InvoiceRunner extends Runner {
     private readonly invoiceService: InvoiceService,
     private readonly utilityService: UtilityService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
+    protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
-    super(InvoiceRunner.name, 1 * 60 * 1000, logger, distributedLockService, shutdownService);
-    this.batchSize = 200;
+    super(
+      InvoiceRunner.name,
+      1 * 60 * 100,
+      logger,
+      distributedLockService,
+      shutdownService,
+      runnerInfrastructure,
+      entityManager,
+    );
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
+    console.log('InvoiceRunner execute batchSize', await this.getBatchSize());
     await this.checkAndCallHeartbeat();
 
     const errors: Array<{ error: any }> = [];
     const cb = async (manager: EntityManager) => {
-      const paymentLogs = await this.paymentInfra.getShouldIssueInvoicePaymentLogs(this.batchSize, manager);
+      const paymentLogs = await this.paymentInfra.getShouldIssueInvoicePaymentLogs(await this.getBatchSize(), manager);
 
       for (const paymentLog of paymentLogs) {
         const { no: paymentNo } = paymentLog;

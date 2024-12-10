@@ -20,6 +20,7 @@ import { PortPodcastProgramCommand } from '~/runner/porter-command/portPodcastPr
 import { PorterCommand } from '~/runner/porter-command/porterCommandInterface';
 import { PortPlayerEventCommand } from './porter-command/portPlayerEventCommand';
 import { ProgramService } from '~/program/program.service';
+import { RunnerInfrastructure } from './runner.infra';
 
 @Injectable()
 export class PorterRunner extends Runner {
@@ -35,8 +36,17 @@ export class PorterRunner extends Runner {
     private readonly podcastService: PodcastService,
     private readonly programService: ProgramService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
+    protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
-    super(PorterRunner.name, 1 * 10 * 1000, logger, distributedLockService, shutdownService);
+    super(
+      PorterRunner.name,
+      1 * 10 * 1000,
+      logger,
+      distributedLockService,
+      shutdownService,
+      runnerInfrastructure,
+      entityManager,
+    );
   }
 
   async checkAndCallHeartbeat(): Promise<void> {
@@ -76,7 +86,7 @@ export class PorterRunner extends Runner {
 
     for (const command of commands) {
       try {
-        await command.execute(this.entityManager);
+        await command.execute(this.entityManager, await this.getBatchSize());
       } catch (error) {
         console.error('Porting errors occurred', error);
         errors.push(error);
