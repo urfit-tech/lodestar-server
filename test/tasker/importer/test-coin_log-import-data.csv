@@ -1,4 +1,4 @@
-信箱,項目,代幣數量,代幣開始時間,代幣結束時間,備註,描述,領取時間,建立時間
-email,title,amount,startedAt,endedAt,note,description,claimedAt,createdAt
-kk@example.com,test,100,,,,,,
-zz@example.com,test negative number,-0.2,2024-11-4,,,,,
+信箱,項目,代幣數量,代幣開始時間,代幣結束時間,備註,描述,領取時間,領取開始時間,領取結束時間,建立時間
+email,title,amount,startedAt,endedAt,note,description,claimedAt,claimStartedAt,claimEndedAt,createdAt
+kk@example.com,test,100,,,,,,,,
+zz@example.com,test negative number,-0.2,2024-11-4,,,,,,,
