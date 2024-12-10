@@ -8,6 +8,7 @@ import { DistributedLockService } from '~/utility/lock/distributed_lock.service'
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 
 import { Runner } from './runner';
+import { RunnerInfrastructure } from './runner.infra';
 
 @Injectable()
 export class TriggerRunner extends Runner {
@@ -26,14 +27,22 @@ export class TriggerRunner extends Runner {
     protected readonly shutdownService: ShutdownService,
     private readonly triggerService: TriggerService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
+    protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
-    super(TriggerRunner.name, 60 * 1000, logger, distributedLockService, shutdownService);
-    this.batchSize = 100;
+    super(
+      TriggerRunner.name,
+      60 * 1000,
+      logger,
+      distributedLockService,
+      shutdownService,
+      runnerInfrastructure,
+      entityManager,
+    );
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
     const cb = async (manager: EntityManager) => {
-      return this.triggerService.processTriggerThroughTableLog(this.batchSize, manager);
+      return this.triggerService.processTriggerThroughTableLog(await this.getBatchSize(), manager);
     };
     return entityManager ? cb(entityManager) : this.entityManager.transaction(cb);
   }

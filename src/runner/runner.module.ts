@@ -16,7 +16,7 @@ import { RunnerController } from './runner.controller';
 import { ProgramModule } from '~/program/program.module';
 import { PodcastModule } from '~/podcast/podcast.module';
 import { MemberModule } from '~/member/member.module';
-import { PodcastService } from '~/podcast/podcast.service';
+import { RunnerInfrastructure } from './runner.infra';
 
 dayjs.extend(utc);
 
@@ -68,6 +68,7 @@ export class RunnerModule {
       providers: [
         Logger,
         RunnerService,
+        RunnerInfrastructure,
         { provide: 'NO_GO', useValue: noGo },
         { provide: Runner, useClass: clazz },
         ...(invokedRunnerModule.providers || []),
