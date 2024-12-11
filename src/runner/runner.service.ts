@@ -6,6 +6,22 @@ import { APIException } from '~/api.excetion';
 
 import { Runner } from './runner';
 
+/**
+ * Lifecycle:
+ *
+ * 1. Initialization Phase:
+ *    - Executes `onModuleInit` during module startup.
+ *    - Skips scheduling if `noGo` is true; otherwise, calls `scheduleRunner` to set up the interval.
+ *
+ * 2. Execution Phase:
+ *    - Executes `runner.run()` at each `intervalTime`.
+ *    - Reschedules dynamically after each execution to ensure interval updates.
+ *
+ * 3. Destruction Phase:
+ *    - Executes `onModuleDestroy` when the module is shut down.
+ *    - Deletes the interval from `SchedulerRegistry` to prevent further execution.
+ */
+
 @Injectable()
 export class RunnerService implements OnModuleInit, OnModuleDestroy {
   constructor(
@@ -46,6 +62,7 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     const runnerName = this.runner.getName();
 
     if (this.schedulerRegistry.doesExist('interval', runnerName)) {
+      console.log('delete interval', runnerName);
       this.schedulerRegistry.deleteInterval(runnerName);
     }
 
