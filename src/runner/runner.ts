@@ -71,7 +71,7 @@ export abstract class Runner {
   }
 
   async getInterval(): Promise<number> {
-    const runnerConfig = await this.runnerInfrastructure.getRunnerConfig('InvoiceRunner', this.manager);
+    const runnerConfig = await this.runnerInfrastructure.getRunnerConfig(this.name, this.manager);
     this.logger.log(
       JSON.stringify({
         name: runnerConfig.runnerName,
@@ -82,7 +82,7 @@ export abstract class Runner {
   }
 
   async getBatchSize(): Promise<number> {
-    const runnerConfig = await this.runnerInfrastructure.getRunnerConfig('InvoiceRunner', this.manager);
+    const runnerConfig = await this.runnerInfrastructure.getRunnerConfig(this.name, this.manager);
     this.logger.log(
       JSON.stringify({
         name: runnerConfig.runnerName,
