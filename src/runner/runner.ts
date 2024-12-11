@@ -70,24 +70,36 @@ export abstract class Runner {
 
   async getInterval(): Promise<number> {
     const runnerConfig = await this.runnerInfrastructure.getRunnerConfig(this.name, this.manager);
+    const intervalMs = this.validateInteger(runnerConfig.intervalMs, this.defaultInterval, 'intervalMs');
+
     this.logger.log(
       JSON.stringify({
         name: runnerConfig.runnerName,
-        intervalMs: runnerConfig.intervalMs,
+        intervalMs,
       }),
     );
-    return runnerConfig.intervalMs || this.defaultInterval;
+    return intervalMs;
   }
 
   async getBatchSize(): Promise<number> {
     const runnerConfig = await this.runnerInfrastructure.getRunnerConfig(this.name, this.manager);
+    const batchSize = this.validateInteger(runnerConfig.batchSize, this.defaultBatchSize, 'batchSize');
+
     this.logger.log(
       JSON.stringify({
         name: runnerConfig.runnerName,
-        batchSize: runnerConfig.batchSize,
+        batchSize,
       }),
     );
-    return runnerConfig.batchSize || this.defaultBatchSize;
+    return batchSize;
+  }
+
+  private validateInteger(value: any, defaultValue: number, fieldName: string): number {
+    if (Number.isInteger(value)) {
+      return value;
+    }
+    this.logger.warn(`${fieldName} is not an integer. Using default value: ${defaultValue}`);
+    return defaultValue;
   }
 
   getPreviousExecutedTime(): Date {

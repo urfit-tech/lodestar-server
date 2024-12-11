@@ -62,7 +62,6 @@ export class RunnerService implements OnModuleInit, OnModuleDestroy {
     const runnerName = this.runner.getName();
 
     if (this.schedulerRegistry.doesExist('interval', runnerName)) {
-      console.log('delete interval', runnerName);
       this.schedulerRegistry.deleteInterval(runnerName);
     }
 
