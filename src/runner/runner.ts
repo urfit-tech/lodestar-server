@@ -23,7 +23,6 @@ export abstract class Runner {
 
   constructor(
     name: string,
-    interval: number,
     logger: Logger,
     lockService: DistributedLockService,
     shutdownService: ShutdownService,
@@ -32,7 +31,6 @@ export abstract class Runner {
   ) {
     this.uuid = v4();
     this.name = name;
-    this.interval = interval;
     this.logger = logger;
     this.lockService = lockService;
     this.shutdownService = shutdownService;

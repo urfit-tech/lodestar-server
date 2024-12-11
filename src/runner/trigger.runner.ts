@@ -29,15 +29,7 @@ export class TriggerRunner extends Runner {
     @InjectEntityManager() private readonly entityManager: EntityManager,
     protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
-    super(
-      TriggerRunner.name,
-      60 * 1000,
-      logger,
-      distributedLockService,
-      shutdownService,
-      runnerInfrastructure,
-      entityManager,
-    );
+    super(TriggerRunner.name, logger, distributedLockService, shutdownService, runnerInfrastructure, entityManager);
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {

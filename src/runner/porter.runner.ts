@@ -38,15 +38,7 @@ export class PorterRunner extends Runner {
     @InjectEntityManager() private readonly entityManager: EntityManager,
     protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
-    super(
-      PorterRunner.name,
-      1 * 10 * 1000,
-      logger,
-      distributedLockService,
-      shutdownService,
-      runnerInfrastructure,
-      entityManager,
-    );
+    super(PorterRunner.name, logger, distributedLockService, shutdownService, runnerInfrastructure, entityManager);
   }
 
   async checkAndCallHeartbeat(): Promise<void> {
