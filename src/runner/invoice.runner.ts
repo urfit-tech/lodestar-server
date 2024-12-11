@@ -36,19 +36,10 @@ export class InvoiceRunner extends Runner {
     @InjectEntityManager() private readonly entityManager: EntityManager,
     protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
-    super(
-      InvoiceRunner.name,
-      1 * 60 * 100,
-      logger,
-      distributedLockService,
-      shutdownService,
-      runnerInfrastructure,
-      entityManager,
-    );
+    super(InvoiceRunner.name, logger, distributedLockService, shutdownService, runnerInfrastructure, entityManager);
   }
 
   async execute(entityManager?: EntityManager): Promise<void> {
-    console.log('InvoiceRunner execute batchSize', await this.getBatchSize());
     await this.checkAndCallHeartbeat();
 
     const errors: Array<{ error: any }> = [];

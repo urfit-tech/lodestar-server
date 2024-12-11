@@ -18,15 +18,7 @@ export class ExampleRunner extends Runner {
     protected readonly runnerInfrastructure: RunnerInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(
-      ExampleRunner.name,
-      1000,
-      logger,
-      distributedLockService,
-      shutdownService,
-      runnerInfrastructure,
-      entityManager,
-    );
+    super(ExampleRunner.name, logger, distributedLockService, shutdownService, runnerInfrastructure, entityManager);
   }
 
   async execute(): Promise<void> {
