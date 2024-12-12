@@ -1,7 +1,9 @@
+// ActivitySession.ts
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Activity } from './Activity';
 import { ActivityAttendance } from './ActivityAttendance';
 import { ActivitySessionTicket } from './ActivitySessionTicket';
+import { ActivityEnrollment } from '../view_entity/ActivityEnrollment';
 
 @Index('activity_session_pkey', ['id'], { unique: true })
 @Entity('activity_session', { schema: 'public' })
@@ -48,4 +50,7 @@ export class ActivitySession {
 
   @OneToMany(() => ActivitySessionTicket, (activitySessionTicket) => activitySessionTicket.activitySession)
   activitySessionTickets: ActivitySessionTicket[];
+
+  @OneToMany(() => ActivityEnrollment, (activityEnrollment) => activityEnrollment.activitySession)
+  activityEnrollments: ActivityEnrollment[];
 }

@@ -346,70 +346,65 @@ export class ActivityInfrastructure {
   }
 
   async getActivityParticipants(activityId: string, manager: EntityManager): Promise<ActivityParticipantResponse> {
-    const rawData = await manager
-      .createQueryBuilder()
-      .select(
-        `
-          activity_session.id AS activity_session_id,
-          activity_session.title AS activity_session_title,
-          activity_session.started_at AS activity_session_started_at,
-          activity_enrollment.order_log_id AS participant_order_log_id,
-          activity_enrollment.member_id AS participant_id,
-          activity_enrollment.member_name AS participant_name,
-          activity_enrollment.member_email AS participant_email,
-          activity_enrollment.member_phone AS participant_phone,
-          activity_enrollment.attended AS participant_attended,
-          activity_ticket.title AS participant_activity_title
-        `,
-      )
-      .from('activity_session', 'activity_session')
-      .innerJoin(
-        'activity_enrollment',
-        'activity_enrollment',
-        'activity_enrollment.activity_session_id = activity_session.id',
-      )
-      .leftJoin('activity_ticket', 'activity_ticket', 'activity_enrollment.activity_ticket_id = activity_ticket.id')
-      .leftJoin('activity', 'activity', 'activity.id = activity_ticket.activity_id')
-      .where('activity_session.activity_id = :activityId', { activityId })
-      .orderBy('activity_session.started_at', 'ASC')
-      .getRawMany();
-
-    const activitySessionDtos: ActivitySessionDto[] = [];
-
-    rawData.forEach((row) => {
-      const activitySessionId = row.activity_session_id;
-      const participantId = row.participant_id;
-
-      const activitySessionDto = activitySessionDtos.find((dto) => dto.id === activitySessionId);
-
-      if (activitySessionDto) {
-        activitySessionDto.participants.push({
-          id: participantId,
-          name: row.participant_name,
-          phone: row.participant_phone,
-          email: row.participant_email,
-          orderLogId: row.participant_order_log_id,
-          attended: row.participant_attended,
-          activityTicketTitle: row.participant_activity_title,
-        });
-      } else {
-        activitySessionDtos.push({
-          id: activitySessionId,
-          title: row.activity_session_title,
-          participants: [
-            {
-              id: participantId,
-              name: row.participant_name,
-              phone: row.participant_phone,
-              email: row.participant_email,
-              orderLogId: row.participant_order_log_id,
-              attended: row.participant_attended,
-              activityTicketTitle: row.participant_activity_title,
+    const activitySessions = await manager.getRepository(ActivitySession).find({
+      select: {
+        id: true,
+        title: true,
+        startedAt: true,
+        activityEnrollments: {
+          orderLogId: true,
+          memberId: true,
+          memberName: true,
+          memberEmail: true,
+          memberPhone: true,
+          attended: true,
+          member: {
+            id: true,
+            name: true,
+            email: true,
+            memberPhones: {
+              phone: true,
+              isPrimary: true,
+              isValid: true,
             },
-          ],
-        });
-      }
+          },
+          activityTicket: {
+            title: true,
+          },
+        },
+      },
+      relations: [
+        'activityEnrollments',
+        'activityEnrollments.activityTicket',
+        'activityEnrollments.activityTicket.activity',
+        'activityEnrollments.member',
+        'activityEnrollments.member.memberPhones',
+      ],
+      where: {
+        activityId: activityId,
+      },
+      order: {
+        startedAt: 'ASC',
+      },
     });
+
+    const activitySessionParticipantsAdapter = (activitySession: ActivitySession) => {
+      return {
+        id: activitySession.id,
+        title: activitySession.title,
+        participants: activitySession.activityEnrollments.map((enrollment) => ({
+          id: enrollment.memberId,
+          name: enrollment.memberName || enrollment.member.name,
+          phone: enrollment.memberPhone || enrollment.member.memberPhones.find((phone) => phone.isPrimary)?.phone,
+          email: enrollment.memberEmail || enrollment.member.email,
+          orderLogId: enrollment.orderLogId,
+          attended: enrollment.attended,
+          activityTicketTitle: enrollment.activityTicket.title,
+        })),
+      };
+    };
+
+    const activitySessionDtos = activitySessions.map(activitySessionParticipantsAdapter);
 
     const response: ActivityParticipantResponse = {
       activitySessions: activitySessionDtos,
