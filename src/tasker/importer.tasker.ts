@@ -166,7 +166,7 @@ export class ImporterTasker extends Tasker {
       case 'text/csv':
       default:
         const decodedRaw = new TextDecoder().decode(rawBin);
-        data = XLSX.read(decodedRaw, { type: 'string' });
+        data = XLSX.read(decodedRaw, { type: 'string', cellDates: true, dateNF: 'yyyy/mm/dd hh:mm:ss' });
         break;
     }
     const { Sheets, SheetNames } = data;
