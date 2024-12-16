@@ -1,4 +1,7 @@
-import { ViewEntity, ViewColumn } from 'typeorm';
+import { ViewEntity, ViewColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { ActivitySession } from '../entity/ActivitySession';
+import { ActivityTicket } from '../entity/ActivityTicket';
+import { Member } from '~/member/entity/member.entity';
 
 @ViewEntity({
   name: 'activity_enrollment',
@@ -22,8 +25,7 @@ import { ViewEntity, ViewColumn } from 'typeorm';
       JOIN activity_session ON activity_session.id = activity_session_ticket.activity_session_id 
       JOIN activity ON activity.id = activity_session.activity_id 
       LEFT JOIN activity_attendance ON activity_attendance.order_product_id = activity_ticket_enrollment.order_product_id 
-      AND activity_attendance.activity_session_id = activity_session.id;
-  `,
+      AND activity_attendance.activity_session_id = activity_session.id;`,
 })
 export class ActivityEnrollment {
   @ViewColumn({ name: 'activity_id' })
@@ -36,7 +38,7 @@ export class ActivityEnrollment {
   activityTicketId: number;
 
   @ViewColumn({ name: 'order_log_id' })
-  orderLogId: number;
+  orderLogId: string;
 
   @ViewColumn({ name: 'member_name' })
   memberName: string;
@@ -48,8 +50,20 @@ export class ActivityEnrollment {
   memberPhone: string;
 
   @ViewColumn({ name: 'member_id' })
-  memberId: number;
+  memberId: string;
 
   @ViewColumn({ name: 'attended' })
   attended: boolean;
+
+  @ManyToOne(() => ActivitySession, (activitySession) => activitySession.activityEnrollments)
+  @JoinColumn([{ name: 'activity_session_id', referencedColumnName: 'id' }])
+  activitySession: ActivitySession;
+
+  @ManyToOne(() => ActivityTicket, (activityTicket) => activityTicket.enrollments)
+  @JoinColumn([{ name: 'activity_ticket_id', referencedColumnName: 'id' }])
+  activityTicket: ActivityTicket;
+
+  @ManyToOne(() => Member, (member) => member.enrollments)
+  @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
+  member: Member;
 }
