@@ -395,7 +395,10 @@ export class ActivityInfrastructure {
         participants: activitySession.activityEnrollments.map((enrollment) => ({
           id: enrollment.memberId,
           name: enrollment.memberName || enrollment.member.name,
-          phone: enrollment.memberPhone || enrollment.member.memberPhones.find((phone) => phone.isPrimary)?.phone,
+          phone:
+            enrollment.memberPhone ||
+            enrollment.member.memberPhones.find((phone) => phone.isValid)?.phone ||
+            enrollment.member.memberPhones.find((phone) => phone.isPrimary)?.phone,
           email: enrollment.memberEmail || enrollment.member.email,
           orderLogId: enrollment.orderLogId,
           attended: enrollment.attended,
