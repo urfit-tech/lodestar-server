@@ -79,6 +79,7 @@ import { InvoiceModule } from './invoice/invoice.module';
     AuthModule,
     AppModule,
     MemberModule,
+    CoinModule,
     MediaModule,
     UtilityModule,
     // TriggerModule,

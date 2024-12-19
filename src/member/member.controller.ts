@@ -66,7 +66,7 @@ const MEMBER_DOWNLOAD_PERMISSION_GROUP: PermissionSet[] = [
   PermissionSet.SALES_LEAD_ADMIN,
   PermissionSet.SALES_LEAD_NORMAL,
   PermissionSet.SALES_PERFORMANCE_ADMIN,
-]
+];
 
 @UseGuards(AuthGuard, PermissionGuard)
 @ApiTags('Member')
@@ -80,7 +80,7 @@ export class MemberController {
 
   constructor(
     private logger: Logger,
-    @InjectQueue(ImporterTasker.name) private readonly importerQueue: Queue,
+    @InjectQueue('ImportTasker') private readonly importerQueue: Queue,
     @InjectQueue(ExporterTasker.name) private readonly exportQueue: Queue,
     private readonly configService: ConfigService<{
       HASURA_JWT_SECRET: string;
@@ -124,13 +124,10 @@ export class MemberController {
   @Post('member-role-count')
   @Permissions(...MEMBER_PERMISSION_GROUP_ADMIN)
   @ApiExcludeEndpoint()
-  public async getMembersRoleCountList(
-    @Local('member') member: JwtMember,
-    @Body() condition: MemberGetConditionDTO,
-  ) {
-    const { appId } = member
+  public async getMembersRoleCountList(@Local('member') member: JwtMember, @Body() condition: MemberGetConditionDTO) {
+    const { appId } = member;
 
-    const result = await this.memberService.getMembersRoleCountList(appId , condition);
+    const result = await this.memberService.getMembersRoleCountList(appId, condition);
 
     return result;
   }

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 export function getMemoryUsageString(): string {
   const used = process.memoryUsage();
   const output = Object.keys(used)
@@ -26,4 +28,15 @@ export function parseNullableFieldFromRaw<T>(
   parser: (value: string) => T = (value: string) => value as T,
 ): T {
   return isEmptyString(value) || value === undefined ? undefined : isNullString(value) ? null : parser(value);
+}
+
+export function parseDateStringFieldFromRaw<T>(
+  value: string | undefined,
+  parser: (value: string) => T = (value: string) => value as T,
+): T {
+  return isEmptyString(value) || value === undefined || isNullString(value)
+    ? null
+    : dayjs(value).isValid()
+    ? parser(dayjs(value).toISOString())
+    : parser(value);
 }

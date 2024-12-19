@@ -25,7 +25,7 @@ import { AccessControlService } from '~/auth/access-control.service';
     AppModule,
     DeviceModule,
     MailerModule,
-    BullModule.registerQueue({ name: ImporterTasker.name }),
+    BullModule.registerQueue({ name: 'ImportTasker' }),
     BullModule.registerQueue({ name: ExporterTasker.name }),
   ],
   providers: [

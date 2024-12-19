@@ -2887,7 +2887,8 @@ CREATE TABLE public.coin_log (
     note text,
     amount numeric NOT NULL,
     started_at timestamp with time zone,
-    ended_at timestamp with time zone
+    ended_at timestamp with time zone,
+    claimed_at timestamp with time zone
 );
 CREATE VIEW public.coin_status AS
  SELECT coin_log.id AS coin_id,
@@ -8489,3 +8490,5 @@ alter table "public"."card_product" add column "created_at" timestamptz
  not null default now();
 alter table "public"."card_product" add column "updated_at" timestamptz
  null default now();
+CREATE TABLE "public"."coin_log_audit_log" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "member_id" text NOT NULL, "action" text NOT NULL, "target" text NOT NULL, "created_at" timestamptz NOT NULL DEFAULT now(), PRIMARY KEY ("id") , FOREIGN KEY ("member_id") REFERENCES "public"."member"("id") ON UPDATE restrict ON DELETE restrict, UNIQUE ("id"));
+CREATE EXTENSION IF NOT EXISTS pgcrypto;

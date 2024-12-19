@@ -12,6 +12,9 @@ import { DistributedLockService } from '~/utility/lock/distributed_lock.service'
 import { UtilityService } from '~/utility/utility.service';
 
 import { Runner } from './runner';
+import { PaymentLog } from '~/payment/payment_log.entity';
+
+const DB_LOCK_ERROR_CODE = '55P03';
 
 @Injectable()
 export class InvoiceRunner extends Runner {
@@ -82,7 +85,9 @@ export class InvoiceRunner extends Runner {
         await this.utilityService.sleep(1000);
       }
     };
+
     await (entityManager ? cb(entityManager) : this.entityManager.transaction(cb));
+
     if (errors.length > 0) {
       throw new Error(JSON.stringify(errors));
     }
