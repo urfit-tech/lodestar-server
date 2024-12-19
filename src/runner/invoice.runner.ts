@@ -50,54 +50,30 @@ export class InvoiceRunner extends Runner {
       for (const paymentLog of paymentLogs) {
         const { no: paymentNo } = paymentLog;
 
-        try {
-          await manager.transaction(async (transactionalManager) => {
-            this.logger.log(`paymentNo: ${paymentNo} start`);
-            const lockedPaymentRecord = await transactionalManager.getRepository(PaymentLog).findOne({
-              where: { no: paymentNo },
-              lock: { mode: 'pessimistic_write', onLocked: 'nowait' },
-            });
-
-            if (!lockedPaymentRecord) {
-              this.logger.log(`Skipping locked payment record: ${paymentNo}`);
-              return;
+        if (paymentLog.invoiceOptions?.invoices && paymentLog.invoiceOptions?.invoices?.length > 0) {
+          for (const invoice of paymentLog.invoiceOptions.invoices) {
+            try {
+              await this.invoiceService.issueInvoiceDirectly(
+                paymentLog.order.appId,
+                paymentLog.orderId,
+                paymentLog.invoiceGatewayId,
+                invoice,
+                this.entityManager,
+                paymentNo,
+              );
+            } catch (error) {
+              errors.push({ error: error.message });
+              this.logger.error({
+                error: JSON.stringify(error),
+                title: '開立發票失敗',
+                message: `paymentNo: ${paymentNo}`,
+              });
             }
-
-            const paymentWithRelations = await transactionalManager.getRepository(PaymentLog).findOne({
-              where: { no: paymentNo },
-              relations: {
-                order: {
-                  member: true,
-                  orderProducts: true,
-                  orderDiscounts: true,
-                },
-              },
-            });
-
-            const completePaymentRecord = { ...paymentWithRelations, ...lockedPaymentRecord };
-
-            if (
-              completePaymentRecord.invoiceOptions?.invoices &&
-              completePaymentRecord.invoiceOptions?.invoices?.length > 0
-            ) {
-              for (const invoice of completePaymentRecord.invoiceOptions.invoices) {
-                await this.invoiceService.issueInvoiceDirectly(
-                  completePaymentRecord.order.appId,
-                  completePaymentRecord.orderId,
-                  completePaymentRecord.invoiceGatewayId,
-                  invoice,
-                  transactionalManager,
-                  paymentNo,
-                );
-              }
-            } else {
-              await this.invoiceService.issueInvoiceByPayment(completePaymentRecord, transactionalManager);
-            }
-          });
-        } catch (error) {
-          if (error.code === DB_LOCK_ERROR_CODE) {
-            this.logger.log(`Could not obtain lock for payment record: ${paymentNo}, skipping...`);
-          } else {
+          }
+        } else {
+          try {
+            await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
+          } catch (error) {
             errors.push({ error: error.message });
             this.logger.error({
               error: JSON.stringify(error),

@@ -80,7 +80,7 @@ export class LeadService {
       member.metadata = {
         ...metadata,
         leadgenId,
-        is_distributed: false,
+        is_distributed: metadata.is_distributed ?? false,
         from_lead_webhook_at: metadata.from_lead_webhook_at ?? new Date().toISOString(),
       };
     } else {
