@@ -33,7 +33,7 @@ export class InvoiceRunner extends Runner {
     private readonly utilityService: UtilityService,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {
-    super(InvoiceRunner.name, 5 * 60 * 1000, logger, distributedLockService, shutdownService);
+    super(InvoiceRunner.name, 1 * 60 * 1000, logger, distributedLockService, shutdownService);
     this.batchSize = 200;
   }
 
@@ -46,15 +46,38 @@ export class InvoiceRunner extends Runner {
 
       for (const paymentLog of paymentLogs) {
         const { no: paymentNo } = paymentLog;
-        try {
-          await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
-        } catch (error) {
-          errors.push({ error: error.message });
-          this.logger.error({
-            error: JSON.stringify(error),
-            title: '開立發票失敗',
-            message: `paymentNo: ${paymentNo}`,
-          });
+
+        if (paymentLog.invoiceOptions?.invoices && paymentLog.invoiceOptions?.invoices?.length > 0) {
+          for (const invoice of paymentLog.invoiceOptions.invoices) {
+            try {
+              await this.invoiceService.issueInvoiceDirectly(
+                paymentLog.order.appId,
+                paymentLog.orderId,
+                paymentLog.invoiceGatewayId,
+                invoice,
+                this.entityManager,
+                paymentNo,
+              );
+            } catch (error) {
+              errors.push({ error: error.message });
+              this.logger.error({
+                error: JSON.stringify(error),
+                title: '開立發票失敗',
+                message: `paymentNo: ${paymentNo}`,
+              });
+            }
+          }
+        } else {
+          try {
+            await this.invoiceService.issueInvoiceByPayment(paymentLog, manager);
+          } catch (error) {
+            errors.push({ error: error.message });
+            this.logger.error({
+              error: JSON.stringify(error),
+              title: '開立發票失敗',
+              message: `paymentNo: ${paymentNo}`,
+            });
+          }
         }
         await this.utilityService.sleep(1000);
       }
