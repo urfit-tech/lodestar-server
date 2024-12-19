@@ -26,6 +26,7 @@ import { EquityController } from './equity/equity.controller';
 import { EquityModule } from './equity/equity.module';
 import { MerchandiseModule } from './merchandise/merchandise.module';
 import { InvoiceModule } from './invoice/invoice.module';
+import { CoinModule } from './coin/coin.module';
 
 @Module({
   controllers: [ApplicationController],
