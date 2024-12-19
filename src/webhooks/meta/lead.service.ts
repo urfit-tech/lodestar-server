@@ -103,6 +103,6 @@ export class LeadService {
   }
 
   private parsePhoneNumber(phoneNumber: string) {
-    return parsePhoneNumberFromString(phoneNumber)?.formatNational().replace(/\s+/g, '') || '';
+    return parsePhoneNumberFromString(phoneNumber)?.formatNational().replace(/\s+/g, '') || phoneNumber;
   }
 }
