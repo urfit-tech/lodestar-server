@@ -135,7 +135,7 @@ export class EzpayClient {
     );
     return {
       ...data,
-      Result: JSON.parse(data.Result),
+      Result: await this.safeParseJSON(data.Result),
     };
   }
 
@@ -169,5 +169,13 @@ export class EzpayClient {
       Message: data.Message,
       Result: result,
     };
+  }
+
+  async safeParseJSON<T = unknown>(input: string): Promise<T | string> {
+    try {
+      return JSON.parse(input);
+    } catch {
+      return input;
+    }
   }
 }
