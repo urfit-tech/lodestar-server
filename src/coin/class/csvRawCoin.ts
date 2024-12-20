@@ -52,6 +52,16 @@ export class CsvRawCoin {
   @IsOptional()
   @Transform(({ value }) => (value ? dayjs(value).toISOString() : value))
   @IsDateString(undefined, { always: true })
+  claimStartedAt: string | null | undefined;
+
+  @IsOptional()
+  @Transform(({ value }) => (value ? dayjs(value).toISOString() : value))
+  @IsDateString(undefined, { always: true })
+  claimEndedAt: string | null | undefined;
+
+  @IsOptional()
+  @Transform(({ value }) => (value ? dayjs(value).toISOString() : value))
+  @IsDateString(undefined, { always: true })
   createdAt: string | null | undefined;
 
   public deserializedFromCsvRawRow(
@@ -66,6 +76,8 @@ export class CsvRawCoin {
     this.note = parseNullableFieldFromRaw<string>(row[header.note]);
     this.description = parseNullableFieldFromRaw<string>(row[header.description]);
     this.claimedAt = parseDateStringFieldFromRaw<string>(row[header.claimedAt]);
+    this.claimStartedAt = parseDateStringFieldFromRaw<string>(row[header.claimStartedAt]);
+    this.claimEndedAt = parseDateStringFieldFromRaw<string>(row[header.claimEndedAt]);
     this.createdAt = parseDateStringFieldFromRaw<string>(row[header.createdAt]);
     return [this, validateSync(this)];
   }

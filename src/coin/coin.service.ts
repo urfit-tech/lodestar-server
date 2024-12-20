@@ -61,6 +61,12 @@ export class CoinService {
       coinLog.claimedAt = !eachRow.claimedAt
         ? null
         : dayjs(eachRow.claimedAt).isValid() && dayjs(eachRow.claimedAt).toDate();
+      coinLog.claimStartedAt = !eachRow.claimStartedAt
+        ? null
+        : dayjs(eachRow.claimStartedAt).isValid() && dayjs(eachRow.claimStartedAt).toDate();
+      coinLog.claimEndedAt = !eachRow.claimEndedAt
+        ? null
+        : dayjs(eachRow.claimEndedAt).isValid() && dayjs(eachRow.claimEndedAt).toDate();
       coinLog.createdAt = !eachRow.createdAt
         ? dayjs().toDate()
         : dayjs(eachRow.createdAt).isValid() && dayjs(eachRow.createdAt).toDate();

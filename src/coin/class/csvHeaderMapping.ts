@@ -35,6 +35,14 @@ export class CoinCsvHeaderMapping {
 
   @IsString()
   @ValidateIf((_, value) => value !== undefined)
+  claimStartedAt: string;
+
+  @IsString()
+  @ValidateIf((_, value) => value !== undefined)
+  claimEndedAt: string;
+
+  @IsString()
+  @ValidateIf((_, value) => value !== undefined)
   createdAt: string;
 
   public deserializeFromRaw(headerRow: Record<string, string>): [CoinCsvHeaderMapping, Array<ValidationError>] {
@@ -49,6 +57,8 @@ export class CoinCsvHeaderMapping {
         case 'note':
         case 'description':
         case 'claimedAt':
+        case 'claimStartedAt':
+        case 'claimEndedAt':
         case 'createdAt':
           this[codeReadable] = humanReadable;
           continue;
