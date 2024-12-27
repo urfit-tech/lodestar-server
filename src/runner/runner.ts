@@ -6,29 +6,36 @@ import { Logger } from '@nestjs/common';
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 import { getMemoryUsageString } from '~/utils';
+import { RunnerInfrastructure } from './runner.infra';
 
 export abstract class Runner {
   public readonly uuid: string;
   protected readonly name: string;
-  protected readonly interval: number;
+  protected interval: number;
   protected readonly logger: Logger;
   protected readonly lockService: DistributedLockService;
   protected readonly shutdownService: ShutdownService;
   protected previousExecutedTime: Date;
+  protected readonly runnerInfrastructure: RunnerInfrastructure;
+  private readonly manager: EntityManager;
+  private defaultInterval = 30000;
+  private defaultBatchSize = 20;
 
   constructor(
     name: string,
-    interval: number,
     logger: Logger,
     lockService: DistributedLockService,
     shutdownService: ShutdownService,
+    runnerInfrastructure: RunnerInfrastructure,
+    manager: EntityManager,
   ) {
     this.uuid = v4();
     this.name = name;
-    this.interval = interval;
     this.logger = logger;
     this.lockService = lockService;
     this.shutdownService = shutdownService;
+    this.runnerInfrastructure = runnerInfrastructure;
+    this.manager = manager;
   }
 
   abstract execute(manager?: EntityManager): Promise<void>;
@@ -61,8 +68,38 @@ export abstract class Runner {
     return this.name;
   }
 
-  getInterval(): number {
-    return this.interval;
+  async getInterval(): Promise<number> {
+    const runnerConfig = await this.runnerInfrastructure.getRunnerConfig(this.name, this.manager);
+    const intervalMs = this.validateInteger(runnerConfig.intervalMs, this.defaultInterval, 'intervalMs');
+
+    this.logger.log(
+      JSON.stringify({
+        name: runnerConfig.runnerName,
+        intervalMs,
+      }),
+    );
+    return intervalMs;
+  }
+
+  async getBatchSize(): Promise<number> {
+    const runnerConfig = await this.runnerInfrastructure.getRunnerConfig(this.name, this.manager);
+    const batchSize = this.validateInteger(runnerConfig.batchSize, this.defaultBatchSize, 'batchSize');
+
+    this.logger.log(
+      JSON.stringify({
+        name: runnerConfig.runnerName,
+        batchSize,
+      }),
+    );
+    return batchSize;
+  }
+
+  private validateInteger(value: any, defaultValue: number, fieldName: string): number {
+    if (Number.isInteger(value)) {
+      return value;
+    }
+    this.logger.warn(`${fieldName} is not an integer. Using default value: ${defaultValue}`);
+    return defaultValue;
   }
 
   getPreviousExecutedTime(): Date {
