@@ -121,7 +121,7 @@ export class AuthService {
 
       if (member.role !== 'app-owner' && isLoginAndDeviceModuleEnable) {
         const device: MemberDevice | undefined = await this.deviceService.getByFingerprintId(member.id, fingerPrintId);
-        if (device && !device.isLogin) {
+        if (!device?.isLogin) {
           return { status: RefreshStatus.E_SESSION_DESTROY };
         }
       }
