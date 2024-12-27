@@ -3,7 +3,7 @@ import { ProgramContent } from '~/program/entity/program_content.entity';
 import { ProgramContentEvent } from './types/playerEvent';
 
 export interface PorterCommand {
-  execute(manager: EntityManager): Promise<void>;
+  execute(manager: EntityManager, batchSize: number): Promise<void>;
 }
 
 export interface PorterPlayerEventCommand {
