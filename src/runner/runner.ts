@@ -69,16 +69,9 @@ export abstract class Runner {
   }
 
   async getInterval(): Promise<number> {
-    const runnerConfig = await this.runnerInfrastructure.getRunnerConfig(this.name, this.manager);
-    const intervalMs = this.validateInteger(runnerConfig.intervalMs, this.defaultInterval, 'intervalMs');
+    await this.updateInterval();
 
-    this.logger.log(
-      JSON.stringify({
-        name: runnerConfig.runnerName,
-        intervalMs,
-      }),
-    );
-    return intervalMs;
+    return this.interval;
   }
 
   async getBatchSize(): Promise<number> {
@@ -92,6 +85,17 @@ export abstract class Runner {
       }),
     );
     return batchSize;
+  }
+
+  private async updateInterval(): Promise<void> {
+    const runnerConfig = await this.runnerInfrastructure.getRunnerConfig(this.name, this.manager);
+    this.logger.log(
+      `updateInterval: ${JSON.stringify({
+        name: runnerConfig.runnerName,
+        intervalMs: runnerConfig.intervalMs,
+      })}`,
+    );
+    this.interval = this.validateInteger(runnerConfig.intervalMs, this.defaultInterval, 'intervalMs');
   }
 
   private validateInteger(value: any, defaultValue: number, fieldName: string): number {

@@ -22,6 +22,13 @@ export class PaymentInfrastructure {
         gateway: Not(In(['lodestar', 'manual'])),
       },
       take: limit,
+      relations: {
+        order: {
+          member: true,
+          orderProducts: true,
+          orderDiscounts: true,
+        },
+      },
     });
   }
 
