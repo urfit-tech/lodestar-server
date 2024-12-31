@@ -428,9 +428,9 @@ export class InvoiceService {
     invoice.orderId = orderId;
     invoice.no = invoiceNumber;
     invoice.price = price;
-    invoice.options = {
-      ...invoiceResponse,
-    };
+    invoice.options = { ...invoiceResponse };
+
+    delete invoice.createdAt;
 
     await this.invoiceInfra.save(invoice, manager);
   }
