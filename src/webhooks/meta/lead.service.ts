@@ -56,6 +56,8 @@ export class LeadService {
         }),
       );
 
+      console.log('LeadService upsertMemberPhone Body Data: ', JSON.stringify(body));
+
       await this.memberInfra.upsertMemberPhone(entityManager, member.id, this.parsePhoneNumber(body.phone_number));
     });
   }
