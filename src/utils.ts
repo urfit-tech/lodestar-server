@@ -30,6 +30,12 @@ export function parseNullableFieldFromRaw<T>(
   return isEmptyString(value) || value === undefined ? undefined : isNullString(value) ? null : parser(value);
 }
 
+export const digitalCodeGenerator = (num: number) => {
+  return Math.floor(1 + Math.random() * parseInt('9'.repeat(num)))
+    .toString()
+    .padStart(num, '0');
+};
+
 export function parseDateStringFieldFromRaw<T>(
   value: string | undefined,
   parser: (value: string) => T = (value: string) => value as T,
@@ -40,3 +46,19 @@ export function parseDateStringFieldFromRaw<T>(
     ? parser(dayjs(value).toISOString())
     : parser(value);
 }
+
+export const getBrowserByUserAgent = (userAgent: string) => {
+  if (userAgent.includes('Edg/')) {
+    return 'Microsoft Edge';
+  } else if (userAgent.includes('Chrome/')) {
+    return 'Google Chrome';
+  } else if (userAgent.includes('Firefox/')) {
+    return 'Mozilla Firefox';
+  } else if (userAgent.includes('Safari/') && !userAgent.includes('Chrome/')) {
+    return 'Apple Safari';
+  } else if (userAgent.includes('OPR/') || userAgent.includes('Opera/')) {
+    return 'Opera';
+  } else {
+    return 'Unknown Browser';
+  }
+};

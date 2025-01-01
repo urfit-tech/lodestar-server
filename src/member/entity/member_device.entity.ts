@@ -7,7 +7,7 @@ import { Member } from '~/member/entity/member.entity';
 @Index('member_device_pkey', ['id'], { unique: true })
 @Entity('member_device', { schema: 'public' })
 export class MemberDevice {
-  @Column('text', { name: 'member_id', unique: true })
+  @Column('text', { name: 'member_id' })
   memberId: string;
 
   @Column('text', { name: 'type', nullable: true })
@@ -20,7 +20,7 @@ export class MemberDevice {
   })
   options: object | null;
 
-  @Column('text', { name: 'fingerprint_id', unique: true })
+  @Column('text', { name: 'fingerprint_id' })
   fingerprintId: string;
 
   @Column('timestamp with time zone', {
@@ -47,6 +47,7 @@ export class MemberDevice {
   @Column('uuid', {
     primary: true,
     name: 'id',
+    unique: true,
     default: () => 'gen_random_uuid()',
   })
   id: string;

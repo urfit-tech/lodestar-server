@@ -58,7 +58,9 @@ export class EmailService {
         content: content ? Mustache.render(content, partials) : this.renderPartials(partials),
       };
       this.mailerQueue.add(job, { removeOnComplete: true, removeOnFail: true });
-    } catch {}
+    } catch (error) {
+      console.error(`insert email queue job failed, error:${error}`);
+    }
   }
 
   private getDefaultTemplate(catalog: string): string | null {
