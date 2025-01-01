@@ -235,6 +235,7 @@ import { MerchandiseSpecInventoryStatusView } from '~/merchandise/entity/Merchan
 import { CoinLogAuditLog } from '~/coin/entity/coin_log_audit_log.entity';
 import { MailVerificationCode } from '../entity/MailVerificationCode';
 import { RunnerConfig } from '~/runner/entity/runner-config.entity';
+import { MailVerificationCode } from '../entity/MailVerificationCode';
 
 export const PostgresEntities = [
   Activity,
@@ -474,4 +475,5 @@ export const PostgresEntities = [
   ProgramContentEbook,
   MailVerificationCode,
   RunnerConfig,
+  MailVerificationCode,
 ];
