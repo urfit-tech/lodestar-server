@@ -12,11 +12,20 @@ import DeviceService from './device/device.service';
 import { CacheService } from '~/utility/cache/cache.service';
 import { UtilityService } from '~/utility/utility.service';
 import { AccessControlService } from './access-control.service';
+import { MailVerificationCodeModule } from '~/mailVerificationCode/mailVerificationCode.module';
 
 @Module({
   controllers: [AuthController],
-  imports: [AppModule, MemberModule, PermissionModule, MailerModule],
-  providers: [Logger, AuthService, DeviceService, AuthInfrastructure, CacheService, UtilityService,AccessControlService],
-  exports: [AuthService, AuthInfrastructure,AccessControlService],
+  imports: [AppModule, MemberModule, PermissionModule, MailerModule, MailVerificationCodeModule],
+  providers: [
+    Logger,
+    AuthService,
+    DeviceService,
+    AuthInfrastructure,
+    CacheService,
+    UtilityService,
+    AccessControlService,
+  ],
+  exports: [AuthService, AuthInfrastructure, AccessControlService],
 })
 export class AuthModule {}

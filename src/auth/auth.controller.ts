@@ -1,10 +1,8 @@
 import { Request, Response } from 'express';
 import { Body, Controller, Headers, Logger, Post, Req, Res, Session, UseGuards } from '@nestjs/common';
-
 import { PublicMember } from '~/member/member.type';
 import { AppCache } from '~/app/app.type';
 import { Local } from '~/decorator';
-
 import { AuthService } from './auth.service';
 import { RefreshTokenDTO } from './auth.dto';
 import { CrossServerTokenDTO, GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus, RefreshStatus } from './auth.type';
@@ -16,6 +14,7 @@ import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { AuthGuard } from './auth.guard';
 import { PermissionGuard } from './permission.guard';
+import MailVerificationCodeService from '~/mailVerificationCode/mailVerificationCode.service';
 
 @ApiTags('Auth')
 @Controller({
@@ -27,6 +26,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly deviceService: DeviceService,
     private readonly logger: Logger,
+    private readonly mailVerificationCodeService: MailVerificationCodeService,
   ) {}
 
   @Post('general-login')
@@ -70,6 +70,7 @@ export class AuthController {
       }
 
       const { fingerPrintId, geoLocation } = cookies;
+
       const deviceStatus: LoginDeviceStatus = fingerPrintId
         ? await this.deviceService.checkAndBindDevices(appCache, {
             appId,
@@ -80,12 +81,19 @@ export class AuthController {
             fingerPrintId,
           })
         : LoginDeviceStatus.UNSUPPORTED;
-
       switch (deviceStatus) {
         case LoginDeviceStatus.BIND_LIMIT_EXCEED:
+          await this.mailVerificationCodeService.expireOldAndSendVerificationCode(
+            appId,
+            member.email,
+            'login-device-limit',
+            userAgent,
+            geoLocation?.ip,
+          );
           return {
             code: 'E_BIND_DEVICE',
             message: 'The number of device bind for this member reach limit.',
+            result: { member: { id: member.id, email: member.email } },
           };
         case LoginDeviceStatus.LOGIN_LIMIT_EXCEED:
           return {
