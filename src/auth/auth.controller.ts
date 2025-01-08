@@ -33,6 +33,7 @@ export class AuthController {
   @ApiExcludeEndpoint()
   async generalLogin(
     @Req() request: Request,
+    @Headers('user-agent') userAgents: string,
     @Local('appCache') appCache: AppCache,
     @Session() session: Record<string, any> | undefined,
     @Headers('User-Agent') userAgent: string | undefined,
@@ -43,10 +44,16 @@ export class AuthController {
     }
 
     const { cookies } = request;
-    const { appId, account, password } = body;
+    const { appId, account, password, fingerPrintId: bodyFingerPrint, geoLocation } = body;
     const { modules: appModules } = appCache;
     const isBusinessModuleEnable = appModules.includes('business_member');
     const loggedInMembers: Array<PublicMember> = (session[appId] && session[appId].members) || [];
+
+    const { fingerPrintId: cookieFingerPrint } = cookies;
+    const fingerPrintId =
+      bodyFingerPrint && !cookieFingerPrint
+        ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgents)
+        : cookieFingerPrint;
 
     try {
       const { status, authToken, member } = await this.authService.generalLogin(appCache, {
@@ -68,8 +75,6 @@ export class AuthController {
       if (member.isBusiness && !isBusinessModuleEnable) {
         return { code: 'E_NO_MODULE', message: 'business_member module disabled' };
       }
-
-      const { fingerPrintId, geoLocation } = cookies;
 
       const deviceStatus: LoginDeviceStatus = fingerPrintId
         ? await this.deviceService.checkAndBindDevices(appCache, {
