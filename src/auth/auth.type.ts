@@ -1,4 +1,6 @@
-import { IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { GeoLocation } from './auth.dto';
 
 export enum LoginStatus {
   E_NO_MEMBER,
@@ -23,6 +25,14 @@ export class GeneralLoginDTO {
 
   @IsString()
   password: string;
+
+  @IsString()
+  @IsOptional()
+  fingerPrintId: string | null;
+
+  @ValidateNested()
+  @Type(() => GeoLocation)
+  geoLocation: GeoLocation;
 }
 
 export interface CrossServerTokenDTO {
