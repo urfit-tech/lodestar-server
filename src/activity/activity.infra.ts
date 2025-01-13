@@ -38,6 +38,7 @@ export class ActivityInfrastructure {
     offset = 0,
     categoryId?: string,
     scenario?: 'holding' | 'finished' | 'draft' | 'privateHolding',
+    organizerId?: string | null,
   ): Promise<[Activity[], number]> {
     const activityRepo = manager.getRepository(Activity);
 
@@ -74,6 +75,9 @@ export class ActivityInfrastructure {
       case 'privateHolding':
         queryBuilder.andWhere('activity.is_private = true').andWhere('adp.ended_at > CURRENT_TIMESTAMP');
         break;
+    }
+    if (organizerId) {
+      queryBuilder.andWhere('activity.organizer_id = :organizerId', { organizerId });
     }
     queryBuilder.orderBy('activity.createdAt', 'DESC', 'NULLS LAST');
 
