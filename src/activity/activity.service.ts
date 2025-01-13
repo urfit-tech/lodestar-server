@@ -103,6 +103,7 @@ export class ActivityService {
       dto.offset,
       dto.categoryId,
       dto.basicCondition.scenario,
+      dto.basicCondition.organizerId,
     );
   }
 
