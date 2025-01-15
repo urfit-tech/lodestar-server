@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { digitalCodeGenerator, getBrowserByUserAgent } from '~/utils';
 import { MailVerificationCodeInfrastructure } from './mailVerificationCode.infra';
@@ -7,8 +7,6 @@ import { EmailService } from '~/mailer/email/email.service';
 import { AppCache } from '~/app/app.type';
 import { AppService } from '~/app/app.service';
 import { DeviceInfrastructure } from '~/auth/device/device.infra';
-import { APIException } from '~/api.excetion';
-
 @Injectable()
 export default class MailVerificationCodeService {
   constructor(
@@ -19,7 +17,13 @@ export default class MailVerificationCodeService {
     @InjectEntityManager() private entityManager: EntityManager,
   ) {}
 
-  async checkMailVerificationCode(appId: string, email: string, type: string, code: string): Promise<boolean> {
+  async checkMailVerificationCodeExpired(
+    appId: string,
+    email: string,
+    type: string,
+    code: string,
+    expirationTimeMs: number,
+  ): Promise<boolean> {
     const result = await this.mailVerificationCodeInfra.getMailVerificationCode(
       appId,
       email,
@@ -27,13 +31,13 @@ export default class MailVerificationCodeService {
       code,
       this.entityManager,
     );
-    if (result.id) return true;
-    return false;
+    return new Date(result.expiredAt).getTime() - new Date().getTime() < expirationTimeMs;
   }
 
   async verifyMailVerificationCode(appId: string, email: string, memberId: string, type: string, code: string) {
     try {
-      const isVerify = await this.checkMailVerificationCode(appId, email, type, code);
+      const expirationTimeMs = 1000 * 60 * 30;
+      const isVerify = await this.checkMailVerificationCodeExpired(appId, email, type, code, expirationTimeMs);
       if (isVerify) {
         const memberDevices = await this.memberDeviceInfra.getMemberDevices(memberId, this.entityManager);
         const oldestMemberDeviceId = memberDevices.reduce((prev, curr) => {
@@ -99,24 +103,24 @@ export default class MailVerificationCodeService {
     const expirationTimeMs = 1000 * 60 * 30;
     try {
       code = digitalCodeGenerator(4);
-      const verificationCodes = await this.mailVerificationCodeInfra.getUnexpiredMailVerificationCodesByEmail(
+      const mailVerificationCodes = await this.mailVerificationCodeInfra.getUnexpiredMailVerificationCodesByEmail(
         appId,
         email,
         type,
         this.entityManager,
       );
-      const verificationCodeIds = verificationCodes.map((verificationCode) => verificationCode.id);
+      const mailVerificationCodeIds = mailVerificationCodes.map((mailVerificationCode) => mailVerificationCode.id);
       await this.mailVerificationCodeInfra.updateMailVerificationCodesToNow(
-        verificationCodeIds,
+        mailVerificationCodeIds,
         appId,
         email,
         type,
         this.entityManager,
       );
       // The new verification code must not be the same as an unexpired verification code.
-      while (verificationCodes.find((verificationCode) => verificationCode.code === code)) {
+      while (mailVerificationCodes.find((mailVerificationCode) => mailVerificationCode.code === code)) {
         code = digitalCodeGenerator(4);
-        if (!verificationCodes.find((verificationCode) => verificationCode.code === code)) {
+        if (!mailVerificationCodes.find((mailVerificationCode) => mailVerificationCode.code === code)) {
           break;
         }
       }
