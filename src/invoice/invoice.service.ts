@@ -27,6 +27,7 @@ type InvoiceOptions = {
   uniformNumber?: string;
   uniformTitle?: string;
   citizenCode?: string;
+  kioskPrintFlag?: string;
 };
 
 @Injectable()
@@ -262,6 +263,13 @@ export class InvoiceService {
         CarrierType: 1,
         CarrierNum: options.citizenCode,
         PrintFlag: 'N',
+      };
+    } else if (options.kioskPrintFlag) {
+      invoiceAttrs = {
+        Category: 'B2C',
+        PrintFlag: 'N',
+        CarrierType: 2,
+        KioskPrintFlag: '1',
       };
     } else if (options.email) {
       invoiceAttrs = {
