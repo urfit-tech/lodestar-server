@@ -235,6 +235,7 @@ import { MerchandiseSpecInventoryStatusView } from '~/merchandise/entity/Merchan
 import { CoinLogAuditLog } from '~/coin/entity/coin_log_audit_log.entity';
 import { RunnerConfig } from '~/runner/entity/runner-config.entity';
 import { MailVerificationCode } from '../entity/MailVerificationCode';
+import { InvoiceLog } from '~/invoice/invoice_log.entity';
 
 export const PostgresEntities = [
   Activity,
@@ -306,6 +307,7 @@ export const PostgresEntities = [
   GiftPlanProduct,
   Identity,
   Invoice,
+  InvoiceLog,
   InvoiceGateway,
   Issue,
   IssueReaction,

@@ -12,6 +12,9 @@ import { Invoice } from '~/invoice/invoice.entity';
 import { EzpayClient, EzpayClientResponse } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
 import { InvoiceInfo } from './invoice.dto';
+import { InvoiceLog } from './invoice_log.entity';
+import { InvoiceLogInfrastructure } from './invoice_log.infra';
+import { sum } from 'lodash';
 
 type InvoiceOptions = {
   appId: string;
@@ -37,6 +40,7 @@ export class InvoiceService {
     private readonly ezpayClient: EzpayClient,
     @InjectEntityManager() private readonly entityManager: EntityManager,
     private readonly invoiceInfra: InvoiceInfrastructure,
+    private readonly invoiceLogInfra: InvoiceLogInfrastructure,
     private readonly orderInfra: OrderInfrastructure,
     private readonly paymentInfra: PaymentInfrastructure,
     private readonly appService: AppService,
@@ -120,6 +124,28 @@ export class InvoiceService {
     const { order, no: paymentNo, options, price, invoiceOptions: invoiceInfo } = payment;
 
     try {
+      const paymentLogs = await this.paymentInfra.getPaymentLogsByOrderIds([order.id], manager);
+      const invoices = await this.invoiceInfra.getInvoicesByOrderIds([order.id], manager);
+      const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
+      const orderProductsPrice = orderProducts.map((prod) => prod.price);
+      const paymentLogsPrice = paymentLogs.map((log) => log.price);
+      const invoicePrice = invoices.map((invoice) => invoice.price);
+      if (sum(paymentLogsPrice) > sum(orderProductsPrice)) {
+        this.logger.log(
+          `Issues Invoice Failed: the total amount exceeds by ${order.id} in payments ${paymentLogs.map(
+            (log) => log.no,
+          )}`,
+        );
+        return;
+      }
+      if (sum(invoicePrice) >= sum(orderProductsPrice)) {
+        this.logger.log(
+          `Issues Invoice Failed: the total amount exceeds by ${order.id} in invoices ${invoices.map(
+            (invoice) => invoice.no,
+          )}`,
+        );
+        return;
+      }
       const { member } = order;
       const appId = member.appId;
       const card4No = options?.card4No;
@@ -130,9 +156,13 @@ export class InvoiceService {
       const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, payment.invoiceGatewayId, manager);
 
       this.logger.log(`issuing invoice of paymentNo: ${paymentNo}`);
-      const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
 
-      const { invServiceResponse } = await this.issueInvoice(appInvoiceGateway.options, paymentNo, price, {
+      const paymentLog = await this.paymentInfra.getOneByNo(paymentNo, this.entityManager);
+      const merchantOrderNo = paymentLog.invoiceOptions['retry']
+        ? paymentNo.replace(/-/g, '').substring(0, 20).slice(0, -1) + parseInt(paymentLog.invoiceOptions['retry'])
+        : paymentNo.replace(/-/g, '').substring(0, 20);
+
+      const { invServiceResponse } = await this.issueInvoice(appInvoiceGateway.options, price, merchantOrderNo, {
         appId,
         name: invoiceOptions['name'] || member.name,
         email: invoiceOptions['email'] || member.email,
@@ -160,12 +190,14 @@ export class InvoiceService {
         citizenCode: invoiceOptions['citizenCode'],
       });
       const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber'];
+      const invoiceTransNo = invServiceResponse.Result?.['InvoiceTransNo'];
+      const invoiceRandomNumber = invServiceResponse.Result?.['RandomNum'];
 
       const toUpdateInvoiceOptions =
         invServiceResponse.Status === 'SUCCESS'
           ? {
-              invoiceTransNo: invServiceResponse.Result?.['InvoiceTransNo'],
-              invoiceRandomNumber: invServiceResponse.Result?.['RandomNum'],
+              invoiceTransNo: invoiceTransNo,
+              invoiceRandomNumber: invoiceRandomNumber,
               invoiceNumber: invoiceNumber,
             }
           : {
@@ -182,6 +214,19 @@ export class InvoiceService {
         manager,
       );
       this.logger.log(`[PaymentNo: ${paymentNo}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
+
+      await this.insertInvoiceLog(
+        merchantOrderNo,
+        invServiceResponse.Status,
+        invServiceResponse.Message,
+        orderLogs[0].id,
+        appInvoiceGateway.id,
+        invoiceNumber,
+        invoiceTransNo,
+        invoiceRandomNumber,
+        invServiceResponse,
+        manager,
+      );
 
       if (invServiceResponse.Status === 'SUCCESS') {
         const orderId = orderLogs[0].id;
@@ -235,7 +280,12 @@ export class InvoiceService {
     return result;
   }
 
-  private async issueInvoice(invoiceGatewayConfig: object, paymentNo: string, amount: number, options: InvoiceOptions) {
+  private async issueInvoice(
+    invoiceGatewayConfig: object,
+    amount: number,
+    merchantOrderNo: string,
+    options: InvoiceOptions,
+  ) {
     let invoiceAttrs: { [key: string]: any } = {};
     if (options.donationCode) {
       invoiceAttrs = {
@@ -353,7 +403,7 @@ export class InvoiceService {
       BuyerEmail: options.email || '',
       PrintFlag: 'Y',
       Comment: options.comment,
-      MerchantOrderNo: paymentNo.replace(/-/g, '').substr(0, 20),
+      MerchantOrderNo: merchantOrderNo,
       ...invoiceAttrs,
       ...taxOptions,
     });
@@ -441,6 +491,36 @@ export class InvoiceService {
     delete invoice.createdAt;
 
     await this.invoiceInfra.save(invoice, manager);
+  }
+
+  private async insertInvoiceLog(
+    merchantOrderNo: string,
+    status: string,
+    message: string,
+    orderId: string,
+    appInvoiceGatewayId: string,
+    invoiceNumber: string,
+    invoiceTransNo: string,
+    invoiceRandomNumber: string,
+    options: object,
+    manager: EntityManager,
+  ) {
+    const invoiceLog = new InvoiceLog();
+
+    invoiceLog.merchantOrderNo = merchantOrderNo;
+    invoiceLog.status = status;
+    invoiceLog.message = message;
+    invoiceLog.orderId = orderId;
+    invoiceLog.appInvoiceGatewayId = appInvoiceGatewayId;
+    invoiceLog.invoiceNumber = invoiceNumber;
+    invoiceLog.invoiceTransNo = invoiceTransNo;
+    invoiceLog.invoiceRandomNumber = invoiceRandomNumber;
+    invoiceLog.options = options;
+    try {
+      await this.invoiceLogInfra.save(invoiceLog, manager);
+    } catch (err) {
+      this.logger.log('Invoice Log Save Error: ', JSON.stringify(err));
+    }
   }
 
   private async updateInvoiceRevokedAt(invoiceNumber: string, manager: EntityManager): Promise<void> {
