@@ -11,11 +11,12 @@ import { InvoiceInfrastructure } from './invoice.infra';
 import { InvoiceController } from './invoice.controller';
 import { AuthModule } from '~/auth/auth.module';
 import { PaymentService } from '~/payment/payment.service';
+import { InvoiceLogInfrastructure } from './invoice_log.infra';
 
 @Module({
   controllers: [InvoiceController],
   imports: [AuthModule, AppModule, OrderModule, PaymentModule, UtilityModule],
-  providers: [Logger, EzpayClient, InvoiceService, InvoiceInfrastructure, PaymentService],
+  providers: [Logger, EzpayClient, InvoiceService, InvoiceInfrastructure, InvoiceLogInfrastructure, PaymentService],
   exports: [EzpayClient, InvoiceService, InvoiceInfrastructure],
 })
 export class InvoiceModule {}
