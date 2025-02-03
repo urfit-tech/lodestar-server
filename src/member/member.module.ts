@@ -17,6 +17,7 @@ import { AuthInfrastructure } from '~/auth/auth.infra';
 import { UtilityService } from '~/utility/utility.service';
 import { AuthModule } from '~/auth/auth.module';
 import { AccessControlService } from '~/auth/access-control.service';
+import { PaginationService } from '~/utility/pagination/pagination.service';
 
 @Module({
   controllers: [MemberController],
@@ -37,6 +38,7 @@ import { AccessControlService } from '~/auth/access-control.service';
     CacheService,
     AuthInfrastructure,
     UtilityService,
+    PaginationService,
   ],
   exports: [MemberInfrastructure, MemberService],
 })

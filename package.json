@@ -65,7 +65,6 @@
     "rxjs": "^7.2.0",
     "sanitize-html": "^2.11.0",
     "typeorm": "^0.3.15",
-    "typeorm-cursor-pagination": "^0.10.1",
     "ua-parser-js": "^1.0.36",
     "uuid": "^9.0.0",
     "xlsx": "^0.18.5"

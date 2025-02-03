@@ -14,6 +14,7 @@ import { StorageController } from './storage/storage.controller';
 import { AuthModule } from '~/auth/auth.module';
 import { MediaService } from '~/media/media.service';
 import { MediaInfrastructure } from '~/media/media.infra';
+import { PaginationService } from './pagination/pagination.service';
 @Module({
   controllers: [StorageController],
   imports: [AuthModule, FeedModule, MailerModule, CallerModule, SocialModule],
@@ -26,7 +27,8 @@ import { MediaInfrastructure } from '~/media/media.infra';
     ShutdownService,
     MediaService,
     MediaInfrastructure,
+    PaginationService,
   ],
-  exports: [UtilityService, CacheService, ShutdownService, StorageService],
+  exports: [UtilityService, CacheService, ShutdownService, StorageService, PaginationService],
 })
 export class UtilityModule {}

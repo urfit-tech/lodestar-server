@@ -12,10 +12,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { DeleteResult } from 'typeorm';
-import { Cursor } from 'typeorm-cursor-pagination';
 
 import { MemberRole } from './member.type';
 import { isArray } from 'lodash';
+import { Cursor } from '~/utility/pagination/pagination.type';
 
 class FileInfo {
   @IsString()
