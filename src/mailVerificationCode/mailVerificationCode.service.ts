@@ -7,6 +7,7 @@ import { EmailService } from '~/mailer/email/email.service';
 import { AppCache } from '~/app/app.type';
 import { AppService } from '~/app/app.service';
 import { DeviceInfrastructure } from '~/auth/device/device.infra';
+
 @Injectable()
 export default class MailVerificationCodeService {
   constructor(
@@ -24,14 +25,18 @@ export default class MailVerificationCodeService {
     code: string,
     expirationTimeMs: number,
   ): Promise<boolean> {
-    const result = await this.mailVerificationCodeInfra.getMailVerificationCode(
+    const result = await this.mailVerificationCodeInfra.getUnexpiredMailVerificationCodesByEmail(
       appId,
       email,
       type,
-      code,
       this.entityManager,
     );
-    return new Date(result.expiredAt).getTime() - new Date().getTime() < expirationTimeMs;
+    if (result.length === 0) {
+      return false;
+    } else {
+      const expiredAt = result.find((mailVerificationCode) => mailVerificationCode.code === code)?.expiredAt;
+      return new Date(expiredAt).getTime() - new Date().getTime() < expirationTimeMs;
+    }
   }
 
   async verifyMailVerificationCode(appId: string, email: string, memberId: string, type: string, code: string) {
@@ -40,9 +45,10 @@ export default class MailVerificationCodeService {
       const isVerify = await this.checkMailVerificationCodeExpired(appId, email, type, code, expirationTimeMs);
       if (isVerify) {
         const memberDevices = await this.memberDeviceInfra.getMemberDevices(memberId, this.entityManager);
-        const oldestMemberDeviceId = memberDevices.reduce((prev, curr) => {
-          return new Date(curr.createdAt) < new Date(prev.createdAt) ? curr : prev;
-        }).id;
+        const oldestMemberDeviceId = memberDevices.reduce(
+          (prev, curr) => (new Date(curr.createdAt) < new Date(prev.createdAt) ? curr : prev),
+          memberDevices[0],
+        ).id;
         await this.memberDeviceInfra.deleteMemberDeviceById(oldestMemberDeviceId, this.entityManager);
         const unexpiredMailVerificationCodes =
           await this.mailVerificationCodeInfra.getUnexpiredMailVerificationCodesByEmail(

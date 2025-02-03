@@ -16,19 +16,6 @@ export class MailVerificationCodeInfrastructure {
     return verificationCodes;
   }
 
-  async getUnexpiredMailVerificationCodesByEmail(appId: string, email: string, type: string, manager: EntityManager) {
-    const verificationCodes = await manager
-      .getRepository(MailVerificationCode)
-      .createQueryBuilder('mailVerificationCode')
-      .select('mailVerificationCode')
-      .where('mailVerificationCode.appId = :appId', { appId })
-      .andWhere('mailVerificationCode.email = :email', { email })
-      .andWhere('mailVerificationCode.type = :type', { type })
-      .andWhere('mailVerificationCode.expiredAt > NOW()')
-      .getMany();
-    return verificationCodes;
-  }
-
   async insertVerificationCode(
     appId: string,
     email: string,
@@ -68,13 +55,16 @@ export class MailVerificationCodeInfrastructure {
     }
   }
 
-  async getMailVerificationCode(
-    appId: string,
-    email: string,
-    type: string,
-    code: string,
-    manager: EntityManager,
-  ): Promise<MailVerificationCode> {
-    return await manager.getRepository(MailVerificationCode).findOneBy({ appId, email, type, code });
+  async getUnexpiredMailVerificationCodesByEmail(appId: string, email: string, type: string, manager: EntityManager) {
+    const verificationCodes = await manager
+      .getRepository(MailVerificationCode)
+      .createQueryBuilder('mailVerificationCode')
+      .select('mailVerificationCode')
+      .where('mailVerificationCode.appId = :appId', { appId })
+      .andWhere('mailVerificationCode.email = :email', { email })
+      .andWhere('mailVerificationCode.type = :type', { type })
+      .andWhere('mailVerificationCode.expiredAt > NOW()')
+      .getMany();
+    return verificationCodes;
   }
 }
