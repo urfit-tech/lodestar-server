@@ -33,6 +33,8 @@ export class LeadService {
       this.entityManager,
     );
 
+    await this.upsertResubmissionMemberProperty(this.entityManager, app.id, { email: body.email }, body);
+
     await this.entityManager.transaction(async (entityManager) => {
       const member = await this.upsertMember(
         entityManager,
@@ -82,7 +84,7 @@ export class LeadService {
       member.metadata = {
         ...metadata,
         leadgenId,
-        is_distributed: metadata.is_distributed ?? false,
+        is_distributed: false,
         from_lead_webhook_at: metadata.from_lead_webhook_at ?? new Date().toISOString(),
       };
     } else {
@@ -102,6 +104,41 @@ export class LeadService {
       });
     }
     return this.memberInfra.saveMember(entityManager, member);
+  }
+
+  private async upsertResubmissionMemberProperty(
+    entityManager: EntityManager,
+    appId: string,
+    data: {
+      email: string;
+    },
+    body: LeadWebhookBody,
+  ) {
+    const propertyNameToField = {
+      最新填寫日期: 'created_time',
+    };
+    const member = await this.memberInfra.firstMemberByCondition(entityManager, {
+      appId,
+      email: data.email,
+    });
+    if (!member) return;
+    if (member) {
+      const properties = await this.definitionInfra.upsertProperties(
+        appId,
+        Object.keys(propertyNameToField),
+        this.entityManager,
+      );
+      return await Promise.all(
+        properties.map((property) => {
+          return this.memberInfra.upsertMemberProperty(
+            entityManager,
+            member.id,
+            property.id,
+            body[propertyNameToField[property.name]],
+          );
+        }),
+      );
+    }
   }
 
   private parsePhoneNumber(phoneNumber: string) {
