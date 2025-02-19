@@ -142,7 +142,7 @@ export default class MailVerificationCodeService {
       app = await this.appService.getAppInfo(appId);
       await this.putEmailQueue(
         appId,
-        'login-device-alert',
+        type,
         email,
         {
           browser: getBrowserByUserAgent(userAgent),
