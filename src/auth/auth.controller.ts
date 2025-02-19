@@ -15,6 +15,7 @@ import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { AuthGuard } from './auth.guard';
 import { PermissionGuard } from './permission.guard';
 import MailVerificationCodeService from '~/mailVerificationCode/mailVerificationCode.service';
+import { EventType } from '~/mailVerificationCode/mailVerificationCode.type';
 
 @ApiTags('Auth')
 @Controller({
@@ -33,11 +34,11 @@ export class AuthController {
   @ApiExcludeEndpoint()
   async generalLogin(
     @Req() request: Request,
-    @Headers('user-agent') userAgents: string,
     @Local('appCache') appCache: AppCache,
     @Session() session: Record<string, any> | undefined,
     @Headers('User-Agent') userAgent: string | undefined,
     @Body() body: GeneralLoginDTO,
+    @Res({ passthrough: true }) response: Response,
   ) {
     if (!session) {
       return { code: 'E_SESSION', message: 'cannot get session', result: null };
@@ -52,7 +53,7 @@ export class AuthController {
     const { fingerPrintId: cookieFingerPrint } = cookies;
     const fingerPrintId =
       bodyFingerPrint && !cookieFingerPrint
-        ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgents)
+        ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgent)
         : cookieFingerPrint;
 
     try {
@@ -87,23 +88,27 @@ export class AuthController {
           })
         : LoginDeviceStatus.UNSUPPORTED;
       switch (deviceStatus) {
-        case LoginDeviceStatus.BIND_LIMIT_EXCEED:
-          await this.mailVerificationCodeService.expireOldAndSendVerificationCode(
-            appId,
-            member.email,
-            'login-device-limit',
-            userAgent,
-            geoLocation?.ip,
-          );
-          return {
-            code: 'E_BIND_DEVICE',
-            message: 'The number of device bind for this member reach limit.',
-            result: { member: { id: member.id, email: member.email } },
-          };
         case LoginDeviceStatus.LOGIN_LIMIT_EXCEED:
           return {
             code: 'E_LOGIN_DEVICE',
             message: 'The number of device login for this member reach limit.',
+            result: null,
+          };
+        case LoginDeviceStatus.BIND_LIMIT_EXCEED:
+          await this.mailVerificationCodeService.expireOldAndSendVerificationCode(
+            appId,
+            member.email,
+            EventType.BIND_DEVICE_LIMIT,
+            userAgent,
+            geoLocation?.ip,
+          );
+          response.cookie('member', encodeURIComponent(JSON.stringify({ id: member.id, email: member.email })), {
+            maxAge: 600 * 1000,
+          });
+          return {
+            code: 'E_BIND_DEVICE',
+            message: 'The number of device bind for this member reach limit.',
+            result: null,
           };
         default:
           break;
@@ -141,7 +146,7 @@ export class AuthController {
   @ApiExcludeEndpoint()
   async refreshToken(
     @Local('appCache') appCache: AppCache,
-    @Headers('user-agent') userAgents: string,
+    @Headers('user-agent') userAgent: string,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
     @Session() session: Record<string, any> | undefined,
@@ -152,7 +157,7 @@ export class AuthController {
     const { fingerPrintId: cookieFingerPrint } = cookies;
     const fingerPrintId =
       bodyFingerPrint && !cookieFingerPrint
-        ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgents)
+        ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgent)
         : cookieFingerPrint;
     const sessionMemberId = session[appId] && session[appId].currentMemberId;
     const loggedInMembers: Array<PublicMember> = (session[appId] && session[appId].members) || [];
