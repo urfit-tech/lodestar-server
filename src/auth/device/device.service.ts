@@ -3,18 +3,18 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
 import { EntityManager } from 'typeorm';
 import UAParser from 'ua-parser-js';
-
 import { AppCache } from '~/app/app.type';
 import { MemberDevice } from '~/member/entity/member_device.entity';
 import { MemberInfrastructure } from '~/member/member.infra';
+import { DeviceInfrastructure } from './device.infra';
 import { MemberRole } from '~/member/member.type';
-
 import { LoginDeviceStatus } from './device.type';
 
 @Injectable()
 export default class DeviceService {
   constructor(
     private readonly memberInfra: MemberInfrastructure,
+    private readonly deviceInfra: DeviceInfrastructure,
     @InjectEntityManager() private entityManager: EntityManager,
   ) {}
 
@@ -122,6 +122,41 @@ export default class DeviceService {
       this.entityManager,
     );
     return LoginDeviceStatus.AVAILABLE;
+  }
+
+  async checkCurrentDeviceExist(memberId: string, fingerPrintId: string): Promise<boolean> {
+    const loginDevices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
+    return loginDevices.some((device) => device.fingerprintId === fingerPrintId);
+  }
+
+  async getLoginDevices(memberId: string): Promise<MemberDevice[]> {
+    const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
+    return devices.filter((device) => device.isLogin) || [];
+  }
+
+  async checkLoginDeviceReachedLimit(memberId: string, appCache: AppCache): Promise<boolean> {
+    const { settings } = appCache;
+    const loginLimit = Number(settings['login_device_num']) || 1;
+    const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
+    const loginedDevices = devices.filter((device) => device.isLogin);
+    return loginedDevices.length >= loginLimit;
+  }
+
+  async getEarliestLoginDevice(memberId: string): Promise<MemberDevice | null> {
+    const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
+    return devices.sort((a, b) => a.lastLoginAt.getTime() - b.lastLoginAt.getTime())[0] || null;
+  }
+
+  async logoutExcessDevices(memberId: string, appCache: AppCache): Promise<void> {
+    const { settings } = appCache;
+    const loginLimit = Number(settings['login_device_num']) || 1;
+    const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
+    const loginedDevices = devices
+      .filter((device) => device.isLogin)
+      .sort((a, b) => a.lastLoginAt.getTime() - b.lastLoginAt.getTime());
+    const devicesToBeLoggedOut = loginedDevices.slice(0, loginedDevices.length - loginLimit + 1);
+    const devicesToBeLoggedOutIds = devicesToBeLoggedOut.map((v) => v.id);
+    await this.deviceInfra.logoutMemberDevices(devicesToBeLoggedOutIds, this.entityManager);
   }
 
   async expireFingerPrintId(fingerprintId: string): Promise<void> {

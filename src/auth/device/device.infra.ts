@@ -28,4 +28,13 @@ export class DeviceInfrastructure {
     const memberDeviceRepo = manager.getRepository(MemberDevice);
     return await memberDeviceRepo.delete({ id });
   }
+
+  async logoutMemberDevices(ids: string[], manager: EntityManager) {
+    const memberDeviceRepo = manager.getRepository(MemberDevice);
+    return await memberDeviceRepo
+      .createQueryBuilder('MemberDevice')
+      .update({ isLogin: false })
+      .where('id IN (:...ids)', { ids })
+      .execute();
+  }
 }
