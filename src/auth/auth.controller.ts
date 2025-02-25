@@ -146,7 +146,7 @@ export class AuthController {
   @ApiExcludeEndpoint()
   async refreshToken(
     @Local('appCache') appCache: AppCache,
-    @Headers('user-agent') userAgent: string,
+    @Headers('user-agent') userAgents: string,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
     @Session() session: Record<string, any> | undefined,
@@ -157,7 +157,7 @@ export class AuthController {
     const { fingerPrintId: cookieFingerPrint } = cookies;
     const fingerPrintId =
       bodyFingerPrint && !cookieFingerPrint
-        ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgent)
+        ? this.deviceService.getFingerPrintFromUa(bodyFingerPrint, userAgents)
         : cookieFingerPrint;
     const sessionMemberId = session[appId] && session[appId].currentMemberId;
     const loggedInMembers: Array<PublicMember> = (session[appId] && session[appId].members) || [];
