@@ -14,6 +14,8 @@ import { InvoiceInfrastructure } from './invoice.infra';
 import { InvoiceInfo } from './invoice.dto';
 import { getRoundedListWithCompensation, parseStringSplitValue, RoundMethodsForCompensation } from '~/utils';
 import { always, converge, evolve, flip, identity, join, map, mergeAll, mergeRight, objOf, pipe, pluck, prepend, prop, props, sum, tap } from 'ramda';
+import { InvoiceLogInfrastructure } from './invoice_log.infra';
+import { InvoiceLog } from './invoice_log.entity';
 
 type InvoiceOptions = {
   appId: string;
@@ -355,7 +357,12 @@ export class InvoiceService {
     )
   }
 
-  private async issueInvoice(invoiceGatewayConfig: object, paymentNo: string, amount: number, options: InvoiceOptions) {
+  private async issueInvoice(
+    invoiceGatewayConfig: object,
+    amount: number,
+    merchantOrderNo: string,
+    options: InvoiceOptions,
+  ) {
     let invoiceAttrs: { [key: string]: any } = {};
     if (options.donationCode) {
       invoiceAttrs = {
