@@ -115,7 +115,7 @@ export class InvoiceService {
           orderId,
           result.Result?.['InvoiceNumber'],
           result.Result?.['TotalAmt'],
-          { ...result, Result: { ...invoiceInfo, ...result.Result } },
+          { ...result, Result: { ...roundedInvoiceInfo, ...result.Result } },
           manager,
         );
       }
