@@ -12,6 +12,8 @@ import { Invoice } from '~/invoice/invoice.entity';
 import { EzpayClient, EzpayClientResponse } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
 import { InvoiceInfo } from './invoice.dto';
+import { getRoundedListWithCompensation, parseStringSplitValue, RoundMethodsForCompensation } from '~/utils';
+import { always, converge, evolve, flip, identity, join, map, mergeAll, mergeRight, objOf, pipe, pluck, prepend, prop, props, sum, tap } from 'ramda';
 
 type InvoiceOptions = {
   appId: string;
@@ -53,8 +55,24 @@ export class InvoiceService {
     try {
       const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
       const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
+      const keyMap = {
+        number: 'ItemPrice',
+        quantity: 'ItemCount',
+        amount: 'ItemAmt',
+      }
+      const roundedInvoiceInfo = converge(
+        mergeRight,
+        [
+          identity,
+          pipe(
+            InvoiceService.getProductItemsFromInvoiceString,
+            InvoiceService.roundProductList({ name: 'ItemName', unit: 'ItemUnit' })(keyMap),
+            InvoiceService.generateInvoiceStringFromProductItems,
+          )
+        ]
+      )(invoiceInfo)
 
-      const result = await this.ezpayClient.issue(ezpayCredentials, invoiceInfo);
+      const result = await this.ezpayClient.issue(ezpayCredentials, roundedInvoiceInfo);
       const toUpdateInvoiceOptions =
         result.Status === 'SUCCESS'
           ? {
@@ -94,7 +112,7 @@ export class InvoiceService {
           orderId,
           result.Result?.['InvoiceNumber'],
           result.Result?.['TotalAmt'],
-          { ...result, Result: { ...invoiceInfo, ...result.Result } },
+          { ...result, Result: { ...roundedInvoiceInfo, ...result.Result } },
           manager,
         );
       }
@@ -140,7 +158,7 @@ export class InvoiceService {
         products: orderProducts.map(v => ({
           name: v.name.replace(/\|/g, '｜'),
           price: v.price,
-          quantity: Number(v?.options?.quantity) || 1,
+          quantity: 1,
         })),
         discounts: orderDiscounts.map(v => ({
           name: v.name.replace(/\|/g, '｜'),
@@ -236,7 +254,72 @@ export class InvoiceService {
     return result;
   }
 
-  private async issueInvoice(invoiceGatewayConfig: object, paymentNo: string, amount: number, options: InvoiceOptions) {
+  private static getProductItemsFromInvoiceString = (invoiceInfo: InvoiceInfo) => {
+    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit']
+    return pipe(
+      converge(
+        prepend,
+        [
+          always(join('|')(keys)),
+          props(keys)
+        ]
+      ),
+      parseStringSplitValue('|'),
+      (evolve as any)({ 'ItemCount': Number, 'ItemPrice': Number, 'ItemAmt': Number })
+    )(invoiceInfo)
+  }
+
+  private static roundProductList = compensationKeyMap => keyMap => products => {
+
+    // make it flexible in the future
+    const roundMap: RoundMethodsForCompensation = {
+      itemNumberRoundMethod: 'ceil',
+      itemQuantityRoundMethod: 'ceil',
+      totalRoundMethod: 'round',
+    }
+
+    const getTargetKeysFromKeyMap = keyMap => flip(props)(keyMap) as any
+
+    const getCompensatedItems: <T>(items: T[]) => T[]
+      = items => {
+        const getTargetCompensationItemKeys = getTargetKeysFromKeyMap(compensationKeyMap)
+        const { roundedList, compensationItem } = getRoundedListWithCompensation(roundMap)(keyMap)(items)
+        return roundedList.concat(
+          compensationItem ? {
+            ...roundedList[0],
+            [getTargetCompensationItemKeys(['name'])]: '化整溢價補償',
+            [getTargetCompensationItemKeys(['unit'])]: '筆',
+            ...compensationItem,
+          } :
+            []) as any
+      }
+
+    const roundedProducts = getCompensatedItems(products)
+
+    return roundedProducts
+  }
+
+  private static generateInvoiceStringFromProductItems = (products) => {
+    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit']
+    return mergeAll(
+      map(
+        converge(
+          objOf,
+          [
+            identity,
+            (pipe as any)(flip(pluck)(products), join('|')),
+          ]
+        )
+      )(keys)
+    )
+  }
+
+  private async issueInvoice(
+    invoiceGatewayConfig: object,
+    paymentNo: string,
+    amount: number,
+    options: InvoiceOptions,
+  ) {
     let invoiceAttrs: { [key: string]: any } = {};
     if (options.donationCode) {
       invoiceAttrs = {
@@ -295,8 +378,17 @@ export class InvoiceService {
           AmtFree: Amt,
         }
       : {};
+
+    const keyMap = {
+      number: 'price',
+      quantity: 'quantity',
+      amount: 'amount',
+    }
+
+    const roundedProducts = InvoiceService.roundProductList({ name: 'name', unit: 'unit' })(keyMap)(options.products) as any
+
     const ItemAmt = [
-      ...options.products.map(product => {
+      ...roundedProducts.map((product) => {
         return invoiceAttrs.Category === 'B2B'
           ? Math.round(Number(product.price) / (1 + TaxRate))
           : Number(product.price);
@@ -311,7 +403,7 @@ export class InvoiceService {
         : []),
     ].join('|');
     const ItemPrice = [
-      ...options.products.map(product => {
+      ...roundedProducts.map((product) => {
         return invoiceAttrs.Category === 'B2B'
           ? Math.round(Number(product.price) / (1 + TaxRate))
           : Number(product.price);
@@ -326,17 +418,18 @@ export class InvoiceService {
         : []),
     ].join('|');
     const ItemCount = [
-      ...options.products.map(_ => 1),
-      ...options.discounts.map(_ => 1),
+      ...roundedProducts.map(prop('quantity')),
+      ...options.discounts.map((_) => 1),
       ...(options.shipping?.method ? [1] : []),
     ].join('|');
 
     const ItemName = [
-      ...options.products.map(product => product.name.substring(0, 25) + ` x${product.quantity}`),
-      ...options.discounts.map(discount => discount.name.substring(0, 30)),
+      ...roundedProducts.map((product) => product.name.substring(0, 25) + ` x${product.quantity}`),
+      ...options.discounts.map((discount) => discount.name.substring(0, 30)),
       ...(options.shipping?.method ? [`運費 - ${options.shipping.method}`.substring(0, 30)] : []),
     ].join('|');
-    const ItemUnit = Array(options.products.length + options.discounts.length)
+
+    const ItemUnit = Array(roundedProducts.length + options.discounts.length)
       .fill('個')
       .concat(options.shipping?.method ? ['筆'] : [])
       .join('|');
@@ -348,8 +441,8 @@ export class InvoiceService {
       ItemName,
       ItemPrice,
       ItemUnit,
-      Amt,
-      TotalAmt: amount,
+      Amt: Math.round(Amt),
+      TotalAmt: Math.round(amount),
       TaxAmt,
       BuyerName: options.name || '',
       BuyerEmail: options.email || '',
