@@ -1,4 +1,23 @@
 import dayjs from 'dayjs';
+import {
+  always,
+  append,
+  apply,
+  converge,
+  evolve,
+  flip,
+  head,
+  identity,
+  map,
+  multiply,
+  pipe,
+  props,
+  split,
+  sum,
+  tail,
+  transpose,
+  zipObj,
+} from 'ramda'
 
 export function getMemoryUsageString(): string {
   const used = process.memoryUsage();
@@ -62,3 +81,53 @@ export const getBrowserByUserAgent = (userAgent: string) => {
     return 'Unknown Browser';
   }
 };
+
+type RoundMethod = 'round' | 'ceil' | 'floor'
+export type RoundMethodsForCompensation = {
+  itemNumberRoundMethod: RoundMethod
+  itemQuantityRoundMethod: RoundMethod
+  totalRoundMethod: RoundMethod
+}
+type ItemForCompensation = { number: number; quantity: number; amount: number }
+
+export const getRoundedListWithCompensation: <T extends Record<string, any>, K extends keyof T>(
+  roundMethods: RoundMethodsForCompensation,
+) => (keyMap: Record<keyof ItemForCompensation, K>) => (list: T[]) => { roundedList: T[]; compensationItem: any } =
+  ({ itemNumberRoundMethod, itemQuantityRoundMethod, totalRoundMethod }) =>
+    keyMap =>
+      list => {
+        const getTargetKeys = flip(props)(keyMap) as any
+        const getAmt = pipe((props as any)(getTargetKeys(['number', 'quantity'])), apply(multiply))
+        const roundedList = map(
+          pipe(
+            evolve(
+              zipObj(getTargetKeys(['number', 'quantity']), [Math[itemNumberRoundMethod], Math[itemQuantityRoundMethod]]),
+            ),
+            converge(evolve, [
+              (converge as any)(zipObj, [always(getTargetKeys(['amount'])), pipe(getAmt, always, flip(append)([]))]),
+              identity,
+            ]),
+          ),
+        )(list) as any
+        
+        const getTotal = pipe(map(getAmt), sum)
+        const compensation = getTotal(roundedList) - Math[totalRoundMethod](getTotal(list))
+        const compensationItem = compensation > 0 ?
+          zipObj(
+            getTargetKeys(['number', 'quantity', 'amount']),
+            [compensation, 1, compensation]
+          ) :
+          undefined
+
+        return {
+          roundedList,
+          compensationItem,
+        }
+      }
+
+export const parseStringSplitValue = (splittingChar: string) => (data: string[]) => {
+  const rawArrays = map(split(splittingChar))(data)
+  const keys = head(rawArrays)
+  const vals = pipe(tail, transpose)(rawArrays)
+  return map(zipObj(keys))(vals)
+}
