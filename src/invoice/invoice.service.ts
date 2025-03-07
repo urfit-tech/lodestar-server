@@ -13,7 +13,25 @@ import { EzpayClient, EzpayClientResponse } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
 import { InvoiceInfo } from './invoice.dto';
 import { getRoundedListWithCompensation, parseStringSplitValue, RoundMethodsForCompensation } from '~/utils';
-import { always, converge, evolve, flip, identity, join, map, mergeAll, mergeRight, objOf, pipe, pluck, prepend, prop, props, sum, tap } from 'ramda';
+import {
+  always,
+  converge,
+  evolve,
+  flip,
+  identity,
+  join,
+  map,
+  mergeAll,
+  mergeRight,
+  objOf,
+  pipe,
+  pluck,
+  prepend,
+  prop,
+  props,
+  sum,
+  tap,
+} from 'ramda';
 import { InvoiceLogInfrastructure } from './invoice_log.infra';
 import { InvoiceLog } from './invoice_log.entity';
 
@@ -62,18 +80,15 @@ export class InvoiceService {
         number: 'ItemPrice',
         quantity: 'ItemCount',
         amount: 'ItemAmt',
-      }
-      const roundedInvoiceInfo = converge(
-        mergeRight,
-        [
-          identity,
-          pipe(
-            InvoiceService.getProductItemsFromInvoiceString,
-            InvoiceService.roundProductList({ name: 'ItemName', unit: 'ItemUnit' })(keyMap),
-            InvoiceService.generateInvoiceStringFromProductItems,
-          )
-        ]
-      )(invoiceInfo)
+      };
+      const roundedInvoiceInfo = converge(mergeRight, [
+        identity,
+        pipe(
+          InvoiceService.getProductItemsFromInvoiceString,
+          InvoiceService.roundProductList({ name: 'ItemName', unit: 'ItemUnit' })(keyMap),
+          InvoiceService.generateInvoiceStringFromProductItems,
+        ),
+      ])(invoiceInfo);
 
       const result = await this.ezpayClient.issue(ezpayCredentials, roundedInvoiceInfo);
       const toUpdateInvoiceOptions =
@@ -298,64 +313,48 @@ export class InvoiceService {
   }
 
   private static getProductItemsFromInvoiceString = (invoiceInfo: InvoiceInfo) => {
-    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit']
+    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit'];
     return pipe(
-      converge(
-        prepend,
-        [
-          always(join('|')(keys)),
-          props(keys)
-        ]
-      ),
+      converge(prepend, [always(join('|')(keys)), props(keys)]),
       parseStringSplitValue('|'),
-      evolve({ 'ItemCount': Number, 'ItemPrice': Number, 'ItemAmt': Number })
-    )(invoiceInfo)
-  }
+      (evolve as any)({ ItemCount: Number, ItemPrice: Number, ItemAmt: Number }),
+    )(invoiceInfo);
+  };
 
-  private static roundProductList = compensationKeyMap => keyMap => products => {
-
+  private static roundProductList = (compensationKeyMap) => (keyMap) => (products) => {
     // make it flexible in the future
     const roundMap: RoundMethodsForCompensation = {
       itemNumberRoundMethod: 'ceil',
       itemQuantityRoundMethod: 'ceil',
       totalRoundMethod: 'round',
-    }
+    };
 
-    const getTargetKeysFromKeyMap = keyMap => flip(props)(keyMap) as any
+    const getTargetKeysFromKeyMap = (keyMap) => flip(props)(keyMap) as any;
 
-    const getCompensatedItems: <T>(items: T[]) => T[]
-      = items => {
-        const getTargetCompensationItemKeys = getTargetKeysFromKeyMap(compensationKeyMap)
-        const { roundedList, compensationItem } = getRoundedListWithCompensation(roundMap)(keyMap)(items)
-        return roundedList.concat(
-          compensationItem ? {
-            ...roundedList[0],
-            [getTargetCompensationItemKeys(['name'])]: '化整溢價補償',
-            [getTargetCompensationItemKeys(['unit'])]: '筆',
-            ...compensationItem,
-          } :
-            []) as any
-      }
+    const getCompensatedItems: <T>(items: T[]) => T[] = (items) => {
+      const getTargetCompensationItemKeys = getTargetKeysFromKeyMap(compensationKeyMap);
+      const { roundedList, compensationItem } = getRoundedListWithCompensation(roundMap)(keyMap)(items);
+      return roundedList.concat(
+        compensationItem
+          ? {
+              ...roundedList[0],
+              [getTargetCompensationItemKeys(['name'])]: '化整溢價補償',
+              [getTargetCompensationItemKeys(['unit'])]: '筆',
+              ...compensationItem,
+            }
+          : [],
+      ) as any;
+    };
 
-    const roundedProducts = getCompensatedItems(products)
+    const roundedProducts = getCompensatedItems(products);
 
-    return roundedProducts
-  }
+    return roundedProducts;
+  };
 
   private static generateInvoiceStringFromProductItems = (products) => {
-    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit']
-    return mergeAll(
-      map(
-        converge(
-          objOf,
-          [
-            identity,
-            pipe(flip(pluck)(products), join('|')),
-          ]
-        )
-      )(keys)
-    )
-  }
+    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit'];
+    return mergeAll(map(converge(objOf, [identity, pipe(flip(pluck as any)(products), join('|'))]))(keys));
+  };
 
   private async issueInvoice(
     invoiceGatewayConfig: object,
@@ -425,9 +424,11 @@ export class InvoiceService {
       number: 'price',
       quantity: 'quantity',
       amount: 'amount',
-    }
+    };
 
-    const roundedProducts = InvoiceService.roundProductList({ name: 'name', unit: 'unit' })(keyMap)(options.products) as any
+    const roundedProducts = InvoiceService.roundProductList({ name: 'name', unit: 'unit' })(keyMap)(
+      options.products,
+    ) as any;
 
     const ItemAmt = [
       ...roundedProducts.map((product) => {
