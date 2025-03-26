@@ -5,7 +5,6 @@ import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 
 import { Runner } from './runner';
 import { CacheService } from '~/utility/cache/cache.service';
-import axios from 'axios';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { MemberService } from '~/member/member.service';
@@ -21,6 +20,7 @@ import { PorterCommand } from '~/runner/porter-command/porterCommandInterface';
 import { PortPlayerEventCommand } from './porter-command/portPlayerEventCommand';
 import { ProgramService } from '~/program/program.service';
 import { RunnerInfrastructure } from './runner.infra';
+import ZabbixHeartBeater from './helper/ZabbixHeartBeater';
 
 @Injectable()
 export class PorterRunner extends Runner {
@@ -42,23 +42,7 @@ export class PorterRunner extends Runner {
   }
 
   async checkAndCallHeartbeat(): Promise<void> {
-    const heartbeatUrl = process.env.PORTER_RUNNER_HEARTBEAT_URL;
-
-    const isValidUrl = (url) => {
-      try {
-        new URL(url);
-        return true;
-      } catch (_) {
-        return false;
-      }
-    };
-
-    if (heartbeatUrl && typeof heartbeatUrl === 'string' && isValidUrl(heartbeatUrl)) {
-      console.log('Calling heartbeat URL:', heartbeatUrl);
-      await axios.get(heartbeatUrl);
-    } else {
-      console.log(`Invalid or no heartbeat URL set, skipping call: ${heartbeatUrl}`);
-    }
+    new ZabbixHeartBeater().beat();
   }
 
   public async execute(entityManager?: EntityManager): Promise<void> {
