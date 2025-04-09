@@ -220,6 +220,7 @@ export class InvoiceService {
         uniformNumber: invoiceOptions['uniformNumber'],
         uniformTitle: invoiceOptions['uniformTitle'],
         citizenCode: invoiceOptions['citizenCode'],
+        kioskPrintFlag: invoiceOptions['kioskPrintFlag'],
       });
       const invoiceNumber = invServiceResponse.Result?.['InvoiceNumber'];
       const invoiceTransNo = invServiceResponse.Result?.['InvoiceTransNo'];
