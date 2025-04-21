@@ -247,7 +247,7 @@ export class InvoiceService {
     } else if (options.phoneBarCode) {
       invoiceAttrs = {
         Category: 'B2C',
-        CarrierType: 0,
+        CarrierType: '0',
         CarrierNum: options.phoneBarCode,
         PrintFlag: 'N',
       };
@@ -261,7 +261,7 @@ export class InvoiceService {
     } else if (options.citizenCode) {
       invoiceAttrs = {
         Category: 'B2C',
-        CarrierType: 1,
+        CarrierType: '1',
         CarrierNum: options.citizenCode,
         PrintFlag: 'N',
       };
@@ -269,7 +269,7 @@ export class InvoiceService {
       invoiceAttrs = {
         Category: 'B2C',
         PrintFlag: 'N',
-        CarrierType: 2,
+        CarrierType: '2',
         KioskPrintFlag: '1',
       };
     } else if (options.email) {
