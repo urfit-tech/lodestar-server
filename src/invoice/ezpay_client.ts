@@ -78,6 +78,14 @@ export class EzpayClient {
 
   async issue(credentials: EzpayCredentials, params: EzpayIssueParams): Promise<EzpayClientResponse> {
     const { merchantId, hashKey, hashIV, options } = credentials;
+    const { MerchantOrderNo } = params;
+    
+    console.log('Ezpay request information:', { 
+      merchantId, 
+      MerchantOrderNo, 
+      params: JSON.stringify(params),
+    });
+
     const { data } = await axios.post(
       `${this.endpoint(options ? options.dryRun : true)}/invoice_issue`,
       querystring.stringify({
@@ -100,7 +108,7 @@ export class EzpayClient {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       },
-    );
+    ).catch((error) => {console.log('error',merchantId, MerchantOrderNo, error); throw error;});
     let result = null;
     try {
       result = JSON.parse(data.Result);
