@@ -397,6 +397,7 @@ export class InvoiceService {
         PrintFlag: 'N',
         CarrierType: '2',
         KioskPrintFlag: '1',
+        CarrierNum: `${options.appId}-${options.email}`,
       };
     } else if (options.email) {
       invoiceAttrs = {
