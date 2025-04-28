@@ -12,23 +12,23 @@ export class Podcast {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => App, (app) => app.podcasts, {
+  @ManyToOne(() => App, app => app.podcasts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Member, (member) => member.podcasts, {
+  @ManyToOne(() => Member, member => member.podcasts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'instructor_id', referencedColumnName: 'id' }])
   instructor: Member;
 
-  @OneToMany(() => PodcastPlan, (podcastPlan) => podcastPlan.podcast)
+  @OneToMany(() => PodcastPlan, podcastPlan => podcastPlan.podcast)
   podcastPlans: PodcastPlan[];
 
-  @OneToMany(() => PodcastProgram, (podcastProgram) => podcastProgram.podcast)
+  @OneToMany(() => PodcastProgram, podcastProgram => podcastProgram.podcast)
   podcastPrograms: PodcastProgram[];
 }

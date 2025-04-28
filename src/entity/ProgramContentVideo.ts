@@ -21,14 +21,14 @@ export class ProgramContentVideo {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Attachment, (attachment) => attachment.programContentVideos, {
+  @ManyToOne(() => Attachment, attachment => attachment.programContentVideos, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'attachment_id', referencedColumnName: 'id' }])
   attachment: Attachment;
 
-  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentVideos, {
+  @ManyToOne(() => ProgramContent, programContent => programContent.programContentVideos, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

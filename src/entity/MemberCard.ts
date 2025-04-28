@@ -27,7 +27,7 @@ export class MemberCard {
   @Column('integer', { name: 'priority', default: () => 0 })
   priority: number;
 
-  @ManyToOne(() => Member, (member) => member.memberCards, {
+  @ManyToOne(() => Member, member => member.memberCards, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -36,16 +36,16 @@ export class ActivityTicket {
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
-  @OneToMany(() => ActivitySessionTicket, (activitySessionTicket) => activitySessionTicket.activityTicket)
+  @OneToMany(() => ActivitySessionTicket, activitySessionTicket => activitySessionTicket.activityTicket)
   activitySessionTickets: ActivitySessionTicket[];
 
-  @ManyToOne(() => Activity, (activity) => activity.activityTickets, {
+  @ManyToOne(() => Activity, activity => activity.activityTickets, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'activity_id', referencedColumnName: 'id' }])
   activity: Activity;
 
-  @OneToMany(() => ActivityTicketEnrollment, (enrollment) => enrollment.activityTicket)
+  @OneToMany(() => ActivityTicketEnrollment, enrollment => enrollment.activityTicket)
   enrollments: ActivityTicketEnrollment[];
 }

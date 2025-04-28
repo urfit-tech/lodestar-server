@@ -22,6 +22,6 @@ export class InvoiceGateway {
   })
   updatedAt: Date;
 
-  @OneToMany(() => AppInvoiceGateway, (appInvoiceGateway) => appInvoiceGateway.invoiceGateway)
+  @OneToMany(() => AppInvoiceGateway, appInvoiceGateway => appInvoiceGateway.invoiceGateway)
   appInvoiceGateways: AppInvoiceGateway[];
 }

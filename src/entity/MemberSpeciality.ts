@@ -20,14 +20,14 @@ export class MemberSpeciality {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.memberSpecialities, {
+  @ManyToOne(() => Member, member => member.memberSpecialities, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Tag, (tag) => tag.memberSpecialities, {
+  @ManyToOne(() => Tag, tag => tag.memberSpecialities, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

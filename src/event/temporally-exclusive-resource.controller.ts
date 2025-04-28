@@ -23,7 +23,7 @@ export class TemporallyExclusiveResourceController {
     @Query('ids') permission_group_ids: string,
     @Query('properties') properties?: string,
   ) {
-    const [permissionGroupIds, adaptedProperties] = [permission_group_ids, properties].map((str) =>
+    const [permissionGroupIds, adaptedProperties] = [permission_group_ids, properties].map(str =>
       str ? str?.split(',') : undefined,
     );
     return await this.TemporallyExclusiveResourceService.findByPermissionGroupIds(type)({
@@ -53,8 +53,8 @@ export class TemporallyExclusiveResourceController {
   @Post('')
   async create(@Local('member') member: JwtMember, @Body() createTemporallyExclusiveResourceDto: any) {
     const { type, targets } = createTemporallyExclusiveResourceDto;
-    const adaptedPayload = targets.map((target) => ({ type, target, app_id: member.appId }));
-    return (await this.TemporallyExclusiveResourceService.create(adaptedPayload)).map((resource) => {
+    const adaptedPayload = targets.map(target => ({ type, target, app_id: member.appId }));
+    return (await this.TemporallyExclusiveResourceService.create(adaptedPayload)).map(resource => {
       const { id, ...rest } = resource;
       return { ...rest, temporally_exclusive_resource_id: id };
     });

@@ -42,7 +42,7 @@ class PortPodcastProgramCommand implements PorterCommand {
       if (progressInfoList.length > 0) {
         try {
           await this.podcastService.processPodcastProgramProgress(progressInfoList, manager);
-          await client.del(...progressInfoList.map((info) => info.key));
+          await client.del(...progressInfoList.map(info => info.key));
         } catch (error) {
           console.error('Batch saving failed:', error);
           for (const progressInfo of progressInfoList) {

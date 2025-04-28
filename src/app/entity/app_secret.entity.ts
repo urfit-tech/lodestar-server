@@ -20,14 +20,14 @@ export class AppSecret {
   @Column('text', { name: 'value' })
   value: string;
 
-  @ManyToOne(() => App, (app) => app.appSecrets, {
+  @ManyToOne(() => App, app => app.appSecrets, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Setting, (setting) => setting.appSecrets, {
+  @ManyToOne(() => Setting, setting => setting.appSecrets, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

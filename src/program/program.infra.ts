@@ -1264,7 +1264,7 @@ export class ProgramInfrastructure {
             ...programContentsByProgramPlanEnrollment,
             ...programContentsByProgramPackageEnrollment,
             ...programContentsByMembershipCardEnrollment,
-          ].map((item) => [item.program_content_id, item]),
+          ].map(item => [item.program_content_id, item]),
         ).values(),
       ),
     );
@@ -1279,7 +1279,7 @@ export class ProgramInfrastructure {
       select: ['id', 'displayMode'],
     });
 
-    return programContents.map((content) => ({
+    return programContents.map(content => ({
       programContentId: content.id,
       displayMode: content.displayMode,
     }));

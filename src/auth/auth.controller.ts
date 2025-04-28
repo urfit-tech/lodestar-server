@@ -117,7 +117,7 @@ export class AuthController {
       session[appId] = {
         currentMemberId: member.id,
         members: [
-          ...loggedInMembers.filter((loggedInMember) => loggedInMember.id !== member.id),
+          ...loggedInMembers.filter(loggedInMember => loggedInMember.id !== member.id),
           {
             id: member.id,
             orgId: member.orgId,
@@ -183,7 +183,7 @@ export class AuthController {
         case RefreshStatus.E_NO_MEMBER:
           return { code: 'E_NO_MEMBER', message: 'no such member' };
         case RefreshStatus.E_SESSION_DESTROY:
-          await new Promise((resolve) => request.session.destroy(resolve));
+          await new Promise(resolve => request.session.destroy(resolve));
         case RefreshStatus.E_NO_DEVICE:
           return { code: 'E_NO_DEVICE', message: 'device is not available' };
       }

@@ -25,14 +25,14 @@ export class ActivityAttendance {
   })
   createdAt: Date;
 
-  @ManyToOne(() => ActivitySession, (activitySession) => activitySession.activityAttendances, {
+  @ManyToOne(() => ActivitySession, activitySession => activitySession.activityAttendances, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'activity_session_id', referencedColumnName: 'id' }])
   activitySession: ActivitySession;
 
-  @ManyToOne(() => OrderProduct, (orderProduct) => orderProduct.activityAttendances, {
+  @ManyToOne(() => OrderProduct, orderProduct => orderProduct.activityAttendances, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

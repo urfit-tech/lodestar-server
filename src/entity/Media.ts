@@ -28,7 +28,7 @@ export class Media {
   })
   createdAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.media, {
+  @ManyToOne(() => Member, member => member.media, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

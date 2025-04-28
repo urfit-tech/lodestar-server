@@ -92,42 +92,42 @@ export class Merchandise {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => App, (app) => app.merchandises, {
+  @ManyToOne(() => App, app => app.merchandises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Member, (member) => member.merchandises, {
+  @ManyToOne(() => Member, member => member.merchandises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => MemberShop, (memberShop) => memberShop.merchandises, {
+  @ManyToOne(() => MemberShop, memberShop => memberShop.merchandises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_shop_id', referencedColumnName: 'id' }])
   memberShop: MemberShop;
 
-  @OneToMany(() => MerchandiseCategory, (merchandiseCategory) => merchandiseCategory.merchandise)
+  @OneToMany(() => MerchandiseCategory, merchandiseCategory => merchandiseCategory.merchandise)
   merchandiseCategories: MerchandiseCategory[];
 
-  @OneToMany(() => MerchandiseFile, (merchandiseFile) => merchandiseFile.merchandise)
+  @OneToMany(() => MerchandiseFile, merchandiseFile => merchandiseFile.merchandise)
   merchandiseFiles: MerchandiseFile[];
 
-  @OneToMany(() => MerchandiseImg, (merchandiseImg) => merchandiseImg.merchandise)
+  @OneToMany(() => MerchandiseImg, merchandiseImg => merchandiseImg.merchandise)
   merchandiseImgs: MerchandiseImg[];
 
-  @OneToMany(() => MerchandiseSpec, (merchandiseSpec) => merchandiseSpec.merchandise)
+  @OneToMany(() => MerchandiseSpec, merchandiseSpec => merchandiseSpec.merchandise)
   merchandiseSpecs: MerchandiseSpec[];
 
-  @OneToMany(() => MerchandiseTag, (merchandiseTag) => merchandiseTag.merchandise)
+  @OneToMany(() => MerchandiseTag, merchandiseTag => merchandiseTag.merchandise)
   merchandiseTags: MerchandiseTag[];
 
-  @OneToMany(() => PostMerchandise, (postMerchandise) => postMerchandise.merchandise)
+  @OneToMany(() => PostMerchandise, postMerchandise => postMerchandise.merchandise)
   postMerchandises: PostMerchandise[];
 }

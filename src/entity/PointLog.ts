@@ -28,7 +28,7 @@ export class PointLog {
   @Column('text', { name: 'note', nullable: true })
   note: string | null;
 
-  @ManyToOne(() => Member, (member) => member.pointLogs, {
+  @ManyToOne(() => Member, member => member.pointLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

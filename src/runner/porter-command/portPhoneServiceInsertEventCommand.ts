@@ -98,12 +98,12 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
       // save data to DB
       await Promise.all(
         redisDataArray.map(
-          async (data) =>
-            await manager.transaction(async (manager) => {
+          async data =>
+            await manager.transaction(async manager => {
               try {
                 const { lastMemberNotes, key } = data;
                 const memberNotes = data.memberNotes
-                  ? data.memberNotes.map((note) => {
+                  ? data.memberNotes.map(note => {
                       const memberNote = new MemberNote();
                       memberNote.authorId = note?.authorId || '';
                       memberNote.metadata = note?.metadata || null;

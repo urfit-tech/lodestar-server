@@ -34,7 +34,7 @@ export default class DeviceService {
 
   async getByFingerprintId(memberId: string, fingerPrintId: string) {
     const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
-    return devices.find((device) => device.fingerprintId === fingerPrintId);
+    return devices.find(device => device.fingerprintId === fingerPrintId);
   }
 
   async checkAndBindDevices(
@@ -80,10 +80,10 @@ export default class DeviceService {
     }
 
     const memberDevices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
-    const loginedDevices = memberDevices.filter((device) => device.isLogin);
+    const loginedDevices = memberDevices.filter(device => device.isLogin);
 
-    const isBind = memberDevices.find((device) => device.fingerprintId === fingerPrintId);
-    const isLogin = loginedDevices.find((device) => device.fingerprintId === fingerPrintId);
+    const isBind = memberDevices.find(device => device.fingerprintId === fingerPrintId);
+    const isLogin = loginedDevices.find(device => device.fingerprintId === fingerPrintId);
 
     if (isLogin) {
       await this.memberInfra.upsertMemberDevice(
@@ -126,19 +126,19 @@ export default class DeviceService {
 
   async checkCurrentDeviceExist(memberId: string, fingerPrintId: string): Promise<boolean> {
     const loginDevices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
-    return loginDevices.some((device) => device.fingerprintId === fingerPrintId);
+    return loginDevices.some(device => device.fingerprintId === fingerPrintId);
   }
 
   async getLoginDevices(memberId: string): Promise<MemberDevice[]> {
     const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
-    return devices.filter((device) => device.isLogin) || [];
+    return devices.filter(device => device.isLogin) || [];
   }
 
   async checkLoginDeviceReachedLimit(memberId: string, appCache: AppCache): Promise<boolean> {
     const { settings } = appCache;
     const loginLimit = Number(settings['login_device_num']) || 1;
     const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
-    const loginedDevices = devices.filter((device) => device.isLogin);
+    const loginedDevices = devices.filter(device => device.isLogin);
     return loginedDevices.length >= loginLimit;
   }
 
@@ -152,10 +152,10 @@ export default class DeviceService {
     const loginLimit = Number(settings['login_device_num']) || 1;
     const devices = await this.memberInfra.getMemberDevices(memberId, this.entityManager);
     const loginedDevices = devices
-      .filter((device) => device.isLogin)
+      .filter(device => device.isLogin)
       .sort((a, b) => a.lastLoginAt.getTime() - b.lastLoginAt.getTime());
     const devicesToBeLoggedOut = loginedDevices.slice(0, loginedDevices.length - loginLimit + 1);
-    const devicesToBeLoggedOutIds = devicesToBeLoggedOut.map((v) => v.id);
+    const devicesToBeLoggedOutIds = devicesToBeLoggedOut.map(v => v.id);
     await this.deviceInfra.logoutMemberDevices(devicesToBeLoggedOutIds, this.entityManager);
   }
 

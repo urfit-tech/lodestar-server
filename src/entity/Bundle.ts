@@ -40,6 +40,6 @@ export class Bundle {
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
 
-  @OneToMany(() => BundleItem, (bundleItem) => bundleItem.bundle)
+  @OneToMany(() => BundleItem, bundleItem => bundleItem.bundle)
   bundleItems: BundleItem[];
 }

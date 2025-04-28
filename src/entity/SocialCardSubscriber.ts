@@ -28,7 +28,7 @@ export class SocialCardSubscriber {
   })
   createdAt: Date;
 
-  @ManyToOne(() => SocialCard, (socialCard) => socialCard.socialCardSubscribers, {
+  @ManyToOne(() => SocialCard, socialCard => socialCard.socialCardSubscribers, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

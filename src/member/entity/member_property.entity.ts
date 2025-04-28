@@ -32,14 +32,14 @@ export class MemberProperty {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.memberProperties, {
+  @ManyToOne(() => Member, member => member.memberProperties, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Property, (property) => property.memberProperties, {
+  @ManyToOne(() => Property, property => property.memberProperties, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

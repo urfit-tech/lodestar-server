@@ -14,7 +14,7 @@ export class AppAdmin {
   @Column('text', { name: 'api_host', nullable: true })
   apiHost: string | null;
 
-  @ManyToOne(() => App, (app) => app.appAdmins, {
+  @ManyToOne(() => App, app => app.appAdmins, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

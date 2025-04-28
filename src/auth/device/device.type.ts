@@ -5,4 +5,4 @@ export enum LoginDeviceStatus {
   UNSUPPORTED = 'unsupported',
   BIND_LIMIT_EXCEED = 'bindLimitExceeded',
   LOGIN_LIMIT_EXCEED = 'loginLimitExceeded',
-};
+}

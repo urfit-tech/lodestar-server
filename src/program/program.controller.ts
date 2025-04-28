@@ -49,8 +49,8 @@ export class ProgramController {
   ): Promise<ProgramResponseDTO> {
     const { permissions } = member;
 
-    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
-    return ['PROGRAM_ADMIN'].some((e) => permissions.includes(e))
+    const extraAllowPermission = ['PROGRAM_NORMAL'].find(e => permissions.includes(e));
+    return ['PROGRAM_ADMIN'].some(e => permissions.includes(e))
       ? this.programService.getProgramByProgramId(programId)
       : this.programService.getProgramByMemberId(member.memberId, programId, extraAllowPermission);
   }
@@ -76,8 +76,8 @@ export class ProgramController {
     const isLoginToTrial = programContent.displayMode === 'loginToTrial';
     const member = !!authorization && (await this._verifyAuthorization(authorization));
 
-    const extraAllowPermission = !!member && ['PROGRAM_NORMAL'].find((e) => member.permissions.includes(e));
-    const adminPermission = !!member && ['PROGRAM_ADMIN'].find((e) => member.permissions.includes(e));
+    const extraAllowPermission = !!member && ['PROGRAM_NORMAL'].find(e => member.permissions.includes(e));
+    const adminPermission = !!member && ['PROGRAM_ADMIN'].find(e => member.permissions.includes(e));
 
     return adminPermission || (!!member && isLoginToTrial) || isTrial
       ? { ...programContent, isEquity: true }
@@ -102,9 +102,9 @@ export class ProgramController {
     const { memberId } = request.query;
     const { role, permissions } = member;
 
-    const extraAllowPermission = ['PROGRAM_NORMAL'].find((e) => permissions.includes(e));
+    const extraAllowPermission = ['PROGRAM_NORMAL'].find(e => permissions.includes(e));
 
-    return role === 'app-owner' || ['PROGRAM_ADMIN'].some((e) => permissions.includes(e))
+    return role === 'app-owner' || ['PROGRAM_ADMIN'].some(e => permissions.includes(e))
       ? this.programService.getProgramContentsByProgramId(member.appId, programId)
       : this.programService.getEnrolledProgramContentsByProgramId(
           member.appId,

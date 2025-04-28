@@ -24,10 +24,10 @@ export class VoucherCode {
   @Column('timestamp without time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
-  @OneToMany(() => Voucher, (voucher) => voucher.voucherCode)
+  @OneToMany(() => Voucher, voucher => voucher.voucherCode)
   vouchers: Voucher[];
 
-  @ManyToOne(() => VoucherPlan, (voucherPlan) => voucherPlan.voucherCodes, {
+  @ManyToOne(() => VoucherPlan, voucherPlan => voucherPlan.voucherCodes, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -34,7 +34,7 @@ export default class MailVerificationCodeService {
     if (result.length === 0) {
       return false;
     } else {
-      const expiredAt = result.find((mailVerificationCode) => mailVerificationCode.code === code)?.expiredAt;
+      const expiredAt = result.find(mailVerificationCode => mailVerificationCode.code === code)?.expiredAt;
       return new Date(expiredAt).getTime() - new Date().getTime() < expirationTimeMs;
     }
   }
@@ -58,7 +58,7 @@ export default class MailVerificationCodeService {
             this.entityManager,
           );
         const unexpiredMailVerificationCodeIds = unexpiredMailVerificationCodes.map(
-          (unexpiredMailVerificationCode) => unexpiredMailVerificationCode.id,
+          unexpiredMailVerificationCode => unexpiredMailVerificationCode.id,
         );
         await this.mailVerificationCodeInfra.updateMailVerificationCodesToNow(
           unexpiredMailVerificationCodeIds,
@@ -84,7 +84,7 @@ export default class MailVerificationCodeService {
         type,
         this.entityManager,
       );
-      const ids = verificationCodes.map((verificationCode) => verificationCode.id);
+      const ids = verificationCodes.map(verificationCode => verificationCode.id);
       await this.mailVerificationCodeInfra.updateMailVerificationCodesToNow(
         ids,
         appId,
@@ -115,7 +115,7 @@ export default class MailVerificationCodeService {
         type,
         this.entityManager,
       );
-      const mailVerificationCodeIds = mailVerificationCodes.map((mailVerificationCode) => mailVerificationCode.id);
+      const mailVerificationCodeIds = mailVerificationCodes.map(mailVerificationCode => mailVerificationCode.id);
       await this.mailVerificationCodeInfra.updateMailVerificationCodesToNow(
         mailVerificationCodeIds,
         appId,
@@ -124,9 +124,9 @@ export default class MailVerificationCodeService {
         this.entityManager,
       );
       // The new verification code must not be the same as an unexpired verification code.
-      while (mailVerificationCodes.find((mailVerificationCode) => mailVerificationCode.code === code)) {
+      while (mailVerificationCodes.find(mailVerificationCode => mailVerificationCode.code === code)) {
         code = digitalCodeGenerator(4);
-        if (!mailVerificationCodes.find((mailVerificationCode) => mailVerificationCode.code === code)) {
+        if (!mailVerificationCodes.find(mailVerificationCode => mailVerificationCode.code === code)) {
           break;
         }
       }

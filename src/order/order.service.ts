@@ -293,7 +293,7 @@ export class OrderService {
 
       for (const orderProduct of orderProducts) {
         const productOwner =
-          productOwners.find((owner) => owner.productId === orderProduct.product.target)?.memberName || '';
+          productOwners.find(owner => owner.productId === orderProduct.product.target)?.memberName || '';
         orderProductCount += (getValue(orderProduct.options, 'quantity') as number) || 0;
         orderProductTotalPrice += parseFloat(orderProduct.price as any);
         name.push(
@@ -303,7 +303,7 @@ export class OrderService {
         );
         sharingCode.push(getValue(orderProduct.options, 'sharingCode'));
         sharingNote.push(
-          sharingCodes.find((sharingCode) => sharingCode.path === getValue(orderProduct.options, 'from'))?.note,
+          sharingCodes.find(sharingCode => sharingCode.path === getValue(orderProduct.options, 'from'))?.note,
         );
         if (getValue(orderProduct.options, 'type') === 'gift') {
           gift.push(orderProduct.name);
@@ -325,7 +325,7 @@ export class OrderService {
 
       for (const orderDiscount of orderDiscounts) {
         orderDiscountTotalPrice += parseFloat(orderDiscount.price as any);
-        const coupon = coupons.find((coupon) => coupon.id === orderDiscount.target);
+        const coupon = coupons.find(coupon => coupon.id === orderDiscount.target);
         if (coupon) {
           name.push(`${orderDiscount.name} $${orderDiscount.price} - ${coupon.couponCode.code}`);
         } else {
@@ -340,26 +340,25 @@ export class OrderService {
     };
 
     return orderLogs
-      .map((each) => {
+      .map(each => {
         const csvRawOrderLog = new CsvRawOrderLog();
         const { orderProductCount, orderProductName, orderProductTotalPrice, sharingCode, sharingNote, gift } =
           orderProductAggregator(each.orderProducts);
         const { orderDiscountName, orderDiscountTotalPrice } = orderDiscountsAggregator(each.orderDiscounts);
 
         csvRawOrderLog.orderLogId = each.id;
-        csvRawOrderLog.paymentLogNo = each.paymentLogs.map((payment) => payment.no).join('\n');
+        csvRawOrderLog.paymentLogNo = each.paymentLogs.map(payment => payment.no).join('\n');
         csvRawOrderLog.orderLogStatus = each.status;
         csvRawOrderLog.paymentLogGateway = getValue(each.paymentModel, 'gateway');
         csvRawOrderLog.paymentLogDetails = each.paymentLogs
           .map(
-            (payment) =>
-              `${getValue(payment.options, 'paymentMethod')} ${getValue(payment.options, 'installmentPlan')}`,
+            payment => `${getValue(payment.options, 'paymentMethod')} ${getValue(payment.options, 'installmentPlan')}`,
           )
           .join('\n');
         csvRawOrderLog.orderCountry = `${getValue(each.options, 'country')} ${getValue(each.options, 'countryCode')}`;
         csvRawOrderLog.orderLogCreatedAt = dateFormatter(each.createdAt);
         csvRawOrderLog.paymentLogPaidAt = each.paymentLogs
-          .map((payment) => (payment.paidAt ? dateFormatter(payment.paidAt) : ''))
+          .map(payment => (payment.paidAt ? dateFormatter(payment.paidAt) : ''))
           .join('\n');
         csvRawOrderLog.memberName = `${each.member.name}(${each.member.username})`;
         csvRawOrderLog.memberEmail = each.member.email;
@@ -377,7 +376,7 @@ export class OrderService {
         csvRawOrderLog.sharingNote = sharingNote;
         csvRawOrderLog.referrer = getValue(each.invoiceOptions, 'referrerEmail');
         csvRawOrderLog.orderLogExecutor = each.orderExecutors
-          .map((executor) => `${executor?.member?.name} ${executor?.ratio}`)
+          .map(executor => `${executor?.member?.name} ${executor?.ratio}`)
           .join('\n');
         csvRawOrderLog.gift = gift;
         csvRawOrderLog.send = getValue(each.shipping, 'isOutsideTaiwanIsland')
@@ -421,14 +420,14 @@ export class OrderService {
           getValue(each.invoiceOptions, 'address') || getValue(each.invoiceOptions, 'postCode');
         csvRawOrderLog.invoiceId = get(each.invoiceOptions, 'id') || get(each.invoiceOptions, 'invoiceNumber') || '';
         csvRawOrderLog.invoiceIssuedAt = each.paymentLogs
-          .map((payment) => (payment.invoiceIssuedAt ? dateFormatter(payment.invoiceIssuedAt) : ''))
+          .map(payment => (payment.invoiceIssuedAt ? dateFormatter(payment.invoiceIssuedAt) : ''))
           .join('\n');
         csvRawOrderLog.invoiceStatus = getValue(each.invoiceOptions, 'status');
         csvRawOrderLog.specification = getValue(each.shipping, 'specification');
 
         return csvRawOrderLog;
       })
-      .map((each) => each.serializeToCsvRawRow(headerInfos));
+      .map(each => each.serializeToCsvRawRow(headerInfos));
   }
 
   async orderProductToRawCsv(
@@ -442,7 +441,7 @@ export class OrderService {
       return defaultTo(get(object, key), '');
     };
     return orderProducts
-      .map((each) => {
+      .map(each => {
         const csvRawOrderProduct = new CsvRawOrderProduct();
         csvRawOrderProduct.orderLogId = each.orderId;
         csvRawOrderProduct.orderCountry = `${getValue(each.order.options, 'country')} ${getValue(
@@ -452,7 +451,7 @@ export class OrderService {
         csvRawOrderProduct.orderLogCreatedAt = dateFormatter(each.order.createdAt);
         csvRawOrderProduct.paymentLogPaidAt = each.order.lastPaidAt ? dateFormatter(each.order.lastPaidAt) : '';
         csvRawOrderProduct.productOwner =
-          productOwners.find((owner) => owner.productId === each.product.target)?.memberName || '';
+          productOwners.find(owner => owner.productId === each.product.target)?.memberName || '';
         csvRawOrderProduct.productType = each.product.type;
         csvRawOrderProduct.orderProductId = each.productId;
         csvRawOrderProduct.orderProductName = each.name;
@@ -464,7 +463,7 @@ export class OrderService {
 
         return csvRawOrderProduct;
       })
-      .map((each) => each.serializeToCsvRawRow(headerInfos));
+      .map(each => each.serializeToCsvRawRow(headerInfos));
   }
 
   async orderDiscountToRawCsv(
@@ -476,7 +475,7 @@ export class OrderService {
     };
 
     return orderDiscounts
-      .map((each) => {
+      .map(each => {
         const csvRawOrderDiscount = new CsvRawOrderDiscount();
         csvRawOrderDiscount.orderLogId = each.order.id;
         csvRawOrderDiscount.orderCountry = `${getValue(each.order.options, 'country')} ${getValue(
@@ -488,7 +487,7 @@ export class OrderService {
         csvRawOrderDiscount.orderDiscountPrice = each.price;
         return csvRawOrderDiscount;
       })
-      .map((each) => each.serializeToCsvRawRow(headerInfos));
+      .map(each => each.serializeToCsvRawRow(headerInfos));
   }
 
   public async processOrderLogExportFromDatabase(appId: string, condition: OrderExportDTO) {
@@ -496,7 +495,7 @@ export class OrderService {
     const discountTargets = await this.getOrderDiscountTargetsByPlanIds(appId, condition);
     const orderLogs = await this.exportOrderLogsFromDatabase(appId, condition, discountTargets);
     const coupons = await this.couponInfra.getCouponsByConditions(
-      { id: In(flatten(orderLogs.map((orderLog) => orderLog.orderDiscounts.map((discount) => discount.target)))) },
+      { id: In(flatten(orderLogs.map(orderLog => orderLog.orderDiscounts.map(discount => discount.target)))) },
       this.entityManager,
     );
     const sharingCodes = await this.sharingCodeInfra.getSharingCodeByConditions(
@@ -507,7 +506,7 @@ export class OrderService {
     );
     const productOwners = await this.productInfra.getProductOwnerByProducts(
       appId,
-      flatten(orderLogs.map((orderLog) => orderLog.orderProducts.map((orderProduct) => orderProduct.product))),
+      flatten(orderLogs.map(orderLog => orderLog.orderProducts.map(orderProduct => orderProduct.product))),
       this.entityManager,
     );
 
@@ -524,7 +523,7 @@ export class OrderService {
     const orderProducts = await this.exportOrderProductsFromDatabase(appId, condition, discountTargets);
     const productOwners = await this.productInfra.getProductOwnerByProducts(
       appId,
-      flatten(orderProducts.map((orderProduct) => orderProduct.product)),
+      flatten(orderProducts.map(orderProduct => orderProduct.product)),
       this.entityManager,
     );
     const headerInfos = await new OrderProductCsvHeaderMapping().createHeader();
@@ -556,7 +555,7 @@ export class OrderService {
         },
         this.entityManager,
       );
-      coupons.forEach((coupon) => {
+      coupons.forEach(coupon => {
         targets.push(coupon.id);
       });
     }
@@ -571,7 +570,7 @@ export class OrderService {
         },
         this.entityManager,
       );
-      vouchers.forEach((voucher) => {
+      vouchers.forEach(voucher => {
         targets.push(voucher.id);
       });
     }

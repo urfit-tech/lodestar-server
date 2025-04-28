@@ -91,15 +91,15 @@ export class Project {
   @Column('numeric', { name: 'views', default: () => 0 })
   views: number;
 
-  @OneToMany(() => ProjectCategory, (projectCategory) => projectCategory.project)
+  @OneToMany(() => ProjectCategory, projectCategory => projectCategory.project)
   projectCategories: ProjectCategory[];
 
-  @OneToMany(() => ProjectPlan, (projectPlan) => projectPlan.project)
+  @OneToMany(() => ProjectPlan, projectPlan => projectPlan.project)
   projectPlans: ProjectPlan[];
 
-  @OneToMany(() => ProjectRole, (projectRole) => projectRole.project)
+  @OneToMany(() => ProjectRole, projectRole => projectRole.project)
   projectRoles: ProjectRole[];
 
-  @OneToMany(() => ProjectSection, (projectSection) => projectSection.project)
+  @OneToMany(() => ProjectSection, projectSection => projectSection.project)
   projectSections: ProjectSection[];
 }

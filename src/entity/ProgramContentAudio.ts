@@ -23,7 +23,7 @@ export class ProgramContentAudio {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentAudios, {
+  @ManyToOne(() => ProgramContent, programContent => programContent.programContentAudios, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

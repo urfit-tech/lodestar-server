@@ -19,7 +19,7 @@ export class PodcastProgramBody {
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
-  @ManyToOne(() => PodcastProgram, (podcastProgram) => podcastProgram.podcastProgramBodies, {
+  @ManyToOne(() => PodcastProgram, podcastProgram => podcastProgram.podcastProgramBodies, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

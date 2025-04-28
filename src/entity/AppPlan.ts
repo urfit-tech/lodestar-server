@@ -34,9 +34,9 @@ export class AppPlan {
   @Column('numeric', { name: 'watched_seconds', default: () => -1 })
   watchedSeconds: number;
 
-  @OneToMany(() => App, (app) => app.appPlan)
+  @OneToMany(() => App, app => app.appPlan)
   apps: App[];
 
-  @OneToMany(() => AppPlanModule, (appPlanModule) => appPlanModule.appPlan)
+  @OneToMany(() => AppPlanModule, appPlanModule => appPlanModule.appPlan)
   appPlanModules: AppPlanModule[];
 }

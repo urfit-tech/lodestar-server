@@ -84,7 +84,7 @@ export class EventService {
   }
 
   private upsertTemprotallyExclusiveResource(type) {
-    return (appId) => async (target) =>
+    return appId => async target =>
       (
         await this.entityManager.query(
           `
@@ -99,13 +99,13 @@ export class EventService {
   }
 
   private registerMemberAsResource(appId) {
-    return async (memberId) => await this.upsertTemprotallyExclusiveResource('member')(appId)(memberId);
+    return async memberId => await this.upsertTemprotallyExclusiveResource('member')(appId)(memberId);
   }
 
   insertEvents(appId: string) {
     return async (insertEventsDTO: InsertEventsDTO) => {
       const { events } = insertEventsDTO;
-      const adaptedEvents = events.map((event) => ({ ...event, app_id: appId }));
+      const adaptedEvents = events.map(event => ({ ...event, app_id: appId }));
       return await batchInsert(this.entityManager)('event')(adaptedEvents)(['id']);
     };
   }
@@ -126,8 +126,8 @@ export class EventService {
   async inviteResource(inviteResourcesDTO: InviteResourcesDTO) {
     const { eventIds, eventResources } = inviteResourcesDTO;
     return await this.insertEventResources({
-      eventResources: eventIds.flatMap((eventId) =>
-        eventResources.map((eventResource) => ({
+      eventResources: eventIds.flatMap(eventId =>
+        eventResources.map(eventResource => ({
           event_id: eventId,
           ...eventResource,
         })),
@@ -139,12 +139,12 @@ export class EventService {
     const { source_type, source_target, member_id, amount, app_id } = deliverEventsDTO;
     const temporally_exclusive_resource_id = await this.registerMemberAsResource(app_id)(member_id);
     const events = Array(amount).fill({ source_type, source_target });
-    const eventIds = (await this.insertEvents(app_id)({ events })).map((returning) => returning.id);
-    const eventResources = eventIds.map((eventId) => ({
+    const eventIds = (await this.insertEvents(app_id)({ events })).map(returning => returning.id);
+    const eventResources = eventIds.map(eventId => ({
       event_id: eventId,
       temporally_exclusive_resource_id: temporally_exclusive_resource_id,
     }));
-    const eventResourceIds = (await this.insertEventResources({ eventResources })).map((returning) => returning.id);
+    const eventResourceIds = (await this.insertEventResources({ eventResources })).map(returning => returning.id);
     return { eventIds: eventIds, eventResourceIds: eventResourceIds };
   }
 }

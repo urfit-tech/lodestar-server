@@ -33,7 +33,7 @@ export class LeadService {
       this.entityManager,
     );
 
-    await this.entityManager.transaction(async (entityManager) => {
+    await this.entityManager.transaction(async entityManager => {
       const member = await this.upsertMember(
         entityManager,
         app.id,
@@ -46,7 +46,7 @@ export class LeadService {
         body.id,
       );
       await Promise.all(
-        properties.map((property) => {
+        properties.map(property => {
           return this.memberInfra.upsertMemberProperty(
             entityManager,
             member.id,

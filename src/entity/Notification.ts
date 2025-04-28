@@ -39,14 +39,14 @@ export class Notification {
   @Column('text', { name: 'avatar', nullable: true })
   avatar: string | null;
 
-  @ManyToOne(() => Member, (member) => member.notifications, {
+  @ManyToOne(() => Member, member => member.notifications, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'source_member_id', referencedColumnName: 'id' }])
   sourceMember: Member;
 
-  @ManyToOne(() => Member, (member) => member.notifications2, {
+  @ManyToOne(() => Member, member => member.notifications2, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

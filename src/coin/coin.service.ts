@@ -22,7 +22,7 @@ export class CoinService {
   ): Promise<Array<[CoinLog | null, Array<ValidationError>]>> {
     const coinLogs: Array<[CoinLog | null, Array<ValidationError>]> = [];
 
-    const deserialized = rawRows.map((rawRow) => new CsvRawCoin().deserializedFromCsvRawRow(headerInfos, rawRow));
+    const deserialized = rawRows.map(rawRow => new CsvRawCoin().deserializedFromCsvRawRow(headerInfos, rawRow));
 
     for (const [eachRow, errors] of deserialized) {
       const coinLog = new CoinLog();
@@ -87,7 +87,7 @@ export class CoinService {
 
     const results = await Promise.allSettled(
       coinLogToImport.map(([coinLog]) => {
-        return this.entityManager.transaction(async (manager) => {
+        return this.entityManager.transaction(async manager => {
           try {
             const coinLogRepo = manager.getRepository(CoinLog);
             await coinLogRepo.save(coinLog);
@@ -102,13 +102,13 @@ export class CoinService {
         });
       }),
     );
-    const fulfilleds = results.filter((result) => result.status === 'fulfilled');
+    const fulfilleds = results.filter(result => result.status === 'fulfilled');
     const rejecteds: Array<any> = (
-      results.filter((result) => result.status === 'rejected') as Array<PromiseRejectedResult>
+      results.filter(result => result.status === 'rejected') as Array<PromiseRejectedResult>
     ).map(({ reason }) => (reason instanceof Error ? reason.message : JSON.stringify(reason)));
     deserializationFailed
       .map(([_, errors]) => errors)
-      .forEach((errors) => {
+      .forEach(errors => {
         const acc = {};
         errors.forEach(({ target, property, value, constraints }) => {
           const { email, title } = target as CsvRawCoin;

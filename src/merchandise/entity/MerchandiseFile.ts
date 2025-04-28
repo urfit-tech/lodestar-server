@@ -22,7 +22,7 @@ export class MerchandiseFile {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Merchandise, (merchandise) => merchandise.merchandiseFiles, {
+  @ManyToOne(() => Merchandise, merchandise => merchandise.merchandiseFiles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

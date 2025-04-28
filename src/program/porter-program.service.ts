@@ -31,7 +31,7 @@ export class PorterProgramService {
         const [, memberId, , programContentId, createdAtString] = key.split(':');
         return { key, memberId, programContentId, createdAtString, valueString };
       })
-      .filter((item) => item !== null);
+      .filter(item => item !== null);
   }
 
   async fetchProgramContents(ids: string[], entityManager: EntityManager): Promise<Map<string, ProgramContent>> {
@@ -67,7 +67,7 @@ export class PorterProgramService {
 
         return programContentLog;
       })
-      .filter((log) => log !== null);
+      .filter(log => log !== null);
   }
 
   async saveProgramContentLogs(programContentLogs: ProgramContentLog[], entityManager: EntityManager): Promise<void> {
@@ -100,7 +100,7 @@ export class PorterProgramService {
   ): Promise<Map<string, ProgramContent>> {
     const programContentRepo = entityManager.getRepository(ProgramContent);
 
-    const validIds = ids.filter((id) => uuidValidate(id));
+    const validIds = ids.filter(id => uuidValidate(id));
 
     if (validIds.length === 0) {
       return new Map<string, ProgramContent>();
@@ -108,7 +108,7 @@ export class PorterProgramService {
 
     const programContents = await programContentRepo.findBy({ id: In(validIds) });
     const programContentMap = new Map<string, ProgramContent>();
-    programContents.forEach((pc) => programContentMap.set(pc.id, pc));
+    programContents.forEach(pc => programContentMap.set(pc.id, pc));
     return programContentMap;
   }
 }

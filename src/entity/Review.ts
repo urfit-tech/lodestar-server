@@ -44,16 +44,16 @@ export class Review {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Member, (member) => member.reviews, {
+  @ManyToOne(() => Member, member => member.reviews, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => ReviewReaction, (reviewReaction) => reviewReaction.review)
+  @OneToMany(() => ReviewReaction, reviewReaction => reviewReaction.review)
   reviewReactions: ReviewReaction[];
 
-  @OneToMany(() => ReviewReply, (reviewReply) => reviewReply.review)
+  @OneToMany(() => ReviewReply, reviewReply => reviewReply.review)
   reviewReplies: ReviewReply[];
 }

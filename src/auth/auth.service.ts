@@ -136,7 +136,7 @@ export class AuthService {
   }
 
   async generateCrossServerToken(appCache: AppCache, dto: CrossServerTokenDTO) {
-    return this.entityManager.transaction(async (manager) => {
+    return this.entityManager.transaction(async manager => {
       const { clientId, key, permissions } = dto;
 
       const app = await this.appService.getAppByClientId(clientId, manager);
@@ -213,7 +213,7 @@ export class AuthService {
       ? await this.checkUndoneSignUpProperty(payload.appId, payload.memberId, manager)
       : true;
 
-    defaultPermissions.forEach((each) => {
+    defaultPermissions.forEach(each => {
       if (!payload.permissions.includes(each)) {
         payload.permissions.push(each);
       }

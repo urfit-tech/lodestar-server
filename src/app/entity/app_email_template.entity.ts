@@ -22,14 +22,14 @@ export class AppEmailTemplate {
   @Column('text', { name: 'subject', nullable: true })
   subject: string | null;
 
-  @ManyToOne(() => App, (app) => app.appEmailTemplates, {
+  @ManyToOne(() => App, app => app.appEmailTemplates, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => EmailTemplate, (emailTemplate) => emailTemplate.appEmailTemplates, {
+  @ManyToOne(() => EmailTemplate, emailTemplate => emailTemplate.appEmailTemplates, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

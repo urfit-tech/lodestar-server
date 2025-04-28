@@ -64,6 +64,6 @@ export class User {
   @Column('text', { name: 'phone', nullable: true })
   phone: string | null;
 
-  @OneToMany(() => UserOauth, (userOauth) => userOauth.user)
+  @OneToMany(() => UserOauth, userOauth => userOauth.user)
   userOauths: UserOauth[];
 }

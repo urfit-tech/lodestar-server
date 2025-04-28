@@ -24,7 +24,7 @@ export class AppLanguage {
   @Column('jsonb', { name: 'data', default: () => 'jsonb_build_object()' })
   data: object;
 
-  @ManyToOne(() => App, (app) => app.appLanguages, {
+  @ManyToOne(() => App, app => app.appLanguages, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -26,14 +26,14 @@ export class MemberPermissionGroup {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.memberPermissionGroups, {
+  @ManyToOne(() => Member, member => member.memberPermissionGroups, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => PermissionGroup, (permissionGroup) => permissionGroup.memberPermissionGroups, {
+  @ManyToOne(() => PermissionGroup, permissionGroup => permissionGroup.memberPermissionGroups, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -29,7 +29,7 @@ export class OrderDiscount {
   @Column('jsonb', { name: 'options', nullable: true })
   options: object | null;
 
-  @ManyToOne(() => OrderLog, (orderLog) => orderLog.orderDiscounts, {
+  @ManyToOne(() => OrderLog, orderLog => orderLog.orderDiscounts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

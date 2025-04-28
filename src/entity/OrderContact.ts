@@ -31,14 +31,14 @@ export class OrderContact {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Member, (member) => member.orderContacts, {
+  @ManyToOne(() => Member, member => member.orderContacts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => OrderLog, (orderLog) => orderLog.orderContacts, {
+  @ManyToOne(() => OrderLog, orderLog => orderLog.orderContacts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

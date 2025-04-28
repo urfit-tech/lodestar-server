@@ -36,14 +36,14 @@ export class ProgramContentProgress {
   })
   updatedAt: Date | null;
 
-  @ManyToOne(() => Member, (member) => member.programContentProgresses, {
+  @ManyToOne(() => Member, member => member.programContentProgresses, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentProgresses, {
+  @ManyToOne(() => ProgramContent, programContent => programContent.programContentProgresses, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

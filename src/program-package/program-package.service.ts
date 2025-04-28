@@ -35,7 +35,7 @@ export class ProgramPackageService {
 
     return [
       ...new Set(
-        ownedProgramPackages.map((programPackage) => ({
+        ownedProgramPackages.map(programPackage => ({
           ...programPackage,
           viewRate: Number(programPackage.viewRate || 0),
         })),
@@ -63,7 +63,7 @@ export class ProgramPackageService {
 
     return [
       ...new Set(
-        expiredProgramPackages.map((programPackage) => ({
+        expiredProgramPackages.map(programPackage => ({
           ...programPackage,
           viewRate: Number(programPackage.viewRate || 0),
         })),
@@ -93,7 +93,7 @@ export class ProgramPackageService {
     const filterProgramContentProgress = ownedProgramPackage.isTempoDelivery
       ? this.filterProgramContentProgressNotTempoDelivered(
           ownedProgramPackage.programContentProgress,
-          ownedProgramPackage.programTempoDelivery.filter((delivery) => !isEmpty(delivery)),
+          ownedProgramPackage.programTempoDelivery.filter(delivery => !isEmpty(delivery)),
         )
       : ownedProgramPackage.programContentProgress;
 
@@ -109,16 +109,16 @@ export class ProgramPackageService {
       title: ownedProgramPackage.title,
       coverUrl: ownedProgramPackage.coverUrl,
       programs: [
-        ...new Set(filterProgramContentProgress.sort((a, b) => a.position - b.position).map((p) => p.programId)),
+        ...new Set(filterProgramContentProgress.sort((a, b) => a.position - b.position).map(p => p.programId)),
       ].map((programId: string) => ({
         id: programId,
-        title: filterProgramContentProgress.find((p) => p.programId === programId).programTitle || '',
-        coverUrl: filterProgramContentProgress.find((p) => p.programId === programId).programCoverUrl || null,
+        title: filterProgramContentProgress.find(p => p.programId === programId).programTitle || '',
+        coverUrl: filterProgramContentProgress.find(p => p.programId === programId).programCoverUrl || null,
         viewRate: progress[programId],
         categories:
           programCategories
-            .find((pc) => pc.id === programId)
-            ?.programCategories.map((programCategory) => ({
+            .find(pc => pc.id === programId)
+            ?.programCategories.map(programCategory => ({
               id: programCategory.category.id,
               name: programCategory.category.name,
               position: programCategory.category.position,
@@ -131,9 +131,9 @@ export class ProgramPackageService {
     programContentProgress: ProgramPackageProgramContentProgressDTO[],
     programTempoDelivery: ProgramTempoDeliveryDTO[],
   ) {
-    return programContentProgress.filter((progress) =>
+    return programContentProgress.filter(progress =>
       programTempoDelivery.some(
-        (delivery) =>
+        delivery =>
           delivery.programPackageProgramId === progress.programPackageProgramId &&
           new Date(delivery.deliveredAt).getTime() < Date.now(),
       ),

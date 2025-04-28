@@ -13,14 +13,14 @@ export class ProgramPackageCategory {
   @PrimaryGeneratedColumn({ type: 'integer', name: 'position' })
   position: number;
 
-  @ManyToOne(() => ProgramPackage, (programPackage) => programPackage.programPackageCategories, {
+  @ManyToOne(() => ProgramPackage, programPackage => programPackage.programPackageCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_package_id', referencedColumnName: 'id' }])
   programPackage: ProgramPackage;
 
-  @ManyToOne(() => Category, (category) => category.programPackageCategories, {
+  @ManyToOne(() => Category, category => category.programPackageCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

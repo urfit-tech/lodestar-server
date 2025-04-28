@@ -29,17 +29,17 @@ export class QuestionGroup {
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
-  @OneToMany(() => Question, (question) => question.questionGroup)
+  @OneToMany(() => Question, question => question.questionGroup)
   questions: Question[];
 
-  @ManyToOne(() => Member, (member) => member.questionGroups, {
+  @ManyToOne(() => Member, member => member.questionGroups, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'modifier_id', referencedColumnName: 'id' }])
   modifier: Member;
 
-  @ManyToOne(() => QuestionLibrary, (questionLibrary) => questionLibrary.questionGroups, {
+  @ManyToOne(() => QuestionLibrary, questionLibrary => questionLibrary.questionGroups, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

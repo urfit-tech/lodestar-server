@@ -16,7 +16,7 @@ export class ProgramRelatedItem {
   @Column('numeric', { name: 'weight' })
   weight: number;
 
-  @ManyToOne(() => Program, (program) => program.programRelatedItems, {
+  @ManyToOne(() => Program, program => program.programRelatedItems, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })

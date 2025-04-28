@@ -15,7 +15,7 @@ export class PaymentInfrastructure {
         status: Equal('SUCCESS'),
         invoiceIssuedAt: IsNull(),
         invoiceOptions: Raw(
-          (alias) =>
+          alias =>
             `(${alias} ->> 'status' IS NULL OR (${alias} ->> 'status' != 'SUCCESS' AND (${alias} ->> 'retry')::numeric < 5)) AND (${alias} ->'skipIssueInvoice' IS NULL OR ${alias} ->>'skipIssueInvoice' != 'true')`,
         ),
         paidAt: And(LessThan(dayjs.utc().toDate()), MoreThan(dayjs.utc().subtract(3, 'day').toDate())),

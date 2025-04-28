@@ -67,17 +67,17 @@ export class ProgramService {
 
     return [
       ...new Set([
-        ...ownedProgramDirectly.map((program) => ({
+        ...ownedProgramDirectly.map(program => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
-        ...programWithRoleIsAssistant.map((program) => ({
+        ...programWithRoleIsAssistant.map(program => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
-        ...ownedProgramPlans.map((program) => ({
+        ...ownedProgramPlans.map(program => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
@@ -160,12 +160,12 @@ export class ProgramService {
 
     return [
       ...new Set([
-        ...expiredPrograms.map((program) => ({
+        ...expiredPrograms.map(program => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
         })),
-        ...expiredProgramsByMembershipCard.map((program) => ({
+        ...expiredProgramsByMembershipCard.map(program => ({
           ...program,
           viewRate: Number(program.viewRate || 0),
           roles: this.sortProgramRole(program.roles),
@@ -262,7 +262,7 @@ export class ProgramService {
       throw new Error('programContentId must be provided');
     }
 
-    await this.entityManager.transaction(async (transactionalEntityManager) => {
+    await this.entityManager.transaction(async transactionalEntityManager => {
       const existingProgress = await this.programInfra.getProgramContentProgressByIdAndMemberId(
         programContentId,
         memberId,
@@ -296,7 +296,7 @@ export class ProgramService {
       (a: { createdAt: string }, b: { createdAt: string }) =>
         dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
     );
-    const resultRoles = sortRoles.map((role) => ({
+    const resultRoles = sortRoles.map(role => ({
       ...role,
       createdAt: dayjs(role.createdAt),
     }));
@@ -305,8 +305,8 @@ export class ProgramService {
 
   private _mergeProgramPlans(primaryPlans: Record<string, any>[], secondaryPlans: Record<string, any>[]) {
     const mergedProgramPlanIds = new Map();
-    primaryPlans.forEach((plan) => mergedProgramPlanIds.set(plan.id, plan));
-    secondaryPlans.forEach((plan) => mergedProgramPlanIds.set(plan.id, plan));
+    primaryPlans.forEach(plan => mergedProgramPlanIds.set(plan.id, plan));
+    secondaryPlans.forEach(plan => mergedProgramPlanIds.set(plan.id, plan));
     return Array.from(mergedProgramPlanIds.values());
   }
 }

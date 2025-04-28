@@ -67,20 +67,20 @@ export class Attachment {
   @Column('text', { name: 'author_id' })
   authorId: string;
 
-  @ManyToOne(() => Member, (member) => member.attachments, {
+  @ManyToOne(() => Member, member => member.attachments, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'author_id', referencedColumnName: 'id' }])
   author: Member;
 
-  @ManyToOne(() => File, (file) => file.attachments, {
+  @ManyToOne(() => File, file => file.attachments, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'file_id', referencedColumnName: 'id' }])
   file: File;
 
-  @OneToMany(() => ProgramContentVideo, (programContentVideo) => programContentVideo.attachment)
+  @OneToMany(() => ProgramContentVideo, programContentVideo => programContentVideo.attachment)
   programContentVideos: ProgramContentVideo[];
 }

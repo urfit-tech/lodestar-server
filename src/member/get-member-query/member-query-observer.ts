@@ -1,15 +1,19 @@
-import { EntityManager, FindOptionsWhere, SelectQueryBuilder } from "typeorm";
-import { Member } from "../entity/member.entity";
-import { MemberProperty } from "../entity/member_property.entity";
-import { first, keys, pick, values } from "lodash";
-import { MemberPropertiesCondition } from "~/member/member.dto";
-import { MemberPermissionGroup } from "../entity/member_permission_group.entity";
-import { MemberCategory } from "../entity/member_category.entity";
-import { MemberTag } from "../entity/member_tag.entity";
-import { MemberPhone } from "../entity/member_phone.entity";
+import { EntityManager, FindOptionsWhere, SelectQueryBuilder } from 'typeorm';
+import { Member } from '../entity/member.entity';
+import { MemberProperty } from '../entity/member_property.entity';
+import { first, keys, pick, values } from 'lodash';
+import { MemberPropertiesCondition } from '~/member/member.dto';
+import { MemberPermissionGroup } from '../entity/member_permission_group.entity';
+import { MemberCategory } from '../entity/member_category.entity';
+import { MemberTag } from '../entity/member_tag.entity';
+import { MemberPhone } from '../entity/member_phone.entity';
 
 class MemberManagerObserver implements QueryObserver {
-  update(entityManager: EntityManager, queryBuilder: SelectQueryBuilder<Member>, conditions: FindOptionsWhere<Member>): void {
+  update(
+    entityManager: EntityManager,
+    queryBuilder: SelectQueryBuilder<Member>,
+    conditions: FindOptionsWhere<Member>,
+  ): void {
     if (conditions.manager || conditions.managerId) {
       queryBuilder.leftJoinAndSelect('member.manager', 'manager');
     }
@@ -17,7 +21,11 @@ class MemberManagerObserver implements QueryObserver {
 }
 
 class MemberPhoneObserver implements QueryObserver {
-  async update(entityManager: EntityManager, queryBuilder: SelectQueryBuilder<Member>, conditions: FindOptionsWhere<Member>): Promise<void> {
+  async update(
+    entityManager: EntityManager,
+    queryBuilder: SelectQueryBuilder<Member>,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<void> {
     if (conditions.memberPhones) {
       const memberPhoneQueryBuilder = await this.getMemberPhoneQueryBuilderByCondition(entityManager, conditions);
       queryBuilder.innerJoinAndSelect(
@@ -28,7 +36,10 @@ class MemberPhoneObserver implements QueryObserver {
     }
   }
 
-  private async getMemberPhoneQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<SelectQueryBuilder<MemberPhone>> {
+  private async getMemberPhoneQueryBuilderByCondition(
+    entityManager: EntityManager,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<SelectQueryBuilder<MemberPhone>> {
     const memberPhoneConditions = pick(conditions, ['memberPhones']).memberPhones as FindOptionsWhere<MemberPhone>;
     const sqlCondition = `("phone" ILIKE '${memberPhoneConditions.phone}')`;
     return entityManager
@@ -41,7 +52,11 @@ class MemberPhoneObserver implements QueryObserver {
 }
 
 class MemberTagObserver implements QueryObserver {
-  async update(entityManager: EntityManager, queryBuilder: SelectQueryBuilder<Member>, conditions: FindOptionsWhere<Member>): Promise<void> {
+  async update(
+    entityManager: EntityManager,
+    queryBuilder: SelectQueryBuilder<Member>,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<void> {
     if (conditions.memberTags) {
       const memberTagQueryBuilder = await this.getMemberTagQueryBuilderByCondition(entityManager, conditions);
       queryBuilder.innerJoinAndSelect(
@@ -52,7 +67,10 @@ class MemberTagObserver implements QueryObserver {
     }
   }
 
-  private async getMemberTagQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<SelectQueryBuilder<MemberTag>> {
+  private async getMemberTagQueryBuilderByCondition(
+    entityManager: EntityManager,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<SelectQueryBuilder<MemberTag>> {
     const memberTagsConditions = pick(conditions, ['memberTags']).memberTags as FindOptionsWhere<MemberTag>;
     const sqlCondition = `("tag_name" ILIKE '${memberTagsConditions.tagName}')`;
     return entityManager
@@ -64,7 +82,11 @@ class MemberTagObserver implements QueryObserver {
 }
 
 class MemberCategoryObserver implements QueryObserver {
-  async update(entityManager: EntityManager, queryBuilder: SelectQueryBuilder<Member>, conditions: FindOptionsWhere<Member>): Promise<void> {
+  async update(
+    entityManager: EntityManager,
+    queryBuilder: SelectQueryBuilder<Member>,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<void> {
     if (conditions.memberCategories) {
       const memberCategoriesQueryBuilder = await this.getMemberCategoryBuilderByCondition(entityManager, conditions);
       queryBuilder.innerJoinAndSelect(
@@ -75,7 +97,10 @@ class MemberCategoryObserver implements QueryObserver {
     }
   }
 
-  private async getMemberCategoryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<SelectQueryBuilder<MemberCategory>> {
+  private async getMemberCategoryBuilderByCondition(
+    entityManager: EntityManager,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<SelectQueryBuilder<MemberCategory>> {
     const memberCategoriesConditions = pick(conditions, ['memberCategories']).memberCategories as any;
     const sqlCondition = `("name" ILIKE '${memberCategoriesConditions.category.name}')`;
     return entityManager
@@ -88,9 +113,16 @@ class MemberCategoryObserver implements QueryObserver {
 }
 
 class MemberPermissionGroupObserver implements QueryObserver {
-  async update(entityManager: EntityManager, queryBuilder: SelectQueryBuilder<Member>, conditions: FindOptionsWhere<Member>): Promise<void> {
+  async update(
+    entityManager: EntityManager,
+    queryBuilder: SelectQueryBuilder<Member>,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<void> {
     if (conditions.memberPermissionGroups) {
-      const memberPermissionGroupQueryBuilder = await this.getMemberPermissionsGroupBuilderByCondition(entityManager, conditions);
+      const memberPermissionGroupQueryBuilder = await this.getMemberPermissionsGroupBuilderByCondition(
+        entityManager,
+        conditions,
+      );
       queryBuilder.innerJoinAndSelect(
         `(${memberPermissionGroupQueryBuilder.getSql()})`,
         'memberPermissionGroup',
@@ -99,7 +131,10 @@ class MemberPermissionGroupObserver implements QueryObserver {
     }
   }
 
-  private async getMemberPermissionsGroupBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<SelectQueryBuilder<MemberPermissionGroup>> {
+  private async getMemberPermissionsGroupBuilderByCondition(
+    entityManager: EntityManager,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<SelectQueryBuilder<MemberPermissionGroup>> {
     const memberPermissionGroupsConditions = pick(conditions, ['memberPermissionGroups']).memberPermissionGroups as any;
     const sqlCondition = `("name" = '${memberPermissionGroupsConditions.permissionGroup.name}')`;
     return entityManager
@@ -112,7 +147,11 @@ class MemberPermissionGroupObserver implements QueryObserver {
 }
 
 class MemberPropertyObserver implements QueryObserver {
-  async update(entityManager: EntityManager, queryBuilder: SelectQueryBuilder<Member>, conditions: FindOptionsWhere<Member>): Promise<void> {
+  async update(
+    entityManager: EntityManager,
+    queryBuilder: SelectQueryBuilder<Member>,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<void> {
     if (conditions.memberProperties) {
       const memberPropertyQueryBuilder = await this.getMemberPropertyQueryBuilderByCondition(entityManager, conditions);
       queryBuilder.innerJoinAndSelect(
@@ -123,10 +162,14 @@ class MemberPropertyObserver implements QueryObserver {
     }
   }
 
-  private async getMemberPropertyQueryBuilderByCondition(entityManager: EntityManager, conditions: FindOptionsWhere<Member>): Promise<SelectQueryBuilder<MemberProperty>> {
-    const memberPropertyConditions = pick(conditions, ['memberProperties']).memberProperties as MemberPropertiesCondition[];
+  private async getMemberPropertyQueryBuilderByCondition(
+    entityManager: EntityManager,
+    conditions: FindOptionsWhere<Member>,
+  ): Promise<SelectQueryBuilder<MemberProperty>> {
+    const memberPropertyConditions = pick(conditions, ['memberProperties'])
+      .memberProperties as MemberPropertiesCondition[];
     const sqlCondition = memberPropertyConditions
-      .map((property) => {
+      .map(property => {
         const key = first(keys(property));
         const value = first(values(property));
         return `("property_id" = '${key}' AND "value" ILIKE '${value}')`;
@@ -143,5 +186,11 @@ class MemberPropertyObserver implements QueryObserver {
   }
 }
 
-
-export {MemberManagerObserver ,  MemberPhoneObserver, MemberTagObserver , MemberCategoryObserver, MemberPermissionGroupObserver , MemberPropertyObserver}
+export {
+  MemberManagerObserver,
+  MemberPhoneObserver,
+  MemberTagObserver,
+  MemberCategoryObserver,
+  MemberPermissionGroupObserver,
+  MemberPropertyObserver,
+};

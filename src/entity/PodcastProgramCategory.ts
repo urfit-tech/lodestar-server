@@ -11,14 +11,14 @@ export class PodcastProgramCategory {
   @Column('integer', { name: 'position' })
   position: number;
 
-  @ManyToOne(() => PodcastProgram, (podcastProgram) => podcastProgram.podcastProgramCategories, {
+  @ManyToOne(() => PodcastProgram, podcastProgram => podcastProgram.podcastProgramCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'podcast_program_id', referencedColumnName: 'id' }])
   podcastProgram: PodcastProgram;
 
-  @ManyToOne(() => Category, (category) => category.podcastProgramCategories, {
+  @ManyToOne(() => Category, category => category.podcastProgramCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

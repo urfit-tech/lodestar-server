@@ -26,20 +26,20 @@ export class Coupon {
   @Column('uuid', { name: 'coupon_code_id' })
   couponCodeId: string;
 
-  @ManyToOne(() => CouponCode, (couponCode) => couponCode.coupons, {
+  @ManyToOne(() => CouponCode, couponCode => couponCode.coupons, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'coupon_code_id', referencedColumnName: 'id' }])
   couponCode: CouponCode;
 
-  @ManyToOne(() => Member, (member) => member.coupons, {
+  @ManyToOne(() => Member, member => member.coupons, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => OrderLog, (orderLog) => orderLog.discountCoupon)
+  @OneToMany(() => OrderLog, orderLog => orderLog.discountCoupon)
   orderLogs: OrderLog[];
 }

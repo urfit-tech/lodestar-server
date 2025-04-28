@@ -11,6 +11,6 @@ export class AccessControlService {
   constructor() {}
 
   public isAuthorized({ currentPermissions, requiredPermissions }: IsAuthorizedParams) {
-    return currentPermissions.some( permissions=> requiredPermissions.includes(permissions));
+    return currentPermissions.some(permissions => requiredPermissions.includes(permissions));
   }
 }

@@ -21,14 +21,14 @@ export class PostRole {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @ManyToOne(() => Member, (member) => member.postRoles, {
+  @ManyToOne(() => Member, member => member.postRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Post, (post) => post.postRoles, {
+  @ManyToOne(() => Post, post => post.postRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

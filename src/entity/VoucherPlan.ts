@@ -55,16 +55,16 @@ export class VoucherPlan {
   @Column('text', { name: 'editor_id', nullable: true })
   editorId: string | null;
 
-  @OneToMany(() => VoucherCode, (voucherCode) => voucherCode.voucherPlan)
+  @OneToMany(() => VoucherCode, voucherCode => voucherCode.voucherPlan)
   voucherCodes: VoucherCode[];
 
-  @ManyToOne(() => App, (app) => app.voucherPlans, {
+  @ManyToOne(() => App, app => app.voucherPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @OneToMany(() => VoucherPlanProduct, (voucherPlanProduct) => voucherPlanProduct.voucherPlan)
+  @OneToMany(() => VoucherPlanProduct, voucherPlanProduct => voucherPlanProduct.voucherPlan)
   voucherPlanProducts: VoucherPlanProduct[];
 }

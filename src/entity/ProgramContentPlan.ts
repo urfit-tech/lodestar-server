@@ -16,14 +16,14 @@ export class ProgramContentPlan {
   @Column('uuid', { name: 'program_content_id' })
   programContentId: string;
 
-  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentPlans, {
+  @ManyToOne(() => ProgramContent, programContent => programContent.programContentPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_content_id', referencedColumnName: 'id' }])
   programContent: ProgramContent;
 
-  @ManyToOne(() => ProgramPlan, (programPlan) => programPlan.programContentPlans, {
+  @ManyToOne(() => ProgramPlan, programPlan => programPlan.programContentPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

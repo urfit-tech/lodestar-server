@@ -32,13 +32,13 @@ export class MemberShop {
   @Column('text', { name: 'cover_url', nullable: true })
   coverUrl: string | null;
 
-  @ManyToOne(() => Member, (member) => member.memberShops, {
+  @ManyToOne(() => Member, member => member.memberShops, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => Merchandise, (merchandise) => merchandise.memberShop)
+  @OneToMany(() => Merchandise, merchandise => merchandise.memberShop)
   merchandises: Merchandise[];
 }

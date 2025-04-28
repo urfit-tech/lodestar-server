@@ -41,13 +41,13 @@ export class MerchandiseSpec {
   @Column('boolean', { name: 'is_deleted', default: () => false })
   isDeleted: boolean;
 
-  @ManyToOne(() => Merchandise, (merchandise) => merchandise.merchandiseSpecs, {
+  @ManyToOne(() => Merchandise, merchandise => merchandise.merchandiseSpecs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'merchandise_id', referencedColumnName: 'id' }])
   merchandise: Merchandise;
 
-  @OneToMany(() => MerchandiseSpecFile, (merchandiseSpecFile) => merchandiseSpecFile.merchandiseSpec)
+  @OneToMany(() => MerchandiseSpecFile, merchandiseSpecFile => merchandiseSpecFile.merchandiseSpec)
   merchandiseSpecFiles: MerchandiseSpecFile[];
 }

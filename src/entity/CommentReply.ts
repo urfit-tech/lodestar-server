@@ -21,20 +21,20 @@ export class CommentReply {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Comment, (comment) => comment.commentReplies, {
+  @ManyToOne(() => Comment, comment => comment.commentReplies, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'comment_id', referencedColumnName: 'id' }])
   comment: Comment;
 
-  @ManyToOne(() => Member, (member) => member.commentReplies, {
+  @ManyToOne(() => Member, member => member.commentReplies, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => CommentReplyReaction, (commentReplyReaction) => commentReplyReaction.commentReply)
+  @OneToMany(() => CommentReplyReaction, commentReplyReaction => commentReplyReaction.commentReply)
   commentReplyReactions: CommentReplyReaction[];
 }

@@ -34,10 +34,10 @@ export class QuestionLibrary {
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
-  @OneToMany(() => QuestionGroup, (questionGroup) => questionGroup.questionLibrary)
+  @OneToMany(() => QuestionGroup, questionGroup => questionGroup.questionLibrary)
   questionGroups: QuestionGroup[];
 
-  @ManyToOne(() => Member, (member) => member.questionLibraries, {
+  @ManyToOne(() => Member, member => member.questionLibraries, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

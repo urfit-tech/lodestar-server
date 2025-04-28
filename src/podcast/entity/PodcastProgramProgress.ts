@@ -37,21 +37,21 @@ export class PodcastProgramProgress {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.podcastProgramProgresses, {
+  @ManyToOne(() => Member, member => member.podcastProgramProgresses, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => PodcastAlbum, (podcastAlbum) => podcastAlbum.podcastProgramProgresses, {
+  @ManyToOne(() => PodcastAlbum, podcastAlbum => podcastAlbum.podcastProgramProgresses, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'podcast_album_id', referencedColumnName: 'id' }])
   podcastAlbum: PodcastAlbum;
 
-  @ManyToOne(() => PodcastProgram, (podcastProgram) => podcastProgram.podcastProgramProgresses, {
+  @ManyToOne(() => PodcastProgram, podcastProgram => podcastProgram.podcastProgramProgresses, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

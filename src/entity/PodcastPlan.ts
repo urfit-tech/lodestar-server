@@ -52,14 +52,14 @@ export class PodcastPlan {
   })
   updatedAt: Date | null;
 
-  @ManyToOne(() => Member, (member) => member.podcastPlans, {
+  @ManyToOne(() => Member, member => member.podcastPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'creator_id', referencedColumnName: 'id' }])
   creator: Member;
 
-  @ManyToOne(() => Podcast, (podcast) => podcast.podcastPlans, {
+  @ManyToOne(() => Podcast, podcast => podcast.podcastPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

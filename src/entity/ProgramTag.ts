@@ -22,14 +22,14 @@ export class ProgramTag {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @ManyToOne(() => Program, (program) => program.programTags, {
+  @ManyToOne(() => Program, program => program.programTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
   program: Program;
 
-  @ManyToOne(() => Tag, (tag) => tag.programTags, {
+  @ManyToOne(() => Tag, tag => tag.programTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

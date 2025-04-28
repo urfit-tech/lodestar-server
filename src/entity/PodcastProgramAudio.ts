@@ -28,7 +28,7 @@ export class PodcastProgramAudio {
   @Column('integer', { name: 'position' })
   position: number;
 
-  @ManyToOne(() => PodcastProgram, (podcastProgram) => podcastProgram.podcastProgramAudios, {
+  @ManyToOne(() => PodcastProgram, podcastProgram => podcastProgram.podcastProgramAudios, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

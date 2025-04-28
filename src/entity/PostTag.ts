@@ -13,14 +13,14 @@ export class PostTag {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @ManyToOne(() => Post, (post) => post.postTags, {
+  @ManyToOne(() => Post, post => post.postTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'post_id', referencedColumnName: 'id' }])
   post: Post;
 
-  @ManyToOne(() => Tag, (tag) => tag.postTags, {
+  @ManyToOne(() => Tag, tag => tag.postTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

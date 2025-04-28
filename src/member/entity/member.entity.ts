@@ -196,224 +196,224 @@ export class Member {
   @Column('boolean', { name: 'is_business', default: () => false })
   isBusiness: boolean;
 
-  @OneToMany(() => Activity, (activity) => activity.organizer)
+  @OneToMany(() => Activity, activity => activity.organizer)
   activities: Activity[];
 
-  @OneToMany(() => AppPage, (appPage) => appPage.editor)
+  @OneToMany(() => AppPage, appPage => appPage.editor)
   appPages: AppPage[];
 
-  @OneToMany(() => AppPageTemplate, (appPageTemplate) => appPageTemplate.author)
+  @OneToMany(() => AppPageTemplate, appPageTemplate => appPageTemplate.author)
   appPageTemplates: AppPageTemplate[];
 
-  @OneToMany(() => AppointmentPlan, (appointmentPlan) => appointmentPlan.creator)
+  @OneToMany(() => AppointmentPlan, appointmentPlan => appointmentPlan.creator)
   appointmentPlans: AppointmentPlan[];
 
-  @OneToMany(() => Attachment, (attachment) => attachment.author)
+  @OneToMany(() => Attachment, attachment => attachment.author)
   attachments: Attachment[];
 
-  @OneToMany(() => Attend, (attend) => attend.member)
+  @OneToMany(() => Attend, attend => attend.member)
   attends: Attend[];
 
-  @OneToMany(() => CoinLog, (coinLog) => coinLog.member)
+  @OneToMany(() => CoinLog, coinLog => coinLog.member)
   coinLogs: CoinLog[];
 
-  @OneToMany(() => Comment, (comment) => comment.member)
+  @OneToMany(() => Comment, comment => comment.member)
   comments: Comment[];
 
-  @OneToMany(() => CommentReaction, (commentReaction) => commentReaction.member)
+  @OneToMany(() => CommentReaction, commentReaction => commentReaction.member)
   commentReactions: CommentReaction[];
 
-  @OneToMany(() => CommentReply, (commentReply) => commentReply.member)
+  @OneToMany(() => CommentReply, commentReply => commentReply.member)
   commentReplies: CommentReply[];
 
-  @OneToMany(() => CommentReplyReaction, (commentReplyReaction) => commentReplyReaction.member)
+  @OneToMany(() => CommentReplyReaction, commentReplyReaction => commentReplyReaction.member)
   commentReplyReactions: CommentReplyReaction[];
 
-  @OneToMany(() => Coupon, (coupon) => coupon.member)
+  @OneToMany(() => Coupon, coupon => coupon.member)
   coupons: Coupon[];
 
-  @OneToMany(() => CreatorCategory, (creatorCategory) => creatorCategory.creator)
+  @OneToMany(() => CreatorCategory, creatorCategory => creatorCategory.creator)
   creatorCategories: CreatorCategory[];
 
-  @OneToMany(() => CreatorDisplay, (creatorDisplay) => creatorDisplay.member)
+  @OneToMany(() => CreatorDisplay, creatorDisplay => creatorDisplay.member)
   creatorDisplays: CreatorDisplay[];
 
-  @OneToMany(() => Exercise, (exercise) => exercise.member)
+  @OneToMany(() => Exercise, exercise => exercise.member)
   exercises: Exercise[];
 
-  @OneToMany(() => Issue, (issue) => issue.member)
+  @OneToMany(() => Issue, issue => issue.member)
   issues: Issue[];
 
-  @OneToMany(() => IssueReaction, (issueReaction) => issueReaction.member)
+  @OneToMany(() => IssueReaction, issueReaction => issueReaction.member)
   issueReactions: IssueReaction[];
 
-  @OneToMany(() => IssueReply, (issueReply) => issueReply.member)
+  @OneToMany(() => IssueReply, issueReply => issueReply.member)
   issueReplies: IssueReply[];
 
-  @OneToMany(() => IssueReplyReaction, (issueReplyReaction) => issueReplyReaction.member)
+  @OneToMany(() => IssueReplyReaction, issueReplyReaction => issueReplyReaction.member)
   issueReplyReactions: IssueReplyReaction[];
 
-  @OneToMany(() => Media, (media) => media.member)
+  @OneToMany(() => Media, media => media.member)
   media: Media[];
 
-  @ManyToOne(() => App, (app) => app.members, {
+  @ManyToOne(() => App, app => app.members, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Member, (member) => member.members, {
+  @ManyToOne(() => Member, member => member.members, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'manager_id', referencedColumnName: 'id' }])
   manager: Member;
 
-  @OneToMany(() => Member, (member) => member.manager)
+  @OneToMany(() => Member, member => member.manager)
   members: Member[];
 
-  @OneToMany(() => MemberCard, (memberCard) => memberCard.member)
+  @OneToMany(() => MemberCard, memberCard => memberCard.member)
   memberCards: MemberCard[];
 
-  @OneToMany(() => MemberCategory, (memberCategory) => memberCategory.member)
+  @OneToMany(() => MemberCategory, memberCategory => memberCategory.member)
   memberCategories: MemberCategory[];
 
-  @OneToMany(() => MemberContract, (memberContract) => memberContract.author)
+  @OneToMany(() => MemberContract, memberContract => memberContract.author)
   memberContracts: MemberContract[];
 
-  @OneToMany(() => MemberContract, (memberContract) => memberContract.member)
+  @OneToMany(() => MemberContract, memberContract => memberContract.member)
   memberContracts2: MemberContract[];
 
-  @OneToMany(() => MemberDevice, (memberDevice) => memberDevice.member)
+  @OneToMany(() => MemberDevice, memberDevice => memberDevice.member)
   memberDevices: MemberDevice[];
 
-  @OneToMany(() => MemberNote, (memberNote) => memberNote.author)
+  @OneToMany(() => MemberNote, memberNote => memberNote.author)
   memberNotes: MemberNote[];
 
-  @OneToMany(() => MemberNote, (memberNote) => memberNote.member)
+  @OneToMany(() => MemberNote, memberNote => memberNote.member)
   memberNotes2: MemberNote[];
 
-  @OneToMany(() => MemberOauth, (memberOauth) => memberOauth.member)
+  @OneToMany(() => MemberOauth, memberOauth => memberOauth.member)
   memberOauths: MemberOauth[];
 
-  @OneToMany(() => MemberPermissionExtra, (memberPermissionExtra) => memberPermissionExtra.member)
+  @OneToMany(() => MemberPermissionExtra, memberPermissionExtra => memberPermissionExtra.member)
   memberPermissionExtras: MemberPermissionExtra[];
 
-  @OneToMany(() => MemberPermissionGroup, (memberPermissionGroup) => memberPermissionGroup.member)
+  @OneToMany(() => MemberPermissionGroup, memberPermissionGroup => memberPermissionGroup.member)
   memberPermissionGroups: MemberPermissionGroup[];
 
-  @OneToMany(() => MemberPhone, (memberPhone) => memberPhone.member)
+  @OneToMany(() => MemberPhone, memberPhone => memberPhone.member)
   memberPhones: MemberPhone[];
 
-  @OneToMany(() => MemberProperty, (memberProperty) => memberProperty.member, { persistence: false })
+  @OneToMany(() => MemberProperty, memberProperty => memberProperty.member, { persistence: false })
   memberProperties: MemberProperty[];
 
-  @OneToMany(() => MemberShop, (memberShop) => memberShop.member)
+  @OneToMany(() => MemberShop, memberShop => memberShop.member)
   memberShops: MemberShop[];
 
-  @OneToMany(() => MemberSocial, (memberSocial) => memberSocial.member)
+  @OneToMany(() => MemberSocial, memberSocial => memberSocial.member)
   memberSocials: MemberSocial[];
 
-  @OneToMany(() => MemberSpeciality, (memberSpeciality) => memberSpeciality.member)
+  @OneToMany(() => MemberSpeciality, memberSpeciality => memberSpeciality.member)
   memberSpecialities: MemberSpeciality[];
 
-  @OneToMany(() => MemberTag, (memberTag) => memberTag.member)
+  @OneToMany(() => MemberTag, memberTag => memberTag.member)
   memberTags: MemberTag[];
 
-  @OneToMany(() => MemberTask, (memberTask) => memberTask.author)
+  @OneToMany(() => MemberTask, memberTask => memberTask.author)
   memberTasks: MemberTask[];
 
-  @OneToMany(() => MemberTask, (memberTask) => memberTask.executor)
+  @OneToMany(() => MemberTask, memberTask => memberTask.executor)
   memberTasks2: MemberTask[];
 
-  @OneToMany(() => MemberTask, (memberTask) => memberTask.member)
+  @OneToMany(() => MemberTask, memberTask => memberTask.member)
   memberTasks3: MemberTask[];
 
-  @OneToMany(() => MemberTrackingLog, (memberTrackingLog) => memberTrackingLog.member)
+  @OneToMany(() => MemberTrackingLog, memberTrackingLog => memberTrackingLog.member)
   memberTrackingLogs: MemberTrackingLog[];
 
-  @OneToMany(() => Merchandise, (merchandise) => merchandise.member)
+  @OneToMany(() => Merchandise, merchandise => merchandise.member)
   merchandises: Merchandise[];
 
-  @OneToMany(() => Notification, (notification) => notification.sourceMember)
+  @OneToMany(() => Notification, notification => notification.sourceMember)
   notifications: Notification[];
 
-  @OneToMany(() => Notification, (notification) => notification.targetMember)
+  @OneToMany(() => Notification, notification => notification.targetMember)
   notifications2: Notification[];
 
-  @OneToMany(() => OrderContact, (orderContact) => orderContact.member)
+  @OneToMany(() => OrderContact, orderContact => orderContact.member)
   orderContacts: OrderContact[];
 
-  @OneToMany(() => OrderExecutor, (orderExecutor) => orderExecutor.member)
+  @OneToMany(() => OrderExecutor, orderExecutor => orderExecutor.member)
   orderExecutors: OrderExecutor[];
 
-  @OneToMany(() => OrderLog, (orderLog) => orderLog.member)
+  @OneToMany(() => OrderLog, orderLog => orderLog.member)
   orderLogs: OrderLog[];
 
-  @OneToMany(() => Playlist, (playlist) => playlist.member)
+  @OneToMany(() => Playlist, playlist => playlist.member)
   playlists: Playlist[];
 
-  @OneToMany(() => Podcast, (podcast) => podcast.instructor)
+  @OneToMany(() => Podcast, podcast => podcast.instructor)
   podcasts: Podcast[];
 
-  @OneToMany(() => PodcastAlbum, (podcastAlbum) => podcastAlbum.author)
+  @OneToMany(() => PodcastAlbum, podcastAlbum => podcastAlbum.author)
   podcastAlbums: PodcastAlbum[];
 
-  @OneToMany(() => PodcastPlan, (podcastPlan) => podcastPlan.creator)
+  @OneToMany(() => PodcastPlan, podcastPlan => podcastPlan.creator)
   podcastPlans: PodcastPlan[];
 
-  @OneToMany(() => PodcastProgram, (podcastProgram) => podcastProgram.creator)
+  @OneToMany(() => PodcastProgram, podcastProgram => podcastProgram.creator)
   podcastPrograms: PodcastProgram[];
 
-  @OneToMany(() => PodcastProgramProgress, (podcastProgramProgress) => podcastProgramProgress.member)
+  @OneToMany(() => PodcastProgramProgress, podcastProgramProgress => podcastProgramProgress.member)
   podcastProgramProgresses: PodcastProgramProgress[];
 
-  @OneToMany(() => PodcastProgramRole, (podcastProgramRole) => podcastProgramRole.member)
+  @OneToMany(() => PodcastProgramRole, podcastProgramRole => podcastProgramRole.member)
   podcastProgramRoles: PodcastProgramRole[];
 
-  @OneToMany(() => PointLog, (pointLog) => pointLog.member)
+  @OneToMany(() => PointLog, pointLog => pointLog.member)
   pointLogs: PointLog[];
 
-  @OneToMany(() => PostRole, (postRole) => postRole.member)
+  @OneToMany(() => PostRole, postRole => postRole.member)
   postRoles: PostRole[];
 
-  @OneToMany(() => Practice, (practice) => practice.member)
+  @OneToMany(() => Practice, practice => practice.member)
   practices: Practice[];
 
-  @OneToMany(() => ProgramContentLog, (programContentLog) => programContentLog.member)
+  @OneToMany(() => ProgramContentLog, programContentLog => programContentLog.member)
   programContentLogs: ProgramContentLog[];
 
-  @OneToMany(() => ProgramContentProgress, (programContentProgress) => programContentProgress.member)
+  @OneToMany(() => ProgramContentProgress, programContentProgress => programContentProgress.member)
   programContentProgresses: ProgramContentProgress[];
 
-  @OneToMany(() => ProgramRole, (programRole) => programRole.member)
+  @OneToMany(() => ProgramRole, programRole => programRole.member)
   programRoles: ProgramRole[];
 
-  @OneToMany(() => ProgramTempoDelivery, (programTempoDelivery) => programTempoDelivery.member)
+  @OneToMany(() => ProgramTempoDelivery, programTempoDelivery => programTempoDelivery.member)
   programTempoDeliveries: ProgramTempoDelivery[];
 
-  @OneToMany(() => ProgramTimetable, (programTimetable) => programTimetable.member)
+  @OneToMany(() => ProgramTimetable, programTimetable => programTimetable.member)
   programTimetables: ProgramTimetable[];
 
-  @OneToMany(() => ProjectRole, (projectRole) => projectRole.member)
+  @OneToMany(() => ProjectRole, projectRole => projectRole.member)
   projectRoles: ProjectRole[];
 
-  @OneToMany(() => QuestionGroup, (questionGroup) => questionGroup.modifier)
+  @OneToMany(() => QuestionGroup, questionGroup => questionGroup.modifier)
   questionGroups: QuestionGroup[];
 
-  @OneToMany(() => QuestionLibrary, (questionLibrary) => questionLibrary.modifier)
+  @OneToMany(() => QuestionLibrary, questionLibrary => questionLibrary.modifier)
   questionLibraries: QuestionLibrary[];
 
-  @OneToMany(() => Review, (review) => review.member)
+  @OneToMany(() => Review, review => review.member)
   reviews: Review[];
 
-  @OneToMany(() => ReviewReaction, (reviewReaction) => reviewReaction.member)
+  @OneToMany(() => ReviewReaction, reviewReaction => reviewReaction.member)
   reviewReactions: ReviewReaction[];
 
-  @OneToMany(() => Voucher, (voucher) => voucher.member)
+  @OneToMany(() => Voucher, voucher => voucher.member)
   vouchers: Voucher[];
 
-  @OneToMany(() => ActivityTicketEnrollment, (enrollment) => enrollment.member)
+  @OneToMany(() => ActivityTicketEnrollment, enrollment => enrollment.member)
   enrollments: ActivityTicketEnrollment[];
 }

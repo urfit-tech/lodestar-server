@@ -16,7 +16,7 @@ export class ProjectSection {
   @Column('integer', { name: 'position', nullable: true })
   position: number | null;
 
-  @ManyToOne(() => Project, (project) => project.projectSections, {
+  @ManyToOne(() => Project, project => project.projectSections, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

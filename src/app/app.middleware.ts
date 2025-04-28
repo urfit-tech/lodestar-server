@@ -6,10 +6,7 @@ import { AppCache } from './app.type';
 
 @Injectable()
 export class AppMiddleware implements NestMiddleware {
-  constructor(
-    private readonly appService: AppService,
-    private readonly logger: Logger,
-  ) {}
+  constructor(private readonly appService: AppService, private readonly logger: Logger) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
     const host = req.headers.host;
@@ -19,13 +16,14 @@ export class AppMiddleware implements NestMiddleware {
       });
     }
 
-    this.appService.getAppInfoByHost(host)
+    this.appService
+      .getAppInfoByHost(host)
       .then((appCache: AppCache) => {
         res.locals.appCache = appCache;
         next();
         this.appService.setAppCache(host, appCache);
       })
-      .catch((error) => {
+      .catch(error => {
         this.logger.error(error);
         return res.status(500).json({
           message: `cannot get the app: ${error.message}`,

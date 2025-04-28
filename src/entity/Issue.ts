@@ -36,23 +36,23 @@ export class Issue {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => App, (app) => app.issues, {
+  @ManyToOne(() => App, app => app.issues, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Member, (member) => member.issues, {
+  @ManyToOne(() => Member, member => member.issues, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => IssueReaction, (issueReaction) => issueReaction.issue)
+  @OneToMany(() => IssueReaction, issueReaction => issueReaction.issue)
   issueReactions: IssueReaction[];
 
-  @OneToMany(() => IssueReply, (issueReply) => issueReply.issue)
+  @OneToMany(() => IssueReply, issueReply => issueReply.issue)
   issueReplies: IssueReply[];
 }

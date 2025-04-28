@@ -32,14 +32,14 @@ export class ProgramContentLog {
   @Column('text', { name: 'program_content_id' })
   programContentId: string;
 
-  @ManyToOne(() => Member, (member) => member.programContentLogs, {
+  @ManyToOne(() => Member, member => member.programContentLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentLogs, {
+  @ManyToOne(() => ProgramContent, programContent => programContent.programContentLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

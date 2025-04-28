@@ -113,7 +113,7 @@ export class ActivityTicketInfrastructure {
   }
 
   private _mapSessions(sessions) {
-    return sessions.map((session) => ({
+    return sessions.map(session => ({
       id: session.id,
       startedAt: session.startedAt,
       endedAt: session.endedAt,

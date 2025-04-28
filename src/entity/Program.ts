@@ -124,43 +124,43 @@ export class Program {
   @Column('numeric', { name: 'views', default: () => 0 })
   views: number;
 
-  @OneToMany(() => PackageItem, (packageItem) => packageItem.program)
+  @OneToMany(() => PackageItem, packageItem => packageItem.program)
   packageItems: PackageItem[];
 
-  @ManyToOne(() => App, (app) => app.programs, {
+  @ManyToOne(() => App, app => app.programs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @OneToMany(() => ProgramAnnouncement, (programAnnouncement) => programAnnouncement.program)
+  @OneToMany(() => ProgramAnnouncement, programAnnouncement => programAnnouncement.program)
   programAnnouncements: ProgramAnnouncement[];
 
-  @OneToMany(() => ProgramApproval, (programApproval) => programApproval.program)
+  @OneToMany(() => ProgramApproval, programApproval => programApproval.program)
   programApprovals: ProgramApproval[];
 
-  @OneToMany(() => ProgramCategory, (programCategory) => programCategory.program)
+  @OneToMany(() => ProgramCategory, programCategory => programCategory.program)
   programCategories: ProgramCategory[];
 
-  @OneToMany(() => ProgramContentSection, (programContentSection) => programContentSection.program)
+  @OneToMany(() => ProgramContentSection, programContentSection => programContentSection.program)
   programContentSections: ProgramContentSection[];
 
-  @OneToMany(() => ProgramPackageProgram, (programPackageProgram) => programPackageProgram.program)
+  @OneToMany(() => ProgramPackageProgram, programPackageProgram => programPackageProgram.program)
   programPackagePrograms: ProgramPackageProgram[];
 
-  @OneToMany(() => ProgramPlan, (programPlan) => programPlan.program)
+  @OneToMany(() => ProgramPlan, programPlan => programPlan.program)
   programPlans: ProgramPlan[];
 
-  @OneToMany(() => ProgramRelatedItem, (programRelatedItem) => programRelatedItem.program)
+  @OneToMany(() => ProgramRelatedItem, programRelatedItem => programRelatedItem.program)
   programRelatedItems: ProgramRelatedItem[];
 
-  @OneToMany(() => ProgramRole, (programRole) => programRole.program)
+  @OneToMany(() => ProgramRole, programRole => programRole.program)
   programRoles: ProgramRole[];
 
-  @OneToMany(() => ProgramTag, (programTag) => programTag.program)
+  @OneToMany(() => ProgramTag, programTag => programTag.program)
   programTags: ProgramTag[];
 
-  @OneToMany(() => ProgramTimetable, (programTimetable) => programTimetable.program)
+  @OneToMany(() => ProgramTimetable, programTimetable => programTimetable.program)
   programTimetables: ProgramTimetable[];
 }

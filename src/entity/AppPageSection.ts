@@ -16,7 +16,7 @@ export class AppPageSection {
   @Column('numeric', { name: 'position', nullable: true })
   position: number | null;
 
-  @ManyToOne(() => AppPage, (appPage) => appPage.appPageSections, {
+  @ManyToOne(() => AppPage, appPage => appPage.appPageSections, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

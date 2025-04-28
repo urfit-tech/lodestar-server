@@ -55,7 +55,7 @@ export class ProgramPackagePlan {
   @Column('boolean', { name: 'is_participants_visible', default: () => true })
   isParticipantsVisible: boolean;
 
-  @ManyToOne(() => ProgramPackage, (programPackage) => programPackage.programPackagePlans, {
+  @ManyToOne(() => ProgramPackage, programPackage => programPackage.programPackagePlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

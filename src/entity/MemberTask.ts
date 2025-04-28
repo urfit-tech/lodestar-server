@@ -43,28 +43,28 @@ export class MemberTask {
   })
   updatedAt: Date | null;
 
-  @ManyToOne(() => Member, (member) => member.memberTasks, {
+  @ManyToOne(() => Member, member => member.memberTasks, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'author_id', referencedColumnName: 'id' }])
   author: Member;
 
-  @ManyToOne(() => Member, (member) => member.memberTasks2, {
+  @ManyToOne(() => Member, member => member.memberTasks2, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'executor_id', referencedColumnName: 'id' }])
   executor: Member;
 
-  @ManyToOne(() => Member, (member) => member.memberTasks3, {
+  @ManyToOne(() => Member, member => member.memberTasks3, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Category, (category) => category.memberTasks, {
+  @ManyToOne(() => Category, category => category.memberTasks, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

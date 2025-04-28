@@ -43,6 +43,6 @@ export class Contract {
   @Column('text', { name: 'app_id' })
   appId: string;
 
-  @OneToMany(() => MemberContract, (memberContract) => memberContract.contract)
+  @OneToMany(() => MemberContract, memberContract => memberContract.contract)
   memberContracts: MemberContract[];
 }

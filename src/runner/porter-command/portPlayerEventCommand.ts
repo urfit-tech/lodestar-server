@@ -100,7 +100,7 @@ class PortPlayerEventCommand implements PorterCommand {
 
       const values = await this.porterProgramService.fetchValuesFromCache(keys);
       const events = this.porterProgramService.parseKeyValuePairs(keys, values);
-      const programContentIds = new Set(events.map((event) => event.programContentId));
+      const programContentIds = new Set(events.map(event => event.programContentId));
       const programContentsMap = await this.porterProgramService.fetchProgramContents(
         Array.from(programContentIds),
         manager,

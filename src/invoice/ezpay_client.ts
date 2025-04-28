@@ -79,36 +79,41 @@ export class EzpayClient {
   async issue(credentials: EzpayCredentials, params: EzpayIssueParams): Promise<EzpayClientResponse> {
     const { merchantId, hashKey, hashIV, options } = credentials;
     const { MerchantOrderNo } = params;
-    
-    console.log('Ezpay request information:', { 
-      merchantId, 
-      MerchantOrderNo, 
+
+    console.log('Ezpay request information:', {
+      merchantId,
+      MerchantOrderNo,
       params: JSON.stringify(params),
     });
 
-    const { data } = await axios.post(
-      `${this.endpoint(options ? options.dryRun : true)}/invoice_issue`,
-      querystring.stringify({
-        MerchantID_: merchantId,
-        PostData_: this.buildPostParams(hashKey, hashIV, {
-          RespondType: 'JSON',
-          Version: '1.4',
-          TimeStamp: ~~(dayjs().toDate().getTime() / 1000),
-          TransNum: '',
-          TaxType: 1,
-          Status: 1,
-          CreateStatusTime: '',
-          TaxRate: 5,
-          TaxAmt: 0,
-          ...params,
+    const { data } = await axios
+      .post(
+        `${this.endpoint(options ? options.dryRun : true)}/invoice_issue`,
+        querystring.stringify({
+          MerchantID_: merchantId,
+          PostData_: this.buildPostParams(hashKey, hashIV, {
+            RespondType: 'JSON',
+            Version: '1.4',
+            TimeStamp: ~~(dayjs().toDate().getTime() / 1000),
+            TransNum: '',
+            TaxType: 1,
+            Status: 1,
+            CreateStatusTime: '',
+            TaxRate: 5,
+            TaxAmt: 0,
+            ...params,
+          }),
         }),
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         },
-      },
-    ).catch((error) => {console.log('error',merchantId, MerchantOrderNo, error); throw error;});
+      )
+      .catch(error => {
+        console.log('error', merchantId, MerchantOrderNo, error);
+        throw error;
+      });
     let result = null;
     try {
       result = JSON.parse(data.Result);

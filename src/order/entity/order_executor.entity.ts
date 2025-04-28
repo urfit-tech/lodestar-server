@@ -19,14 +19,14 @@ export class OrderExecutor {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Member, (member) => member.orderExecutors, {
+  @ManyToOne(() => Member, member => member.orderExecutors, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => OrderLog, (orderLog) => orderLog.orderExecutors, {
+  @ManyToOne(() => OrderLog, orderLog => orderLog.orderExecutors, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

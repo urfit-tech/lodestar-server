@@ -14,7 +14,6 @@ import { Runner } from './runner';
 import { RunnerInfrastructure } from './runner.infra';
 import ZabbixHeartBeater from './helper/ZabbixHeartBeater';
 
-
 @Injectable()
 export class InvoiceRunner extends Runner {
   static forRoot(): DynamicModule {

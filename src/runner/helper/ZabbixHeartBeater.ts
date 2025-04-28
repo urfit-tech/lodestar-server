@@ -7,7 +7,7 @@ class ZabbixHeartBeater extends ZabbixSender {
     this.port = Number(process.env?.ZABBIX_SERVER_PORT);
   }
   beat() {
-    console.log(this.host, this.port, process.env?.ZABBIX_ITEM_KEY)
+    console.log(this.host, this.port, process.env?.ZABBIX_ITEM_KEY);
     if (this.host !== '' && !Number.isNaN(this.port) && process.env?.ZABBIX_ITEM_KEY) {
       this.addItem(process.env.ZABBIX_HOST || '', process.env.ZABBIX_ITEM_KEY, 'OK');
       this.send((err, res) => {

@@ -13,14 +13,14 @@ export class AppDefaultPermission {
   @Column({ type: 'text', name: 'permission_id' })
   permissionId: string;
 
-  @ManyToOne(() => App, (app) => app.appDefaultPermissions, {
+  @ManyToOne(() => App, app => app.appDefaultPermissions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Permission, (permission) => permission.appDefaultPermissions, {
+  @ManyToOne(() => Permission, permission => permission.appDefaultPermissions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

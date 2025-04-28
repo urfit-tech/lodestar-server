@@ -23,10 +23,10 @@ export class ProgramContentSection {
   @Column('integer', { name: 'position' })
   position: number;
 
-  @OneToMany(() => ProgramContent, (programContent) => programContent.contentSection)
+  @OneToMany(() => ProgramContent, programContent => programContent.contentSection)
   programContents: ProgramContent[];
 
-  @ManyToOne(() => Program, (program) => program.programContentSections, {
+  @ManyToOne(() => Program, program => program.programContentSections, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -19,7 +19,7 @@ export class MemberAuditLog {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => Member, (m) => m.id)
+  @ManyToOne(() => Member, m => m.id)
   @JoinColumn({ name: 'member_id' })
   member: Member;
 }

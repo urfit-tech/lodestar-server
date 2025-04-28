@@ -90,23 +90,23 @@ export class ProgramPlan {
   @Column('boolean', { name: 'is_deleted', default: () => false })
   isDeleted: boolean;
 
-  @OneToMany(() => ProgramContentPlan, (programContentPlan) => programContentPlan.programPlan)
+  @OneToMany(() => ProgramContentPlan, programContentPlan => programContentPlan.programPlan)
   programContentPlans: ProgramContentPlan[];
 
-  @ManyToOne(() => Currency, (currency) => currency.programPlans, {
+  @ManyToOne(() => Currency, currency => currency.programPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'currency_id', referencedColumnName: 'id' }])
   currency: Currency;
 
-  @ManyToOne(() => Program, (program) => program.programPlans, {
+  @ManyToOne(() => Program, program => program.programPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
   program: Program;
 
-  @OneToMany(() => CardProduct, (cardProduct) => cardProduct.programPlan)
+  @OneToMany(() => CardProduct, cardProduct => cardProduct.programPlan)
   cardProducts: CardProduct[];
 }

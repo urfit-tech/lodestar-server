@@ -16,7 +16,7 @@ export class CalendarService {
 
   async getCalendarEventsByMemberId(memberId: string): Promise<EventAttributes[]> {
     const redisCli = this.cacheService.getClient();
-    const cachedEvents = await redisCli.get(`${this.cacheKeyPrefix}${memberId}`).then((result) => {
+    const cachedEvents = await redisCli.get(`${this.cacheKeyPrefix}${memberId}`).then(result => {
       return JSON.parse(result);
     });
     if (cachedEvents) {
@@ -25,8 +25,8 @@ export class CalendarService {
 
     const tasks = await this.memberService.getMemberTasksByExecutorId(memberId);
     const taskEvents: EventAttributes[] = tasks
-      .filter((task) => !!task.dueAt)
-      .map((task) => {
+      .filter(task => !!task.dueAt)
+      .map(task => {
         return {
           uid: task.id,
           start: convertTimestampToArray(task.dueAt.getTime(), 'local'),
@@ -39,8 +39,8 @@ export class CalendarService {
     const appointmentEnrollment = await this.appointmentService.getAppointmentEnrollmentByCreatorId(memberId);
 
     const appointmentEvents: EventAttributes[] = appointmentEnrollment
-      .filter((appointment) => !!appointment.startedAt && !!appointment.endedAt)
-      .map((appointment) => {
+      .filter(appointment => !!appointment.startedAt && !!appointment.endedAt)
+      .map(appointment => {
         return {
           uid: appointment.orderProductId,
           start: convertTimestampToArray(appointment.startedAt.getTime(), 'local'),

@@ -6,15 +6,9 @@ import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { AccessControlService } from './access-control.service';
 @Injectable()
 export class PermissionGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private accessControlService: AccessControlService,
-  ) {}
+  constructor(private reflector: Reflector, private accessControlService: AccessControlService) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     // Get required roles for the current route handler or controller class.
     // If roles are defined on the handler, they override those on the controller.
     const requiredPermissions = this.reflector.getAllAndOverride<PermissionSet[]>(PERMISSION_KEY, [
@@ -23,7 +17,7 @@ export class PermissionGuard implements CanActivate {
     ]);
 
     if (!requiredPermissions) {
-      return true; 
+      return true;
     }
 
     const http = context.switchToHttp();

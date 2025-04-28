@@ -20,14 +20,14 @@ export class AppPlanModule {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => AppPlan, (appPlan) => appPlan.appPlanModules, {
+  @ManyToOne(() => AppPlan, appPlan => appPlan.appPlanModules, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_plan_id', referencedColumnName: 'id' }])
   appPlan: AppPlan;
 
-  @ManyToOne(() => Module, (module) => module.appPlanModules, {
+  @ManyToOne(() => Module, module => module.appPlanModules, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -29,15 +29,15 @@ export class Permission {
   })
   updatedAt: Date;
 
-  @OneToMany(() => AppDefaultPermission, (appDefaultPermission) => appDefaultPermission.permission)
+  @OneToMany(() => AppDefaultPermission, appDefaultPermission => appDefaultPermission.permission)
   appDefaultPermissions: AppDefaultPermission[];
 
-  @OneToMany(() => MemberPermissionExtra, (memberPermissionExtra) => memberPermissionExtra.permission)
+  @OneToMany(() => MemberPermissionExtra, memberPermissionExtra => memberPermissionExtra.permission)
   memberPermissionExtras: MemberPermissionExtra[];
 
-  @OneToMany(() => PermissionGroupPermission, (permissionGroupPermission) => permissionGroupPermission.permission)
+  @OneToMany(() => PermissionGroupPermission, permissionGroupPermission => permissionGroupPermission.permission)
   permissionGroupPermissions: PermissionGroupPermission[];
 
-  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.permission)
+  @OneToMany(() => RolePermission, rolePermission => rolePermission.permission)
   rolePermissions: RolePermission[];
 }

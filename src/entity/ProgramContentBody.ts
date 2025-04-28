@@ -20,6 +20,6 @@ export class ProgramContentBody {
   @Column('uuid', { name: 'target', nullable: true })
   target: string | null;
 
-  @OneToMany(() => ProgramContent, (programContent) => programContent.contentBody)
+  @OneToMany(() => ProgramContent, programContent => programContent.contentBody)
   programContents: ProgramContent[];
 }

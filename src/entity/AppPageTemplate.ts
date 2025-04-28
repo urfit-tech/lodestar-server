@@ -40,7 +40,7 @@ export class AppPageTemplate {
   @Column('text', { name: 'cover_url', nullable: true })
   coverUrl: string | null;
 
-  @ManyToOne(() => Member, (member) => member.appPageTemplates, {
+  @ManyToOne(() => Member, member => member.appPageTemplates, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

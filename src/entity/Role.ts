@@ -22,6 +22,6 @@ export class Role {
   })
   updatedAt: Date;
 
-  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
+  @OneToMany(() => RolePermission, rolePermission => rolePermission.role)
   rolePermissions: RolePermission[];
 }

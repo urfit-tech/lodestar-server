@@ -17,14 +17,14 @@ export class PodcastProgramRole {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Member, (member) => member.podcastProgramRoles, {
+  @ManyToOne(() => Member, member => member.podcastProgramRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => PodcastProgram, (podcastProgram) => podcastProgram.podcastProgramRoles, {
+  @ManyToOne(() => PodcastProgram, podcastProgram => podcastProgram.podcastProgramRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

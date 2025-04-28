@@ -74,7 +74,7 @@ describe('CalendarService', () => {
     ];
 
     const getAppointmentEnrollmentByCreatorIdMock = jest.fn().mockResolvedValue(
-      mockAppointments.map((appointment) => ({
+      mockAppointments.map(appointment => ({
         orderProductId: appointment.uid,
         startedAt: new Date(
           appointment.start[0],

@@ -43,19 +43,19 @@ export class ProgramPackage {
   @Column('boolean', { name: 'is_private', default: () => false })
   isPrivate: boolean;
 
-  @ManyToOne(() => App, (app) => app.programPackages, {
+  @ManyToOne(() => App, app => app.programPackages, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @OneToMany(() => ProgramPackageCategory, (programPackageCategory) => programPackageCategory.programPackage)
+  @OneToMany(() => ProgramPackageCategory, programPackageCategory => programPackageCategory.programPackage)
   programPackageCategories: ProgramPackageCategory[];
 
-  @OneToMany(() => ProgramPackagePlan, (programPackagePlan) => programPackagePlan.programPackage)
+  @OneToMany(() => ProgramPackagePlan, programPackagePlan => programPackagePlan.programPackage)
   programPackagePlans: ProgramPackagePlan[];
 
-  @OneToMany(() => ProgramPackageProgram, (programPackageProgram) => programPackageProgram.programPackage)
+  @OneToMany(() => ProgramPackageProgram, programPackageProgram => programPackageProgram.programPackage)
   programPackagePrograms: ProgramPackageProgram[];
 }

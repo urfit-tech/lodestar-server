@@ -137,12 +137,12 @@ export class InvoiceService {
         name: invoiceOptions['name'] || member.name,
         email: invoiceOptions['email'] || member.email,
         comment: invoiceComment,
-        products: orderProducts.map((v) => ({
+        products: orderProducts.map(v => ({
           name: v.name.replace(/\|/g, '｜'),
           price: v.price,
           quantity: Number(v?.options?.quantity) || 1,
         })),
-        discounts: orderDiscounts.map((v) => ({
+        discounts: orderDiscounts.map(v => ({
           name: v.name.replace(/\|/g, '｜'),
           price: v.price,
         })),
@@ -296,12 +296,12 @@ export class InvoiceService {
         }
       : {};
     const ItemAmt = [
-      ...options.products.map((product) => {
+      ...options.products.map(product => {
         return invoiceAttrs.Category === 'B2B'
           ? Math.round(Number(product.price) / (1 + TaxRate))
           : Number(product.price);
       }),
-      ...options.discounts.map((discount) =>
+      ...options.discounts.map(discount =>
         invoiceAttrs.Category === 'B2B' ? -Math.round(Number(discount.price) / (1 + TaxRate)) : -discount.price,
       ),
       ...(options.shipping?.method
@@ -311,12 +311,12 @@ export class InvoiceService {
         : []),
     ].join('|');
     const ItemPrice = [
-      ...options.products.map((product) => {
+      ...options.products.map(product => {
         return invoiceAttrs.Category === 'B2B'
           ? Math.round(Number(product.price) / (1 + TaxRate))
           : Number(product.price);
       }),
-      ...options.discounts.map((discount) =>
+      ...options.discounts.map(discount =>
         invoiceAttrs.Category === 'B2B' ? -Math.round(Number(discount.price) / (1 + TaxRate)) : -discount.price,
       ),
       ...(options.shipping?.method
@@ -326,14 +326,14 @@ export class InvoiceService {
         : []),
     ].join('|');
     const ItemCount = [
-      ...options.products.map((_) => 1),
-      ...options.discounts.map((_) => 1),
+      ...options.products.map(_ => 1),
+      ...options.discounts.map(_ => 1),
       ...(options.shipping?.method ? [1] : []),
     ].join('|');
 
     const ItemName = [
-      ...options.products.map((product) => product.name.substring(0, 25) + ` x${product.quantity}`),
-      ...options.discounts.map((discount) => discount.name.substring(0, 30)),
+      ...options.products.map(product => product.name.substring(0, 25) + ` x${product.quantity}`),
+      ...options.discounts.map(discount => discount.name.substring(0, 30)),
       ...(options.shipping?.method ? [`運費 - ${options.shipping.method}`.substring(0, 30)] : []),
     ].join('|');
     const ItemUnit = Array(options.products.length + options.discounts.length)

@@ -37,14 +37,14 @@ export class Exercise {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Member, (member) => member.exercises, {
+  @ManyToOne(() => Member, member => member.exercises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => ProgramContent, (programContent) => programContent.exercises, {
+  @ManyToOne(() => ProgramContent, programContent => programContent.exercises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

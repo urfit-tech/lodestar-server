@@ -37,6 +37,6 @@ export class Venue {
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
-  @OneToMany(() => VenueSeat, (venueSeat) => venueSeat.venue)
+  @OneToMany(() => VenueSeat, venueSeat => venueSeat.venue)
   venueSeats: VenueSeat[];
 }

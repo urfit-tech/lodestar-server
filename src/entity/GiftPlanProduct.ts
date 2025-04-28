@@ -8,14 +8,14 @@ export class GiftPlanProduct {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => GiftPlan, (giftPlan) => giftPlan.giftPlanProducts, {
+  @ManyToOne(() => GiftPlan, giftPlan => giftPlan.giftPlanProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'gift_plan_id', referencedColumnName: 'id' }])
   giftPlan: GiftPlan;
 
-  @ManyToOne(() => Product, (product) => product.giftPlanProducts, {
+  @ManyToOne(() => Product, product => product.giftPlanProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

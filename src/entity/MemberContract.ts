@@ -55,21 +55,21 @@ export class MemberContract {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Member, (member) => member.memberContracts, {
+  @ManyToOne(() => Member, member => member.memberContracts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'author_id', referencedColumnName: 'id' }])
   author: Member;
 
-  @ManyToOne(() => Contract, (contract) => contract.memberContracts, {
+  @ManyToOne(() => Contract, contract => contract.memberContracts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'contract_id', referencedColumnName: 'id' }])
   contract: Contract;
 
-  @ManyToOne(() => Member, (member) => member.memberContracts2, {
+  @ManyToOne(() => Member, member => member.memberContracts2, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

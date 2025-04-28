@@ -1,6 +1,6 @@
-import { EntityManager, FindOptionsWhere, OrderByCondition, SelectQueryBuilder } from "typeorm";
-import { Member } from "../entity/member.entity";
-import { omit } from "lodash";
+import { EntityManager, FindOptionsWhere, OrderByCondition, SelectQueryBuilder } from 'typeorm';
+import { Member } from '../entity/member.entity';
+import { omit } from 'lodash';
 
 export default class MemberQueryObserveBase {
   private observers: QueryObserver[] = [];
@@ -26,7 +26,13 @@ export default class MemberQueryObserveBase {
 
     this.observers.forEach(observer => observer.update(entityManager, queryBuilder, conditions));
 
-    const memberConditions = omit(conditions, ['memberPhones', 'memberTags', 'memberCategories', 'memberPermissionGroups', 'memberProperties']);
+    const memberConditions = omit(conditions, [
+      'memberPhones',
+      'memberTags',
+      'memberCategories',
+      'memberPermissionGroups',
+      'memberProperties',
+    ]);
 
     queryBuilder = queryBuilder
       .where({ appId, ...memberConditions })

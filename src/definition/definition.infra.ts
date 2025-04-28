@@ -35,8 +35,8 @@ export class DefinitionInfrastructure {
     const existingProperties = await propertyRepo.find({
       where: { appId, name: In(propertyNames) },
     });
-    const existingPropertyNames = existingProperties.map((property) => property.name);
-    const newPropertyNames = propertyNames.filter((propertyName) => !existingPropertyNames.includes(propertyName));
+    const existingPropertyNames = existingProperties.map(property => property.name);
+    const newPropertyNames = propertyNames.filter(propertyName => !existingPropertyNames.includes(propertyName));
     if (newPropertyNames.length === 0) {
       return existingProperties;
     }

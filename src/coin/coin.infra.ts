@@ -7,7 +7,7 @@ export class CoinInfrastructure {
     const coinLogAuditLogRepo = manager.getRepository(CoinLogAuditLog);
 
     return Promise.allSettled(
-      invokers.map((invoker) => {
+      invokers.map(invoker => {
         const toInsert = new CoinLogAuditLog();
         toInsert.memberId = invoker.id;
         toInsert.target = target;

@@ -31,9 +31,9 @@ export class GiftPlan {
   })
   updatedAt: Date | null;
 
-  @OneToMany(() => GiftPlanProduct, (giftPlanProduct) => giftPlanProduct.giftPlan)
+  @OneToMany(() => GiftPlanProduct, giftPlanProduct => giftPlanProduct.giftPlan)
   giftPlanProducts: GiftPlanProduct[];
 
-  @OneToMany(() => ProductGiftPlan, (productGiftPlan) => productGiftPlan.giftPlan)
+  @OneToMany(() => ProductGiftPlan, productGiftPlan => productGiftPlan.giftPlan)
   productGiftPlans: ProductGiftPlan[];
 }

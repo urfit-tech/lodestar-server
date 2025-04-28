@@ -20,14 +20,14 @@ export class MemberCategory {
   @Column('integer', { name: 'position' })
   position: number;
 
-  @ManyToOne(() => Member, (member) => member.memberCategories, {
+  @ManyToOne(() => Member, member => member.memberCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Category, (category) => category.memberCategories, {
+  @ManyToOne(() => Category, category => category.memberCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

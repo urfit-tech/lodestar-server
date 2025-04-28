@@ -37,7 +37,7 @@ export class CoinLog {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Member, (member) => member.coinLogs, {
+  @ManyToOne(() => Member, member => member.coinLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

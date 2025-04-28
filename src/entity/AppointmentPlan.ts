@@ -54,20 +54,20 @@ export class AppointmentPlan {
   @Column('text', { name: 'reservation_type', nullable: true })
   reservationType: string | null;
 
-  @ManyToOne(() => Member, (member) => member.appointmentPlans, {
+  @ManyToOne(() => Member, member => member.appointmentPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'creator_id', referencedColumnName: 'id' }])
   creator: Member;
 
-  @ManyToOne(() => Currency, (currency) => currency.appointmentPlans, {
+  @ManyToOne(() => Currency, currency => currency.appointmentPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'currency_id', referencedColumnName: 'id' }])
   currency: Currency;
 
-  @OneToMany(() => AppointmentSchedule, (appointmentSchedule) => appointmentSchedule.appointmentPlan)
+  @OneToMany(() => AppointmentSchedule, appointmentSchedule => appointmentSchedule.appointmentPlan)
   appointmentSchedules: AppointmentSchedule[];
 }
