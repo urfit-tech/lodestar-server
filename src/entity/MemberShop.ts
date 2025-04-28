@@ -24,7 +24,7 @@ export class MemberShop {
   title: string;
 
   @Column('jsonb', { name: 'shipping_methods', nullable: true })
-  shippingMethods: object | null;
+  shippingMethods: { id: string; fee: number; days: number; enabled: boolean }[] | null;
 
   @Column('timestamp with time zone', { name: 'published_at', nullable: true })
   publishedAt: Date | null;

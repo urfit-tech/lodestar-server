@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { GiftPlan } from './GiftPlan';
+import { GiftPlan } from '../gift/entity/GiftPlan';
+import { Product } from './Product';
 
 @Index('product_gift_plan_pkey', ['id'], { unique: true })
 @Entity('product_gift_plan', { schema: 'public' })
@@ -27,6 +28,9 @@ export class ProductGiftPlan {
     default: () => 'now()',
   })
   updatedAt: Date;
+
+  @ManyToOne(() => Product, (product) => product.giftPlanProducts)
+  product: Product;
 
   @ManyToOne(() => GiftPlan, (giftPlan) => giftPlan.productGiftPlans, {
     onDelete: 'RESTRICT',
