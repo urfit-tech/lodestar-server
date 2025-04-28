@@ -116,20 +116,20 @@ describe('MemberService', () => {
       expect(member.name).toBe('test');
       expect(member.username).toBe('test_account');
       expect(member.email).toBe('test_email@test.com');
-      member.memberPhones.forEach((memberPhone) => {
+      member.memberPhones.forEach(memberPhone => {
         expect(['0912345678', '0923456789']).toContain(memberPhone.phone);
       });
-      member.memberCategories.forEach((memberCategory) => {
+      member.memberCategories.forEach(memberCategory => {
         expect(['test_category1_id', 'test_category2_id']).toContain(memberCategory.category.id);
       });
-      member.memberProperties.forEach((memberProperty) => {
+      member.memberProperties.forEach(memberProperty => {
         if (memberProperty.property.id === 'test_property1_id') {
           expect(memberProperty.value).toEqual('test_property1');
         } else {
           expect(memberProperty.value).toEqual('test_property2');
         }
       });
-      member.memberTags.forEach((memberTag) => {
+      member.memberTags.forEach(memberTag => {
         expect(['test_tag1', 'test_tag2']).toContain(memberTag.tagName2.name);
       });
       expect(member.star).toBe(999);
@@ -603,12 +603,12 @@ describe('MemberService', () => {
       expect(raw['星等']).toEqual(member.star.toString());
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       expect(raw['上次登入日期']).toEqual('N/A');
-      Array(member.memberCategories.length).forEach((index) => {
+      Array(member.memberCategories.length).forEach(index => {
         expect(raw[`分類${index + 1}`]).toEqual(member.memberCategories[index].category.name);
         expect(raw[`測試屬性${index + 1}`]).toEqual(member.memberProperties[index].value);
         expect(raw[`標籤${index + 1}`]).toEqual(member.memberTags[index].tagName2.name);
       });
-      Array(member.memberPhones.length).forEach((index) => {
+      Array(member.memberPhones.length).forEach(index => {
         expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index].phone);
       });
     });
@@ -677,7 +677,7 @@ describe('MemberService', () => {
       expect(raw['星等']).toEqual(member.star.toString());
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       expect(raw['上次登入日期']).toEqual('N/A');
-      Array(member.memberCategories.length).forEach((index) => {
+      Array(member.memberCategories.length).forEach(index => {
         expect(raw[`分類${index + 1}`]).toEqual(
           member.memberCategories[index] ? member.memberCategories[index].category.name : '',
         );
@@ -686,7 +686,7 @@ describe('MemberService', () => {
         );
         expect(raw[`標籤${index + 1}`]).toEqual(member.memberTags[index] ? member.memberTags[index].tagName2.name : '');
       });
-      Array(member.memberPhones.length).forEach((index) => {
+      Array(member.memberPhones.length).forEach(index => {
         expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index] ? member.memberPhones[index].phone : '');
       });
     });
@@ -755,12 +755,12 @@ describe('MemberService', () => {
       expect(raw['星等']).toEqual(member.star.toString());
       expect(raw['建立日期']).toEqual(member.createdAt.toISOString());
       expect(raw['上次登入日期']).toEqual('N/A');
-      Array(member.memberCategories.length).forEach((index) => {
+      Array(member.memberCategories.length).forEach(index => {
         expect(raw[`分類${index + 1}`]).toEqual(index === 0 ? member.memberCategories[index].category.name : '');
         expect(raw[`測試屬性${index + 1}`]).toEqual(index === 0 ? member.memberProperties[index].value : '');
         expect(raw[`標籤${index + 1}`]).toEqual(index === 0 ? member.memberTags[index].tagName2.name : '');
       });
-      Array(member.memberPhones.length).forEach((index) => {
+      Array(member.memberPhones.length).forEach(index => {
         expect(raw[`手機${index + 1}`]).toEqual(member.memberPhones[index] ? member.memberPhones[index].phone : '');
       });
     });
@@ -829,21 +829,21 @@ describe('MemberService', () => {
       expect(importedMember.star).toEqual(member.star);
       expect(importedMember.createdAt).toEqual(memberCreatedAt);
       expect(importedMember.loginedAt).toBeNull();
-      importedMember.memberPhones.forEach((each) => {
-        const find = member.memberPhones.find((every) => each.phone === every.phone);
+      importedMember.memberPhones.forEach(each => {
+        const find = member.memberPhones.find(every => each.phone === every.phone);
         expect(find).not.toBeUndefined();
       });
-      importedMember.memberCategories.forEach((each) => {
-        const find = member.memberCategories.find((every) => each.categoryId === every.categoryId);
+      importedMember.memberCategories.forEach(each => {
+        const find = member.memberCategories.find(every => each.categoryId === every.categoryId);
         expect(find).not.toBeUndefined();
       });
-      importedMember.memberProperties.forEach((each) => {
-        const find = member.memberProperties.find((every) => each.id === every.id);
+      importedMember.memberProperties.forEach(each => {
+        const find = member.memberProperties.find(every => each.id === every.id);
         expect(find).not.toBeUndefined();
         expect(find.value).toEqual(memberProperty1.value);
       });
-      importedMember.memberTags.forEach((each) => {
-        const find = member.memberTags.find((every) => each.id === every.id);
+      importedMember.memberTags.forEach(each => {
+        const find = member.memberTags.find(every => each.id === every.id);
         expect(find).not.toBeUndefined();
       });
     });

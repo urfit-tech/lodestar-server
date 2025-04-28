@@ -49,19 +49,19 @@ export class PodcastAlbum {
   @Column('text', { name: 'abstract', nullable: true })
   abstract: string | null;
 
-  @ManyToOne(() => Member, (member) => member.podcastAlbums, {
+  @ManyToOne(() => Member, member => member.podcastAlbums, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'author_id', referencedColumnName: 'id' }])
   author: Member;
 
-  @OneToMany(() => PodcastAlbumCategory, (podcastAlbumCategory) => podcastAlbumCategory.podcastAlbum)
+  @OneToMany(() => PodcastAlbumCategory, podcastAlbumCategory => podcastAlbumCategory.podcastAlbum)
   podcastAlbumCategories: PodcastAlbumCategory[];
 
-  @OneToMany(() => PodcastAlbumPodcastProgram, (podcastAlbumPodcastProgram) => podcastAlbumPodcastProgram.podcastAlbum)
+  @OneToMany(() => PodcastAlbumPodcastProgram, podcastAlbumPodcastProgram => podcastAlbumPodcastProgram.podcastAlbum)
   podcastAlbumPodcastPrograms: PodcastAlbumPodcastProgram[];
 
-  @OneToMany(() => PodcastProgramProgress, (podcastProgramProgress) => podcastProgramProgress.podcastAlbum)
+  @OneToMany(() => PodcastProgramProgress, podcastProgramProgress => podcastProgramProgress.podcastAlbum)
   podcastProgramProgresses: PodcastProgramProgress[];
 }

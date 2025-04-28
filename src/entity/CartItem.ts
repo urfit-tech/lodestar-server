@@ -17,7 +17,7 @@ export class CartItem {
   @Column('jsonb', { name: 'target' })
   target: object;
 
-  @ManyToOne(() => App, (app) => app.cartItems, {
+  @ManyToOne(() => App, app => app.cartItems, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

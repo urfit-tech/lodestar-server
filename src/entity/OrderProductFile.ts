@@ -23,7 +23,7 @@ export class OrderProductFile {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => OrderProduct, (orderProduct) => orderProduct.orderProductFiles, {
+  @ManyToOne(() => OrderProduct, orderProduct => orderProduct.orderProductFiles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

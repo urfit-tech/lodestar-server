@@ -18,14 +18,14 @@ export class ProjectPlanProduct {
   @Column('jsonb', { name: 'options' })
   options: object;
 
-  @ManyToOne(() => Product, (product) => product.projectPlanProducts, {
+  @ManyToOne(() => Product, product => product.projectPlanProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'product_id', referencedColumnName: 'id' }])
   product: Product;
 
-  @ManyToOne(() => ProjectPlan, (projectPlan) => projectPlan.projectPlanProducts, {
+  @ManyToOne(() => ProjectPlan, projectPlan => projectPlan.projectPlanProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

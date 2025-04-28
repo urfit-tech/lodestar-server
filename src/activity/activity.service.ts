@@ -26,7 +26,7 @@ export class ActivityService {
     console.time(logPrefix);
 
     const [activities, totalCount] = await this.getActivities(activityCollectionDto);
-    const activityIds = activities.map((activity) => activity.id);
+    const activityIds = activities.map(activity => activity.id);
 
     const [activityDurations, sessionTypes, participantsCounts] = await Promise.all([
       this.getActivityDurations(activityCollectionDto, activityIds),
@@ -61,11 +61,11 @@ export class ActivityService {
     return {
       ...activity,
       activityTickets: activity.activityTickets
-        ?.filter((ticket) => ticket.isPublished && (includeDeleted || ticket.deletedAt === null))
+        ?.filter(ticket => ticket.isPublished && (includeDeleted || ticket.deletedAt === null))
         ?.sort((a, b) => a.endedAt - b.endedAt)
-        .map((ticket) => {
-          const enrolledTicket = activityTickets.find((t) => t.activityTicketId === ticket.id);
-          const enrolledParticipants = participants.find((t) => t.activityTicketId === ticket.id);
+        .map(ticket => {
+          const enrolledTicket = activityTickets.find(t => t.activityTicketId === ticket.id);
+          const enrolledParticipants = participants.find(t => t.activityTicketId === ticket.id);
           return {
             ...ticket,
             price: Number(ticket.price),
@@ -74,9 +74,8 @@ export class ActivityService {
             orderProductId: enrolledTicket?.orderProductId || null,
             activitySessionTickets: ticket.activitySessionTickets
               .sort((a, b) => a.activitySession.startedAt - b.activitySession.startedAt)
-              .map((st) => {
-                const attended = !!enrolledTicket?.activitySession?.find((s) => s.id === st.activitySession.id)
-                  ?.attended;
+              .map(st => {
+                const attended = !!enrolledTicket?.activitySession?.find(s => s.id === st.activitySession.id)?.attended;
                 return { ...st, activitySession: { ...st.activitySession, attended } };
               }),
           };
@@ -129,7 +128,7 @@ export class ActivityService {
     sessionTypes: Map<string, any>,
     participantsCounts: Map<string, ActivitySessionTicketEnrollmentCount[]>,
   ): ActivityDto[] {
-    return activities.map((activity) => {
+    return activities.map(activity => {
       const activityDuration = activityDurations.get(activity.id);
       const sessionType = sessionTypes.get(activity.id);
       const sessionTicketEnrollmentCounts = participantsCounts.get(activity.id) || [];

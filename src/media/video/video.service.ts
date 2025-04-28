@@ -180,7 +180,7 @@ export class VideoService {
     }
 
     const result = captionKeys
-      .filter((key) => key.includes('.vtt'))
+      .filter(key => key.includes('.vtt'))
       .sort((a, b) => {
         if (a.includes('zh.vtt')) {
           return -1;
@@ -196,7 +196,7 @@ export class VideoService {
   public async deleteCaptions(attachmentId: string, filename: string): Promise<Array<string>> {
     const keys = await this.getCaptions(attachmentId);
 
-    const keysNeedToDelete = keys.filter((key) => key.includes(filename));
+    const keysNeedToDelete = keys.filter(key => key.includes(filename));
     for (const key of keysNeedToDelete) {
       await this.storageService.deleteFileAtBucketStorage({ Key: new URL(key).pathname.substring(1) });
     }
@@ -209,8 +209,8 @@ export class VideoService {
 
     const signedManifest = manifest
       .split('\n')
-      .filter((row) => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
-      .map((row) => {
+      .filter(row => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
+      .map(row => {
         if (row.includes('.m3u8')) {
           // hls m3u8
           if (row.includes('URI=')) {
@@ -236,7 +236,7 @@ export class VideoService {
           return row;
         }
       })
-      .map((row) => row.replace(',SUBTITLES="group_subtitle"', ''))
+      .map(row => row.replace(',SUBTITLES="group_subtitle"', ''))
       .join('\n');
     return signedManifest;
   }
@@ -282,7 +282,7 @@ export class VideoService {
     const videoUrlSignature = this.signCloudfrontUrl(videoUrl);
     const captionUrlSignature = this.signCloudfrontUrl(captionUrl);
     const captionPaths = await this.getCaptions(videoId);
-    const captionSignedUrls = captionPaths.map((captionUrl) => `${new URL(captionUrl)}${captionUrlSignature}`);
+    const captionSignedUrls = captionPaths.map(captionUrl => `${new URL(captionUrl)}${captionUrlSignature}`);
 
     const hlsPath = cloudfrontOptions?.playPaths
       ? `${new URL(cloudfrontOptions.playPaths.hls).pathname}${videoUrlSignature}`

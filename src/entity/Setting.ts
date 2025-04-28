@@ -26,13 +26,13 @@ export class Setting {
   @Column('boolean', { name: 'is_secret', default: () => false })
   isSecret: boolean;
 
-  @OneToMany(() => AppSecret, (appSecret) => appSecret.key2)
+  @OneToMany(() => AppSecret, appSecret => appSecret.key2)
   appSecrets: AppSecret[];
 
-  @OneToMany(() => AppSetting, (appSetting) => appSetting.key2)
+  @OneToMany(() => AppSetting, appSetting => appSetting.key2)
   appSettings: AppSetting[];
 
-  @ManyToOne(() => Module, (module) => module.settings, {
+  @ManyToOne(() => Module, module => module.settings, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -32,7 +32,7 @@ export class Attend {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => Member, (member) => member.attends, {
+  @ManyToOne(() => Member, member => member.attends, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

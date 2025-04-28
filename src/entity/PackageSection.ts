@@ -23,10 +23,10 @@ export class PackageSection {
   @Column('integer', { name: 'position' })
   position: number;
 
-  @OneToMany(() => PackageItemGroup, (packageItemGroup) => packageItemGroup.packageSection)
+  @OneToMany(() => PackageItemGroup, packageItemGroup => packageItemGroup.packageSection)
   packageItemGroups: PackageItemGroup[];
 
-  @ManyToOne(() => Package, (pkg) => pkg.packageSections, {
+  @ManyToOne(() => Package, pkg => pkg.packageSections, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

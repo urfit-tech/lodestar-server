@@ -136,7 +136,7 @@ export class MemberInfrastructure {
 
     const roleCounts = await queryBuilder.getRawMany();
 
-    return roleCounts.map((item) => ({
+    return roleCounts.map(item => ({
       role: item.role,
       count: parseInt(item.count, 10),
     }));
@@ -365,23 +365,23 @@ export class MemberInfrastructure {
 
     const datas = await builder.execute();
 
-    return (datas || []).map((data) => {
-      const filteredPhones = (data.phones || []).filter((phone) => phone);
-      const filteredOauths = (data.oauths || []).filter((oauth) => oauth);
-      const filteredPermissions = (data.permissions || []).filter((permission) => permission);
+    return (datas || []).map(data => {
+      const filteredPhones = (data.phones || []).filter(phone => phone);
+      const filteredOauths = (data.oauths || []).filter(oauth => oauth);
+      const filteredPermissions = (data.permissions || []).filter(permission => permission);
 
       return {
         phones: filteredPhones,
         oauths: filteredOauths.reduce((accum, v) => {
           accum[v.provider] = {};
-          Object.keys(v?.options || {}).forEach((key) => {
+          Object.keys(v?.options || {}).forEach(key => {
             if (key.includes('id')) {
               accum[v.provider][key] = v.options[key];
             }
           });
           return accum;
         }, {} as { [key: string]: any }),
-        permissions: filteredPermissions.map((permission) => ({
+        permissions: filteredPermissions.map(permission => ({
           memberId: permission.member_id,
           permissionId: permission.permission_id,
         })),
@@ -453,7 +453,7 @@ export class MemberInfrastructure {
     const memberAuditLogRepo = manager.getRepository(MemberAuditLog);
 
     return Promise.allSettled(
-      invokers.map((invoker) => {
+      invokers.map(invoker => {
         const toInsert = new MemberAuditLog();
         toInsert.memberId = invoker.id;
         toInsert.target = target;
@@ -604,7 +604,7 @@ export class MemberInfrastructure {
       .memberProperties as MemberPropertiesCondition[];
 
     const sqlCondition = memberPropertyConditions
-      .map((property) => {
+      .map(property => {
         const key = first(keys(property));
         const value = first(values(property));
         return `("property_id" = '${key}' AND "value" ILIKE '${value}')`;
@@ -677,7 +677,7 @@ export class MemberInfrastructure {
   }
 
   public async deleteMemberByEmail(appId: string, email: string, entityManager: EntityManager): Promise<DeleteResult> {
-    return entityManager.transaction(async (manager) => {
+    return entityManager.transaction(async manager => {
       const memberRepo = manager.getRepository(Member);
       const memberCategoryRepo = manager.getRepository(MemberCategory);
       const memberTagRepo = manager.getRepository(MemberTag);

@@ -35,7 +35,7 @@ export class MemberPhone {
   @Column('boolean', { name: 'is_valid', default: () => true })
   isValid: boolean;
 
-  @ManyToOne(() => Member, (member) => member.memberPhones, {
+  @ManyToOne(() => Member, member => member.memberPhones, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -28,7 +28,7 @@ export class ProductInventory {
   @Column('text', { name: 'comment', nullable: true })
   comment: string | null;
 
-  @ManyToOne(() => Product, (product) => product.productInventories, {
+  @ManyToOne(() => Product, product => product.productInventories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

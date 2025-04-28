@@ -74,41 +74,41 @@ export class ProgramContent {
   @Column('boolean', { name: 'pinned_status' })
   pinnedStatus: boolean;
 
-  @OneToMany(() => Exercise, (exercise) => exercise.programContent)
+  @OneToMany(() => Exercise, exercise => exercise.programContent)
   exercises: Exercise[];
 
-  @OneToMany(() => Practice, (practice) => practice.programContent)
+  @OneToMany(() => Practice, practice => practice.programContent)
   practices: Practice[];
 
-  @ManyToOne(() => ProgramContentBody, (programContentBody) => programContentBody.programContents, {
+  @ManyToOne(() => ProgramContentBody, programContentBody => programContentBody.programContents, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })
   @JoinColumn([{ name: 'content_body_id', referencedColumnName: 'id' }])
   contentBody: ProgramContentBody;
 
-  @ManyToOne(() => ProgramContentSection, (programContentSection) => programContentSection.programContents, {
+  @ManyToOne(() => ProgramContentSection, programContentSection => programContentSection.programContents, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'content_section_id', referencedColumnName: 'id' }])
   contentSection: ProgramContentSection;
 
-  @OneToMany(() => ProgramContentAudio, (programContentAudio) => programContentAudio.programContent)
+  @OneToMany(() => ProgramContentAudio, programContentAudio => programContentAudio.programContent)
   programContentAudios: ProgramContentAudio[];
 
-  @OneToMany(() => ProgramContentLog, (programContentLog) => programContentLog.programContent)
+  @OneToMany(() => ProgramContentLog, programContentLog => programContentLog.programContent)
   programContentLogs: ProgramContentLog[];
 
-  @OneToMany(() => ProgramContentMaterial, (programContentMaterial) => programContentMaterial.programContent)
+  @OneToMany(() => ProgramContentMaterial, programContentMaterial => programContentMaterial.programContent)
   programContentMaterials: ProgramContentMaterial[];
 
-  @OneToMany(() => ProgramContentPlan, (programContentPlan) => programContentPlan.programContent)
+  @OneToMany(() => ProgramContentPlan, programContentPlan => programContentPlan.programContent)
   programContentPlans: ProgramContentPlan[];
 
-  @OneToMany(() => ProgramContentProgress, (programContentProgress) => programContentProgress.programContent)
+  @OneToMany(() => ProgramContentProgress, programContentProgress => programContentProgress.programContent)
   programContentProgresses: ProgramContentProgress[];
 
-  @OneToMany(() => ProgramContentVideo, (programContentVideo) => programContentVideo.programContent)
+  @OneToMany(() => ProgramContentVideo, programContentVideo => programContentVideo.programContent)
   programContentVideos: ProgramContentVideo[];
 }

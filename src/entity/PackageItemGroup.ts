@@ -20,10 +20,10 @@ export class PackageItemGroup {
   @Column('boolean', { name: 'with_filter' })
   withFilter: boolean;
 
-  @OneToMany(() => PackageItem, (packageItem) => packageItem.packageItemGroup)
+  @OneToMany(() => PackageItem, packageItem => packageItem.packageItemGroup)
   packageItems: PackageItem[];
 
-  @ManyToOne(() => PackageSection, (packageSection) => packageSection.packageItemGroups, {
+  @ManyToOne(() => PackageSection, packageSection => packageSection.packageItemGroups, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

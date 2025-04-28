@@ -13,7 +13,7 @@ export class BundleItem {
   @Column('jsonb', { name: 'target' })
   target: object;
 
-  @ManyToOne(() => Bundle, (bundle) => bundle.bundleItems, {
+  @ManyToOne(() => Bundle, bundle => bundle.bundleItems, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })

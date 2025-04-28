@@ -29,13 +29,13 @@ export class MemberSocial {
   @Column('text', { name: 'profile_url', nullable: true })
   profileUrl: string | null;
 
-  @ManyToOne(() => Member, (member) => member.memberSocials, {
+  @ManyToOne(() => Member, member => member.memberSocials, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => SocialCard, (socialCard) => socialCard.memberSocial)
+  @OneToMany(() => SocialCard, socialCard => socialCard.memberSocial)
   socialCards: SocialCard[];
 }

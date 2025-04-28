@@ -16,7 +16,7 @@ export class MerchandiseImg {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @ManyToOne(() => Merchandise, (merchandise) => merchandise.merchandiseImgs, {
+  @ManyToOne(() => Merchandise, merchandise => merchandise.merchandiseImgs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

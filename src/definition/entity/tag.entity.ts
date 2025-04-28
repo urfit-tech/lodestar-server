@@ -38,24 +38,24 @@ export class Tag {
   @Column('boolean', { name: 'filterable', default: () => true })
   filterable: boolean;
 
-  @OneToMany(() => ActivityTag, (activityTag) => activityTag.tagName)
+  @OneToMany(() => ActivityTag, activityTag => activityTag.tagName)
   activityTags: ActivityTag[];
 
-  @OneToMany(() => MemberSpeciality, (memberSpeciality) => memberSpeciality.tagName)
+  @OneToMany(() => MemberSpeciality, memberSpeciality => memberSpeciality.tagName)
   memberSpecialities: MemberSpeciality[];
 
-  @OneToMany(() => MemberTag, (memberTag) => memberTag.tagName2)
+  @OneToMany(() => MemberTag, memberTag => memberTag.tagName2)
   memberTags: MemberTag[];
 
-  @OneToMany(() => MerchandiseTag, (merchandiseTag) => merchandiseTag.tagName)
+  @OneToMany(() => MerchandiseTag, merchandiseTag => merchandiseTag.tagName)
   merchandiseTags: MerchandiseTag[];
 
-  @OneToMany(() => PodcastProgramTag, (podcastProgramTag) => podcastProgramTag.tagName2)
+  @OneToMany(() => PodcastProgramTag, podcastProgramTag => podcastProgramTag.tagName2)
   podcastProgramTags: PodcastProgramTag[];
 
-  @OneToMany(() => PostTag, (postTag) => postTag.tagName)
+  @OneToMany(() => PostTag, postTag => postTag.tagName)
   postTags: PostTag[];
 
-  @OneToMany(() => ProgramTag, (programTag) => programTag.tagName2)
+  @OneToMany(() => ProgramTag, programTag => programTag.tagName2)
   programTags: ProgramTag[];
 }

@@ -26,16 +26,16 @@ export class Card {
   @Column('text', { name: 'creator_id', nullable: true })
   creatorId: string | null;
 
-  @ManyToOne(() => App, (app) => app.cards, {
+  @ManyToOne(() => App, app => app.cards, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @OneToMany(() => CardDiscount, (cardDiscount) => cardDiscount.card)
+  @OneToMany(() => CardDiscount, cardDiscount => cardDiscount.card)
   cardDiscounts: CardDiscount[];
 
-  @OneToMany(() => CardProduct, (cardProduct) => cardProduct.card)
+  @OneToMany(() => CardProduct, cardProduct => cardProduct.card)
   cardProducts: CardProduct[];
 }

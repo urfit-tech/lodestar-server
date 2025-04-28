@@ -115,7 +115,7 @@ export class ExporterTasker extends Tasker {
         this.entityManager,
       );
       const appSettings = await this.appInfra.getAppSettings(appId, this.entityManager);
-      const exportToAllAdmin = appSettings.find((setting) => setting.key === 'export.to_all_admins')?.value;
+      const exportToAllAdmin = appSettings.find(setting => setting.key === 'export.to_all_admins')?.value;
       let admins = [];
       if (exportToAllAdmin === '1') {
         admins = await this.memberInfra.getMembersByConditions(appId, { role: 'app-owner' }, this.entityManager);
@@ -215,7 +215,7 @@ export class ExporterTasker extends Tasker {
     await this.mailService.insertEmailJobIntoQueue({
       appId,
       catalog: 'export',
-      targetMemberIds: invokerMember.map((member) => member.email),
+      targetMemberIds: invokerMember.map(member => member.email),
       partials,
       subject,
       manager,

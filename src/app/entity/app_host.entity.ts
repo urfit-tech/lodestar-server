@@ -14,7 +14,7 @@ export class AppHost {
   @Column('integer', { name: 'priority', default: () => 0 })
   priority: number;
 
-  @ManyToOne(() => App, (app) => app.appHosts, {
+  @ManyToOne(() => App, app => app.appHosts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

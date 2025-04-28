@@ -27,14 +27,14 @@ export class ProgramRole {
   })
   createdAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.programRoles, {
+  @ManyToOne(() => Member, member => member.programRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Program, (program) => program.programRoles, {
+  @ManyToOne(() => Program, program => program.programRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

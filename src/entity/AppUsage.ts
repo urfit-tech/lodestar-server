@@ -17,7 +17,7 @@ export class AppUsage {
   @Column('numeric', { name: 'watched_seconds', default: () => 0 })
   watchedSeconds: number;
 
-  @ManyToOne(() => App, (app) => app.appUsages, {
+  @ManyToOne(() => App, app => app.appUsages, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -28,7 +28,7 @@ export class ProgramApproval {
   @Column('text', { name: 'feedback', nullable: true })
   feedback: string | null;
 
-  @ManyToOne(() => Program, (program) => program.programApprovals, {
+  @ManyToOne(() => Program, program => program.programApprovals, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

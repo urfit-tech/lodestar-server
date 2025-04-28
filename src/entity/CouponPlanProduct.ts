@@ -14,14 +14,14 @@ export class CouponPlanProduct {
   @Column('text', { name: 'product_id' })
   productId: string;
 
-  @ManyToOne(() => CouponPlan, (couponPlan) => couponPlan.couponPlanProducts, {
+  @ManyToOne(() => CouponPlan, couponPlan => couponPlan.couponPlanProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'coupon_plan_id', referencedColumnName: 'id' }])
   couponPlan: CouponPlan;
 
-  @ManyToOne(() => Product, (product) => product.couponPlanProducts, {
+  @ManyToOne(() => Product, product => product.couponPlanProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

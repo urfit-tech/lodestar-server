@@ -32,21 +32,21 @@ export class ProjectRole {
   })
   createdAt: Date;
 
-  @ManyToOne(() => Identity, (identity) => identity.projectRoles, {
+  @ManyToOne(() => Identity, identity => identity.projectRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'identity_id', referencedColumnName: 'id' }])
   identity: Identity;
 
-  @ManyToOne(() => Member, (member) => member.projectRoles, {
+  @ManyToOne(() => Member, member => member.projectRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Project, (project) => project.projectRoles, {
+  @ManyToOne(() => Project, project => project.projectRoles, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

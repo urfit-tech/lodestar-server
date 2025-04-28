@@ -43,7 +43,7 @@ export class MemberTrackingLog {
   })
   createdAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.memberTrackingLogs, {
+  @ManyToOne(() => Member, member => member.memberTrackingLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

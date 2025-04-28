@@ -57,13 +57,13 @@ describe('CoinImportDTO', () => {
 
     expect(errors.length).toBeGreaterThan(0);
 
-    const fileInfoErrors = errors.find((error) => error.property === 'fileInfos');
+    const fileInfoErrors = errors.find(error => error.property === 'fileInfos');
     expect(fileInfoErrors).toBeDefined();
 
     const fileInfoError = fileInfoErrors?.children?.[0];
     expect(fileInfoError).toBeDefined();
 
-    const checksumError = fileInfoError?.children?.find((child) => child.property === 'checksum');
+    const checksumError = fileInfoError?.children?.find(child => child.property === 'checksum');
     expect(checksumError).toBeDefined();
     expect(checksumError?.constraints).toHaveProperty('isString', 'checksum must be a string');
   });

@@ -20,13 +20,13 @@ export class SocialCard {
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
 
-  @ManyToOne(() => MemberSocial, (memberSocial) => memberSocial.socialCards, {
+  @ManyToOne(() => MemberSocial, memberSocial => memberSocial.socialCards, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_social_id', referencedColumnName: 'id' }])
   memberSocial: MemberSocial;
 
-  @OneToMany(() => SocialCardSubscriber, (socialCardSubscriber) => socialCardSubscriber.socialCard)
+  @OneToMany(() => SocialCardSubscriber, socialCardSubscriber => socialCardSubscriber.socialCard)
   socialCardSubscribers: SocialCardSubscriber[];
 }

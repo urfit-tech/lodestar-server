@@ -35,7 +35,7 @@ export class AppointmentSchedule {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => AppointmentPlan, (appointmentPlan) => appointmentPlan.appointmentSchedules, {
+  @ManyToOne(() => AppointmentPlan, appointmentPlan => appointmentPlan.appointmentSchedules, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

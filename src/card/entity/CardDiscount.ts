@@ -23,14 +23,14 @@ export class CardDiscount {
   @Column('text', { name: 'type' })
   type: string;
 
-  @ManyToOne(() => Card, (card) => card.cardDiscounts, {
+  @ManyToOne(() => Card, card => card.cardDiscounts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'card_id', referencedColumnName: 'id' }])
   card: Card;
 
-  @ManyToOne(() => Product, (product) => product.cardDiscounts, {
+  @ManyToOne(() => Product, product => product.cardDiscounts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

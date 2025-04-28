@@ -66,22 +66,22 @@ export class Post {
   @Column('timestamp with time zone', { name: 'pinned_at', nullable: true })
   pinnedAt: Date | null;
 
-  @ManyToOne(() => App, (app) => app.posts, {
+  @ManyToOne(() => App, app => app.posts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @OneToMany(() => PostCategory, (postCategory) => postCategory.post)
+  @OneToMany(() => PostCategory, postCategory => postCategory.post)
   postCategories: PostCategory[];
 
-  @OneToMany(() => PostMerchandise, (postMerchandise) => postMerchandise.post)
+  @OneToMany(() => PostMerchandise, postMerchandise => postMerchandise.post)
   postMerchandises: PostMerchandise[];
 
-  @OneToMany(() => PostRole, (postRole) => postRole.post)
+  @OneToMany(() => PostRole, postRole => postRole.post)
   postRoles: PostRole[];
 
-  @OneToMany(() => PostTag, (postTag) => postTag.post)
+  @OneToMany(() => PostTag, postTag => postTag.post)
   postTags: PostTag[];
 }

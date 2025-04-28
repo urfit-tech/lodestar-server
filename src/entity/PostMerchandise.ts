@@ -11,14 +11,14 @@ export class PostMerchandise {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @ManyToOne(() => Merchandise, (merchandise) => merchandise.postMerchandises, {
+  @ManyToOne(() => Merchandise, merchandise => merchandise.postMerchandises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'merchandise_id', referencedColumnName: 'id' }])
   merchandise: Merchandise;
 
-  @ManyToOne(() => Post, (post) => post.postMerchandises, {
+  @ManyToOne(() => Post, post => post.postMerchandises, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

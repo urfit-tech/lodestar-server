@@ -19,20 +19,20 @@ export class ProgramPackageProgram {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @ManyToOne(() => Program, (program) => program.programPackagePrograms, {
+  @ManyToOne(() => Program, program => program.programPackagePrograms, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_id', referencedColumnName: 'id' }])
   program: Program;
 
-  @ManyToOne(() => ProgramPackage, (programPackage) => programPackage.programPackagePrograms, {
+  @ManyToOne(() => ProgramPackage, programPackage => programPackage.programPackagePrograms, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'program_package_id', referencedColumnName: 'id' }])
   programPackage: ProgramPackage;
 
-  @OneToMany(() => ProgramTempoDelivery, (programTempoDelivery) => programTempoDelivery.programPackageProgram)
+  @OneToMany(() => ProgramTempoDelivery, programTempoDelivery => programTempoDelivery.programPackageProgram)
   programTempoDeliveries: ProgramTempoDelivery[];
 }

@@ -18,14 +18,14 @@ export class PostCategory {
   @Column('text', { name: 'category_id' })
   categoryId: string;
 
-  @ManyToOne(() => Post, (post) => post.postCategories, {
+  @ManyToOne(() => Post, post => post.postCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'post_id', referencedColumnName: 'id' }])
   post: Post;
 
-  @ManyToOne(() => Category, (category) => category.postCategories, {
+  @ManyToOne(() => Category, category => category.postCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

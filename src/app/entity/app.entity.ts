@@ -100,103 +100,103 @@ export class App {
   @Column('text', { name: 'org_id', nullable: true })
   orgId: string | null;
 
-  @OneToMany(() => Activity, (activity) => activity.app)
+  @OneToMany(() => Activity, activity => activity.app)
   activities: Activity[];
 
-  @ManyToOne(() => AppPlan, (appPlan) => appPlan.apps, {
+  @ManyToOne(() => AppPlan, appPlan => appPlan.apps, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_plan_id', referencedColumnName: 'id' }])
   appPlan: AppPlan;
 
-  @OneToMany(() => AppAdmin, (appAdmin) => appAdmin.app)
+  @OneToMany(() => AppAdmin, appAdmin => appAdmin.app)
   appAdmins: AppAdmin[];
 
-  @OneToMany(() => AppChannel, (appChannel) => appChannel.app)
+  @OneToMany(() => AppChannel, appChannel => appChannel.app)
   appChannels: AppChannel[];
 
-  @OneToMany(() => AppDefaultPermission, (appDefaultPermission) => appDefaultPermission.app)
+  @OneToMany(() => AppDefaultPermission, appDefaultPermission => appDefaultPermission.app)
   appDefaultPermissions: AppDefaultPermission[];
 
-  @OneToMany(() => AppEmailTemplate, (appEmailTemplate) => appEmailTemplate.app)
+  @OneToMany(() => AppEmailTemplate, appEmailTemplate => appEmailTemplate.app)
   appEmailTemplates: AppEmailTemplate[];
 
-  @OneToMany(() => AppExtendedModule, (appExtendedModule) => appExtendedModule.app)
+  @OneToMany(() => AppExtendedModule, appExtendedModule => appExtendedModule.app)
   appExtendedModules: AppExtendedModule[];
 
-  @OneToMany(() => AppHost, (appHost) => appHost.app)
+  @OneToMany(() => AppHost, appHost => appHost.app)
   appHosts: AppHost[];
 
-  @OneToMany(() => AppLanguage, (appLanguage) => appLanguage.app)
+  @OneToMany(() => AppLanguage, appLanguage => appLanguage.app)
   appLanguages: AppLanguage[];
 
-  @OneToMany(() => AppNav, (appNav) => appNav.app)
+  @OneToMany(() => AppNav, appNav => appNav.app)
   appNavs: AppNav[];
 
-  @OneToMany(() => AppSecret, (appSecret) => appSecret.app)
+  @OneToMany(() => AppSecret, appSecret => appSecret.app)
   appSecrets: AppSecret[];
 
-  @OneToMany(() => AppSetting, (appSetting) => appSetting.app)
+  @OneToMany(() => AppSetting, appSetting => appSetting.app)
   appSettings: AppSetting[];
 
-  @OneToMany(() => AppUsage, (appUsage) => appUsage.app)
+  @OneToMany(() => AppUsage, appUsage => appUsage.app)
   appUsages: AppUsage[];
 
-  @OneToMany(() => AppWebhook, (appWebhook) => appWebhook.app)
+  @OneToMany(() => AppWebhook, appWebhook => appWebhook.app)
   appWebhooks: AppWebhook[];
 
-  @OneToMany(() => Card, (card) => card.app)
+  @OneToMany(() => Card, card => card.app)
   cards: Card[];
 
-  @OneToMany(() => CartItem, (cartItem) => cartItem.app)
+  @OneToMany(() => CartItem, cartItem => cartItem.app)
   cartItems: CartItem[];
 
-  @OneToMany(() => Comment, (comment) => comment.app)
+  @OneToMany(() => Comment, comment => comment.app)
   comments: Comment[];
 
-  @OneToMany(() => Issue, (issue) => issue.app)
+  @OneToMany(() => Issue, issue => issue.app)
   issues: Issue[];
 
-  @OneToMany(() => Member, (member) => member.app)
+  @OneToMany(() => Member, member => member.app)
   members: Member[];
 
-  @OneToMany(() => Merchandise, (merchandise) => merchandise.app)
+  @OneToMany(() => Merchandise, merchandise => merchandise.app)
   merchandises: Merchandise[];
 
-  @OneToMany(() => Package, (pkg) => pkg.app)
+  @OneToMany(() => Package, pkg => pkg.app)
   packages: Package[];
 
-  @OneToMany(() => Podcast, (podcast) => podcast.app)
+  @OneToMany(() => Podcast, podcast => podcast.app)
   podcasts: Podcast[];
 
-  @OneToMany(() => Post, (post) => post.app)
+  @OneToMany(() => Post, post => post.app)
   posts: Post[];
 
-  @OneToMany(() => ProductChannel, (productChannel) => productChannel.app)
+  @OneToMany(() => ProductChannel, productChannel => productChannel.app)
   productChannels: ProductChannel[];
 
-  @OneToMany(() => Program, (program) => program.app)
+  @OneToMany(() => Program, program => program.app)
   programs: Program[];
 
-  @OneToMany(() => ProgramPackage, (programPackage) => programPackage.app)
+  @OneToMany(() => ProgramPackage, programPackage => programPackage.app)
   programPackages: ProgramPackage[];
 
-  @OneToMany(() => Property, (property) => property.app)
+  @OneToMany(() => Property, property => property.app)
   properties: Property[];
 
-  @OneToMany(() => SharingCode, (sharingCode) => sharingCode.app)
+  @OneToMany(() => SharingCode, sharingCode => sharingCode.app)
   sharingCodes: SharingCode[];
 
-  @OneToMany(() => SmsVerificationCode, (smsVerificationCode) => smsVerificationCode.app)
+  @OneToMany(() => SmsVerificationCode, smsVerificationCode => smsVerificationCode.app)
   smsVerificationCodes: SmsVerificationCode[];
 
-  @OneToMany(() => VoucherPlan, (voucherPlan) => voucherPlan.app)
+  @OneToMany(() => VoucherPlan, voucherPlan => voucherPlan.app)
   voucherPlans: VoucherPlan[];
 
-  @OneToMany(() => Report, (report) => report.app)
+  @OneToMany(() => Report, report => report.app)
   reports: Report[];
 
-  @OneToMany(() => AppInvoiceGateway, (appInvoiceGateway) => appInvoiceGateway.app)
+  @OneToMany(() => AppInvoiceGateway, appInvoiceGateway => appInvoiceGateway.app)
   appInvoiceGateways: AppInvoiceGateway[];
 }

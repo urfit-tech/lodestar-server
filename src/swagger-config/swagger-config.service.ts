@@ -10,7 +10,7 @@ export class SwaggerConfigService {
       .setDescription(config.description)
       .setVersion(config.version);
 
-    config.tags.forEach((tag) => options.addTag(tag));
+    config.tags.forEach(tag => options.addTag(tag));
     if (config.bearerAuth) {
       options.addBearerAuth();
     }
@@ -26,7 +26,7 @@ export class SwaggerConfigService {
   }
 
   private static filterRoutes(document: OpenAPIObject, routeFilter: (path: string) => boolean) {
-    Object.keys(document.paths).forEach((path) => {
+    Object.keys(document.paths).forEach(path => {
       if (!routeFilter(path)) {
         delete document.paths[path];
       }

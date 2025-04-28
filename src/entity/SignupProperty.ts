@@ -35,7 +35,7 @@ export class SignupProperty {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Property, (property) => property.signupProperties, {
+  @ManyToOne(() => Property, property => property.signupProperties, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

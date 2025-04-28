@@ -23,14 +23,14 @@ export class PlaylistPodcastProgram {
   @Column('integer', { name: 'position' })
   position: number;
 
-  @ManyToOne(() => Playlist, (playlist) => playlist.playlistPodcastPrograms, {
+  @ManyToOne(() => Playlist, playlist => playlist.playlistPodcastPrograms, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'playlist_id', referencedColumnName: 'id' }])
   playlist: Playlist;
 
-  @ManyToOne(() => PodcastProgram, (podcastProgram) => podcastProgram.playlistPodcastPrograms, {
+  @ManyToOne(() => PodcastProgram, podcastProgram => podcastProgram.playlistPodcastPrograms, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

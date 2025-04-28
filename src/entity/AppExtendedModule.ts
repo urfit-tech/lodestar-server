@@ -28,14 +28,14 @@ export class AppExtendedModule {
   @Column({ type: 'text', name: 'module_id' })
   moduleId: string;
 
-  @ManyToOne(() => App, (app) => app.appExtendedModules, {
+  @ManyToOne(() => App, app => app.appExtendedModules, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Module, (module) => module.appExtendedModules, {
+  @ManyToOne(() => Module, module => module.appExtendedModules, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

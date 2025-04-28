@@ -39,7 +39,7 @@ export class Invoice {
   @Column('uuid', { name: 'executor_id', nullable: true })
   executorId: string | null;
 
-  @OneToOne(() => OrderLog, (orderLog) => orderLog.invoice, {
+  @OneToOne(() => OrderLog, orderLog => orderLog.invoice, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

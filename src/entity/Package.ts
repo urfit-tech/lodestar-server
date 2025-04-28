@@ -16,13 +16,13 @@ export class Package {
   @Column('jsonb', { name: 'elements' })
   elements: object;
 
-  @ManyToOne(() => App, (app) => app.packages, {
+  @ManyToOne(() => App, app => app.packages, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @OneToMany(() => PackageSection, (packageSection) => packageSection.package)
+  @OneToMany(() => PackageSection, packageSection => packageSection.package)
   packageSections: PackageSection[];
 }

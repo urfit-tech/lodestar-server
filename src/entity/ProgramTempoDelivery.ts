@@ -22,14 +22,14 @@ export class ProgramTempoDelivery {
   @Column('timestamp with time zone', { name: 'delivered_at' })
   deliveredAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.programTempoDeliveries, {
+  @ManyToOne(() => Member, member => member.programTempoDeliveries, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => ProgramPackageProgram, (programPackageProgram) => programPackageProgram.programTempoDeliveries, {
+  @ManyToOne(() => ProgramPackageProgram, programPackageProgram => programPackageProgram.programTempoDeliveries, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

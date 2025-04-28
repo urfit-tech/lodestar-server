@@ -35,7 +35,7 @@ export class CreatorDisplay {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.creatorDisplays, {
+  @ManyToOne(() => Member, member => member.creatorDisplays, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

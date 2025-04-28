@@ -27,12 +27,12 @@ export class Currency {
   })
   minorUnits: number | null;
 
-  @OneToMany(() => AppointmentPlan, (appointmentPlan) => appointmentPlan.currency)
+  @OneToMany(() => AppointmentPlan, appointmentPlan => appointmentPlan.currency)
   appointmentPlans: AppointmentPlan[];
 
-  @OneToMany(() => OrderProduct, (orderProduct) => orderProduct.currency)
+  @OneToMany(() => OrderProduct, orderProduct => orderProduct.currency)
   orderProducts: OrderProduct[];
 
-  @OneToMany(() => ProgramPlan, (programPlan) => programPlan.currency)
+  @OneToMany(() => ProgramPlan, programPlan => programPlan.currency)
   programPlans: ProgramPlan[];
 }

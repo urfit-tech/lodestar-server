@@ -31,7 +31,7 @@ export class PodcastService {
 
     const podcasts = await this.podcastInfra.getOwnedPodcasts(appId, memberId, this.entityManager);
 
-    return podcasts.map((podcast) => ({
+    return podcasts.map(podcast => ({
       ...podcast,
       durationSecond: Number(podcast.durationSecond || 0),
       salePrice: podcast.salePrice ? Number(podcast.salePrice) : null,

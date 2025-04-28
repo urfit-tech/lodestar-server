@@ -55,15 +55,15 @@ export class ActivityEnrollment {
   @ViewColumn({ name: 'attended' })
   attended: boolean;
 
-  @ManyToOne(() => ActivitySession, (activitySession) => activitySession.activityEnrollments)
+  @ManyToOne(() => ActivitySession, activitySession => activitySession.activityEnrollments)
   @JoinColumn([{ name: 'activity_session_id', referencedColumnName: 'id' }])
   activitySession: ActivitySession;
 
-  @ManyToOne(() => ActivityTicket, (activityTicket) => activityTicket.enrollments)
+  @ManyToOne(() => ActivityTicket, activityTicket => activityTicket.enrollments)
   @JoinColumn([{ name: 'activity_ticket_id', referencedColumnName: 'id' }])
   activityTicket: ActivityTicket;
 
-  @ManyToOne(() => Member, (member) => member.enrollments)
+  @ManyToOne(() => Member, member => member.enrollments)
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 }

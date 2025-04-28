@@ -26,13 +26,13 @@ export class Playlist {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @ManyToOne(() => Member, (member) => member.playlists, {
+  @ManyToOne(() => Member, member => member.playlists, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => PlaylistPodcastProgram, (playlistPodcastProgram) => playlistPodcastProgram.playlist)
+  @OneToMany(() => PlaylistPodcastProgram, playlistPodcastProgram => playlistPodcastProgram.playlist)
   playlistPodcastPrograms: PlaylistPodcastProgram[];
 }

@@ -31,14 +31,14 @@ export class ProgramTimetable {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Member, (member) => member.programTimetables, {
+  @ManyToOne(() => Member, member => member.programTimetables, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Program, (program) => program.programTimetables, {
+  @ManyToOne(() => Program, program => program.programTimetables, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

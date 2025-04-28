@@ -24,7 +24,6 @@ const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SALES_RECORDS_ADMIN,
 ];
 
-
 @UseGuards(AuthGuard, PermissionGuard)
 @Controller({
   path: 'orders',

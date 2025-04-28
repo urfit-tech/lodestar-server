@@ -29,6 +29,6 @@ export class EmailTemplate {
   })
   updatedAt: Date;
 
-  @OneToMany(() => AppEmailTemplate, (appEmailTemplate) => appEmailTemplate.emailTemplate)
+  @OneToMany(() => AppEmailTemplate, appEmailTemplate => appEmailTemplate.emailTemplate)
   appEmailTemplates: AppEmailTemplate[];
 }

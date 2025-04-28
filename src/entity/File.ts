@@ -72,6 +72,6 @@ export class File {
   @Column('timestamp with time zone', { name: 'purge_at', nullable: true })
   purgeAt: Date | null;
 
-  @OneToMany(() => Attachment, (attachment) => attachment.file)
+  @OneToMany(() => Attachment, attachment => attachment.file)
   attachments: Attachment[];
 }

@@ -17,14 +17,14 @@ export class ActivityCategory {
   @Column('text', { name: 'category_id' })
   categoryId: string;
 
-  @ManyToOne(() => Activity, (activity) => activity.activityCategories, {
+  @ManyToOne(() => Activity, activity => activity.activityCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'activity_id', referencedColumnName: 'id' }])
   activity: Activity;
 
-  @ManyToOne(() => Category, (category) => category.activityCategories, {
+  @ManyToOne(() => Category, category => category.activityCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

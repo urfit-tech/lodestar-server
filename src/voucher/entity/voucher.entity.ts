@@ -28,14 +28,14 @@ export class Voucher {
   @Column('timestamp without time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
-  @ManyToOne(() => Member, (member) => member.vouchers, {
+  @ManyToOne(() => Member, member => member.vouchers, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => VoucherCode, (voucherCode) => voucherCode.vouchers, {
+  @ManyToOne(() => VoucherCode, voucherCode => voucherCode.vouchers, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

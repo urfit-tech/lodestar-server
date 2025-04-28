@@ -184,7 +184,7 @@ export class MemberService {
     const deserializationFailed = rawDeserializeResult.filter(([_, errors]) => errors.length !== 0);
     const results = await Promise.allSettled(
       membersToImport.map(([member]) => {
-        return this.entityManager.transaction(async (manager) => {
+        return this.entityManager.transaction(async manager => {
           try {
             const memberRepo = manager.getRepository(Member);
             const memberPropertyRepo = manager.getRepository(MemberProperty);
@@ -214,13 +214,13 @@ export class MemberService {
       }),
     );
 
-    const fulfilleds = results.filter((result) => result.status === 'fulfilled');
+    const fulfilleds = results.filter(result => result.status === 'fulfilled');
     const rejecteds: Array<any> = (
-      results.filter((result) => result.status === 'rejected') as Array<PromiseRejectedResult>
+      results.filter(result => result.status === 'rejected') as Array<PromiseRejectedResult>
     ).map(({ reason }) => reason);
     deserializationFailed
       .map(([_, errors]) => errors)
-      .forEach((errors) => {
+      .forEach(errors => {
         const acc = {};
         errors.forEach(({ target, property, value, constraints }) => {
           const { id, username, email } = target as CsvRawMember;
@@ -269,7 +269,7 @@ export class MemberService {
 
     const members: Array<[Member | null, Array<ValidationError>]> = [];
 
-    const deserialized = rawRows.map((rawRow) => new CsvRawMember().deserializedFromCsvRawRow(headerInfos, rawRow));
+    const deserialized = rawRows.map(rawRow => new CsvRawMember().deserializedFromCsvRawRow(headerInfos, rawRow));
 
     for (const [eachRow, errors] of deserialized) {
       if (errors.length > 0) {
@@ -319,8 +319,8 @@ export class MemberService {
       }
 
       member.memberCategories = eachRow.categories
-        .filter((category) => appCategories.find(({ name }) => category === name))
-        .map((category) => {
+        .filter(category => appCategories.find(({ name }) => category === name))
+        .map(category => {
           const appCategory = appCategories.find(({ name }) => category === name);
           const memberCategory = new MemberCategory();
           memberCategory.memberId = member.id;
@@ -331,10 +331,10 @@ export class MemberService {
 
       member.memberProperties = Object.keys(eachRow.properties)
         .filter(
-          (propertyKey) =>
+          propertyKey =>
             eachRow.properties[propertyKey].length > 0 && appProperties.find(({ name }) => name === propertyKey),
         )
-        .map((propertyKey) => {
+        .map(propertyKey => {
           const memberProperty = new MemberProperty();
           memberProperty.memberId = member.id;
           memberProperty.property = appProperties.find(({ name }) => name === propertyKey);
@@ -343,8 +343,8 @@ export class MemberService {
         });
 
       member.memberPhones = eachRow.phones
-        .filter((phone) => phone.length > 0)
-        .map((phone) => {
+        .filter(phone => phone.length > 0)
+        .map(phone => {
           const memberPhone = new MemberPhone();
           memberPhone.memberId = member.id;
           memberPhone.phone = phone;
@@ -352,8 +352,8 @@ export class MemberService {
         });
 
       member.memberTags = eachRow.tags
-        .filter((tag) => appTags.find(({ name }) => name === tag))
-        .map((tag) => {
+        .filter(tag => appTags.find(({ name }) => name === tag))
+        .map(tag => {
           const memberTag = new MemberTag();
           memberTag.memberId = member.id;
           memberTag.tagName2 = appTags.find(({ name }) => name === tag);
@@ -371,7 +371,7 @@ export class MemberService {
     members: Array<Member>,
   ): Promise<Array<Record<string, any>>> {
     return members
-      .map((each) => {
+      .map(each => {
         const csvRawMember = new CsvRawMember();
         csvRawMember.id = each.id;
         csvRawMember.name = each.name;
@@ -392,7 +392,7 @@ export class MemberService {
 
         return csvRawMember;
       })
-      .map((each) => each.serializeToCsvRawRow(headerInfos));
+      .map(each => each.serializeToCsvRawRow(headerInfos));
   }
 
   async updateMemberLoginDate(memberId: string, loginedAt: Date, entityManager: EntityManager): Promise<void> {
@@ -482,7 +482,7 @@ export class MemberService {
     ];
 
     const results = await Promise.all(
-      functions.map((f) =>
+      functions.map(f =>
         this.timedMemberInfraFunction(f.name, () => f.method(managerId, appId, this.entityManager), managerId, appId),
       ),
     );

@@ -36,14 +36,14 @@ export class MemberTag {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @ManyToOne(() => Member, (member) => member.memberTags, {
+  @ManyToOne(() => Member, member => member.memberTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Tag, (tag) => tag.memberTags, {
+  @ManyToOne(() => Tag, tag => tag.memberTags, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

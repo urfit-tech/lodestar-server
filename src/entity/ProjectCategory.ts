@@ -13,14 +13,14 @@ export class ProjectCategory {
   @Column('integer', { name: 'position' })
   position: number;
 
-  @ManyToOne(() => Project, (project) => project.projectCategories, {
+  @ManyToOne(() => Project, project => project.projectCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'project_id', referencedColumnName: 'id' }])
   project: Project;
 
-  @ManyToOne(() => Category, (category) => category.projectCategories, {
+  @ManyToOne(() => Category, category => category.projectCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

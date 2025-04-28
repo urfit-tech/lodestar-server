@@ -36,7 +36,7 @@ export class CouponService {
     const couponEnrollment = await this.couponInfra.getCouponEnrollment(memberId, this.entityManager);
 
     const wrapCondition: FindOptionsWhere<OrderDiscount> = {
-      target: In(couponEnrollment.map((coupon) => coupon.id)),
+      target: In(couponEnrollment.map(coupon => coupon.id)),
       order: {
         status: 'SUCCESS',
         memberId,
@@ -54,8 +54,8 @@ export class CouponService {
 
     return this.utilityService.convertObjectKeysToCamelCase(
       couponEnrollment
-        .filter((coupon) => includeDeleted || coupon.couponCode.deletedAt === null)
-        .map((coupon) => {
+        .filter(coupon => includeDeleted || coupon.couponCode.deletedAt === null)
+        .map(coupon => {
           const startedAt = coupon.couponCode.couponPlan.startedAt;
           const endedAt = coupon.couponCode.couponPlan.endedAt;
           return {
@@ -63,7 +63,7 @@ export class CouponService {
             status: {
               outdated:
                 !!(startedAt && dayjs(startedAt).isAfter(dayjs())) || !!(endedAt && dayjs(endedAt).isBefore(dayjs())),
-              used: !!orderDiscountEnrollment.find((od) => od.target === coupon.id),
+              used: !!orderDiscountEnrollment.find(od => od.target === coupon.id),
             },
           };
         }),

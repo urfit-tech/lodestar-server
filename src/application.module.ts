@@ -44,15 +44,15 @@ import { EventModule } from './event/event.module';
         return ['production', 'staging'].includes(nodeEnv)
           ? {}
           : {
-            pinoHttp: {
-              transport: {
-                target: 'pino-pretty',
-                options: {
-                  ignore: 'pid,context,hostname',
+              pinoHttp: {
+                transport: {
+                  target: 'pino-pretty',
+                  options: {
+                    ignore: 'pid,context,hostname',
+                  },
                 },
               },
-            },
-          };
+            };
       },
       inject: [ConfigService],
     }),

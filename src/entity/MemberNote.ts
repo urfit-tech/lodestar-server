@@ -59,14 +59,14 @@ export class MemberNote {
   @Column('text', { name: 'deleted_from', nullable: true })
   deletedFrom: string | null;
 
-  @ManyToOne(() => Member, (member) => member.memberNotes, {
+  @ManyToOne(() => Member, member => member.memberNotes, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'author_id', referencedColumnName: 'id' }])
   author: Member;
 
-  @ManyToOne(() => Member, (member) => member.memberNotes2, {
+  @ManyToOne(() => Member, member => member.memberNotes2, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

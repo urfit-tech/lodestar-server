@@ -31,7 +31,7 @@ export class QuestionOption {
   @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
-  @ManyToOne(() => Question, (question) => question.questionOptions, {
+  @ManyToOne(() => Question, question => question.questionOptions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

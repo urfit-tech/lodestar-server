@@ -32,7 +32,7 @@ export class SharingCode {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => App, (app) => app.sharingCodes, {
+  @ManyToOne(() => App, app => app.sharingCodes, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

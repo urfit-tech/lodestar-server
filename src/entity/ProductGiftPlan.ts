@@ -28,7 +28,7 @@ export class ProductGiftPlan {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => GiftPlan, (giftPlan) => giftPlan.productGiftPlans, {
+  @ManyToOne(() => GiftPlan, giftPlan => giftPlan.productGiftPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

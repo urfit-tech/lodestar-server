@@ -45,10 +45,10 @@ export class CouponCode {
   })
   deletedAt: Date | null;
 
-  @OneToMany(() => Coupon, (coupon) => coupon.couponCode)
+  @OneToMany(() => Coupon, coupon => coupon.couponCode)
   coupons: Coupon[];
 
-  @ManyToOne(() => CouponPlan, (couponPlan) => couponPlan.couponCodes, {
+  @ManyToOne(() => CouponPlan, couponPlan => couponPlan.couponCodes, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

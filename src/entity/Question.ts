@@ -41,13 +41,13 @@ export class Question {
   @Column('text', { name: 'explanation', nullable: true })
   explanation: string | null;
 
-  @ManyToOne(() => QuestionGroup, (questionGroup) => questionGroup.questions, {
+  @ManyToOne(() => QuestionGroup, questionGroup => questionGroup.questions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'question_group_id', referencedColumnName: 'id' }])
   questionGroup: QuestionGroup;
 
-  @OneToMany(() => QuestionOption, (questionOption) => questionOption.question)
+  @OneToMany(() => QuestionOption, questionOption => questionOption.question)
   questionOptions: QuestionOption[];
 }

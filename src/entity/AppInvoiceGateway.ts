@@ -29,14 +29,14 @@ export class AppInvoiceGateway {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => App, (app) => app.appInvoiceGateways, {
+  @ManyToOne(() => App, app => app.appInvoiceGateways, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => InvoiceGateway, (invoiceGateway) => invoiceGateway.appInvoiceGateways, {
+  @ManyToOne(() => InvoiceGateway, invoiceGateway => invoiceGateway.appInvoiceGateways, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

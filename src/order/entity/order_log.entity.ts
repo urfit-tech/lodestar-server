@@ -111,45 +111,45 @@ export class OrderLog {
   })
   invoiceIssuedAt: Date | null;
 
-  @OneToOne(() => Invoice, (invoice) => invoice.order)
+  @OneToOne(() => Invoice, invoice => invoice.order)
   invoice: Invoice;
 
-  @OneToMany(() => OrderContact, (orderContact) => orderContact.order)
+  @OneToMany(() => OrderContact, orderContact => orderContact.order)
   orderContacts: OrderContact[];
 
-  @OneToMany(() => OrderDiscount, (orderDiscount) => orderDiscount.order)
+  @OneToMany(() => OrderDiscount, orderDiscount => orderDiscount.order)
   orderDiscounts: OrderDiscount[];
 
-  @OneToMany(() => OrderExecutor, (orderExecutor) => orderExecutor.order)
+  @OneToMany(() => OrderExecutor, orderExecutor => orderExecutor.order)
   orderExecutors: OrderExecutor[];
 
-  @ManyToOne(() => Coupon, (coupon) => coupon.orderLogs, {
+  @ManyToOne(() => Coupon, coupon => coupon.orderLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'discount_coupon_id', referencedColumnName: 'id' }])
   discountCoupon: Coupon;
 
-  @ManyToOne(() => Member, (member) => member.orderLogs, {
+  @ManyToOne(() => Member, member => member.orderLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => OrderLog, (orderLog) => orderLog.orderLogs, {
+  @ManyToOne(() => OrderLog, orderLog => orderLog.orderLogs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'parent_order_id', referencedColumnName: 'id' }])
   parentOrder: OrderLog;
 
-  @OneToMany(() => OrderLog, (orderLog) => orderLog.parentOrder)
+  @OneToMany(() => OrderLog, orderLog => orderLog.parentOrder)
   orderLogs: OrderLog[];
 
-  @OneToMany(() => OrderProduct, (orderProduct) => orderProduct.order)
+  @OneToMany(() => OrderProduct, orderProduct => orderProduct.order)
   orderProducts: OrderProduct[];
 
-  @OneToMany(() => PaymentLog, (paymentLog) => paymentLog.order)
+  @OneToMany(() => PaymentLog, paymentLog => paymentLog.order)
   paymentLogs: PaymentLog[];
 }

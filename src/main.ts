@@ -104,7 +104,7 @@ async function bootstrap() {
       bearerAuth: true,
       endpoint: 'lodestar/docs/member',
       documentOptions: { include: [MemberModule, AuthModule] },
-      routeFilter: (path) => path.includes('/v2/'),
+      routeFilter: path => path.includes('/v2/'),
     });
   }
 

@@ -71,7 +71,7 @@ export class MemberDevice {
   })
   lastLoginAt: Date | null;
 
-  @ManyToOne(() => Member, (member) => member.memberDevices, {
+  @ManyToOne(() => Member, member => member.memberDevices, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

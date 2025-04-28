@@ -33,19 +33,13 @@ export class StorageController {
   }
 
   @Post('storage/upload')
-  uploadFileToStorageBucket(
-    @Body() body: UploadDTO,
-    @Local('member') member: JwtMember,
-  ) {
+  uploadFileToStorageBucket(@Body() body: UploadDTO, @Local('member') member: JwtMember) {
     const { fileName, prefix } = body;
     return this.storageService.getSignedUrlForUploadStorage(member.appId, fileName, prefix, 60);
   }
 
   @Post('storage/download')
-  async getDownloadUrlFromStorageBucket(
-    @Body() body: UploadDTO,
-    @Local('member') member: JwtMember,
-  ) {
+  async getDownloadUrlFromStorageBucket(@Body() body: UploadDTO, @Local('member') member: JwtMember) {
     const { fileName, prefix } = body;
     return this.storageService.getSignedUrlForDownloadStorage(`${prefix}/${member.appId}/${fileName}`, 60);
   }

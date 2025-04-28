@@ -22,7 +22,7 @@ export class ExampleRunner extends Runner {
   }
 
   async execute(): Promise<void> {
-    await new Promise((resolve) =>
+    await new Promise(resolve =>
       setTimeout(() => {
         this.logger.log(`Execute time: ${dayjs().toISOString()}`);
         resolve(undefined);

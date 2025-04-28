@@ -6,9 +6,7 @@ import { AuthService } from './auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const http = context.switchToHttp();
@@ -20,8 +18,8 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-     const member = this.authService.verify(token);
-     response.locals.member = member;
+      const member = this.authService.verify(token);
+      response.locals.member = member;
     } catch (err) {
       throw new UnauthorizedException();
     }

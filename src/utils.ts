@@ -22,7 +22,7 @@ import {
 export function getMemoryUsageString(): string {
   const used = process.memoryUsage();
   const output = Object.keys(used)
-    .map((key) => `${key}: ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`)
+    .map(key => `${key}: ${Math.round((used[key] / 1024 / 1024) * 100) / 100} MB`)
     .join(',');
   return `[MemoryUsage] ${output}`;
 }
@@ -94,8 +94,8 @@ export const getRoundedListWithCompensation: <T extends Record<string, any>, K e
   roundMethods: RoundMethodsForCompensation,
 ) => (keyMap: Record<keyof ItemForCompensation, K>) => (list: T[]) => { roundedList: T[]; compensationItem: any } =
   ({ itemNumberRoundMethod, itemQuantityRoundMethod, totalRoundMethod }) =>
-  (keyMap) =>
-  (list) => {
+  keyMap =>
+  list => {
     const getTargetKeys = flip(props)(keyMap) as any;
     const getAmt = pipe((props as any)(getTargetKeys(['number', 'quantity'])), apply(multiply));
     const roundedList = map(

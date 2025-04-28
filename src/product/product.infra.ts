@@ -106,11 +106,11 @@ export class ProductInfrastructure {
     }
 
     const productOwners = await manager.query(sql.join(' UNION '));
-    return productOwners.map((owner) => mapKeys(owner, (_, k) => camelCase(k)));
+    return productOwners.map(owner => mapKeys(owner, (_, k) => camelCase(k)));
   }
 
   targetsToSql(targets: string[]) {
-    return targets.map((v) => JSON.stringify(v).replace(/"/g, "'")).join(', ');
+    return targets.map(v => JSON.stringify(v).replace(/"/g, "'")).join(', ');
   }
 
   getActivityTicketProductOwner(appId: string, targets: string[], manager: EntityManager) {

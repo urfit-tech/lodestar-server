@@ -27,14 +27,14 @@ export class AppSetting {
   })
   createdAt: Date | null;
 
-  @ManyToOne(() => App, (app) => app.appSettings, {
+  @ManyToOne(() => App, app => app.appSettings, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Setting, (setting) => setting.appSettings, {
+  @ManyToOne(() => Setting, setting => setting.appSettings, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

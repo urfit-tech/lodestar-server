@@ -22,7 +22,7 @@ export class ProgramAnnouncement {
   @Column('timestamp with time zone', { name: 'published_at', nullable: true })
   publishedAt: Date | null;
 
-  @ManyToOne(() => Program, (program) => program.programAnnouncements, {
+  @ManyToOne(() => Program, program => program.programAnnouncements, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })

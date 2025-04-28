@@ -72,30 +72,30 @@ export class OrderProduct {
   })
   deliveredAt: Date | null;
 
-  @OneToMany(() => ActivityAttendance, (activityAttendance) => activityAttendance.orderProduct)
+  @OneToMany(() => ActivityAttendance, activityAttendance => activityAttendance.orderProduct)
   activityAttendances: ActivityAttendance[];
 
-  @ManyToOne(() => Currency, (currency) => currency.orderProducts, {
+  @ManyToOne(() => Currency, currency => currency.orderProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'currency_id', referencedColumnName: 'id' }])
   currency: Currency;
 
-  @ManyToOne(() => OrderLog, (orderLog) => orderLog.orderProducts, {
+  @ManyToOne(() => OrderLog, orderLog => orderLog.orderProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'order_id', referencedColumnName: 'id' }])
   order: OrderLog;
 
-  @ManyToOne(() => Product, (product) => product.orderProducts, {
+  @ManyToOne(() => Product, product => product.orderProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'product_id', referencedColumnName: 'id' }])
   product: Product;
 
-  @OneToMany(() => OrderProductFile, (orderProductFile) => orderProductFile.orderProduct)
+  @OneToMany(() => OrderProductFile, orderProductFile => orderProductFile.orderProduct)
   orderProductFiles: OrderProductFile[];
 }

@@ -108,7 +108,7 @@ export class ActivityInfrastructure {
     const results = await query.getRawMany();
 
     const durations = new Map<string, ActivityDuration>();
-    results.forEach((result) => {
+    results.forEach(result => {
       durations.set(result.activity_id, {
         startedAt: new Date(result.started_at),
         endedAt: new Date(result.ended_at),
@@ -171,7 +171,7 @@ export class ActivityInfrastructure {
 
     const enrollmentCountMap = new Map<string, ActivitySessionTicketEnrollmentCount[]>();
 
-    sessionTicketEnrollmentCounts.forEach((count) => {
+    sessionTicketEnrollmentCounts.forEach(count => {
       const activityId = count.activityId;
       if (!enrollmentCountMap.has(activityId)) {
         enrollmentCountMap.set(activityId, []);
@@ -396,13 +396,13 @@ export class ActivityInfrastructure {
       return {
         id: activitySession.id,
         title: activitySession.title,
-        participants: activitySession.activityEnrollments.map((enrollment) => ({
+        participants: activitySession.activityEnrollments.map(enrollment => ({
           id: enrollment.memberId,
           name: enrollment.memberName || enrollment.member.name,
           phone:
             enrollment.memberPhone ||
-            enrollment.member.memberPhones.find((phone) => phone.isValid)?.phone ||
-            enrollment.member.memberPhones.find((phone) => phone.isPrimary)?.phone,
+            enrollment.member.memberPhones.find(phone => phone.isValid)?.phone ||
+            enrollment.member.memberPhones.find(phone => phone.isPrimary)?.phone,
           email: enrollment.memberEmail || enrollment.member.email,
           orderLogId: enrollment.orderLogId,
           attended: enrollment.attended,

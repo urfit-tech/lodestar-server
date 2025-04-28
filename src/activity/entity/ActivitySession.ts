@@ -38,19 +38,19 @@ export class ActivitySession {
   @Column('text', { name: 'activity_id' })
   activityId: string;
 
-  @OneToMany(() => ActivityAttendance, (activityAttendance) => activityAttendance.activitySession)
+  @OneToMany(() => ActivityAttendance, activityAttendance => activityAttendance.activitySession)
   activityAttendances: ActivityAttendance[];
 
-  @ManyToOne(() => Activity, (activity) => activity.activitySessions, {
+  @ManyToOne(() => Activity, activity => activity.activitySessions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'activity_id', referencedColumnName: 'id' }])
   activity: Activity;
 
-  @OneToMany(() => ActivitySessionTicket, (activitySessionTicket) => activitySessionTicket.activitySession)
+  @OneToMany(() => ActivitySessionTicket, activitySessionTicket => activitySessionTicket.activitySession)
   activitySessionTickets: ActivitySessionTicket[];
 
-  @OneToMany(() => ActivityEnrollment, (activityEnrollment) => activityEnrollment.activitySession)
+  @OneToMany(() => ActivityEnrollment, activityEnrollment => activityEnrollment.activitySession)
   activityEnrollments: ActivityEnrollment[];
 }

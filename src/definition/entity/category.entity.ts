@@ -51,36 +51,36 @@ export class Category {
   @Column('boolean', { name: 'filterable', default: () => true })
   filterable: boolean;
 
-  @OneToMany(() => ActivityCategory, (activityCategory) => activityCategory.category)
+  @OneToMany(() => ActivityCategory, activityCategory => activityCategory.category)
   activityCategories: ActivityCategory[];
 
-  @OneToMany(() => CreatorCategory, (creatorCategory) => creatorCategory.category)
+  @OneToMany(() => CreatorCategory, creatorCategory => creatorCategory.category)
   creatorCategories: CreatorCategory[];
 
-  @OneToMany(() => MemberCategory, (memberCategory) => memberCategory.category)
+  @OneToMany(() => MemberCategory, memberCategory => memberCategory.category)
   memberCategories: MemberCategory[];
 
-  @OneToMany(() => MemberTask, (memberTask) => memberTask.category)
+  @OneToMany(() => MemberTask, memberTask => memberTask.category)
   memberTasks: MemberTask[];
 
-  @OneToMany(() => MerchandiseCategory, (merchandiseCategory) => merchandiseCategory.category)
+  @OneToMany(() => MerchandiseCategory, merchandiseCategory => merchandiseCategory.category)
   merchandiseCategories: MerchandiseCategory[];
 
-  @OneToMany(() => PodcastAlbumCategory, (podcastAlbumCategory) => podcastAlbumCategory.category)
+  @OneToMany(() => PodcastAlbumCategory, podcastAlbumCategory => podcastAlbumCategory.category)
   podcastAlbumCategories: PodcastAlbumCategory[];
 
-  @OneToMany(() => PodcastProgramCategory, (podcastProgramCategory) => podcastProgramCategory.category)
+  @OneToMany(() => PodcastProgramCategory, podcastProgramCategory => podcastProgramCategory.category)
   podcastProgramCategories: PodcastProgramCategory[];
 
-  @OneToMany(() => PostCategory, (postCategory) => postCategory.category)
+  @OneToMany(() => PostCategory, postCategory => postCategory.category)
   postCategories: PostCategory[];
 
-  @OneToMany(() => ProgramCategory, (programCategory) => programCategory.category)
+  @OneToMany(() => ProgramCategory, programCategory => programCategory.category)
   programCategories: ProgramCategory[];
 
-  @OneToMany(() => ProgramPackageCategory, (programPackageCategory) => programPackageCategory.category)
+  @OneToMany(() => ProgramPackageCategory, programPackageCategory => programPackageCategory.category)
   programPackageCategories: ProgramPackageCategory[];
 
-  @OneToMany(() => ProjectCategory, (projectCategory) => projectCategory.category)
+  @OneToMany(() => ProjectCategory, projectCategory => projectCategory.category)
   projectCategories: ProjectCategory[];
 }

@@ -17,7 +17,7 @@ export class AppWebhook {
   @Column('boolean', { name: 'enabled', default: () => false })
   enabled: boolean;
 
-  @ManyToOne(() => App, (app) => app.appWebhooks, {
+  @ManyToOne(() => App, app => app.appWebhooks, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

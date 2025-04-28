@@ -44,16 +44,16 @@ export class Property {
   @Column('boolean', { name: 'is_business', default: () => false })
   isBusiness: boolean;
 
-  @OneToMany(() => MemberProperty, (memberProperty) => memberProperty.property)
+  @OneToMany(() => MemberProperty, memberProperty => memberProperty.property)
   memberProperties: MemberProperty[];
 
-  @ManyToOne(() => App, (app) => app.properties, {
+  @ManyToOne(() => App, app => app.properties, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @OneToMany(() => SignupProperty, (signupProperty) => signupProperty.property)
+  @OneToMany(() => SignupProperty, signupProperty => signupProperty.property)
   signupProperties: SignupProperty[];
 }

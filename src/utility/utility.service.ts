@@ -62,7 +62,7 @@ export class UtilityService {
   }
 
   sleep(milliseconds: number) {
-    return new Promise((resolve) => setTimeout(resolve, milliseconds));
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
   }
 
   arrayBufferToBase64Url(buffer: any): string {

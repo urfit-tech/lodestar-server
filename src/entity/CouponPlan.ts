@@ -49,9 +49,9 @@ export class CouponPlan {
   @Column('text', { name: 'editor_id', nullable: true })
   editorId: string | null;
 
-  @OneToMany(() => CouponCode, (couponCode) => couponCode.couponPlan)
+  @OneToMany(() => CouponCode, couponCode => couponCode.couponPlan)
   couponCodes: CouponCode[];
 
-  @OneToMany(() => CouponPlanProduct, (couponPlanProduct) => couponPlanProduct.couponPlan)
+  @OneToMany(() => CouponPlanProduct, couponPlanProduct => couponPlanProduct.couponPlan)
   couponPlanProducts: CouponPlanProduct[];
 }

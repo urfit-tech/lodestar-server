@@ -29,14 +29,14 @@ export class RolePermission {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Permission, (permission) => permission.rolePermissions, {
+  @ManyToOne(() => Permission, permission => permission.rolePermissions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'permission_id', referencedColumnName: 'id' }])
   permission: Permission;
 
-  @ManyToOne(() => Role, (role) => role.rolePermissions, {
+  @ManyToOne(() => Role, role => role.rolePermissions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

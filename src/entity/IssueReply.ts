@@ -21,20 +21,20 @@ export class IssueReply {
   })
   createdAt: Date;
 
-  @ManyToOne(() => Issue, (issue) => issue.issueReplies, {
+  @ManyToOne(() => Issue, issue => issue.issueReplies, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'issue_id', referencedColumnName: 'id' }])
   issue: Issue;
 
-  @ManyToOne(() => Member, (member) => member.issueReplies, {
+  @ManyToOne(() => Member, member => member.issueReplies, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => IssueReplyReaction, (issueReplyReaction) => issueReplyReaction.issueReply)
+  @OneToMany(() => IssueReplyReaction, issueReplyReaction => issueReplyReaction.issueReply)
   issueReplyReactions: IssueReplyReaction[];
 }

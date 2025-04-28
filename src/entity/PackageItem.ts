@@ -12,21 +12,21 @@ export class PackageItem {
   @Column('uuid', { name: 'merchandise_id', nullable: true })
   merchandiseId: string | null;
 
-  @ManyToOne(() => Activity, (activity) => activity.packageItems, {
+  @ManyToOne(() => Activity, activity => activity.packageItems, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'activity_id', referencedColumnName: 'id' }])
   activity: Activity;
 
-  @ManyToOne(() => PackageItemGroup, (packageItemGroup) => packageItemGroup.packageItems, {
+  @ManyToOne(() => PackageItemGroup, packageItemGroup => packageItemGroup.packageItems, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'package_item_group_id', referencedColumnName: 'id' }])
   packageItemGroup: PackageItemGroup;
 
-  @ManyToOne(() => Program, (program) => program.packageItems, {
+  @ManyToOne(() => Program, program => program.packageItems, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

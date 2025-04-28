@@ -64,44 +64,41 @@ export class PodcastProgram {
   })
   createdAt: Date;
 
-  @OneToMany(() => PlaylistPodcastProgram, (playlistPodcastProgram) => playlistPodcastProgram.podcastProgram)
+  @OneToMany(() => PlaylistPodcastProgram, playlistPodcastProgram => playlistPodcastProgram.podcastProgram)
   playlistPodcastPrograms: PlaylistPodcastProgram[];
 
-  @OneToMany(
-    () => PodcastAlbumPodcastProgram,
-    (podcastAlbumPodcastProgram) => podcastAlbumPodcastProgram.podcastProgram,
-  )
+  @OneToMany(() => PodcastAlbumPodcastProgram, podcastAlbumPodcastProgram => podcastAlbumPodcastProgram.podcastProgram)
   podcastAlbumPodcastPrograms: PodcastAlbumPodcastProgram[];
 
-  @ManyToOne(() => Member, (member) => member.podcastPrograms, {
+  @ManyToOne(() => Member, member => member.podcastPrograms, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'creator_id', referencedColumnName: 'id' }])
   creator: Member;
 
-  @ManyToOne(() => Podcast, (podcast) => podcast.podcastPrograms, {
+  @ManyToOne(() => Podcast, podcast => podcast.podcastPrograms, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'podcast_id', referencedColumnName: 'id' }])
   podcast: Podcast;
 
-  @OneToMany(() => PodcastProgramAudio, (podcastProgramAudio) => podcastProgramAudio.podcastProgram)
+  @OneToMany(() => PodcastProgramAudio, podcastProgramAudio => podcastProgramAudio.podcastProgram)
   podcastProgramAudios: PodcastProgramAudio[];
 
-  @OneToMany(() => PodcastProgramBody, (podcastProgramBody) => podcastProgramBody.podcastProgram)
+  @OneToMany(() => PodcastProgramBody, podcastProgramBody => podcastProgramBody.podcastProgram)
   podcastProgramBodies: PodcastProgramBody[];
 
-  @OneToMany(() => PodcastProgramCategory, (podcastProgramCategory) => podcastProgramCategory.podcastProgram)
+  @OneToMany(() => PodcastProgramCategory, podcastProgramCategory => podcastProgramCategory.podcastProgram)
   podcastProgramCategories: PodcastProgramCategory[];
 
-  @OneToMany(() => PodcastProgramProgress, (podcastProgramProgress) => podcastProgramProgress.podcastProgram)
+  @OneToMany(() => PodcastProgramProgress, podcastProgramProgress => podcastProgramProgress.podcastProgram)
   podcastProgramProgresses: PodcastProgramProgress[];
 
-  @OneToMany(() => PodcastProgramRole, (podcastProgramRole) => podcastProgramRole.podcastProgram)
+  @OneToMany(() => PodcastProgramRole, podcastProgramRole => podcastProgramRole.podcastProgram)
   podcastProgramRoles: PodcastProgramRole[];
 
-  @OneToMany(() => PodcastProgramTag, (podcastProgramTag) => podcastProgramTag.podcastProgram)
+  @OneToMany(() => PodcastProgramTag, podcastProgramTag => podcastProgramTag.podcastProgram)
   podcastProgramTags: PodcastProgramTag[];
 }

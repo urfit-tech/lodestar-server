@@ -16,7 +16,7 @@ export class VenueSeat {
   @Column('text', { name: 'category', nullable: true })
   category: string | null;
 
-  @ManyToOne(() => Venue, (venue) => venue.venueSeats, {
+  @ManyToOne(() => Venue, venue => venue.venueSeats, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

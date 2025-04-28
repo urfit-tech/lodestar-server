@@ -10,7 +10,7 @@ describe('ProgramService', () => {
   let manager: EntityManager;
 
   const mockEntityManager = {
-    transaction: jest.fn((callback) => callback(mockEntityManager)),
+    transaction: jest.fn(callback => callback(mockEntityManager)),
   };
 
   const mockMemberService = {

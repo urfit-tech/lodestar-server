@@ -36,7 +36,7 @@ describe('UtilityService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should handle errors in encryptDataStream', (done) => {
+  it('should handle errors in encryptDataStream', done => {
     const dataStream = new Readable({
       read() {
         this.push('valid data');
@@ -52,12 +52,12 @@ describe('UtilityService', () => {
 
     const encryptedStream = service.encryptDataStream(dataStream, key, iv);
 
-    encryptedStream.on('error', (err) => {
+    encryptedStream.on('error', err => {
       expect(err).toBeDefined();
       done();
     });
 
-    encryptedStream.on('data', (data) => {
+    encryptedStream.on('data', data => {
       fail('Encrypted stream should not emit "data" event on error');
     });
 

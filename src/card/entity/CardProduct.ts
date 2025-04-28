@@ -26,14 +26,14 @@ export class CardProduct {
   @Column('timestamp with time zone', { name: 'updated_at', unique: false, nullable: true, default: () => 'now()' })
   updatedAt: Date | null;
 
-  @ManyToOne(() => Card, (card) => card.cardProducts, {
+  @ManyToOne(() => Card, card => card.cardProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'card_id', referencedColumnName: 'id' }])
   card: Card;
 
-  @ManyToOne(() => ProgramPlan, (programPlan) => programPlan.cardProducts, {
+  @ManyToOne(() => ProgramPlan, programPlan => programPlan.cardProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

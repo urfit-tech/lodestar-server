@@ -23,7 +23,7 @@ export class SmsVerificationCode {
   @Column('text', { name: 'phone' })
   phone: string;
 
-  @ManyToOne(() => App, (app) => app.smsVerificationCodes, {
+  @ManyToOne(() => App, app => app.smsVerificationCodes, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })

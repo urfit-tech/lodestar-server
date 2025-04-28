@@ -24,7 +24,7 @@ export class Report {
   @Column('text', { name: 'app_id' })
   appId: string;
 
-  @ManyToOne(() => App, (app) => app.reports, {
+  @ManyToOne(() => App, app => app.reports, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -25,7 +25,7 @@ export class ProgramContentMaterial {
   })
   updatedAt: Date | null;
 
-  @ManyToOne(() => ProgramContent, (programContent) => programContent.programContentMaterials, {
+  @ManyToOne(() => ProgramContent, programContent => programContent.programContentMaterials, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })

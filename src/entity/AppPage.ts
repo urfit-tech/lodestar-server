@@ -51,13 +51,13 @@ export class AppPage {
   @Column('jsonb', { name: 'meta_tag', nullable: true })
   metaTag: object | null;
 
-  @ManyToOne(() => Member, (member) => member.appPages, {
+  @ManyToOne(() => Member, member => member.appPages, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'editor_id', referencedColumnName: 'id' }])
   editor: Member;
 
-  @OneToMany(() => AppPageSection, (appPageSection) => appPageSection.appPage)
+  @OneToMany(() => AppPageSection, appPageSection => appPageSection.appPage)
   appPageSections: AppPageSection[];
 }

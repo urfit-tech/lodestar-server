@@ -27,9 +27,9 @@ export class PermissionGroup {
   })
   updatedAt: Date;
 
-  @OneToMany(() => MemberPermissionGroup, (memberPermissionGroup) => memberPermissionGroup.permissionGroup)
+  @OneToMany(() => MemberPermissionGroup, memberPermissionGroup => memberPermissionGroup.permissionGroup)
   memberPermissionGroups: MemberPermissionGroup[];
 
-  @OneToMany(() => PermissionGroupPermission, (permissionGroupPermission) => permissionGroupPermission.permissionGroup)
+  @OneToMany(() => PermissionGroupPermission, permissionGroupPermission => permissionGroupPermission.permissionGroup)
   permissionGroupPermissions: PermissionGroupPermission[];
 }

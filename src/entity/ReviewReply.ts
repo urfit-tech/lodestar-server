@@ -25,7 +25,7 @@ export class ReviewReply {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => Review, (review) => review.reviewReplies, {
+  @ManyToOne(() => Review, review => review.reviewReplies, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

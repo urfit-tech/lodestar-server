@@ -26,14 +26,14 @@ export class ActivitySessionTicket {
   })
   activitySessionType: string;
 
-  @ManyToOne(() => ActivitySession, (activitySession) => activitySession.activitySessionTickets, {
+  @ManyToOne(() => ActivitySession, activitySession => activitySession.activitySessionTickets, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'activity_session_id', referencedColumnName: 'id' }])
   activitySession: ActivitySession;
 
-  @ManyToOne(() => ActivityTicket, (activityTicket) => activityTicket.activitySessionTickets, {
+  @ManyToOne(() => ActivityTicket, activityTicket => activityTicket.activitySessionTickets, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

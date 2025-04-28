@@ -30,7 +30,7 @@ describe('CoinService', () => {
           provide: getEntityManagerToken(),
           useValue: {
             getRepository: jest.fn(() => mockMemberRepo),
-            transaction: jest.fn((cb) => {
+            transaction: jest.fn(cb => {
               return cb(mockEntityManager);
             }),
           },

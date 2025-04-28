@@ -19,12 +19,12 @@ export class Module {
   @Column('text', { name: 'category_name', nullable: true })
   categoryName: string | null;
 
-  @OneToMany(() => AppExtendedModule, (appExtendedModule) => appExtendedModule.module)
+  @OneToMany(() => AppExtendedModule, appExtendedModule => appExtendedModule.module)
   appExtendedModules: AppExtendedModule[];
 
-  @OneToMany(() => AppPlanModule, (appPlanModule) => appPlanModule.module)
+  @OneToMany(() => AppPlanModule, appPlanModule => appPlanModule.module)
   appPlanModules: AppPlanModule[];
 
-  @OneToMany(() => Setting, (setting) => setting.module)
+  @OneToMany(() => Setting, setting => setting.module)
   settings: Setting[];
 }

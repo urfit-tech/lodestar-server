@@ -35,20 +35,20 @@ export class AppNav {
   @Column('jsonb', { name: 'options', nullable: true })
   options: object | null;
 
-  @ManyToOne(() => App, (app) => app.appNavs, {
+  @ManyToOne(() => App, app => app.appNavs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => AppNav, (appNav) => appNav.appNavs, {
+  @ManyToOne(() => AppNav, appNav => appNav.appNavs, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'parent_id', referencedColumnName: 'id' }])
   parent: AppNav;
 
-  @OneToMany(() => AppNav, (appNav) => appNav.parent)
+  @OneToMany(() => AppNav, appNav => appNav.parent)
   appNavs: AppNav[];
 }

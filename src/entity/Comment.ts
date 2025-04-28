@@ -27,23 +27,23 @@ export class Comment {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => App, (app) => app.comments, {
+  @ManyToOne(() => App, app => app.comments, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Member, (member) => member.comments, {
+  @ManyToOne(() => Member, member => member.comments, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @OneToMany(() => CommentReaction, (commentReaction) => commentReaction.comment)
+  @OneToMany(() => CommentReaction, commentReaction => commentReaction.comment)
   commentReactions: CommentReaction[];
 
-  @OneToMany(() => CommentReply, (commentReply) => commentReply.comment)
+  @OneToMany(() => CommentReply, commentReply => commentReply.comment)
   commentReplies: CommentReply[];
 }

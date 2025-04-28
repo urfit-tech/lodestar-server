@@ -22,7 +22,7 @@ export class UserOauth {
   @Column('jsonb', { name: 'options', nullable: true })
   options: object | null;
 
-  @ManyToOne(() => User, (user) => user.userOauths, {
+  @ManyToOne(() => User, user => user.userOauths, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

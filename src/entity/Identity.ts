@@ -19,6 +19,6 @@ export class Identity {
   @Column('integer', { name: 'position', default: () => 0 })
   position: number;
 
-  @OneToMany(() => ProjectRole, (projectRole) => projectRole.identity)
+  @OneToMany(() => ProjectRole, projectRole => projectRole.identity)
   projectRoles: ProjectRole[];
 }

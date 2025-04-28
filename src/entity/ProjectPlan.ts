@@ -74,13 +74,13 @@ export class ProjectPlan {
   @Column('text', { name: 'currency_id', default: () => "'TWD'" })
   currencyId: string;
 
-  @ManyToOne(() => Project, (project) => project.projectPlans, {
+  @ManyToOne(() => Project, project => project.projectPlans, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'project_id', referencedColumnName: 'id' }])
   project: Project;
 
-  @OneToMany(() => ProjectPlanProduct, (projectPlanProduct) => projectPlanProduct.projectPlan)
+  @OneToMany(() => ProjectPlanProduct, projectPlanProduct => projectPlanProduct.projectPlan)
   projectPlanProducts: ProjectPlanProduct[];
 }

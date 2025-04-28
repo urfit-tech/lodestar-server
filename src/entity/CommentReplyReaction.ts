@@ -17,14 +17,14 @@ export class CommentReplyReaction {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
-  @ManyToOne(() => CommentReply, (commentReply) => commentReply.commentReplyReactions, {
+  @ManyToOne(() => CommentReply, commentReply => commentReply.commentReplyReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'comment_reply_id', referencedColumnName: 'id' }])
   commentReply: CommentReply;
 
-  @ManyToOne(() => Member, (member) => member.commentReplyReactions, {
+  @ManyToOne(() => Member, member => member.commentReplyReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

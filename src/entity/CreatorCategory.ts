@@ -11,14 +11,14 @@ export class CreatorCategory {
   @Column('integer', { name: 'position', default: () => -1 })
   position: number;
 
-  @ManyToOne(() => Member, (member) => member.creatorCategories, {
+  @ManyToOne(() => Member, member => member.creatorCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'creator_id', referencedColumnName: 'id' }])
   creator: Member;
 
-  @ManyToOne(() => Category, (category) => category.creatorCategories, {
+  @ManyToOne(() => Category, category => category.creatorCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

@@ -107,10 +107,10 @@ export class MemberCsvHeaderMapping {
     this.name = '姓名';
     this.username = '帳號';
     this.email = '信箱';
-    this.categories = [...Array(appCategories.length).keys()].map((each) => `分類${(each + 1).toString()}`);
+    this.categories = [...Array(appCategories.length).keys()].map(each => `分類${(each + 1).toString()}`);
     this.properties = appProperties.map(({ name }) => name);
-    this.phones = [...Array(maxPhoneCount).keys()].map((each) => `手機${(each + 1).toString()}`);
-    this.tags = [...Array(maxTagCount).keys()].map((each) => `標籤${(each + 1).toString()}`);
+    this.phones = [...Array(maxPhoneCount).keys()].map(each => `手機${(each + 1).toString()}`);
+    this.tags = [...Array(maxTagCount).keys()].map(each => `標籤${(each + 1).toString()}`);
     this.star = '星等';
     this.role = '身份';
     this.createdAt = '建立日期';

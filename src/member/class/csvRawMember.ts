@@ -122,11 +122,11 @@ export class CsvRawMember {
 
     this.phones = [
       ...new Set(
-        (header.phones === undefined ? [] : header.phones).map((each) => row[each].toString()).filter(isNotEmpty),
+        (header.phones === undefined ? [] : header.phones).map(each => row[each].toString()).filter(isNotEmpty),
       ),
     ];
     this.categories = (header.categories === undefined ? [] : header.categories)
-      .map((each) => row[each])
+      .map(each => row[each])
       .filter(isNotEmpty);
     this.properties = (header.properties === undefined ? [] : header.properties).reduce((acc, current) => {
       const value = row[current];
@@ -135,7 +135,7 @@ export class CsvRawMember {
       }
       return acc;
     }, {});
-    this.tags = (header.tags === undefined ? [] : header.tags).map((each) => row[each]).filter(isNotEmpty);
+    this.tags = (header.tags === undefined ? [] : header.tags).map(each => row[each]).filter(isNotEmpty);
     return [this, validateSync(this, { groups: [isEmpty(row[header.id]) ? 'import-new' : 'import-exists'] })];
   }
 }

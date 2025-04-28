@@ -52,30 +52,30 @@ export class Product {
   })
   updatedAt: Date | null;
 
-  @OneToMany(() => CardDiscount, (cardDiscount) => cardDiscount.product)
+  @OneToMany(() => CardDiscount, cardDiscount => cardDiscount.product)
   cardDiscounts: CardDiscount[];
 
-  @OneToMany(() => CartProduct, (cartProduct) => cartProduct.product)
+  @OneToMany(() => CartProduct, cartProduct => cartProduct.product)
   cartProducts: CartProduct[];
 
-  @OneToMany(() => CouponPlanProduct, (couponPlanProduct) => couponPlanProduct.product)
+  @OneToMany(() => CouponPlanProduct, couponPlanProduct => couponPlanProduct.product)
   couponPlanProducts: CouponPlanProduct[];
 
-  @OneToMany(() => GiftPlanProduct, (giftPlanProduct) => giftPlanProduct.product)
+  @OneToMany(() => GiftPlanProduct, giftPlanProduct => giftPlanProduct.product)
   giftPlanProducts: GiftPlanProduct[];
 
-  @OneToMany(() => OrderProduct, (orderProduct) => orderProduct.product)
+  @OneToMany(() => OrderProduct, orderProduct => orderProduct.product)
   orderProducts: OrderProduct[];
 
-  @OneToMany(() => ProductChannel, (productChannel) => productChannel.product)
+  @OneToMany(() => ProductChannel, productChannel => productChannel.product)
   productChannels: ProductChannel[];
 
-  @OneToMany(() => ProductInventory, (productInventory) => productInventory.product)
+  @OneToMany(() => ProductInventory, productInventory => productInventory.product)
   productInventories: ProductInventory[];
 
-  @OneToMany(() => ProjectPlanProduct, (projectPlanProduct) => projectPlanProduct.product)
+  @OneToMany(() => ProjectPlanProduct, projectPlanProduct => projectPlanProduct.product)
   projectPlanProducts: ProjectPlanProduct[];
 
-  @OneToMany(() => VoucherPlanProduct, (voucherPlanProduct) => voucherPlanProduct.product)
+  @OneToMany(() => VoucherPlanProduct, voucherPlanProduct => voucherPlanProduct.product)
   voucherPlanProducts: VoucherPlanProduct[];
 }

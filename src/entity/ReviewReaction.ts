@@ -25,14 +25,14 @@ export class ReviewReaction {
   })
   createdAt: Date;
 
-  @ManyToOne(() => Member, (member) => member.reviewReactions, {
+  @ManyToOne(() => Member, member => member.reviewReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'member_id', referencedColumnName: 'id' }])
   member: Member;
 
-  @ManyToOne(() => Review, (review) => review.reviewReactions, {
+  @ManyToOne(() => Review, review => review.reviewReactions, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

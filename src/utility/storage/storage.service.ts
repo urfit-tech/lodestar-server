@@ -114,7 +114,7 @@ export class StorageService {
       '"': '%22',
       '#': '%23',
       // eslint-disable-next-line prettier/prettier
-      '$': '%24',
+      $: '%24',
       '&': '%26',
       "'": '%27',
       '(': '%28',
@@ -128,7 +128,7 @@ export class StorageService {
       '@': '%40',
     };
 
-    return encodeString.replace(/([+!"#$&'()*+,;=?@])/g, (match) => encodings[match]);
+    return encodeString.replace(/([+!"#$&'()*+,;=?@])/g, match => encodings[match]);
   }
 
   private async getFileFromBucket(region: string, data: GetObjectCommandInput) {

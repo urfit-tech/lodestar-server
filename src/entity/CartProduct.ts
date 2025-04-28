@@ -19,7 +19,7 @@ export class CartProduct {
   @Column('text', { name: 'app_id' })
   appId: string;
 
-  @ManyToOne(() => Product, (product) => product.cartProducts, {
+  @ManyToOne(() => Product, product => product.cartProducts, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })

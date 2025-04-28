@@ -65,32 +65,32 @@ export class Activity {
   @Column('text', { name: 'app_id' })
   appId: string;
 
-  @ManyToOne(() => App, (app) => app.activities, {
+  @ManyToOne(() => App, app => app.activities, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'app_id', referencedColumnName: 'id' }])
   app: App;
 
-  @ManyToOne(() => Member, (member) => member.activities, {
+  @ManyToOne(() => Member, member => member.activities, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
   })
   @JoinColumn([{ name: 'organizer_id', referencedColumnName: 'id' }])
   organizer: Member;
 
-  @OneToMany(() => ActivityCategory, (activityCategory) => activityCategory.activity)
+  @OneToMany(() => ActivityCategory, activityCategory => activityCategory.activity)
   activityCategories: ActivityCategory[];
 
-  @OneToMany(() => ActivitySession, (activitySession) => activitySession.activity)
+  @OneToMany(() => ActivitySession, activitySession => activitySession.activity)
   activitySessions: ActivitySession[];
 
-  @OneToMany(() => ActivityTag, (activityTag) => activityTag.activity)
+  @OneToMany(() => ActivityTag, activityTag => activityTag.activity)
   activityTags: ActivityTag[];
 
-  @OneToMany(() => ActivityTicket, (activityTicket) => activityTicket.activity)
+  @OneToMany(() => ActivityTicket, activityTicket => activityTicket.activity)
   activityTickets: ActivityTicket[];
 
-  @OneToMany(() => PackageItem, (packageItem) => packageItem.activity)
+  @OneToMany(() => PackageItem, packageItem => packageItem.activity)
   packageItems: PackageItem[];
 }
