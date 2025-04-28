@@ -81,6 +81,12 @@ export class InvoiceService {
         quantity: 'ItemCount',
         amount: 'ItemAmt',
       };
+      const orderLog = await this.orderInfra.getOneByOrderId(orderId, manager);
+      const merchantOrderNo = orderLog.invoiceOptions['retry']
+        ? invoiceInfo.MerchantOrderNo.replace(/-/g, '').substring(0, 20).slice(0, -1) +
+          parseInt(orderLog.invoiceOptions['retry'])
+        : invoiceInfo.MerchantOrderNo.replace(/-/g, '').substring(0, 20);
+
       const roundedInvoiceInfo = converge(mergeRight, [
         identity,
         pipe(
@@ -88,7 +94,7 @@ export class InvoiceService {
           InvoiceService.roundProductList({ name: 'ItemName', unit: 'ItemUnit' })(keyMap),
           InvoiceService.generateInvoiceStringFromProductItems,
         ),
-      ])(invoiceInfo);
+      ])({ ...invoiceInfo, MerchantOrderNo: merchantOrderNo });
 
       const result = await this.ezpayClient.issue(ezpayCredentials, roundedInvoiceInfo);
       const toUpdateInvoiceOptions =
@@ -101,6 +107,7 @@ export class InvoiceService {
           : {
               reason: result.Message,
             };
+
       if (paymentNo) {
         const orderLogs = await this.updateOrderAndPaymentLogInvoiceOptionsByPaymentNo(
           paymentNo,
@@ -124,6 +131,19 @@ export class InvoiceService {
         );
         this.logger.log(`[OrderId: ${orderId}] updated order logs ${orderLogs.map(({ id }) => id).join(', ')}`);
       }
+
+      await this.insertInvoiceLog(
+        merchantOrderNo,
+        result.Status,
+        result.Message,
+        orderId,
+        appInvoiceGateway.id,
+        result.Result?.['InvoiceNumber'],
+        result.Result?.['InvoiceTransNo'],
+        result.Result?.['RandomNum'],
+        result.Result,
+        manager,
+      );
 
       if (result.Status === 'SUCCESS') {
         await this.insertInvoice(
@@ -159,13 +179,13 @@ export class InvoiceService {
       const paymentLogs = await this.paymentInfra.getPaymentLogsByOrderIds([order.id], manager);
       const invoices = await this.invoiceInfra.getInvoicesByOrderIds([order.id], manager);
       const { orderProducts, orderDiscounts, shipping, invoiceOptions } = order;
-      const orderProductsPrice = orderProducts.map((prod) => prod.price);
-      const paymentLogsPrice = paymentLogs.map((log) => log.price);
-      const invoicePrice = invoices.map((invoice) => invoice.price);
+      const orderProductsPrice = orderProducts.map(prod => prod.price);
+      const paymentLogsPrice = paymentLogs.map(log => log.price);
+      const invoicePrice = invoices.map(invoice => invoice.price);
       if (sum(paymentLogsPrice) > sum(orderProductsPrice)) {
         this.logger.log(
           `Issues Invoice Failed: the total amount exceeds by ${order.id} in payments ${paymentLogs.map(
-            (log) => log.no,
+            log => log.no,
           )}`,
         );
         return;
@@ -173,7 +193,7 @@ export class InvoiceService {
       if (sum(invoicePrice) >= sum(orderProductsPrice)) {
         this.logger.log(
           `Issues Invoice Failed: the total amount exceeds by ${order.id} in invoices ${invoices.map(
-            (invoice) => invoice.no,
+            invoice => invoice.no,
           )}`,
         );
         return;
@@ -199,12 +219,12 @@ export class InvoiceService {
         name: invoiceOptions['name'] || member.name,
         email: invoiceOptions['email'] || member.email,
         comment: invoiceComment,
-        products: orderProducts.map((v) => ({
+        products: orderProducts.map(v => ({
           name: v.name.replace(/\|/g, '｜'),
           price: v.price,
           quantity: 1,
         })),
-        discounts: orderDiscounts.map((v) => ({
+        discounts: orderDiscounts.map(v => ({
           name: v.name.replace(/\|/g, '｜'),
           price: v.price,
         })),
@@ -322,7 +342,7 @@ export class InvoiceService {
     )(invoiceInfo);
   };
 
-  private static roundProductList = (compensationKeyMap) => (keyMap) => (products) => {
+  private static roundProductList = compensationKeyMap => keyMap => products => {
     // make it flexible in the future
     const roundMap: RoundMethodsForCompensation = {
       itemNumberRoundMethod: 'ceil',
@@ -330,9 +350,9 @@ export class InvoiceService {
       totalRoundMethod: 'round',
     };
 
-    const getTargetKeysFromKeyMap = (keyMap) => flip(props)(keyMap) as any;
+    const getTargetKeysFromKeyMap = keyMap => flip(props)(keyMap) as any;
 
-    const getCompensatedItems: <T>(items: T[]) => T[] = (items) => {
+    const getCompensatedItems: <T>(items: T[]) => T[] = items => {
       const getTargetCompensationItemKeys = getTargetKeysFromKeyMap(compensationKeyMap);
       const { roundedList, compensationItem } = getRoundedListWithCompensation(roundMap)(keyMap)(items);
       return roundedList.concat(
@@ -352,7 +372,7 @@ export class InvoiceService {
     return roundedProducts;
   };
 
-  private static generateInvoiceStringFromProductItems = (products) => {
+  private static generateInvoiceStringFromProductItems = products => {
     const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit'];
     return mergeAll(map(converge(objOf, [identity, pipe(flip(pluck as any)(products), join('|'))]))(keys));
   };
@@ -433,12 +453,12 @@ export class InvoiceService {
     ) as any;
 
     const ItemAmt = [
-      ...roundedProducts.map((product) => {
+      ...roundedProducts.map(product => {
         return invoiceAttrs.Category === 'B2B'
           ? Math.round(Number(product.price) / (1 + TaxRate))
           : Number(product.price);
       }),
-      ...options.discounts.map((discount) =>
+      ...options.discounts.map(discount =>
         invoiceAttrs.Category === 'B2B' ? -Math.round(Number(discount.price) / (1 + TaxRate)) : -discount.price,
       ),
       ...(options.shipping?.method
@@ -448,12 +468,12 @@ export class InvoiceService {
         : []),
     ].join('|');
     const ItemPrice = [
-      ...roundedProducts.map((product) => {
+      ...roundedProducts.map(product => {
         return invoiceAttrs.Category === 'B2B'
           ? Math.round(Number(product.price) / (1 + TaxRate))
           : Number(product.price);
       }),
-      ...options.discounts.map((discount) =>
+      ...options.discounts.map(discount =>
         invoiceAttrs.Category === 'B2B' ? -Math.round(Number(discount.price) / (1 + TaxRate)) : -discount.price,
       ),
       ...(options.shipping?.method
@@ -464,13 +484,13 @@ export class InvoiceService {
     ].join('|');
     const ItemCount = [
       ...roundedProducts.map(prop('quantity')),
-      ...options.discounts.map((_) => 1),
+      ...options.discounts.map(_ => 1),
       ...(options.shipping?.method ? [1] : []),
     ].join('|');
 
     const ItemName = [
-      ...roundedProducts.map((product) => product.name.substring(0, 25) + ` x${product.quantity}`),
-      ...options.discounts.map((discount) => discount.name.substring(0, 30)),
+      ...roundedProducts.map(product => product.name.substring(0, 25) + ` x${product.quantity}`),
+      ...options.discounts.map(discount => discount.name.substring(0, 30)),
       ...(options.shipping?.method ? [`運費 - ${options.shipping.method}`.substring(0, 30)] : []),
     ].join('|');
 
