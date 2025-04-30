@@ -22,6 +22,7 @@ import { PermissionGuard } from '~/auth/permission.guard';
 const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SALES_RECORDS_NORMAL,
   PermissionSet.SALES_RECORDS_ADMIN,
+  PermissionSet.READ_GROUP_SALES_ALL,
 ];
 
 @UseGuards(AuthGuard, PermissionGuard)
