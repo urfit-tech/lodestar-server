@@ -30,7 +30,6 @@ import {
   prop,
   props,
   sum,
-  tap,
 } from 'ramda';
 import { InvoiceLogInfrastructure } from './invoice_log.infra';
 import { InvoiceLog } from './invoice_log.entity';
@@ -334,7 +333,7 @@ export class InvoiceService {
   }
 
   private static getProductItemsFromInvoiceString = (invoiceInfo: InvoiceInfo) => {
-    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit'];
+    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit', 'ItemTaxType'];
     return pipe(
       converge(prepend, [always(join('|')(keys)), props(keys)]),
       parseStringSplitValue('|'),
@@ -354,13 +353,16 @@ export class InvoiceService {
 
     const getCompensatedItems: <T>(items: T[]) => T[] = items => {
       const getTargetCompensationItemKeys = getTargetKeysFromKeyMap(compensationKeyMap);
+
       const { roundedList, compensationItem } = getRoundedListWithCompensation(roundMap)(keyMap)(items);
+
       return roundedList.concat(
         compensationItem
           ? {
               ...roundedList[0],
               [getTargetCompensationItemKeys(['name'])]: '化整溢價補償',
               [getTargetCompensationItemKeys(['unit'])]: '筆',
+              [getTargetCompensationItemKeys(['taxType'])]: '3',
               ...compensationItem,
             }
           : [],
@@ -373,7 +375,7 @@ export class InvoiceService {
   };
 
   private static generateInvoiceStringFromProductItems = products => {
-    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit'];
+    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit', 'ItemTaxType'];
     return mergeAll(map(converge(objOf, [identity, pipe(flip(pluck as any)(products), join('|'))]))(keys));
   };
 
