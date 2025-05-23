@@ -12,3 +12,9 @@ export function IsUndefinable(validationOptions?: ValidationOptions) {
 export const Local = createParamDecorator((key: string, ctx: ExecutionContext) => {
   return ctx.switchToHttp().getResponse().locals[key];
 });
+
+// FIXME: 後端判斷權限組
+export const GetPermissions = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {
+  const req = ctx.switchToHttp().getRequest();
+  return req.locals?.member?.permissions || [];
+});

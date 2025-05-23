@@ -56,6 +56,8 @@ async function bootstrap() {
       process.exit(1);
     });
   } else {
+    // FIXME:delete
+    console.log('🟢 主應用啟動成功1（ApplicationModule）');
     app = await NestFactory.create<NestExpressApplication>(ApplicationModule, {
       bufferLogs: true,
       cors: async (req, callback) => await corsOptionDelegate(req, callback, app),

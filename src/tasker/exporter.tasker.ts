@@ -102,6 +102,8 @@ export class ExporterTasker extends Tasker {
 
   @Process()
   async process(job: Job<ExportJob>): Promise<void> {
+    // FIXME: delete
+    this.logger.log('🟢 任務開始處理 ExporterTasker.process');
     this.preProcess();
     try {
       const { id } = job;
@@ -164,6 +166,8 @@ export class ExporterTasker extends Tasker {
   }
 
   private async exportFromDatabase(appId: string, data: ExportJob): Promise<{ raw: any; ext: string }> {
+    // FIXME: delete
+    this.logger.log('🟡 呼叫 exportFromDatabase，類型為:', data.category);
     let rawRows: Array<Record<string, any>> = [];
     switch (data.category) {
       case 'member':
@@ -172,7 +176,16 @@ export class ExporterTasker extends Tasker {
         break;
       case 'orderLog':
         const { conditions: orderLogConditions } = data as OrderLogExportJob;
+        // FIXME: delete
+        this.logger.log('🔵 執行 exportOrderLogsFromDatabase');
         rawRows = await this.orderService.processOrderLogExportFromDatabase(appId, orderLogConditions);
+        // FIXME: delete
+        console.log(`[OrderService] 匯出總數：${rawRows.length}`);
+        const sampleRows = rawRows.slice(0, 6);
+        sampleRows.forEach((row, index) => {
+          console.log(`🧪 第一筆資料型別：${typeof rawRows[0]}`);
+          console.log(`📦 第 ${index + 1} 筆資料: ${JSON.stringify(row, null, 2)}`);
+        });
         break;
       case 'orderProduct':
         const { conditions: orderProductConditions } = data as OrderProductExportJob;
@@ -212,13 +225,18 @@ export class ExporterTasker extends Tasker {
     invokerMember: Array<Member>,
     manager: EntityManager,
   ): Promise<void> {
-    await this.mailService.insertEmailJobIntoQueue({
-      appId,
-      catalog: 'export',
-      targetMemberIds: invokerMember.map(member => member.email),
-      partials,
-      subject,
-      manager,
-    });
+    // await this.mailService.insertEmailJobIntoQueue({
+    //   appId,
+    //   catalog: 'export',
+    //   targetMemberIds: invokerMember.map(member => member.email),
+    //   partials,
+    //   subject,
+    //   manager,
+    // });
+    // FIXME: delete
+    this.logger.log('🧾 [模擬信件發送] 信件未發送，內容如下：');
+    this.logger.log(`📌 主旨: ${subject}`);
+    this.logger.log(`📬 收件人: ${invokerMember.map(member => member.email).join(', ')}`);
+    this.logger.log(`📝 信件內容: ${JSON.stringify(partials, null, 2)}`);
   }
 }
