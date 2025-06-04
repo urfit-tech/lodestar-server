@@ -16,7 +16,6 @@ import { MemberCsvHeaderMapping } from './class/csvHeaderMapping';
 import { CsvRawMember } from './class/csvRawMember';
 import { MemberInfrastructure } from './member.infra';
 import {
-  MemberDeleteResultDTO,
   MemberGetConditionDTO,
   MemberGetQueryOptionsDTO,
   MemberGetResultDTO,
@@ -28,8 +27,6 @@ import { MemberCategory } from './entity/member_category.entity';
 import { MemberProperty } from './entity/member_property.entity';
 import { MemberPhone } from './entity/member_phone.entity';
 import { MemberTag } from './entity/member_tag.entity';
-import { APIException } from '~/api.excetion';
-import { category } from 'test/data';
 import dayjs from 'dayjs';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
 import { ExecutorInfo, DeleteMemberInfo } from './member.type';
@@ -401,6 +398,10 @@ export class MemberService {
 
   async deleteMemberByEmail(appId: string, email: string): Promise<DeleteResult> {
     return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager);
+  }
+
+  async deleteMembersByEmails(appId: string, emails: Array<string>) {
+    return this.memberInfra.deleteMembersByEmails(appId, emails, this.entityManager);
   }
 
   async logMemberDeletionEventInfo(

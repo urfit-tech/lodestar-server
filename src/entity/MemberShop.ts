@@ -23,6 +23,9 @@ export class MemberShop {
   @Column('text', { name: 'title' })
   title: string;
 
+  @Column('text', { name: 'member_id' })
+  memberId: string;
+
   @Column('jsonb', { name: 'shipping_methods', nullable: true })
   shippingMethods: object | null;
 

@@ -21,6 +21,11 @@ export class IssueReply {
   })
   createdAt: Date;
 
+  @Column('timestamp with time zone', {
+    name: 'deleted_at',
+  })
+  deletedAt: Date;
+
   @ManyToOne(() => Issue, issue => issue.issueReplies, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

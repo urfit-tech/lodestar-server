@@ -44,6 +44,11 @@ export class Review {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
+  @Column('timestamp with time zone', {
+    name: 'deleted_at',
+  })
+  deletedAt: Date;
+
   @ManyToOne(() => Member, member => member.reviews, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',

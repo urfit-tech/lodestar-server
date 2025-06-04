@@ -36,7 +36,7 @@ export class Notification {
   @Column('text', { name: 'description' })
   description: string;
 
-  @Column('text', { name: 'avatar', nullable: true })
+  @Column('text', { name: 'avatar' })
   avatar: string | null;
 
   @ManyToOne(() => Member, member => member.notifications, {

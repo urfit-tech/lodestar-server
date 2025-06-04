@@ -6,14 +6,13 @@ import {
   DeleteResult,
   Equal,
   DeepPartial,
-  InsertResult,
   UpdateResult,
   ObjectId,
   EntityTarget,
 } from 'typeorm';
 import { Cursor, buildPaginator } from 'typeorm-cursor-pagination';
 import { Injectable } from '@nestjs/common';
-import { first, keys, omit, pick, values } from 'lodash';
+import { first, keys, pick, values } from 'lodash';
 import * as uuid from 'uuid';
 import { Member } from './entity/member.entity';
 import { MemberAuditLog } from './entity/member_audit_log.entity';
@@ -64,8 +63,6 @@ import { Practice } from '~/entity/Practice';
 import { ProgramTimetable } from '~/entity/ProgramTimetable';
 import { Attend } from '~/entity/Attend';
 import { ReviewReply } from '~/entity/ReviewReply';
-import { Property } from '~/definition/entity/property.entity';
-import { Category } from '~/definition/entity/category.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import MemberQueryObserveBase from './get-member-query/member-query-base';
 import {
@@ -76,6 +73,21 @@ import {
   MemberPropertyObserver,
   MemberTagObserver,
 } from './get-member-query/member-query-observer';
+import { AppPage } from '~/entity/AppPage';
+import { AppPageTemplate } from '~/entity/AppPageTemplate';
+import { Attachment } from '~/media/attachment.entity';
+import { ProgramRole } from '~/entity/ProgramRole';
+import { Activity } from '~/activity/entity/Activity';
+import { MemberShop } from '~/entity/MemberShop';
+import { Merchandise } from '~/merchandise/entity/Merchandise';
+import { PodcastAlbum } from '~/podcast/entity/PodcastAlbum';
+import { PodcastPlan } from '~/entity/PodcastPlan';
+import { PodcastProgram } from '~/podcast/entity/PodcastProgram';
+import { PodcastProgramRole } from '~/entity/PodcastProgramRole';
+import dayjs from 'dayjs';
+import { CreatorDisplay } from '~/entity/CreatorDisplay';
+import { MemberSpeciality } from '~/entity/MemberSpeciality';
+import { CreatorCategory } from '~/entity/CreatorCategory';
 
 @Injectable()
 export class MemberInfrastructure {
@@ -97,7 +109,7 @@ export class MemberInfrastructure {
     memberQueryBase.addObserver(new MemberPermissionGroupObserver());
     memberQueryBase.addObserver(new MemberPropertyObserver());
 
-    let queryBuilder = await memberQueryBase.execute(appId, conditions, order, entityManager);
+    const queryBuilder = await memberQueryBase.execute(appId, conditions, order, entityManager);
 
     const paginator = buildPaginator({
       entity: Member,
@@ -815,6 +827,213 @@ export class MemberInfrastructure {
       deleteResult.raw.push({ orderLogs });
       deleteResult.raw.push({ orderChildLogs });
       deleteResult.raw.push({ invoice });
+
+      return deleteResult;
+    });
+  }
+
+  public async deleteMembersByEmails(appId: string, emails: Array<string>, entityManager: EntityManager) {
+    return entityManager.transaction(async manager => {
+      const memberRepo = manager.getRepository(Member);
+      const memberCategoryRepo = manager.getRepository(MemberCategory);
+      const memberTagRepo = manager.getRepository(MemberTag);
+      const memberOauthRepo = manager.getRepository(MemberOauth);
+      const memberDeviceRepo = manager.getRepository(MemberDevice);
+      const memberPhoneRepo = manager.getRepository(MemberPhone);
+      const memberPropertyRepo = manager.getRepository(MemberProperty);
+      const memberPermissionExtraRepo = manager.getRepository(MemberPermissionExtra);
+      const memberPermissionGroupRepo = manager.getRepository(MemberPermissionGroup);
+      const memberTrackingLogRepo = manager.getRepository(MemberTrackingLog);
+      const memberNoteRepo = manager.getRepository(MemberNote);
+      const memberTaskRepo = manager.getRepository(MemberTask);
+      const programContentProgressRepo = manager.getRepository(ProgramContentProgress);
+      const programContentLogRepo = manager.getRepository(ProgramContentLog);
+      const notificationRepo = manager.getRepository(Notification);
+      const couponRepo = manager.getRepository(Coupon);
+      const orderLogRepo = manager.getRepository(OrderLog);
+      const voucherRepo = manager.getRepository(Voucher);
+      const exerciseRepo = manager.getRepository(Exercise);
+      const issueRepo = manager.getRepository(Issue);
+      const memberCardRepo = manager.getRepository(MemberCard);
+      const memberContractRepo = manager.getRepository(MemberContract);
+      const reviewRepo = manager.getRepository(Review);
+      const orderExecutorRepo = manager.getRepository(OrderExecutor);
+      const orderContractRepo = manager.getRepository(OrderContact);
+      const coinLogRepo = manager.getRepository(CoinLog);
+      const podcastProgramProgressRepo = manager.getRepository(PodcastProgramProgress);
+      const postRoleRepo = manager.getRepository(PostRole);
+      const programTempoDeliveryRepo = manager.getRepository(ProgramTempoDelivery);
+      const practiceRepo = manager.getRepository(Practice);
+      const programTimeableRepo = manager.getRepository(ProgramTimetable);
+      const attendRepo = manager.getRepository(Attend);
+      const appPageRepo = manager.getRepository(AppPage);
+      const appPageTemplateRepo = manager.getRepository(AppPageTemplate);
+      const attachmentRepo = manager.getRepository(Attachment);
+      const programRoleRepo = manager.getRepository(ProgramRole);
+      const activityRepo = manager.getRepository(Activity);
+      const memberShopRepo = manager.getRepository(MemberShop);
+      const merchandiseRepo = manager.getRepository(Merchandise);
+      const podcastAlbumRepo = manager.getRepository(PodcastAlbum);
+      const podcastPlanRepo = manager.getRepository(PodcastPlan);
+      const podcastProgramRepo = manager.getRepository(PodcastProgram);
+      const podcastProgramRole = manager.getRepository(PodcastProgramRole);
+      const issueReactionRepo = manager.getRepository(IssueReaction);
+      const issueReplyReactionRepo = manager.getRepository(IssueReplyReaction);
+      const issueReplyRepo = manager.getRepository(IssueReply);
+      const creatorDisplayRepo = manager.getRepository(CreatorDisplay);
+      const reviewReactionRepo = manager.getRepository(ReviewReaction);
+      const reviewReplyRepo = manager.getRepository(ReviewReply);
+      const memberSpecialityRepo = manager.getRepository(MemberSpeciality);
+      const creatorCategoryRepo = manager.getRepository(CreatorCategory);
+
+      const members = await memberRepo.find({
+        select: ['id', 'email', 'appId'],
+        where: { email: In(emails), appId },
+      });
+      const memberIds = members.map(member => member.id).filter(Boolean);
+      if (memberIds.length === 0) {
+        return { raw: [], affected: 0 };
+      }
+
+      const orderLogIds = await orderLogRepo.find({
+        select: ['id', 'memberId', 'appId'],
+        where: { memberId: In(memberIds), appId },
+      });
+
+      await Promise.all([
+        programTimeableRepo.delete({ memberId: In(memberIds) }),
+        programTempoDeliveryRepo.delete({ memberId: In(memberIds) }),
+        programContentLogRepo.delete({ memberId: In(memberIds) }),
+        programContentProgressRepo.delete({ memberId: In(memberIds) }),
+        notificationRepo.delete({ targetMember: { id: In(memberIds) } }),
+        notificationRepo.delete({ sourceMember: { id: In(memberIds) } }),
+        orderContractRepo.delete({ memberId: In(memberIds) }),
+        orderExecutorRepo.delete({ memberId: In(memberIds) }),
+        memberContractRepo.delete({ memberId: In(memberIds) }),
+        memberCardRepo.delete({ memberId: In(memberIds) }),
+        memberTagRepo.delete({ memberId: In(memberIds) }),
+        memberOauthRepo.delete({ memberId: In(memberIds) }),
+        memberCategoryRepo.delete({ memberId: In(memberIds) }),
+        memberDeviceRepo.delete({ memberId: In(memberIds) }),
+        memberTrackingLogRepo.delete({ memberId: In(memberIds) }),
+        memberNoteRepo.delete({ memberId: In(memberIds) }),
+        memberTaskRepo.delete({ memberId: In(memberIds) }),
+        memberPhoneRepo.delete({ memberId: In(memberIds) }),
+        memberPropertyRepo.delete({ memberId: In(memberIds) }),
+        memberPermissionExtraRepo.delete({ memberId: In(memberIds) }),
+        memberPermissionGroupRepo.delete({ memberId: In(memberIds) }),
+        coinLogRepo.delete({ memberId: In(memberIds) }),
+        issueReactionRepo.delete({ memberId: In(memberIds) }),
+        issueReplyReactionRepo.delete({ memberId: In(memberIds) }),
+        reviewReactionRepo.delete({ memberId: In(memberIds) }),
+        reviewReplyRepo.delete({ memberId: In(memberIds) }),
+        creatorDisplayRepo.delete({ memberId: In(memberIds) }),
+        podcastProgramProgressRepo.delete({ memberId: In(memberIds) }),
+        postRoleRepo.delete({ memberId: In(memberIds) }),
+        programRoleRepo.delete({ memberId: In(memberIds) }),
+        podcastProgramRole.delete({ memberId: In(memberIds) }),
+        couponRepo.delete({ memberId: In(memberIds) }),
+        attendRepo.delete({ memberId: In(memberIds) }),
+        practiceRepo.delete({ memberId: In(memberIds) }),
+        voucherRepo.delete({ memberId: In(memberIds) }),
+        memberSpecialityRepo.delete({ memberId: In(memberIds) }),
+        exerciseRepo.delete({ memberId: In(memberIds) }),
+        creatorCategoryRepo.delete({ creatorId: In(memberIds) }),
+        appPageRepo
+          .createQueryBuilder()
+          .update()
+          .set({ editor: null })
+          .where('editor_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        appPageTemplateRepo
+          .createQueryBuilder()
+          .update()
+          .set({ authorId: null })
+          .where('author_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        attachmentRepo
+          .createQueryBuilder()
+          .update()
+          .set({ authorId: null })
+          .where('author_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        activityRepo
+          .createQueryBuilder()
+          .update()
+          .set({ organizerId: null })
+          .where('organizer_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        merchandiseRepo
+          .createQueryBuilder()
+          .update()
+          .set({ memberId: null })
+          .where('member_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        memberShopRepo
+          .createQueryBuilder()
+          .update()
+          .set({ memberId: null })
+          .where('member_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        podcastAlbumRepo
+          .createQueryBuilder()
+          .update()
+          .set({ authorId: null })
+          .where('author_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        podcastPlanRepo
+          .createQueryBuilder()
+          .update()
+          .set({ creatorId: null })
+          .where('creator_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        podcastProgramRepo
+          .createQueryBuilder()
+          .update()
+          .set({ creatorId: null })
+          .where('creator_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        issueRepo
+          .createQueryBuilder()
+          .update()
+          .set({ memberId: null, deletedAt: dayjs() })
+          .where('member_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        issueReplyRepo
+          .createQueryBuilder()
+          .update()
+          .set({ memberId: null, deletedAt: dayjs() })
+          .where('member_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        reviewRepo
+          .createQueryBuilder()
+          .update()
+          .set({ memberId: null, deletedAt: dayjs() })
+          .where('member_id IN (:...memberIds)', { memberIds })
+          .execute(),
+        orderLogRepo
+          .createQueryBuilder()
+          .update()
+          .set({ memberId: null, isDeleted: true })
+          .where('member_id IN (:...memberIds)', { memberIds })
+          .returning('*')
+          .execute(),
+      ]);
+
+      const deleteResult = await memberRepo.delete({ id: In(memberIds) });
+      const deleteMemberResultGroup = members.map(member => {
+        const existOrderIds =
+          orderLogIds.length > 0
+            ? orderLogIds.filter(order => order.memberId === member.id).map(order => order.id)
+            : [];
+        return {
+          appId: member.appId,
+          id: member.id,
+          email: member.email,
+          orderLogs: existOrderIds,
+        };
+      });
+      deleteResult.raw.push({ members: deleteMemberResultGroup });
 
       return deleteResult;
     });

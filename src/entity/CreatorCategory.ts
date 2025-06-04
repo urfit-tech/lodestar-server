@@ -11,6 +11,9 @@ export class CreatorCategory {
   @Column('integer', { name: 'position', default: () => -1 })
   position: number;
 
+  @Column('text', { name: 'creator_id' })
+  creatorId: string;
+
   @ManyToOne(() => Member, member => member.creatorCategories, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
