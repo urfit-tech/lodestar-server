@@ -39,27 +39,96 @@ export class ReportService {
     return iframeUrl;
   }
 
-  prepareMetabaseUrl(appId: string, memberId: string, role: string, options: any): string {
-    const payload = options.canViewSelfDataOnly
-      ? !!Object.keys(options.metabase.resource).includes('dashboard')
-        ? {
-            ...options.metabase,
-            params: {
-              appid: appId,
-              memberid: memberId,
-              role,
-            },
-          }
-        : {
-            ...options.metabase,
-            params: {
-              appId,
-              memberId,
-              role,
-            },
-          }
-      : options.metabase;
+  prepareMetabaseUrl(
+    appId: string,
+    memberId: string,
+    role: string,
+    options: any,
+    memberPermissionGroups: string[] = [],
+  ): string {
+    const permissionGroupsParam = memberPermissionGroups.join(',');
 
-    return this.generateMetabaseSignedUrl(payload);
+    // 🔍 判斷是否為 dashboard - 需要放在前面
+    const isDashboard = !!Object.keys(options.metabase.resource).includes('dashboard');
+
+    console.log('=== prepareMetabaseUrl Debug ===');
+    console.log('📥 Input parameters:');
+    console.log('  appId:', appId);
+    console.log('  memberId:', memberId);
+    console.log('  role:', role);
+    console.log('  memberPermissionGroups:', memberPermissionGroups);
+    console.log('  permissionGroupsParam:', permissionGroupsParam);
+    console.log('  isDashboard:', isDashboard);
+
+    console.log('📄 Options object:');
+    console.log('  Full options:', JSON.stringify(options, null, 2));
+    console.log('  options.canViewSelfDataOnly:', options.canViewSelfDataOnly);
+    console.log('  options.canViewGroupDataOnly:', options.canViewGroupDataOnly);
+
+    // 🏗️ 建立基礎參數和條件參數
+    const baseParams = this.createBaseParams(appId, isDashboard);
+    const conditionalParams = this.createConditionalParams(options, memberId, role, permissionGroupsParam, isDashboard);
+
+    // 🔗 組合最終 payload
+    const payload = {
+      ...options.metabase,
+      params: { ...baseParams, ...conditionalParams },
+    };
+
+    console.log('🚀 Final payload:');
+    console.log(JSON.stringify(payload, null, 2));
+
+    const url = this.generateMetabaseSignedUrl(payload);
+    console.log('🔗 Generated URL:', url);
+    console.log('=== prepareMetabaseUrl Debug End ===');
+
+    return url;
+  }
+
+  // 🏗️ 建立基礎參數 (appId/appid)
+  private createBaseParams(appId: string, isDashboard: boolean) {
+    return isDashboard ? { appid: appId } : { appId };
+  }
+
+  // 🔧 根據權限設定建立條件參數
+  private createConditionalParams(
+    options: any,
+    memberId: string,
+    role: string,
+    permissionGroupsParam: string,
+    isDashboard: boolean,
+  ) {
+    const { canViewSelfDataOnly, canViewGroupDataOnly } = options;
+    const params: any = {};
+
+    // 🔍 個人數據篩選
+    if (canViewSelfDataOnly) {
+      console.log('  ✅ Adding SELF filter - member data only');
+      if (isDashboard) {
+        params.memberid = memberId;
+      } else {
+        params.memberId = memberId;
+      }
+      params.role = role;
+    }
+
+    // 🔍 組內數據篩選
+    if (canViewGroupDataOnly) {
+      console.log('  ✅ Adding GROUP filter - group data only');
+      params.permissiongroups = permissionGroupsParam;
+    }
+
+    // 📝 記錄權限決策
+    if (canViewSelfDataOnly && canViewGroupDataOnly) {
+      console.log('  ✅ BOTH filters active - self + group data only');
+    } else if (canViewSelfDataOnly) {
+      console.log('  ✅ SELF filter only - self data only');
+    } else if (canViewGroupDataOnly) {
+      console.log('  ✅ GROUP filter only - group data only');
+    } else {
+      console.log('  ❌ NO filters - all data');
+    }
+
+    return params;
   }
 }
