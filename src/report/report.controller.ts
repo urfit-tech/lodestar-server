@@ -1,5 +1,3 @@
-// 🔧 最終的 report.controller.ts
-
 import { Get, Controller, Param, UseGuards } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -25,13 +23,6 @@ export class ReportController {
 
   @Get('/:reportId')
   async getReportSignedUrl(@Local('member') member: JwtMember, @Param('reportId') reportId: string) {
-    // 👈 詳細 debug 資訊
-    console.log('=== Controller Debug ===');
-    console.log('Received reportId:', reportId, typeof reportId);
-    console.log('reportId length:', reportId ? reportId.length : 'undefined');
-    console.log('reportId === "null":', reportId === 'null');
-    console.log('========================');
-
     if (!reportId || reportId === 'null' || reportId === 'undefined') {
       throw new APIException({
         code: 'E_INVALID_REPORT_ID',
@@ -45,20 +36,15 @@ export class ReportController {
 
     // 查詢該用戶的權限組
     const memberPermissionGroups = await this.getMemberPermissionGroups(memberId);
-    console.log('📋 Member permission groups:', memberPermissionGroups); // 👈 加入這行
-
 
     let result;
     switch (type) {
       case 'metabase':
         result = this.reportService.prepareMetabaseUrl(appId, memberId, role, options, memberPermissionGroups);
-        console.log('🔗 Generated Metabase URL:', result); // 👈 加入這行
-
         break;
       default:
         throw new APIException({ code: 'E_REPORT_TYPE_ERROR', message: 'report type not found' });
     }
-    console.log('📤 Final response:', JSON.stringify(result, null, 2)); // 👈 加入這行
 
     return { code: 'SUCCESS', message: 'get url success', result };
   }
@@ -76,7 +62,6 @@ export class ReportController {
 
       return memberPermissionGroups.map(row => row.permission_group_id);
     } catch (error) {
-      console.error('Error fetching member permission groups:', error);
       return [];
     }
   }
