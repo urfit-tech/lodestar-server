@@ -39,27 +39,55 @@ export class ReportService {
     return iframeUrl;
   }
 
-  prepareMetabaseUrl(appId: string, memberId: string, role: string, options: any): string {
-    const payload = options.canViewSelfDataOnly
-      ? !!Object.keys(options.metabase.resource).includes('dashboard')
-        ? {
-            ...options.metabase,
-            params: {
-              appid: appId,
-              memberid: memberId,
-              role,
-            },
-          }
-        : {
-            ...options.metabase,
-            params: {
-              appId,
-              memberId,
-              role,
-            },
-          }
-      : options.metabase;
+  prepareMetabaseUrl(
+    appId: string,
+    memberId: string,
+    role: string,
+    options: any,
+    memberPermissionGroups: string[] = [],
+  ): string {
+    const permissionGroupsParam = memberPermissionGroups.join(',');
+    const isDashboard = !!Object.keys(options.metabase.resource).includes('dashboard');
+    const baseParams = this.createBaseParams(appId, isDashboard);
+    const conditionalParams = this.createConditionalParams(options, memberId, role, permissionGroupsParam, isDashboard);
 
-    return this.generateMetabaseSignedUrl(payload);
+    const payload = {
+      ...options.metabase,
+      params: { ...baseParams, ...conditionalParams },
+    };
+
+    const url = this.generateMetabaseSignedUrl(payload);
+
+    return url;
+  }
+
+  private createBaseParams(appId: string, isDashboard: boolean) {
+    return isDashboard ? { appid: appId } : { appId };
+  }
+
+  private createConditionalParams(
+    options: any,
+    memberId: string,
+    role: string,
+    permissionGroupsParam: string,
+    isDashboard: boolean,
+  ) {
+    const { canViewSelfDataOnly, canViewGroupDataOnly } = options;
+    const params: any = {};
+
+    if (canViewSelfDataOnly) {
+      if (isDashboard) {
+        params.memberid = memberId;
+      } else {
+        params.memberId = memberId;
+      }
+      params.role = role;
+    }
+
+    if (canViewGroupDataOnly) {
+      params.permissiongroups = permissionGroupsParam;
+    }
+
+    return params;
   }
 }
