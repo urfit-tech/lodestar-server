@@ -10,7 +10,6 @@ import {
   UseGuards,
   Delete,
   Param,
-  Req,
   Ip,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
@@ -18,10 +17,10 @@ import { ConfigService } from '@nestjs/config';
 
 import { AuthGuard } from '~/auth/auth.guard';
 import { JwtMember } from '~/auth/auth.dto';
-import { ImportJob, ImporterTasker } from '~/tasker/importer.tasker';
+import { ImportJob } from '~/tasker/importer.tasker';
 import { ExporterTasker, MemberExportJob } from '~/tasker/exporter.tasker';
 import { Local } from '~/decorator';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiHideProperty, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 
 import {
   MemberDeleteResultDTO,
@@ -39,6 +38,7 @@ import { ExecutorInfo, DeleteMemberInfo } from './member.type';
 import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { PermissionGuard } from '~/auth/permission.guard';
+import { chunk } from 'lodash';
 
 const MEMBER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.MEMBER_ADMIN,
@@ -244,5 +244,87 @@ export class MemberController {
     }
 
     return response;
+  }
+
+  @Post('delete')
+  public async deleteMembers(
+    @Ip() ip: string,
+    @Local('member') member: JwtMember,
+    @Body('emails') emails: Array<string>,
+  ) {
+    const { appId, role, memberId } = member;
+
+    if (role !== 'app-owner') {
+      throw new UnauthorizedException(
+        { message: 'no permission to delete member' },
+        'User permission is not met required permissions.',
+      );
+    }
+
+    const CHUNK_SIZE = 500;
+    const MAX_PARALLEL = 3;
+    const emailChunks = chunk(emails, CHUNK_SIZE);
+
+    const allDeletedEmails: string[] = [];
+    let totalAffected = 0;
+
+    try {
+      for (let i = 0; i < emailChunks.length; i += MAX_PARALLEL) {
+        const batchChunks = emailChunks.slice(i, i + MAX_PARALLEL);
+
+        const results = await Promise.all(
+          batchChunks.map(async (emailChunk, batchIndex) => {
+            const deleteResult = await this.memberService.deleteMembersByEmails(appId, emailChunk);
+
+            for (const raw of deleteResult.raw) {
+              for (const member of raw.members) {
+                const deleteMemberInfo: DeleteMemberInfo = {
+                  email: member.email,
+                  id: member.id || '',
+                  appId: appId,
+                };
+                const executorMemberInfo: ExecutorInfo = {
+                  memberId,
+                  ipAddress: ip,
+                  dateTime: new Date(),
+                  executeResult: JSON.stringify(member),
+                };
+
+                const log = await this.memberService.logMemberDeletionEventInfo(deleteMemberInfo, executorMemberInfo);
+
+                console.log(`[Batch ${i + batchIndex}] Log Details:
+                ID: ${log?.id}
+                Delete Member ID: ${log?.memberId}
+                Action: ${log?.action}
+                Delete Log: ${log?.target}
+                Created At: ${log?.createdAt}`);
+              }
+            }
+
+            const deletedEmails = deleteResult.raw.map(r => r.members.map(member => member.email)).flat(Infinity);
+            return {
+              deletedEmails,
+              affected: deleteResult.affected ?? 0,
+            };
+          }),
+        );
+
+        for (const result of results) {
+          allDeletedEmails.push(...result.deletedEmails);
+          totalAffected += result.affected;
+        }
+      }
+
+      return {
+        code: 'SUCCESS',
+        message: {
+          memberEmails: allDeletedEmails,
+          affected: totalAffected,
+        },
+      };
+    } catch (error) {
+      const response = { code: 'ERROR', message: error.message };
+      throw new APIException(response);
+    }
   }
 }
