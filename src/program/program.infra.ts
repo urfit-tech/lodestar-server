@@ -30,7 +30,7 @@ export class ProgramInfrastructure {
         'order_product.ended_at AS ended_at',
         `JSONB_AGG(DISTINCT order_product.options) AS options`,
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
-        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        `${this.contentProgressSubquery()}::numeric AS view_rate`,
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
@@ -87,7 +87,7 @@ export class ProgramInfrastructure {
         'program.cover_thumbnail_url AS cover_thumbnail_url',
         'program.abstract AS abstract',
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
-        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        `${this.contentProgressSubquery()}::numeric AS view_rate`,
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
@@ -145,7 +145,7 @@ export class ProgramInfrastructure {
         'program.cover_thumbnail_url AS cover_thumbnail_url',
         'program.abstract AS abstract',
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
-        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        `${this.contentProgressSubquery()}::numeric AS view_rate`,
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
@@ -456,7 +456,7 @@ export class ProgramInfrastructure {
         'program.cover_thumbnail_url AS cover_thumbnail_url',
         'program.abstract AS abstract',
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
-        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        `${this.contentProgressSubquery()}::numeric AS view_rate`,
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
@@ -510,7 +510,7 @@ export class ProgramInfrastructure {
         'program.cover_thumbnail_url AS cover_thumbnail_url',
         'program.abstract AS abstract',
         `JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', program_role.id, 'name', program_role.name, 'member_id', member.id,'member_name', member.name, 'created_at', program_role.created_at)) AS roles`,
-        '(FLOOR((SUM(program_content_progress.progress)/COUNT(program_content.id))::float*100)/100)::numeric AS view_rate',
+        `${this.contentProgressSubquery()}::numeric AS view_rate`,
         'MAX(program_content_progress.updated_at) AS last_viewed_at',
         'MIN(order_product.delivered_at) AS delivered_at',
         'JSONB_AGG(DISTINCT program_tag.tag_name) as tags',
@@ -551,6 +551,44 @@ export class ProgramInfrastructure {
       .getRawMany();
 
     return this.utilityService.convertObjectKeysToCamelCase(expiredProgramsByMembershipCard);
+  }
+
+  private contentProgressSubquery() {
+    return `(
+      SELECT FLOOR((AVG(content_progress.calculated_progress) * 100)) / 100
+      FROM (
+        SELECT 
+          CASE 
+            WHEN pcb.type IN ('exercise', 'exam') THEN
+              CASE 
+                WHEN COUNT(e.id) = 0 THEN 0
+                WHEN COALESCE(MAX(ep.gained_points)::numeric, 0) >= COALESCE(MAX(exam.passing_score), 0) THEN 1
+                ELSE 0.5
+              END
+            WHEN pcb.type = 'ebook' THEN
+              CASE 
+                WHEN COUNT(toc.id) = 0 THEN 0
+                ELSE COUNT(toc_progress.finished_at)::numeric / COUNT(toc.id)
+              END
+            WHEN pcb.type = 'practice' THEN
+              CASE WHEN COUNT(p.id) > 0 THEN 1 ELSE 0 END
+            ELSE 
+              COALESCE(pcp.progress, 0)
+          END as calculated_progress
+        FROM program_content pc
+        JOIN program_content_section pcs ON pcs.id = pc.content_section_id
+        JOIN program_content_body pcb ON pcb.id = pc.content_body_id
+        LEFT JOIN program_content_progress pcp ON pcp.program_content_id = pc.id AND pcp.member_id = :memberId
+        LEFT JOIN exercise e ON e.program_content_id = pc.id
+        LEFT JOIN exam ON exam.id = e.exam_id
+        LEFT JOIN exercise_public ep ON ep.exercise_id = e.id AND ep.member_id = :memberId
+        LEFT JOIN program_content_ebook_toc toc ON toc.program_content_id = pc.id
+        LEFT JOIN program_content_ebook_toc_progress toc_progress ON toc_progress.program_content_ebook_toc_id = toc.id AND toc_progress.member_id = :memberId AND toc_progress.finished_at IS NOT NULL
+        LEFT JOIN practice p ON p.program_content_id = pc.id AND p.member_id = :memberId AND p.is_deleted = false
+        WHERE pcs.program_id = program.id AND pc.published_at IS NOT NULL
+        GROUP BY pc.id, pcb.type, pcp.progress
+      ) as content_progress
+    )`;
   }
 
   async getProgramContentInfo(programContentId: string, manager: EntityManager) {
