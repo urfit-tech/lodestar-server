@@ -18,11 +18,20 @@ export class WebhookService {
     this.logger.log(`Queueing webhook event="${event}" for appId="${appId}"`);
     const appWebhook = await this.webhookRepository.getAppWebhookByEventAndAppId(this.entityManager, event, appId);
     if (!appWebhook) return;
-    const job = await this.webhookQueue.add('send', {
-      url: appWebhook.url,
-      event,
-      data,
-    });
+    const job = await this.webhookQueue.add(
+      'send',
+      {
+        url: appWebhook.url,
+        event,
+        data,
+      },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
     this.logger.log(`Webhook job queued: id=${job.id}, event=${event}, appId=${appId}`);
     return job;
   }

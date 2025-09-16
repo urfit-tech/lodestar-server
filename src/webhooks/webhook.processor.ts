@@ -1,4 +1,4 @@
-import { Processor, Process } from '@nestjs/bull';
+import { Processor, Process, OnQueueFailed } from '@nestjs/bull';
 import { Job } from 'bull';
 import axios from 'axios';
 import { Logger } from 'nestjs-pino';
@@ -16,5 +16,10 @@ export class WebhookProcessor {
       this.logger.error(`Failed to sending webhook to ${url} for event ${event},error:${err}`);
       throw err;
     }
+  }
+
+  @OnQueueFailed()
+  async onFailed(job: Job, err: Error) {
+    this.logger.error(`Job failed after all retries: id=${job.id}`, err.stack);
   }
 }
