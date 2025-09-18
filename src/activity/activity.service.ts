@@ -45,11 +45,11 @@ export class ActivityService {
     return res;
   }
 
-  public async getActivityByMemberId(activityId: string, memberId?: string, includeDeleted?: boolean) {
+  public async getActivityByMemberId(activityId: string, memberId?: string, includeDeleted?: boolean, appId?: string) {
     // Todo: check permission
     // ...
 
-    const activity = await this.activityInfra.getPublishedActivity(this.entityManager, activityId);
+    const activity = await this.activityInfra.getPublishedActivity(this.entityManager, activityId, appId);
     const activityTickets = await this.activityInfra.getActivityTicketEnrollment(
       activityId,
       memberId,

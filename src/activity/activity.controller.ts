@@ -8,6 +8,8 @@ import { AuthGuard } from '~/auth/auth.guard';
 import { PermissionGuard } from '~/auth/permission.guard';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { Permissions } from '~/decorators/permissions.decorator';
+import { AppService } from '~/app/app.service';
+import { AppCache } from '~/app/app.type';
 
 const ACTIVITY_ADMIN_PERMISSION_GROUP: PermissionSet[] = [
   PermissionSet.ACTIVITY_ADMIN,
@@ -27,7 +29,11 @@ const ACTIVITY_ADMIN_PERMISSION_GROUP: PermissionSet[] = [
   version: '2',
 })
 export class ActivityController {
-  constructor(private logger: Logger, private readonly activityService: ActivityService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly activityService: ActivityService,
+    private logger: Logger,
+  ) {}
 
   @Get('activity_collection')
   public async activityCollection(
@@ -60,12 +66,21 @@ export class ActivityController {
   @Get(':activity_id')
   async getActivityByMemberId(@Req() request: Request, @Param('activity_id') activityId: string): Promise<any> {
     const { memberId, includeDeleted } = request.query;
-
-    return this.activityService.getActivityByMemberId(
-      activityId,
-      String(memberId),
-      includeDeleted && String(includeDeleted) === 'true',
-    );
+    const host = request.headers.host;
+    try {
+      const appCache = await this.appService.getAppInfoByHost(host);
+      const res = await this.activityService.getActivityByMemberId(
+        activityId,
+        String(memberId),
+        includeDeleted && String(includeDeleted) === 'true',
+        appCache.id,
+      );
+      if (!res.id) throw new Error();
+      return res;
+    } catch (error) {
+      this.logger.error(`Error fetching activity: ${error}`);
+      throw error;
+    }
   }
 
   @Permissions(...ACTIVITY_ADMIN_PERMISSION_GROUP)

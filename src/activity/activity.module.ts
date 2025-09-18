@@ -8,6 +8,7 @@ import { ActivityTicketInfrastructure } from './activity-ticket/activity-ticket.
 import { UtilityModule } from '~/utility/utility.module';
 import { UtilityService } from '~/utility/utility.service';
 import { AuthModule } from '~/auth/auth.module';
+import { AppModule } from '~/app/app.module';
 
 @Module({
   providers: [
@@ -18,7 +19,7 @@ import { AuthModule } from '~/auth/auth.module';
     ActivityTicketInfrastructure,
     UtilityService,
   ],
-  imports: [DefinitionModule, UtilityModule, forwardRef(() => AuthModule)],
+  imports: [DefinitionModule, UtilityModule, forwardRef(() => AuthModule), AppModule],
   controllers: [ActivityController],
   exports: [ActivityService, ActivityTicketService, ActivityModule],
 })
