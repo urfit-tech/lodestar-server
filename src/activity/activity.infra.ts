@@ -182,10 +182,11 @@ export class ActivityInfrastructure {
     return enrollmentCountMap;
   }
 
-  async getPublishedActivity(manager: EntityManager, activityId: string) {
+  async getPublishedActivity(manager: EntityManager, activityId: string, appId: string) {
     const activity = await manager.getRepository(Activity).findOne({
       where: {
         id: activityId,
+        appId,
       },
       select: {
         id: true,
