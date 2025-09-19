@@ -103,19 +103,39 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
               try {
                 const { lastMemberNotes, key } = data;
                 const memberNotes = data.memberNotes
-                  ? data.memberNotes.map(note => {
-                      const memberNote = new MemberNote();
-                      memberNote.authorId = note?.authorId || '';
-                      memberNote.metadata = note?.metadata || null;
-                      memberNote.duration = note?.duration || 0;
-                      memberNote.memberId = note?.memberId || '';
-                      memberNote.status = note?.status;
-                      memberNote.type = note?.type;
-                      memberNote.createdAt = dayjs(note?.createdAt).isValid()
-                        ? dayjs(note.createdAt).toDate()
-                        : new Date();
-                      return memberNote;
-                    })
+                  ? await Promise.all(
+                      data.memberNotes.map(async note => {
+                        const memberNote = new MemberNote();
+
+                        const getAuthorIdByExtension = async () => {
+                          const { appId } = await manager.findOne(Member, {
+                            select: { appId: true },
+                            where: { id: note.memberId },
+                          });
+
+                          const { id } = await manager.findOne(Member, {
+                            select: { id: true },
+                            relations: { memberProperties: { property: true } },
+                            where: {
+                              memberProperties: { value: note.metadata['source'], property: { name: '分機號碼' } },
+                              appId: appId,
+                            },
+                          });
+
+                          return id;
+                        };
+                        memberNote.authorId = note?.authorId || (await getAuthorIdByExtension());
+                        memberNote.metadata = note?.metadata || null;
+                        memberNote.duration = note?.duration || 0;
+                        memberNote.memberId = note?.memberId || '';
+                        memberNote.status = note?.status;
+                        memberNote.type = note?.type;
+                        memberNote.createdAt = dayjs(note?.createdAt).isValid()
+                          ? dayjs(note.createdAt).toDate()
+                          : new Date();
+                        return memberNote;
+                      }),
+                    )
                   : null;
                 const {
                   criteria: { id, appId },
