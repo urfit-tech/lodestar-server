@@ -27,6 +27,8 @@ import { EquityModule } from './equity/equity.module';
 import { MerchandiseModule } from './merchandise/merchandise.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { CoinModule } from './coin/coin.module';
+import { EventModule } from './event/event.module';
+import { MetaModule } from './meta/meta.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -93,6 +95,7 @@ import { CoinModule } from './coin/coin.module';
     SwaggerConfigModule,
     ActivityModule,
     WebhookModule,
+    MetaModule,
     EquityModule,
     MerchandiseModule,
     InvoiceModule,
