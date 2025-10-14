@@ -29,6 +29,7 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { CoinModule } from './coin/coin.module';
 import { EventModule } from './event/event.module';
 import { MetaModule } from './meta/meta.module';
+import { CardModule } from './card/card.module';
 
 @Module({
   controllers: [ApplicationController],
@@ -100,6 +101,7 @@ import { MetaModule } from './meta/meta.module';
     MerchandiseModule,
     InvoiceModule,
     EventModule,
+    CardModule,
   ],
 })
 export class ApplicationModule {
