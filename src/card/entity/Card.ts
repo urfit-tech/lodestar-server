@@ -2,7 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGenerat
 
 import { App } from '~/app/entity/app.entity';
 
-import { CardDiscount } from '../../card/entity/CardDiscount';
+import { CardDiscount } from './CardDiscount';
 import { CardProduct } from './CardProduct';
 
 @Index('card_pkey', ['id'], { unique: true })

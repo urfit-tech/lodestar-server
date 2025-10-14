@@ -1,5 +1,5 @@
-type CardResponseDTO = import('./card.dto').CardResponseDTO;
+import { CardJoinDTO } from './dto/card-join.dto';
 
-export interface CardRepository {
-  getMembershipCards(): Promise<CardResponseDTO[]>;
+export abstract class CardRepository {
+  abstract findAllByApp(appId: string): Promise<CardJoinDTO[]>;
 }

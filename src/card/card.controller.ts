@@ -1,9 +1,11 @@
-import { Controller, Get, Injectable } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { JwtMember } from '~/auth/auth.dto';
+import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
-import { CardResponseDTO } from './card.dto';
+import { CardResponseDTO } from './dto/card-response.dto';
+import { CardService } from './card.service';
 
 @ApiTags('Card')
 @Controller({
@@ -11,12 +13,12 @@ import { CardResponseDTO } from './card.dto';
   version: ['2'],
 })
 export class CardController {
-  constructor(private readonly logger: Logger) {}
+  constructor(private readonly logger: Logger, private readonly cardService: CardService) {}
 
+  @UseGuards(AuthGuard)
   @Get()
-  getMembershipCards(@Local('member') member: JwtMember): Promise<CardResponseDTO[]> {
-    this.logger.log('Fetching membership cards');
-    // get 
-    return [];
+  async findAll(@Local('member') member: JwtMember): Promise<CardResponseDTO[]> {
+    this.logger.log(`Fetching membership cards,${member.appId}`);
+    return await this.cardService.findAllByApp(member.appId);
   }
 }
