@@ -25,6 +25,8 @@ import { CsvRawOrderDiscount } from './class/csvRawOrderDiscount';
 import { ProductInfrastructure } from '~/product/product.infra';
 import { ProductOwner } from '~/product/product.type';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
+import { PaymentInfrastructure } from '~/payment/payment.infra';
+import { PaymentMethod } from '~/payment/payment_method.entity';
 
 dayjs.extend(timezone);
 @Injectable()
@@ -35,6 +37,7 @@ export class OrderService {
     private readonly voucherInfra: VoucherInfrastructure,
     private readonly sharingCodeInfra: SharingCodeInfrastructure,
     private readonly productInfra: ProductInfrastructure,
+    private readonly paymentInfra: PaymentInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
   async transferReceivedOrder(dto: TransferReceivedOrderDTO) {
@@ -276,6 +279,7 @@ export class OrderService {
     coupons: Array<Coupon>,
     sharingCodes: Array<SharingCode>,
     productOwners: Array<ProductOwner>,
+    paymentMethods: Array<PaymentMethod>,
   ): Promise<Array<Record<string, any>>> {
     const dateFormatter = (value: Date | string, format?: string) =>
       dayjs.tz(value).format(format || `YYYY/MM/DD HH:mm`);
@@ -346,15 +350,14 @@ export class OrderService {
           orderProductAggregator(each.orderProducts);
         const { orderDiscountName, orderDiscountTotalPrice } = orderDiscountsAggregator(each.orderDiscounts);
 
+        const methodName = getValue(each.paymentModel, 'method');
+        const paymentMethod = paymentMethods.find(pm => pm.name === methodName);
+
         csvRawOrderLog.orderLogId = each.id;
         csvRawOrderLog.paymentLogNo = each.paymentLogs.map(payment => payment.no).join('\n');
         csvRawOrderLog.orderLogStatus = each.status;
         csvRawOrderLog.paymentLogGateway = getValue(each.paymentModel, 'gateway');
-        csvRawOrderLog.paymentLogDetails = each.paymentLogs
-          .map(
-            payment => `${getValue(payment.options, 'paymentMethod')} ${getValue(payment.options, 'installmentPlan')}`,
-          )
-          .join('\n');
+        csvRawOrderLog.paymentLogDetails = paymentMethod ? paymentMethod.displayName : methodName;
         csvRawOrderLog.orderCountry = `${getValue(each.options, 'country')} ${getValue(each.options, 'countryCode')}`;
         csvRawOrderLog.orderLogCreatedAt = dateFormatter(each.createdAt);
         csvRawOrderLog.paymentLogPaidAt = each.paymentLogs
@@ -509,11 +512,12 @@ export class OrderService {
       flatten(orderLogs.map(orderLog => orderLog.orderProducts.map(orderProduct => orderProduct.product))),
       this.entityManager,
     );
+    const paymentMethods = await this.paymentInfra.getAllPaymentMethods(this.entityManager);
 
     const headerInfos = await new OrderLogCsvHeaderMapping().createHeader();
     return [
       await headerInfos.serializeToRawRow(),
-      ...(await this.orderLogToRawCsv(headerInfos, orderLogs, coupons, sharingCodes, productOwners)),
+      ...(await this.orderLogToRawCsv(headerInfos, orderLogs, coupons, sharingCodes, productOwners, paymentMethods)),
     ];
   }
 
