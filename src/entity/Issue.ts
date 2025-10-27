@@ -36,6 +36,9 @@ export class Issue {
   @Column('text', { name: 'member_id' })
   memberId: string;
 
+  @Column('text', { name: 'app_id' })
+  appId: string;
+
   @ManyToOne(() => App, app => app.issues, {
     onDelete: 'RESTRICT',
     onUpdate: 'RESTRICT',
