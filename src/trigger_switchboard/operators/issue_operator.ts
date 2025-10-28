@@ -19,10 +19,8 @@ export class IssueOperator extends Operator {
     }
   };
 
-  static getAppId = entityManager => async triggeredEvent => {
-    console.log(21, await IssueOperator.getIssue(entityManager)(triggeredEvent));
-    return (await IssueOperator.getIssue(entityManager)(triggeredEvent)).app_id;
-  };
+  static getAppId = entityManager => async triggeredEvent =>
+    (await IssueOperator.getIssue(entityManager)(triggeredEvent)).app_id;
   getAppId = async () => await IssueOperator.getAppId(null)(this.triggeredEvent);
 
   static getIntegratedEvent = entityManager => async triggeredEvent => {
