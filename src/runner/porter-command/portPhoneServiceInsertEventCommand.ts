@@ -5,6 +5,7 @@ import { MemberInfrastructure } from '~/member/member.infra';
 import { Member } from '~/member/entity/member.entity';
 import { PorterCommand } from './porterCommandInterface';
 import dayjs from 'dayjs';
+import * as R from 'ramda';
 
 type LastMemberNotesType = {
   criteria: {
@@ -37,6 +38,9 @@ type redisDataType = {
 
 class PortPhoneServiceInsertEventCommand implements PorterCommand {
   constructor(private readonly memberInfra: MemberInfrastructure, private readonly cacheService: CacheService) {}
+
+  // Generate unique combination key for memberId + metadata
+  private getCombinationKey = (note: MemberNote): string => `${note.memberId}::${JSON.stringify(note.metadata)}`;
 
   public async execute(manager: EntityManager, batchSize = 1000): Promise<void> {
     const hasRedisDataProperty = (data: redisDataType): boolean => {
@@ -144,7 +148,24 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
                 let errorLog = createErrorLog(key);
 
                 try {
-                  await this.memberInfra.insertData(memberNotes, manager);
+                  if (memberNotes && memberNotes.length > 0) {
+                    const deduplicatedMemberNotes = R.uniqBy(this.getCombinationKey)(memberNotes);
+                    const memberIds = R.uniq(R.map(R.prop('memberId'))(deduplicatedMemberNotes));
+
+                    const existingNotes = await manager.getRepository(MemberNote).find({
+                      where: { memberId: In(memberIds) },
+                      select: ['memberId', 'metadata'],
+                    });
+                    const existingCombinations = new Set(R.map(this.getCombinationKey)(existingNotes));
+
+                    const uniqueMemberNotes = deduplicatedMemberNotes.filter(
+                      note => !existingCombinations.has(this.getCombinationKey(note)),
+                    );
+
+                    if (uniqueMemberNotes.length > 0) {
+                      await this.memberInfra.insertData(uniqueMemberNotes, manager);
+                    }
+                  }
                 } catch (error) {
                   errorLog = {
                     ...errorLog,
