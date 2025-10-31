@@ -41,7 +41,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
 
   // Generate unique combination key for memberId + metadata.uniqueId
   private getCombinationKey = (note: MemberNote): string => {
-    const uniqueId = note.metadata?.['uniqueId'] || null;
+    const uniqueId = note.metadata?.['uniqueid'] || null;
     return `${note.memberId}::${uniqueId}`;
   };
 
