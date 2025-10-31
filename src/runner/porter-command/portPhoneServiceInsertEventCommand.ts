@@ -39,8 +39,11 @@ type redisDataType = {
 class PortPhoneServiceInsertEventCommand implements PorterCommand {
   constructor(private readonly memberInfra: MemberInfrastructure, private readonly cacheService: CacheService) {}
 
-  // Generate unique combination key for memberId + metadata
-  private getCombinationKey = (note: MemberNote): string => `${note.memberId}::${JSON.stringify(note.metadata)}`;
+  // Generate unique combination key for memberId + metadata.uniqueId
+  private getCombinationKey = (note: MemberNote): string => {
+    const uniqueId = note.metadata?.['uniqueId'] || null;
+    return `${note.memberId}::${uniqueId}`;
+  };
 
   public async execute(manager: EntityManager, batchSize = 1000): Promise<void> {
     const hasRedisDataProperty = (data: redisDataType): boolean => {
@@ -150,20 +153,9 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
                 try {
                   if (memberNotes && memberNotes.length > 0) {
                     const deduplicatedMemberNotes = R.uniqBy(this.getCombinationKey)(memberNotes);
-                    const memberIds = R.uniq(R.map(R.prop('memberId'))(deduplicatedMemberNotes));
 
-                    const existingNotes = await manager.getRepository(MemberNote).find({
-                      where: { memberId: In(memberIds) },
-                      select: ['memberId', 'metadata'],
-                    });
-                    const existingCombinations = new Set(R.map(this.getCombinationKey)(existingNotes));
-
-                    const uniqueMemberNotes = deduplicatedMemberNotes.filter(
-                      note => !existingCombinations.has(this.getCombinationKey(note)),
-                    );
-
-                    if (uniqueMemberNotes.length > 0) {
-                      await this.memberInfra.insertData(uniqueMemberNotes, manager);
+                    if (deduplicatedMemberNotes.length > 0) {
+                      await this.memberInfra.insertData(deduplicatedMemberNotes, manager);
                     }
                   }
                 } catch (error) {
