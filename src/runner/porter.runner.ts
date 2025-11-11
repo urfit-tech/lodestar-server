@@ -7,6 +7,8 @@ import { Runner } from './runner';
 import { CacheService } from '~/utility/cache/cache.service';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 import { MemberService } from '~/member/member.service';
 import { PodcastService } from '~/podcast/podcast.service';
 import { PorterProgramService } from '~/program/porter-program.service';
@@ -35,6 +37,7 @@ export class PorterRunner extends Runner {
     private readonly memberInfra: MemberInfrastructure,
     private readonly podcastService: PodcastService,
     private readonly programService: ProgramService,
+    @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager() private readonly entityManager: EntityManager,
     protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
@@ -54,7 +57,7 @@ export class PorterRunner extends Runner {
     const commands: PorterCommand[] = [
       new PortLastLoggedInCommand(this.cacheService, this.memberService),
       new PortPlayerEventCommand(this.porterProgramService, this.programInfra, this.programService),
-      new PortPhoneServiceInsertEventCommand(this.memberInfra, this.cacheService),
+      new PortPhoneServiceInsertEventCommand(this.memberInfra, this.cacheService, this.mailerQueue),
       new PortPodcastProgramCommand(this.cacheService, this.podcastService),
     ];
 
