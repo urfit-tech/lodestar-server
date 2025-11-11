@@ -10,7 +10,6 @@ import { BullModule } from '@nestjs/bull';
 import { PostgresModule } from '~/database/postgres.module';
 import { LockModule } from '~/utility/lock/lock.module';
 import { UtilityModule } from '~/utility/utility.module';
-import { MailerModule } from '~/mailer/mailer.module';
 
 import { Runner } from './runner';
 import { RunnerService } from './runner.service';
@@ -80,7 +79,6 @@ export class RunnerModule {
         }),
         LockModule.forFeature({ key: workerName }),
         UtilityModule,
-        MailerModule,
         ProgramModule,
         PodcastModule,
         MemberModule,

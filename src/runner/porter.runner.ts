@@ -1,14 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { DynamicModule, Injectable, Logger } from '@nestjs/common';
+import { BullModule, InjectQueue } from '@nestjs/bull';
+import { InjectEntityManager } from '@nestjs/typeorm';
+import { Queue } from 'bull';
+import { EntityManager } from 'typeorm';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 
 import { Runner } from './runner';
 import { CacheService } from '~/utility/cache/cache.service';
-import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager } from 'typeorm';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
 import { MemberService } from '~/member/member.service';
 import { PodcastService } from '~/podcast/podcast.service';
 import { PorterProgramService } from '~/program/porter-program.service';
@@ -26,6 +26,14 @@ import ZabbixHeartBeater from './helper/ZabbixHeartBeater';
 
 @Injectable()
 export class PorterRunner extends Runner {
+  static forRoot(): DynamicModule {
+    return {
+      module: PorterRunner,
+      imports: [BullModule.registerQueue({ name: 'mailer' })],
+      providers: [],
+    };
+  }
+
   constructor(
     protected readonly logger: Logger,
     protected readonly distributedLockService: DistributedLockService,
