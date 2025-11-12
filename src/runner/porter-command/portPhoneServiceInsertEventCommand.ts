@@ -134,14 +134,43 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
     extensionNumber: string,
     manager: EntityManager,
   ): Promise<{ id: string; email: string } | null> {
+    console.log(`[getSalesByExtensionNumber] Searching for extension: ${extensionNumber}, appId: ${appId}`);
+
     const memberProperty = await manager.findOne(MemberProperty, {
       where: { value: extensionNumber, property: { name: '分機號碼' }, member: { appId } },
-      relations: { member: true },
+      relations: { member: true, property: true },
     });
 
     if (!memberProperty) {
+      console.log(`[getSalesByExtensionNumber] NOT FOUND - extension: ${extensionNumber}, appId: ${appId}`);
+
+      const allMatchingExtensions = await manager.find(MemberProperty, {
+        where: { value: extensionNumber, property: { name: '分機號碼' } },
+        relations: { member: true, property: true },
+        take: 5,
+      });
+
+      if (allMatchingExtensions.length > 0) {
+        console.log(
+          `[getSalesByExtensionNumber] DEBUG - Found ${allMatchingExtensions.length} extensions with value '${extensionNumber}' in other apps:`,
+        );
+        allMatchingExtensions.forEach(mp => {
+          console.log(
+            `  - Member: ${mp.member?.name || 'unknown'}, App: ${mp.member?.appId || 'unknown'}, Property App: ${
+              mp.property?.appId || 'unknown'
+            }`,
+          );
+        });
+      } else {
+        console.log(`[getSalesByExtensionNumber] DEBUG - No extension '${extensionNumber}' found in ANY app`);
+      }
+
       return null;
     }
+
+    console.log(
+      `[getSalesByExtensionNumber] FOUND - Member: ${memberProperty.member.name}, Email: ${memberProperty.member.email}`,
+    );
 
     return {
       id: memberProperty.memberId || '',
@@ -325,7 +354,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
 
     const callers = await this.getCallers(appId, callData, manager);
     if (callers.length === 0) {
-      console.log(`NotFound Caller Event: ${JSON.stringify(callData)}`);
+      console.log(`[${appId}] NotFound Caller Event: ${JSON.stringify(callData)}`);
       return null;
     }
 
