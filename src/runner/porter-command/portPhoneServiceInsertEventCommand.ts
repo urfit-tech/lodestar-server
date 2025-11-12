@@ -97,13 +97,13 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
       }
 
       for (const memberInfo of members) {
-        const member = await manager.findOne(Member, {
+        const member = await manager.getRepository(Member).findOne({
           where: { id: memberInfo.id, appId },
           select: ['id', 'managerId'],
         });
 
         if (member?.managerId) {
-          const memberProperty = await manager.findOne(MemberProperty, {
+          const memberProperty = await manager.getRepository(MemberProperty).findOne({
             where: {
               memberId: member.managerId,
               property: { name: '分機號碼' },
@@ -134,43 +134,14 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
     extensionNumber: string,
     manager: EntityManager,
   ): Promise<{ id: string; email: string } | null> {
-    console.log(`[getSalesByExtensionNumber] Searching for extension: ${extensionNumber}, appId: ${appId}`);
-
-    const memberProperty = await manager.findOne(MemberProperty, {
+    const memberProperty = await manager.getRepository(MemberProperty).findOne({
       where: { value: extensionNumber, property: { name: '分機號碼' }, member: { appId } },
-      relations: { member: true, property: true },
+      relations: { member: true },
     });
 
     if (!memberProperty) {
-      console.log(`[getSalesByExtensionNumber] NOT FOUND - extension: ${extensionNumber}, appId: ${appId}`);
-
-      const allMatchingExtensions = await manager.find(MemberProperty, {
-        where: { value: extensionNumber, property: { name: '分機號碼' } },
-        relations: { member: true, property: true },
-        take: 5,
-      });
-
-      if (allMatchingExtensions.length > 0) {
-        console.log(
-          `[getSalesByExtensionNumber] DEBUG - Found ${allMatchingExtensions.length} extensions with value '${extensionNumber}' in other apps:`,
-        );
-        allMatchingExtensions.forEach(mp => {
-          console.log(
-            `  - Member: ${mp.member?.name || 'unknown'}, App: ${mp.member?.appId || 'unknown'}, Property App: ${
-              mp.property?.appId || 'unknown'
-            }`,
-          );
-        });
-      } else {
-        console.log(`[getSalesByExtensionNumber] DEBUG - No extension '${extensionNumber}' found in ANY app`);
-      }
-
       return null;
     }
-
-    console.log(
-      `[getSalesByExtensionNumber] FOUND - Member: ${memberProperty.member.name}, Email: ${memberProperty.member.email}`,
-    );
 
     return {
       id: memberProperty.memberId || '',
@@ -183,7 +154,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
     phone: string,
     manager: EntityManager,
   ): Promise<Array<{ id: string; email: string }>> {
-    const memberPhone = await manager.find(MemberPhone, {
+    const memberPhone = await manager.getRepository(MemberPhone).find({
       where: { member: { appId }, phone },
       relations: { member: true },
     });
@@ -224,7 +195,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
     const sale = await this.getSalesByExtensionNumber(appId, extensionNumber, manager);
     if (!sale) return;
 
-    const member = await manager.find(Member, {
+    const member = await manager.getRepository(Member).find({
       select: { id: true },
       where: {
         id: In(callerIds),
@@ -319,7 +290,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
       }
 
       for (const [timeKey, memberIds] of callbackGroups.entries()) {
-        await manager.update(Member, { id: In(memberIds) }, { callbackedAt: new Date(timeKey) });
+        await manager.getRepository(Member).update({ id: In(memberIds) }, { callbackedAt: new Date(timeKey) });
       }
 
       console.log(`Batch updated callbackedAt for ${callbackMemberIds.length} members`);
@@ -371,12 +342,12 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
     if (memberIds.length > 3 && status === 'missed') {
       console.log(`Too many member has same phone Event: ${JSON.stringify(callData)}`);
 
-      const app = await manager.findOne(App, { where: { id: appId } });
+      const app = await manager.getRepository(App).findOne({ where: { id: appId } });
       if (!app) {
         throw new Error('App not found');
       }
 
-      const members = await manager.find(Member, { where: { appId, role: 'app-owner' } });
+      const members = await manager.getRepository(Member).find({ where: { appId, role: 'app-owner' } });
       const adminMemberEmails = members.map(v => v.email);
 
       return {
@@ -477,6 +448,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
       const errorLogs: ErrorLogType[] = [];
       const eventsByAppId = new Map<string, { events: ProcessedEventData[]; keys: string[] }>();
       const duplicateNotifications: Array<ProcessedEventData['duplicateMemberEmails']> = [];
+      const rawEventsData: Map<string, RawEventData> = new Map();
 
       const createErrorLog = (key: string): ErrorLogType => {
         const parts = key.split(':');
@@ -511,10 +483,18 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
             continue;
           }
 
-          // Use a fresh query runner instead of the potentially stale manager
-          const processedData = await manager.connection.transaction(async transactionalEntityManager => {
-            return await this.prepareEventData(rawEventData, transactionalEntityManager);
-          });
+          rawEventsData.set(key, rawEventData);
+        } catch (error) {
+          const errorLog = createErrorLog(key);
+          errorLog.info = 'Processing error';
+          errorLogs.push(errorLog);
+          console.error(`Error parsing event ${key}:`, error);
+        }
+      }
+
+      for (const [key, rawEventData] of rawEventsData.entries()) {
+        try {
+          const processedData = await this.prepareEventData(rawEventData, manager);
 
           if (!processedData) {
             continue;
