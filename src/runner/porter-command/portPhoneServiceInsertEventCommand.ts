@@ -511,7 +511,10 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
             continue;
           }
 
-          const processedData = await this.prepareEventData(rawEventData, manager);
+          // Use a fresh query runner instead of the potentially stale manager
+          const processedData = await manager.connection.transaction(async transactionalEntityManager => {
+            return await this.prepareEventData(rawEventData, transactionalEntityManager);
+          });
 
           if (!processedData) {
             continue;
