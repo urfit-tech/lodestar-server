@@ -133,19 +133,15 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
     appId: string,
     extensionNumber: string,
     manager: EntityManager,
-  ): Promise<{ id: string; email: string } | null> {
+  ): Promise<{ id: string; email: string }> {
     const memberProperty = await manager.getRepository(MemberProperty).findOne({
       where: { value: extensionNumber, property: { name: '分機號碼' }, member: { appId } },
       relations: { member: true },
     });
 
-    if (!memberProperty) {
-      return null;
-    }
-
     return {
-      id: memberProperty.memberId || '',
-      email: memberProperty.member.email || '',
+      id: memberProperty?.memberId || '',
+      email: memberProperty?.member.email || '',
     };
   }
 
@@ -494,7 +490,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
 
       for (const [key, rawEventData] of rawEventsData.entries()) {
         try {
-          const processedData = await this.prepareEventData(rawEventData, manager);
+          const processedData = await this.prepareEventData(rawEventData, manager.connection.manager);
 
           if (!processedData) {
             continue;
