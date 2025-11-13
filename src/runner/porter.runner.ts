@@ -1,8 +1,8 @@
 import { DynamicModule, Injectable, Logger } from '@nestjs/common';
 import { BullModule, InjectQueue } from '@nestjs/bull';
-import { InjectEntityManager } from '@nestjs/typeorm';
+import { InjectDataSource, InjectEntityManager } from '@nestjs/typeorm';
 import { Queue } from 'bull';
-import { EntityManager } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
@@ -47,6 +47,7 @@ export class PorterRunner extends Runner {
     private readonly programService: ProgramService,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager() private readonly entityManager: EntityManager,
+    @InjectDataSource() private readonly dataSource: DataSource,
     protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
     super(PorterRunner.name, logger, distributedLockService, shutdownService, runnerInfrastructure, entityManager);
@@ -65,7 +66,7 @@ export class PorterRunner extends Runner {
     const commands: PorterCommand[] = [
       new PortLastLoggedInCommand(this.cacheService, this.memberService),
       new PortPlayerEventCommand(this.porterProgramService, this.programInfra, this.programService),
-      new PortPhoneServiceInsertEventCommand(this.memberInfra, this.cacheService, this.mailerQueue),
+      new PortPhoneServiceInsertEventCommand(this.memberInfra, this.cacheService, this.dataSource, this.mailerQueue),
       new PortPodcastProgramCommand(this.cacheService, this.podcastService),
     ];
 

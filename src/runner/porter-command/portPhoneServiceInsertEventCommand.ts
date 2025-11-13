@@ -1,4 +1,4 @@
-import { EntityManager, In } from 'typeorm';
+import { DataSource, EntityManager, In } from 'typeorm';
 
 import { App } from '~/app/entity/app.entity';
 import { MemberInfrastructure } from '~/member/member.infra';
@@ -34,6 +34,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
   constructor(
     private readonly memberInfra: MemberInfrastructure,
     private readonly cacheService: CacheService,
+    private readonly dataSource: DataSource,
     private readonly mailerQueue?: Queue,
   ) {}
 
@@ -423,7 +424,7 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
     };
   }
 
-  public async execute(manager: EntityManager, batchSize = 1000): Promise<void> {
+  public async execute(manager: EntityManager, batchSize = 10): Promise<void> {
     const client = this.cacheService.getClient();
 
     // key format: PhoneServiceRawEvent:${appId}:${uniqueid}:${source}
@@ -477,16 +478,11 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
             continue;
           }
 
-          const queryRunner = manager.connection.createQueryRunner();
-          await queryRunner.connect();
-          await queryRunner.startTransaction();
-
-          try {
-            const processedData = await this.prepareEventData(rawEventData, queryRunner.manager);
+          await this.dataSource.transaction(async txManager => {
+            const processedData = await this.prepareEventData(rawEventData, txManager);
 
             if (processedData) {
               if (processedData.duplicateMemberEmails) {
-                await queryRunner.commitTransaction();
                 await this.sendMail(
                   processedData.duplicateMemberEmails.appId,
                   processedData.duplicateMemberEmails.adminEmails,
@@ -500,20 +496,12 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
                   } 筆重複會員，此通話將不自動建立聯絡紀錄，建議您檢查您的會員資料並進行帳號整理，謝謝。`,
                 );
               } else {
-                await this.batchProcessEvents([processedData], rawEventData.appId, queryRunner.manager);
-                await queryRunner.commitTransaction();
+                await this.batchProcessEvents([processedData], rawEventData.appId, txManager);
               }
-            } else {
-              await queryRunner.commitTransaction();
             }
+          });
 
-            successfulKeys.push(key);
-          } catch (txError) {
-            await queryRunner.rollbackTransaction();
-            throw txError;
-          } finally {
-            await queryRunner.release();
-          }
+          successfulKeys.push(key);
         } catch (error) {
           const errorLog = createErrorLog(key);
           errorLog.info = 'Processing error';
