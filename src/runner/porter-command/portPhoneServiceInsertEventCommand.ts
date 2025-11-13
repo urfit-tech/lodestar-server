@@ -441,10 +441,8 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
 
       console.log(`Processing batch of ${keys.length} events...`);
 
+      const successfulKeys: string[] = [];
       const errorLogs: ErrorLogType[] = [];
-      const eventsByAppId = new Map<string, { events: ProcessedEventData[]; keys: string[] }>();
-      const duplicateNotifications: Array<ProcessedEventData['duplicateMemberEmails']> = [];
-      const rawEventsData: Map<string, RawEventData> = new Map();
 
       const createErrorLog = (key: string): ErrorLogType => {
         const parts = key.split(':');
@@ -479,83 +477,38 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
             continue;
           }
 
-          rawEventsData.set(key, rawEventData);
-        } catch (error) {
-          const errorLog = createErrorLog(key);
-          errorLog.info = 'Processing error';
-          errorLogs.push(errorLog);
-          console.error(`Error parsing event ${key}:`, error);
-        }
-      }
+          await manager.connection.transaction(async txManager => {
+            const processedData = await this.prepareEventData(rawEventData, txManager);
 
-      for (const [key, rawEventData] of rawEventsData.entries()) {
-        try {
-          const processedData = await this.prepareEventData(rawEventData, manager.connection.manager);
-
-          if (!processedData) {
-            continue;
-          }
-
-          if (processedData.duplicateMemberEmails) {
-            duplicateNotifications.push(processedData.duplicateMemberEmails);
-            const appData = eventsByAppId.get(rawEventData.appId);
-            if (appData) {
-              appData.keys.push(key);
-            } else {
-              eventsByAppId.set(rawEventData.appId, { events: [], keys: [key] });
+            if (!processedData) {
+              return;
             }
-            continue;
-          }
 
-          const appData = eventsByAppId.get(rawEventData.appId);
-          if (appData) {
-            appData.events.push(processedData);
-            appData.keys.push(key);
-          } else {
-            eventsByAppId.set(rawEventData.appId, {
-              events: [processedData],
-              keys: [key],
-            });
-          }
-        } catch (error) {
-          const errorLog = createErrorLog(key);
-          errorLog.info = 'Processing error';
-          errorLogs.push(errorLog);
-          console.error(`Error preparing event ${key}:`, error);
-        }
-      }
+            if (processedData.duplicateMemberEmails) {
+              await this.sendMail(
+                processedData.duplicateMemberEmails.appId,
+                processedData.duplicateMemberEmails.adminEmails,
+                `[${processedData.duplicateMemberEmails.appName}]重複會員電話提醒通知`,
+                `${processedData.duplicateMemberEmails.callerEmails.join(',')} 於 ${dayjs()
+                  .tz('Asia/Taipei')
+                  .format('YYYY-MM-DD')} 撥打電話 ${
+                  processedData.duplicateMemberEmails.destination
+                } ，此號碼於系統內存在共 ${
+                  processedData.duplicateMemberEmails.memberCount
+                } 筆重複會員，此通話將不自動建立聯絡紀錄，建議您檢查您的會員資料並進行帳號整理，謝謝。`,
+              );
+              return;
+            }
 
-      const successfulKeys: string[] = [];
-
-      for (const [appId, { events, keys: appKeys }] of eventsByAppId.entries()) {
-        if (events.length === 0) {
-          continue;
-        }
-
-        try {
-          await manager.transaction(async transactionManager => {
-            await this.batchProcessEvents(events, appId, transactionManager);
+            await this.batchProcessEvents([processedData], rawEventData.appId, txManager);
           });
 
-          successfulKeys.push(...appKeys);
-          console.log(`Successfully processed ${events.length} events for appId: ${appId}`);
+          successfulKeys.push(key);
         } catch (error) {
-          console.error(`Error batch processing events for appId ${appId}:`, error);
-        }
-      }
-
-      for (const notification of duplicateNotifications) {
-        if (notification) {
-          await this.sendMail(
-            notification.appId,
-            notification.adminEmails,
-            `[${notification.appName}]重複會員電話提醒通知`,
-            `${notification.callerEmails.join(',')} 於 ${dayjs().tz('Asia/Taipei').format('YYYY-MM-DD')} 撥打電話 ${
-              notification.destination
-            } ，此號碼於系統內存在共 ${
-              notification.memberCount
-            } 筆重複會員，此通話將不自動建立聯絡紀錄，建議您檢查您的會員資料並進行帳號整理，謝謝。`,
-          );
+          const errorLog = createErrorLog(key);
+          errorLog.info = 'Processing error';
+          errorLogs.push(errorLog);
+          console.error(`Error processing event ${key}:`, error);
         }
       }
 
