@@ -477,33 +477,43 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
             continue;
           }
 
-          await manager.connection.transaction(async txManager => {
-            const processedData = await this.prepareEventData(rawEventData, txManager);
+          const queryRunner = manager.connection.createQueryRunner();
+          await queryRunner.connect();
+          await queryRunner.startTransaction();
 
-            if (!processedData) {
-              return;
+          try {
+            const processedData = await this.prepareEventData(rawEventData, queryRunner.manager);
+
+            if (processedData) {
+              if (processedData.duplicateMemberEmails) {
+                await queryRunner.commitTransaction();
+                await this.sendMail(
+                  processedData.duplicateMemberEmails.appId,
+                  processedData.duplicateMemberEmails.adminEmails,
+                  `[${processedData.duplicateMemberEmails.appName}]重複會員電話提醒通知`,
+                  `${processedData.duplicateMemberEmails.callerEmails.join(',')} 於 ${dayjs()
+                    .tz('Asia/Taipei')
+                    .format('YYYY-MM-DD')} 撥打電話 ${
+                    processedData.duplicateMemberEmails.destination
+                  } ，此號碼於系統內存在共 ${
+                    processedData.duplicateMemberEmails.memberCount
+                  } 筆重複會員，此通話將不自動建立聯絡紀錄，建議您檢查您的會員資料並進行帳號整理，謝謝。`,
+                );
+              } else {
+                await this.batchProcessEvents([processedData], rawEventData.appId, queryRunner.manager);
+                await queryRunner.commitTransaction();
+              }
+            } else {
+              await queryRunner.commitTransaction();
             }
 
-            if (processedData.duplicateMemberEmails) {
-              await this.sendMail(
-                processedData.duplicateMemberEmails.appId,
-                processedData.duplicateMemberEmails.adminEmails,
-                `[${processedData.duplicateMemberEmails.appName}]重複會員電話提醒通知`,
-                `${processedData.duplicateMemberEmails.callerEmails.join(',')} 於 ${dayjs()
-                  .tz('Asia/Taipei')
-                  .format('YYYY-MM-DD')} 撥打電話 ${
-                  processedData.duplicateMemberEmails.destination
-                } ，此號碼於系統內存在共 ${
-                  processedData.duplicateMemberEmails.memberCount
-                } 筆重複會員，此通話將不自動建立聯絡紀錄，建議您檢查您的會員資料並進行帳號整理，謝謝。`,
-              );
-              return;
-            }
-
-            await this.batchProcessEvents([processedData], rawEventData.appId, txManager);
-          });
-
-          successfulKeys.push(key);
+            successfulKeys.push(key);
+          } catch (txError) {
+            await queryRunner.rollbackTransaction();
+            throw txError;
+          } finally {
+            await queryRunner.release();
+          }
         } catch (error) {
           const errorLog = createErrorLog(key);
           errorLog.info = 'Processing error';
