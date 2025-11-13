@@ -424,12 +424,22 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
     };
   }
 
-  public async execute(manager: EntityManager, batchSize = 10): Promise<void> {
+  public async execute(manager: EntityManager, batchSize = 100): Promise<void> {
     const client = this.cacheService.getClient();
 
     // key format: PhoneServiceRawEvent:${appId}:${uniqueid}:${source}
     const pattern = `PhoneServiceRawEvent:*`;
     let cursor = '0';
+
+    const createErrorLog = (key: string, info: string): ErrorLogType => {
+      const parts = key.split(':');
+      const dateTime = parts[parts.length - 1];
+      return {
+        key,
+        date: `${new Date(parseInt(dateTime, 10))}`,
+        info: info as any,
+      };
+    };
 
     do {
       const scanResult = await client.scan(cursor, 'MATCH', pattern, 'COUNT', batchSize);
@@ -442,83 +452,130 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
 
       console.log(`Processing batch of ${keys.length} events...`);
 
-      const successfulKeys: string[] = [];
-      const errorLogs: ErrorLogType[] = [];
+      const CHUNK_SIZE = 10;
+      const chunks: string[][] = [];
 
-      const createErrorLog = (key: string): ErrorLogType => {
-        const parts = key.split(':');
-        const dateTime = parts[parts.length - 1];
-        return {
-          key,
-          date: `${new Date(parseInt(dateTime, 10))}`,
-          info: {
-            memberNote: 'NoError',
-            member: 'NoError',
-          },
-        };
-      };
+      for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
+        chunks.push(keys.slice(i, i + CHUNK_SIZE));
+      }
 
-      for (const key of keys) {
+      const allSuccessfulKeys: string[] = [];
+      const allErrorLogs: ErrorLogType[] = [];
+
+      for (const chunk of chunks) {
+        const chunkSuccessKeys: string[] = [];
+        const chunkErrorLogs: ErrorLogType[] = [];
+
         try {
-          const valueString = await client.get(key);
+          const validEvents: Array<{ key: string; rawEventData: RawEventData }> = [];
 
-          if (!valueString) {
-            const errorLog = createErrorLog(key);
-            errorLog.info = 'No data found';
-            errorLogs.push(errorLog);
-            continue;
+          for (const key of chunk) {
+            try {
+              const valueString = await client.get(key);
+
+              if (!valueString) {
+                chunkErrorLogs.push(createErrorLog(key, 'No data found'));
+                continue;
+              }
+
+              const rawEventData: RawEventData = JSON.parse(valueString);
+
+              if (!rawEventData.appId || !rawEventData.callData) {
+                chunkErrorLogs.push(createErrorLog(key, 'Data format error'));
+                continue;
+              }
+
+              validEvents.push({ key, rawEventData });
+            } catch (error) {
+              chunkErrorLogs.push(createErrorLog(key, 'Parse error'));
+              console.error(`Error parsing event ${key}:`, error);
+            }
           }
 
-          const rawEventData: RawEventData = JSON.parse(valueString);
-
-          if (!rawEventData.appId || !rawEventData.callData) {
-            const errorLog = createErrorLog(key);
-            errorLog.info = 'Data format error';
-            errorLogs.push(errorLog);
+          if (validEvents.length === 0) {
+            allErrorLogs.push(...chunkErrorLogs);
             continue;
           }
 
           await this.dataSource.transaction(async txManager => {
-            const processedData = await this.prepareEventData(rawEventData, txManager);
+            const processedByApp = new Map<string, ProcessedEventData[]>();
+            const emailNotifications: Array<{
+              appId: string;
+              adminEmails: string[];
+              appName: string;
+              callerEmails: string[];
+              destination: string;
+              memberCount: number;
+            }> = [];
 
-            if (processedData) {
-              if (processedData.duplicateMemberEmails) {
-                await this.sendMail(
-                  processedData.duplicateMemberEmails.appId,
-                  processedData.duplicateMemberEmails.adminEmails,
-                  `[${processedData.duplicateMemberEmails.appName}]重複會員電話提醒通知`,
-                  `${processedData.duplicateMemberEmails.callerEmails.join(',')} 於 ${dayjs()
-                    .tz('Asia/Taipei')
-                    .format('YYYY-MM-DD')} 撥打電話 ${
-                    processedData.duplicateMemberEmails.destination
-                  } ，此號碼於系統內存在共 ${
-                    processedData.duplicateMemberEmails.memberCount
-                  } 筆重複會員，此通話將不自動建立聯絡紀錄，建議您檢查您的會員資料並進行帳號整理，謝謝。`,
-                );
-              } else {
-                await this.batchProcessEvents([processedData], rawEventData.appId, txManager);
+            for (const { key, rawEventData } of validEvents) {
+              try {
+                const processedData = await this.prepareEventData(rawEventData, txManager);
+
+                if (processedData) {
+                  if (processedData.duplicateMemberEmails) {
+                    emailNotifications.push(processedData.duplicateMemberEmails);
+                  } else {
+                    if (!processedByApp.has(rawEventData.appId)) {
+                      processedByApp.set(rawEventData.appId, []);
+                    }
+                    processedByApp.get(rawEventData.appId)?.push(processedData);
+                  }
+                }
+
+                chunkSuccessKeys.push(key);
+              } catch (error) {
+                chunkErrorLogs.push(createErrorLog(key, 'Processing error'));
+                console.error(`Error processing event ${key}:`, error);
               }
+            }
+
+            for (const [appId, events] of processedByApp.entries()) {
+              await this.batchProcessEvents(events, appId, txManager);
+            }
+
+            if (emailNotifications.length > 0) {
+              setImmediate(async () => {
+                for (const notification of emailNotifications) {
+                  await this.sendMail(
+                    notification.appId,
+                    notification.adminEmails,
+                    `[${notification.appName}]重複會員電話提醒通知`,
+                    `${notification.callerEmails.join(',')} 於 ${dayjs()
+                      .tz('Asia/Taipei')
+                      .format('YYYY-MM-DD')} 撥打電話 ${notification.destination} ，此號碼於系統內存在共 ${
+                      notification.memberCount
+                    } 筆重複會員，此通話將不自動建立聯絡紀錄，建議您檢查您的會員資料並進行帳號整理，謝謝。`,
+                  );
+                }
+              });
             }
           });
 
-          successfulKeys.push(key);
+          allSuccessfulKeys.push(...chunkSuccessKeys);
         } catch (error) {
-          const errorLog = createErrorLog(key);
-          errorLog.info = 'Processing error';
-          errorLogs.push(errorLog);
-          console.error(`Error processing event ${key}:`, error);
+          console.error(`Error processing chunk:`, error);
+          for (const key of chunk) {
+            if (!chunkSuccessKeys.includes(key)) {
+              chunkErrorLogs.push(createErrorLog(key, 'Chunk transaction failed'));
+            }
+          }
+        }
+
+        allErrorLogs.push(...chunkErrorLogs);
+
+        if (chunkSuccessKeys.length > 0) {
+          await client.del(...chunkSuccessKeys);
+          console.log(`Deleted ${chunkSuccessKeys.length} successfully processed Redis keys from chunk`);
         }
       }
 
-      if (successfulKeys.length > 0) {
-        await client.del(...successfulKeys);
-        console.log(`Deleted ${successfulKeys.length} successfully processed Redis keys`);
+      if (allSuccessfulKeys.length > 0) {
+        console.log(`Total deleted ${allSuccessfulKeys.length} successfully processed Redis keys in this scan batch`);
       }
 
-      if (errorLogs.length > 0) {
-        for (const errorItem of errorLogs) {
-          console.error(`Processing phone service event failed: ${JSON.stringify(errorItem)}`);
-        }
+      if (allErrorLogs.length > 0) {
+        console.error(`Failed to process ${allErrorLogs.length} events in this scan batch`);
       }
     } while (cursor !== '0');
 
