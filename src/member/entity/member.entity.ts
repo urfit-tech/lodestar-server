@@ -193,9 +193,6 @@ export class Member {
   })
   lastMemberNoteAnswered: Date | null;
 
-  @Column('timestamp with time zone', { name: 'callbacked_at', nullable: true })
-  callbackedAt: Date | null;
-
   @Column('boolean', { name: 'is_business', default: () => false })
   isBusiness: boolean;
 

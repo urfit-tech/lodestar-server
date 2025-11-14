@@ -2,7 +2,10 @@ name: Build n Push after Test
 
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows: ["Test on Push"]
+    types:
+      - completed
     branches:
       - release
       - master

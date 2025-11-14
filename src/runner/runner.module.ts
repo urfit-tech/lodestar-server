@@ -5,7 +5,6 @@ import { LoggerModule } from 'nestjs-pino';
 import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { BullModule } from '@nestjs/bull';
 
 import { PostgresModule } from '~/database/postgres.module';
 import { LockModule } from '~/utility/lock/lock.module';
@@ -57,26 +56,6 @@ export class RunnerModule {
           inject: [ConfigService],
         }),
         PostgresModule.forRootAsync(),
-        BullModule.forRootAsync({
-          imports: [ConfigModule],
-          useFactory: (
-            configService: ConfigService<{
-              QUEUE_REDIS_URI: string;
-            }>,
-          ) => {
-            const queueRedisUri = configService.getOrThrow('QUEUE_REDIS_URI');
-            const url = new URL(queueRedisUri);
-            return {
-              redis: {
-                host: url.hostname,
-                port: Number(url.port),
-                username: url.username,
-                password: url.password,
-              },
-            };
-          },
-          inject: [ConfigService],
-        }),
         LockModule.forFeature({ key: workerName }),
         UtilityModule,
         ProgramModule,

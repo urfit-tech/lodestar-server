@@ -1,14 +1,12 @@
-import { DynamicModule, Injectable, Logger } from '@nestjs/common';
-import { BullModule, InjectQueue } from '@nestjs/bull';
-import { InjectDataSource, InjectEntityManager } from '@nestjs/typeorm';
-import { Queue } from 'bull';
-import { DataSource, EntityManager } from 'typeorm';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { DistributedLockService } from '~/utility/lock/distributed_lock.service';
 import { ShutdownService } from '~/utility/shutdown/shutdown.service';
 
 import { Runner } from './runner';
 import { CacheService } from '~/utility/cache/cache.service';
+import { InjectEntityManager } from '@nestjs/typeorm';
+import { EntityManager } from 'typeorm';
 import { MemberService } from '~/member/member.service';
 import { PodcastService } from '~/podcast/podcast.service';
 import { PorterProgramService } from '~/program/porter-program.service';
@@ -26,14 +24,6 @@ import ZabbixHeartBeater from './helper/ZabbixHeartBeater';
 
 @Injectable()
 export class PorterRunner extends Runner {
-  static forRoot(): DynamicModule {
-    return {
-      module: PorterRunner,
-      imports: [BullModule.registerQueue({ name: 'mailer' })],
-      providers: [],
-    };
-  }
-
   constructor(
     protected readonly logger: Logger,
     protected readonly distributedLockService: DistributedLockService,
@@ -45,9 +35,7 @@ export class PorterRunner extends Runner {
     private readonly memberInfra: MemberInfrastructure,
     private readonly podcastService: PodcastService,
     private readonly programService: ProgramService,
-    @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager() private readonly entityManager: EntityManager,
-    @InjectDataSource() private readonly dataSource: DataSource,
     protected readonly runnerInfrastructure: RunnerInfrastructure,
   ) {
     super(PorterRunner.name, logger, distributedLockService, shutdownService, runnerInfrastructure, entityManager);
@@ -66,7 +54,7 @@ export class PorterRunner extends Runner {
     const commands: PorterCommand[] = [
       new PortLastLoggedInCommand(this.cacheService, this.memberService),
       new PortPlayerEventCommand(this.porterProgramService, this.programInfra, this.programService),
-      new PortPhoneServiceInsertEventCommand(this.memberInfra, this.cacheService, this.dataSource, this.mailerQueue),
+      new PortPhoneServiceInsertEventCommand(this.memberInfra, this.cacheService),
       new PortPodcastProgramCommand(this.cacheService, this.podcastService),
     ];
 
