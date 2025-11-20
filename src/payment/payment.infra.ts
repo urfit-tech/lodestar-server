@@ -3,6 +3,7 @@ import { isArray } from 'lodash';
 import { Injectable } from '@nestjs/common';
 
 import { PaymentLog } from './payment_log.entity';
+import { PaymentMethod } from './payment_method.entity';
 import dayjs from 'dayjs';
 
 @Injectable()
@@ -58,5 +59,21 @@ export class PaymentInfrastructure {
       where: { orderId: In(orderIds) },
     });
     return paymentLogs;
+  }
+
+  async getPaymentMethodsByNames(names: Array<string>, manager: EntityManager): Promise<Array<PaymentMethod>> {
+    if (!names || names.length === 0) {
+      return [];
+    }
+    const paymentMethodRepo = manager.getRepository(PaymentMethod);
+    const paymentMethods = await paymentMethodRepo.find({
+      where: { name: In(names) },
+    });
+    return paymentMethods;
+  }
+
+  async getAllPaymentMethods(manager: EntityManager): Promise<Array<PaymentMethod>> {
+    const paymentMethodRepo = manager.getRepository(PaymentMethod);
+    return paymentMethodRepo.find();
   }
 }
