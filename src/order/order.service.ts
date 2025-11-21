@@ -122,6 +122,7 @@ export class OrderService {
         paidAt: true,
         options: true,
         invoiceIssuedAt: true,
+        method: true,
       },
       orderProducts: {
         name: true,
@@ -350,14 +351,17 @@ export class OrderService {
           orderProductAggregator(each.orderProducts);
         const { orderDiscountName, orderDiscountTotalPrice } = orderDiscountsAggregator(each.orderDiscounts);
 
-        const methodName = getValue(each.paymentModel, 'method');
-        const paymentMethod = paymentMethods.find(pm => pm.name === methodName);
-
         csvRawOrderLog.orderLogId = each.id;
         csvRawOrderLog.paymentLogNo = each.paymentLogs.map(payment => payment.no).join('\n');
         csvRawOrderLog.orderLogStatus = each.status;
         csvRawOrderLog.paymentLogGateway = getValue(each.paymentModel, 'gateway');
-        csvRawOrderLog.paymentLogDetails = paymentMethod ? paymentMethod.displayName : methodName;
+        csvRawOrderLog.paymentLogDetails = each.paymentLogs
+          .map(payment => {
+            const methodName = payment.method;
+            const paymentMethod = paymentMethods.find(pm => pm.name === methodName);
+            return paymentMethod ? paymentMethod.displayName : methodName || '';
+          })
+          .join('\n');
         csvRawOrderLog.orderCountry = `${getValue(each.options, 'country')} ${getValue(each.options, 'countryCode')}`;
         csvRawOrderLog.orderLogCreatedAt = dateFormatter(each.createdAt);
         csvRawOrderLog.paymentLogPaidAt = each.paymentLogs
