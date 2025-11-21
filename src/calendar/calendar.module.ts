@@ -6,6 +6,7 @@ import { MemberInfrastructure } from '~/member/member.infra';
 import { MemberService } from '~/member/member.service';
 import { OrderInfrastructure } from '~/order/order.infra';
 import { OrderService } from '~/order/order.service';
+import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { ProductInfrastructure } from '~/product/product.infra';
 import { SharingCodeInfrastructure } from '~/sharingCode/sharingCode.infra';
 import { CacheService } from '~/utility/cache/cache.service';
@@ -28,6 +29,7 @@ import { AppointmentService } from '~/appointment/appointment.service';
     MemberService,
     OrderInfrastructure,
     OrderService,
+    PaymentInfrastructure,
     ProductInfrastructure,
     SharingCodeInfrastructure,
     VoucherInfrastructure,
