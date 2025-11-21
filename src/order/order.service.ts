@@ -358,8 +358,20 @@ export class OrderService {
         csvRawOrderLog.paymentLogDetails = each.paymentLogs
           .map(payment => {
             const methodName = payment.method;
-            const paymentMethod = paymentMethods.find(pm => pm.name === methodName);
-            return paymentMethod ? paymentMethod.displayName : methodName || '';
+            console.log('[DEBUG] RAW payment.method:', {
+              no: payment.no,
+              method: methodName,
+              type: typeof methodName,
+              length: methodName?.length,
+              charCodes: methodName ? Array.from(methodName).map(c => c.charCodeAt(0)) : [],
+            });
+            const paymentMethod = paymentMethods.find(pm => pm.name.toLowerCase() === methodName.toLowerCase());
+            console.log('[DEBUG] Matching result:', {
+              methodName,
+              found: !!paymentMethod,
+              displayName: paymentMethod?.displayName,
+            });
+            return paymentMethod ? paymentMethod.displayName : methodName || payment.method;
           })
           .join('\n');
         csvRawOrderLog.orderCountry = `${getValue(each.options, 'country')} ${getValue(each.options, 'countryCode')}`;
@@ -517,6 +529,13 @@ export class OrderService {
       this.entityManager,
     );
     const paymentMethods = await this.paymentInfra.getAllPaymentMethods(this.entityManager);
+    console.log(
+      '[DEBUG] PaymentMethods loaded:',
+      JSON.stringify({
+        count: paymentMethods.length,
+        methods: paymentMethods,
+      }),
+    );
 
     const headerInfos = await new OrderLogCsvHeaderMapping().createHeader();
     return [
