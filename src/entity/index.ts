@@ -215,6 +215,7 @@ import { MemberTag } from '~/member/entity/member_tag.entity';
 import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderProduct } from '~/order/entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
+import { PaymentMethod } from '~/payment/payment_method.entity';
 import { Permission } from '~/permission/entity/permission.entity';
 import { ProgramContent } from '~/program/entity/program_content.entity';
 import { TableLog } from '~/table_log/table_log.entity';
@@ -369,6 +370,7 @@ export const PostgresEntities = [
   PackageItemGroup,
   PackageSection,
   PaymentLog,
+  PaymentMethod,
   Permission,
   PermissionGroup,
   PermissionGroupPermission,
