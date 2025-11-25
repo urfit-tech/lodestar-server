@@ -3,8 +3,8 @@ import { Issue } from '~/entity/Issue';
 import { Operator } from './index';
 
 export class IssueOperator extends Operator {
-  constructor(triggeredEvent, entityManager) {
-    super(triggeredEvent, entityManager);
+  constructor(entityManager, triggeredEvent) {
+    super(entityManager, triggeredEvent);
   }
 
   static getIssue = entityManager => async triggeredEvent => {
@@ -21,7 +21,7 @@ export class IssueOperator extends Operator {
 
   static getAppId = entityManager => async triggeredEvent =>
     (await IssueOperator.getIssue(entityManager)(triggeredEvent)).app_id;
-  getAppId = async () => await IssueOperator.getAppId(null)(this.triggeredEvent);
+  getAppId = async () => await IssueOperator.getAppId(this.entityManager)(this.triggeredEvent);
 
   static getIntegratedEvent = entityManager => async triggeredEvent => {
     switch (triggeredEvent.trigger.name) {
@@ -42,5 +42,5 @@ export class IssueOperator extends Operator {
         return await triggeredEvent;
     }
   };
-  getIntegratedEvent = async () => await IssueOperator.getIntegratedEvent(null)(this.triggeredEvent);
+  getIntegratedEvent = async () => await IssueOperator.getIntegratedEvent(this.entityManager)(this.triggeredEvent);
 }

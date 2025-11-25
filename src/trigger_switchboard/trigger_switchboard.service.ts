@@ -2,7 +2,7 @@ import { EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { TriggeredEvent, TriggeredEventDTO } from './trigger_switchboard.type';
-import { Operator, IssueOperator } from './operators/index';
+import { Operator, IssueOperator, IsIssueModuleAllowedForMemberOperator, ErrorLogOperator } from './operators/index';
 
 const triggeredEventToTriggerMap = [
   {
@@ -13,18 +13,33 @@ const triggeredEventToTriggerMap = [
     triggeredEventName: 'issue_reply_trigger',
     trigger: 'issue',
   },
+  {
+    triggeredEventName: 'is_issue_module_allowed_for_member',
+    trigger: 'is_issue_module_allowed_for_member',
+  },
+  {
+    triggeredEventName: 'error_log',
+    trigger: 'error_log',
+  },
 ] as const;
+
+type Subclass<T> = {
+  new (...args: any[]): T;
+};
 
 type TriggerInfo = {
   trigger: Exclude<(typeof triggeredEventToTriggerMap)[number]['trigger'], 'default'>;
-  operator: typeof Operator;
-  description: string
+  operator: Subclass<Operator>;
+  description: string;
+  returnType: string;
+  defaultReturnValue?: any[];
 };
 
 @Injectable()
 export class TriggerSwitchboardService {
   ip?: string;
   triggeredEventDTO?: TriggeredEventDTO;
+  operator?: InstanceType<(typeof TriggerSwitchboardService.triggerToOperator)[number]['operator']>;
   constructor(@InjectEntityManager() private readonly entityManager: EntityManager) {}
 
   static readonly triggeredEventToTriggerMap = triggeredEventToTriggerMap;
@@ -32,7 +47,21 @@ export class TriggerSwitchboardService {
     {
       trigger: 'issue',
       operator: IssueOperator,
-      description: 'Questions and replies among members.'
+      description: 'Indicating some changes of questions and replies among members.',
+      returnType: 'void',
+    },
+    {
+      trigger: 'is_issue_module_allowed_for_member',
+      operator: IsIssueModuleAllowedForMemberOperator,
+      description: 'Inquiring whether issue module is allowed for the member.',
+      returnType: 'boolean',
+      defaultReturnValue: [true],
+    },
+    {
+      trigger: 'error_log',
+      operator: ErrorLogOperator,
+      description: 'Indicating some error occurring while calling webhooks.',
+      returnType: 'void',
     },
   ];
 
@@ -56,7 +85,6 @@ export class TriggerSwitchboardService {
     return this;
   };
 
-  //ToDo: Change to the real ip list in env
   static isRequestSourceValid: (ip: String) => boolean = ip =>
     JSON.parse(process.env.TRIGGERED_EVENT_IP_WHITE_LIST).includes(ip);
   isRequestSourceValid = () => TriggerSwitchboardService.isRequestSourceValid(this.ip);
@@ -71,13 +99,20 @@ export class TriggerSwitchboardService {
   getTriggerFromTriggeredEventName = () =>
     TriggerSwitchboardService.getTriggerFromTriggeredEventName(this.triggeredEventDTO.trigger.name);
 
-  static getTriggerInfo: (triggeredEventDTO: TriggeredEventDTO) => TriggerInfo = triggeredEventDTO =>
+  static getTriggerInfo = (triggeredEventDTO: TriggeredEventDTO) =>
     TriggerSwitchboardService.getTriggerFromTriggeredEventName(triggeredEventDTO.trigger.name);
   getTriggerInfo = () => TriggerSwitchboardService.getTriggerInfo(this.triggeredEventDTO);
 
-  static getOperator: (triggeredEventDTO: TriggeredEventDTO) => typeof Operator = triggeredEventDTO =>
+  static getOperatorClass = (triggeredEventDTO: TriggeredEventDTO) =>
     TriggerSwitchboardService.getTriggerInfo(triggeredEventDTO).operator;
-  getOperator = () => TriggerSwitchboardService.getOperator(this.triggeredEventDTO);
+  getOperator = () => {
+    const operatorClass = TriggerSwitchboardService.getOperatorClass(this.triggeredEventDTO);
+    return new operatorClass(this.entityManager, this.triggeredEventDTO);
+  };
+  setOperator = (operator: InstanceType<ReturnType<typeof TriggerSwitchboardService.getOperatorClass>>) => {
+    this.operator = operator;
+    return this;
+  };
 
   static getAdaptedTriggeredEvent: (triggeredEventDTO: TriggeredEventDTO) => TriggeredEvent = triggeredEventDTO => ({
     event: (() => {
@@ -93,21 +128,43 @@ export class TriggerSwitchboardService {
   getAdaptedTriggeredEvent = triggeredEventDTO => TriggerSwitchboardService.getAdaptedTriggeredEvent(triggeredEventDTO);
 
   static execute: (
-    entityManager: EntityManager,
-  ) => (TargetOperator: typeof Operator) => (triggeredEventDTO: TriggeredEventDTO) => Promise<void> =
-    entityManager => TargetOperator => async triggeredEventDTO => {
-      const triggeredEvent = TriggerSwitchboardService.getAdaptedTriggeredEvent(triggeredEventDTO);
-      const appId = await TargetOperator.getAppId(entityManager)(triggeredEvent);
-      if(!appId) throw new UnprocessableEntityException('App id undefined.')
-      TriggerSwitchboardService.log(triggeredEventDTO)(`AppId: ${appId}.`);
-      const requestInfos = await TargetOperator.getWebhooks(entityManager)(triggeredEvent)(appId);
-      if(requestInfos?.length <= 0) throw new UnprocessableEntityException('Request infos not found.')
-      const integratedEvent = await TargetOperator.getIntegratedEvent(entityManager)(triggeredEvent);
-      requestInfos.forEach(async ({ url, fetchOption }) => {
-        const result = await fetch(url, { ...fetchOption, body: JSON.stringify(integratedEvent) });
-        TriggerSwitchboardService.log(triggeredEventDTO)(`Executed results for ${url}: \n${JSON.stringify(result)}.`);
-      });
-    };
+    targetOperator: InstanceType<typeof Operator>,
+  ) => (triggeredEventDTO: TriggeredEventDTO) => Promise<any[]> = targetOperator => async triggeredEventDTO => {
+    const log = TriggerSwitchboardService.log(triggeredEventDTO);
+    if (!targetOperator?.appId) throw new UnprocessableEntityException('App id undefined.');
+    log(`AppId: ${targetOperator?.appId}.`);
+    return await targetOperator.callWebhooks(log);
+  };
 
-  execute = () => TriggerSwitchboardService.execute(this.entityManager)(this.getOperator())(this.triggeredEventDTO);
+  execute = async () => {
+    const operator = this.getOperator();
+    operator.setAppId(await operator.getAppId());
+    this.setOperator(operator);
+    return await TriggerSwitchboardService.execute(operator)(this.triggeredEventDTO);
+  };
+
+  tryCatchWithLog: (process: Function) => unknown = async process => {
+    try {
+      return await process();
+    } catch (error) {
+      this.log(error);
+      try {
+        const event = {
+          event: {
+            op: 'SELECT',
+            data: error,
+          },
+          created_at: new Date().toISOString(),
+          id: '',
+          trigger: {
+            name: 'error_log',
+          },
+        } as const;
+        const errorLogOperator = new ErrorLogOperator(this.entityManager, event).setAppId(this?.operator?.appId);
+        await TriggerSwitchboardService.execute(errorLogOperator)(event);
+      } catch (errorWhileSendingError) {
+        this.log(`Send error log with failure: ${errorWhileSendingError}`);
+      }
+    }
+  };
 }
