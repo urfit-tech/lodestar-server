@@ -358,6 +358,9 @@ export class OrderService {
         csvRawOrderLog.paymentLogDetails = each.paymentLogs
           .map(payment => {
             const methodName = payment.method;
+            if (typeof methodName !== 'string') {
+              return methodName ?? '';
+            }
             console.log('[DEBUG] RAW payment.method:', {
               no: payment.no,
               method: methodName,
@@ -365,7 +368,9 @@ export class OrderService {
               length: methodName?.length,
               charCodes: methodName ? Array.from(methodName).map(c => c.charCodeAt(0)) : [],
             });
-            const paymentMethod = paymentMethods.find(pm => pm.name.toLowerCase() === methodName.toLowerCase());
+            const paymentMethod = paymentMethods.find(
+              pm => typeof pm.name === 'string' && pm.name.toLowerCase() === methodName.toLowerCase(),
+            );
             console.log('[DEBUG] Matching result:', {
               methodName,
               found: !!paymentMethod,
