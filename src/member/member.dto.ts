@@ -6,7 +6,6 @@ import {
   IsEmail,
   IsEnum,
   IsNumber,
-  IsObject,
   IsOptional,
   IsString,
   ValidateNested,
@@ -15,7 +14,6 @@ import { DeleteResult } from 'typeorm';
 import { Cursor } from 'typeorm-cursor-pagination';
 
 import { MemberRole } from './member.type';
-import { isArray } from 'lodash';
 
 class FileInfo {
   @IsString()

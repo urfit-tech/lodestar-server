@@ -106,7 +106,7 @@ export class Member {
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
-    default: () => 'now()',
+    default: () => 'clock_timestamp()',
   })
   createdAt: Date | null;
 
