@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Post, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, HttpCode, HttpStatus, Req } from '@nestjs/common';
+import { Request } from 'express';
+import { randomUUID } from 'crypto';
 import { DataDeletionRequestDto } from './data-deletion.dto';
 
 @Controller({
@@ -11,12 +13,16 @@ export class DataDeletionController {
    */
   @Post()
   @HttpCode(HttpStatus.OK)
-  async dataDeletionCallback(@Body() body: DataDeletionRequestDto) {
-    try {
-      return true;
-    } catch (error) {
-      throw error;
-    }
+  async dataDeletionCallback(@Body() body: DataDeletionRequestDto, @Req() req: Request) {
+    const confirmationCode = randomUUID();
+    const host = req.get('host');
+    const protocol = req.protocol;
+    const statusUrl = `${protocol}://${host}/api/v2/meta/data-deletion/status?id=${confirmationCode}`;
+
+    return {
+      url: statusUrl,
+      confirmation_code: confirmationCode,
+    };
   }
 
   /**
@@ -24,6 +30,9 @@ export class DataDeletionController {
    */
   @Get('status')
   async dataDeletionStatus(@Query('id') confirmationCode: string) {
-    return true;
+    return {
+      status: 'completed',
+      confirmation_code: confirmationCode,
+    };
   }
 }
