@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Between, EntityManager, Equal, FindOptionsOrder, FindOptionsSelect, FindOptionsWhere, In } from 'typeorm';
 import { OrderLog } from './entity/order_log.entity';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -31,6 +31,9 @@ import { PaymentMethod } from '~/payment/payment_method.entity';
 dayjs.extend(timezone);
 @Injectable()
 export class OrderService {
+  // FIXME: delete
+  private readonly logger = new Logger(OrderService.name);
+
   constructor(
     private readonly orderInfra: OrderInfrastructure,
     private readonly couponInfra: CouponInfrastructure,
@@ -98,8 +101,14 @@ export class OrderService {
               target: In(discountTargets),
             },
           }),
+          ...(conditions.memberIds && {
+            memberId: In(conditions.memberIds),
+          }),
         }
       : {};
+    // FIXME: delete
+    this.logger.log(`[後端] 篩選 memberIds: ${JSON.stringify(conditions.memberIds)}`);
+
     const warpSelect: FindOptionsSelect<OrderLog> = {
       id: true,
       status: true,
@@ -162,6 +171,18 @@ export class OrderService {
       wrapOrder,
     );
 
+    // FIXME: debug log：印出 memberId 前幾筆確認篩選正確
+    console.log('💡 匯出 orderLogs 數量：', orderLogs.length);
+    console.log(`共匯出 ${orderLogs.length} 筆資料`);
+    console.log(
+      '前 5 筆 memberId：',
+      orderLogs.slice(0, 10).map(log => log.memberId),
+    );
+    orderLogs.forEach(order => {
+      this.logger.log(`[後端] 撈到的訂單 memberId: ${order.memberId}`);
+    });
+    console.log('🧾 傳入的 memberIds:', conditions.memberIds);
+
     return orderLogs;
   }
 
@@ -185,6 +206,9 @@ export class OrderService {
                 target: In(discountTargets),
               },
             }),
+            ...(conditions.memberIds && {
+              memberId: In(conditions.memberIds),
+            }),
           },
           ...(conditions.productIds && {
             productId: In(conditions.productIds),
@@ -203,6 +227,7 @@ export class OrderService {
         invoiceOptions: {},
         createdAt: true,
         lastPaidAt: true,
+        memberId: true,
       },
       product: {
         type: true,
@@ -242,6 +267,9 @@ export class OrderService {
             }),
             ...(conditions.productIds && {
               orderProducts: { productId: In(conditions.productIds) },
+            }),
+            ...(conditions.memberIds && {
+              memberId: In(conditions.memberIds),
             }),
           },
           ...(discountTargets && {

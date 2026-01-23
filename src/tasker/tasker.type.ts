@@ -4,8 +4,12 @@ import { ExporterTasker } from './exporter.tasker';
 import { MailerTasker } from './mailer.tasker';
 
 export const TaskerType = {
-  ExampleTasker,
-  ImporterTasker,
-  ExporterTasker,
-  MailerTasker,
+  // ExampleTasker,
+  // ImporterTasker,
+  // ExporterTasker,
+  // MailerTasker,
+  exporterTasker: ExporterTasker,
+  importerTasker: ImporterTasker,
+  exampleTasker: ExampleTasker,
+  mailerTasker: MailerTasker,
 };

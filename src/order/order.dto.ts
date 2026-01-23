@@ -59,4 +59,12 @@ export class OrderExportDTO {
    */
   @IsString()
   timezone: string;
+
+  /**
+   * receive permission memberIds
+   */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  memberIds?: string[];
 }

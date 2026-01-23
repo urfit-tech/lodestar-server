@@ -13,7 +13,7 @@ import {
   OrderDiscountExportJob,
 } from '~/tasker/exporter.tasker';
 import { Queue } from 'bull';
-import { Local } from '~/decorator';
+import { Local, GetPermissions } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
 import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
@@ -22,6 +22,7 @@ import { PermissionGuard } from '~/auth/permission.guard';
 const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SALES_RECORDS_NORMAL,
   PermissionSet.SALES_RECORDS_ADMIN,
+  PermissionSet.READ_GROUP_SALES_ALL,
 ];
 
 @UseGuards(AuthGuard, PermissionGuard)
@@ -34,7 +35,10 @@ export class OrderController {
     private authService: AuthService,
     private orderService: OrderService,
     @InjectQueue(ExporterTasker.name) private readonly exportQueue: Queue,
-  ) {}
+  ) {
+    // FIXME: delete
+    console.log('📦 OrderController 載入完成');
+  }
 
   @Put('transfer-received-order')
   async transferOrder(@Body() dto: TransferReceivedOrderBodyDTO) {
@@ -65,14 +69,28 @@ export class OrderController {
   }
 
   @Post('export')
-  @Permissions(...ORDER_PERMISSION_GROUP_ADMIN)
-  public async exportOrderLogs(@Local('member') member: JwtMember, @Body() metadata: OrderExportDTO): Promise<void> {
-    const { appId, memberId: invokerMemberId } = member;
+  @Permissions(...ORDER_PERMISSION_GROUP_ADMIN, PermissionSet.READ_GROUP_SALES_ALL)
+  public async exportOrderLogs(
+    @Local('member') member: JwtMember,
+    @Body() metadata: OrderExportDTO,
+    @GetPermissions() Permissions: PermissionSet[],
+  ): Promise<void> {
+    console.log('🟡 後端收到的 export payload:', metadata);
+    console.log('🧩 member JWT payload:', member);
+    console.log('✅ 當前 permissions:', Permissions);
+    const isGroupOnly =
+      Permissions.includes(PermissionSet.READ_GROUP_SALES_ALL) &&
+      !Permissions.includes(PermissionSet.SALES_RECORDS_ADMIN);
+    if (isGroupOnly) {
+      const groupMemberIds = await this.authService.getGroupMemberIds(member.appId, member.memberId);
+      metadata.memberIds = groupMemberIds;
+      console.log('💡 後端 override memberIds 為同組：', groupMemberIds);
+    }
 
     const { exportMime, ...conditions } = metadata;
     const exportJob: OrderLogExportJob = {
-      appId,
-      invokerMemberId: invokerMemberId,
+      appId: member.appId,
+      invokerMemberId: member.appId,
       category: 'orderLog',
       conditions,
       exportMime,

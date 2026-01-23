@@ -1,4 +1,4 @@
-import { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import bcrypt from 'bcrypt';
 import { sign, verify as jwtVerify } from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
@@ -22,6 +22,7 @@ import { APIException } from '~/api.excetion';
 import { AppCache } from '~/app/app.type';
 
 import { AuthAuditLog } from './entity/auth_audit_log.entity';
+import { MemberPermissionGroup } from '~/member/entity/member_permission_group.entity';
 import { JwtDTO } from './auth.dto';
 import { CrossServerTokenDTO, LoginStatus, RefreshStatus } from './auth.type';
 import { AuthInfrastructure } from './auth.infra';
@@ -188,6 +189,8 @@ export class AuthService {
     const metadata = await this.memberInfra.getLoginMemberMetadata(memberId, manager);
     const { phones, oauths, permissions } = metadata.pop();
     const loggedInMembers = logginedInMembersInSession.filter(({ id }) => id !== memberId);
+    // FIXME: delete
+    this.logger.log('[buildJwtPayload] 權限 metadata:', metadata);
 
     const plain: JwtDTO = {
       sub: memberId,
@@ -230,6 +233,8 @@ export class AuthService {
         'x-hasura-org-id': payload?.orgId || '',
       },
     };
+    // FIXME: delete
+    this.logger.log('[signJWT] JWT payload:', claim);
     return sign(claim, this.hasuraJwtSecret, { expiresIn });
   }
 
@@ -326,5 +331,24 @@ export class AuthService {
     authAuditLog.target = userMemberId;
     authAuditLog.metadata = { reason: purpose };
     await this.authInfra.insertAuthAuditLog(authAuditLog, this.entityManager);
+  }
+  // FIXME: 設定後端確認權限組
+  async getGroupMemberIds(appId: string, memberId: string): Promise<string[]> {
+    const memberGroups = await this.entityManager.find(MemberPermissionGroup, {
+      where: { memberId },
+    });
+
+    if (memberGroups.length === 0) return [];
+
+    const permissionGroupIds = memberGroups.map(g => g.permissionGroupId);
+
+    const groupMembers = await this.entityManager.find(MemberPermissionGroup, {
+      where: {
+        permissionGroupId: In(permissionGroupIds),
+        // appId,
+      },
+    });
+
+    return groupMembers.map(m => m.memberId);
   }
 }
