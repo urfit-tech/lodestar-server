@@ -4,6 +4,7 @@ import { createHash } from 'crypto';
 import { EntityManager } from 'typeorm';
 import UAParser from 'ua-parser-js';
 import { AppCache } from '~/app/app.type';
+import { Member } from '~/member/entity/member.entity';
 import { MemberDevice } from '~/member/entity/member_device.entity';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { DeviceInfrastructure } from './device.infra';
@@ -157,6 +158,13 @@ export default class DeviceService {
     const devicesToBeLoggedOut = loginedDevices.slice(0, loginedDevices.length - loginLimit + 1);
     const devicesToBeLoggedOutIds = devicesToBeLoggedOut.map(v => v.id);
     await this.deviceInfra.logoutMemberDevices(devicesToBeLoggedOutIds, this.entityManager);
+
+    await this.memberInfra.insertMemberAuditLog(
+      [{ id: memberId } as Member],
+      JSON.stringify({ device_ids: devicesToBeLoggedOutIds, logout_type: 'forced' }),
+      'logout',
+      this.entityManager,
+    );
   }
 
   async expireFingerPrintId(fingerprintId: string): Promise<void> {
@@ -165,6 +173,13 @@ export default class DeviceService {
       const device = await memberDeviceRepo.findOneBy({ fingerprintId });
       device.isLogin = false;
       await manager.save(device);
+
+      await this.memberInfra.insertMemberAuditLog(
+        [{ id: device.memberId } as Member],
+        JSON.stringify({ fingerprint_id: fingerprintId, logout_type: 'expired' }),
+        'logout',
+        manager,
+      );
     };
     return cb(this.entityManager);
   }
