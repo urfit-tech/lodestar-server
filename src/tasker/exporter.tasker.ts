@@ -24,6 +24,7 @@ import { ProductInfrastructure } from '~/product/product.infra';
 import { EmailService } from '~/mailer/email/email.service';
 import { AppInfrastructure } from '~/app/app.infra';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
+import { TableLogService } from '~/table_log/table_log.service';
 
 dayjs.extend(timezone);
 dayjs.tz.setDefault('Asia/Taipei');
@@ -81,6 +82,7 @@ export class ExporterTasker extends Tasker {
         PaymentInfrastructure,
         SharingCodeInfrastructure,
         ProductInfrastructure,
+        TableLogService,
       ],
     };
   }
@@ -93,6 +95,7 @@ export class ExporterTasker extends Tasker {
     private readonly orderService: OrderService,
     private readonly memberInfra: MemberInfrastructure,
     private readonly appInfra: AppInfrastructure,
+    private readonly tableLogService: TableLogService,
     // @InjectQueue(MailerTasker.name) private readonly mailerQueue: Queue,
     @InjectQueue('mailer') private readonly mailerQueue: Queue,
     @InjectEntityManager() private readonly entityManager: EntityManager,
@@ -134,6 +137,19 @@ export class ExporterTasker extends Tasker {
       const signedDownloadUrl = await this.storageService.getSignedUrlForDownloadStorage(fileKey, 7 * 24 * 60 * 60);
 
       await this.memberInfra.insertMemberAuditLog(invokers, signedDownloadUrl, 'download', this.entityManager);
+
+      await this.tableLogService.insert(
+        invokerMemberId,
+        `${category}_export`,
+        {
+          new: {
+            file_key: fileKey,
+            category,
+            download_url: signedDownloadUrl,
+          },
+        },
+        this.entityManager,
+      );
 
       let subject;
       switch (job.data.category) {

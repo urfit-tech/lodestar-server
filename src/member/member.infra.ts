@@ -441,13 +441,27 @@ export class MemberInfrastructure {
     found.type = type;
     found.options = options;
 
-    return memberDeviceRepo.save(found);
+    const savedDevice = await memberDeviceRepo.save(found);
+
+    await this.insertMemberAuditLog(
+      [{ id: memberId } as Member],
+      JSON.stringify({
+        ip_address: ipAddress,
+        browser,
+        os_name: osName,
+        fingerprint_id: fingerPrintId,
+      }),
+      'login',
+      manager,
+    );
+
+    return savedDevice;
   }
 
   async insertMemberAuditLog(
     invokers: Array<Member>,
     target: string,
-    action: 'upload' | 'download',
+    action: 'upload' | 'download' | 'login' | 'logout',
     manager: EntityManager,
   ) {
     const memberAuditLogRepo = manager.getRepository(MemberAuditLog);

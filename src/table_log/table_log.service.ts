@@ -6,6 +6,7 @@ import { PgTrigger, TableOperation } from './table_log.type';
 import CheckTableTrigger from './sql/check_table_trigger';
 import CreateOrReplaceFunctionTableLog from './sql/create_or_replace_func_table';
 import CreateOrReplaceTrigger from './sql/create_or_replace_trigger';
+import { TableLog } from './table_log.entity';
 
 @Injectable()
 export class TableLogService {
@@ -34,5 +35,23 @@ export class TableLogService {
   ): Promise<void> {
     const manager = entityManager || this.entityManager;
     await manager.query(CreateOrReplaceTrigger(tableName, operation));
+  }
+
+  public async insert(
+    memberId: string,
+    tableName: string,
+    data: { old?: any; new?: any },
+    entityManager?: EntityManager,
+  ): Promise<TableLog> {
+    const manager = entityManager || this.entityManager;
+    const tableLogRepo = manager.getRepository(TableLog);
+
+    const log = new TableLog();
+    log.memberId = memberId;
+    log.tableName = tableName;
+    log.old = data.old || null;
+    log.new = data.new || null;
+
+    return tableLogRepo.save(log);
   }
 }
