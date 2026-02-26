@@ -80,7 +80,7 @@ export class ImporterTasker extends Tasker {
         const { checksumETag, fileName } = fileInfo;
 
         try {
-          const insertResult = await this.processFiles(appId, fileName, checksumETag, category);
+          const insertResult = await this.processFiles(appId, fileName, checksumETag, category, invokerMemberId);
           await this.storageService.deleteFileAtBucketStorage({
             Key: `import/${appId}/${fileName}`,
           });
@@ -136,6 +136,7 @@ export class ImporterTasker extends Tasker {
     fileName: string,
     checksumETag: string,
     category: ImportCategory,
+    invokerMemberId?: string,
   ): Promise<MemberImportResultDTO | CoinImportResultDTO> {
     const { ContentType, Body, ETag } = await this.storageService.getFileFromBucketStorage({
       Key: `import/${appId}/${fileName}`,
@@ -146,7 +147,7 @@ export class ImporterTasker extends Tasker {
     }
     const uint8Array = await Body.transformToByteArray();
 
-    return this.importToDatabase(appId, category, ContentType, Buffer.from(uint8Array));
+    return this.importToDatabase(appId, category, ContentType, Buffer.from(uint8Array), invokerMemberId);
   }
 
   private importToDatabase(
@@ -154,6 +155,7 @@ export class ImporterTasker extends Tasker {
     category: ImportCategory,
     mimeType: string,
     rawBin: Buffer,
+    invokerMemberId?: string,
   ): Promise<MemberImportResultDTO | CoinImportResultDTO> {
     let rawRows: Array<Record<string, any>> = [];
     let data: XLSX.WorkBook;
@@ -173,7 +175,7 @@ export class ImporterTasker extends Tasker {
     rawRows = XLSX.utils.sheet_to_json(Sheets[SheetNames[0]], { defval: '', raw: false });
     switch (category) {
       case 'member':
-        return this.memberService.processImportFromFile(appId, rawRows);
+        return this.memberService.processImportFromFile(appId, rawRows, invokerMemberId);
       case 'coin':
         return this.coinService.processImportFromFile(appId, rawRows);
     }
