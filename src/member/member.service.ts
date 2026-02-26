@@ -399,8 +399,8 @@ export class MemberService {
     await this.memberInfra.updateMemberLoginDate(memberId, loginedAt, entityManager);
   }
 
-  async deleteMemberByEmail(appId: string, email: string): Promise<DeleteResult> {
-    return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager);
+  async deleteMemberByEmail(appId: string, email: string, executorMemberId?: string): Promise<DeleteResult> {
+    return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager, executorMemberId);
   }
 
   async logMemberDeletionEventInfo(

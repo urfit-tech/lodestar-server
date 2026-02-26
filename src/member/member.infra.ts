@@ -690,8 +690,17 @@ export class MemberInfrastructure {
     return queryBuilder;
   }
 
-  public async deleteMemberByEmail(appId: string, email: string, entityManager: EntityManager): Promise<DeleteResult> {
+  public async deleteMemberByEmail(
+    appId: string,
+    email: string,
+    entityManager: EntityManager,
+    executorMemberId?: string,
+  ): Promise<DeleteResult> {
     return entityManager.transaction(async manager => {
+      if (executorMemberId) {
+        const sessionUser = JSON.stringify({ 'x-hasura-user-id': executorMemberId });
+        await manager.query(`SET LOCAL "hasura.user" = '${sessionUser}'`);
+      }
       const memberRepo = manager.getRepository(Member);
       const memberCategoryRepo = manager.getRepository(MemberCategory);
       const memberTagRepo = manager.getRepository(MemberTag);

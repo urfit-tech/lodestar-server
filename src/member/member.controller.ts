@@ -215,7 +215,7 @@ export class MemberController {
     }
 
     try {
-      deleteResult = await this.memberService.deleteMemberByEmail(appId, email);
+      deleteResult = await this.memberService.deleteMemberByEmail(appId, email, memberId);
       response = { code: 'SUCCESS', message: deleteResult };
     } catch (error) {
       response = { code: 'ERROR', message: error.message };
