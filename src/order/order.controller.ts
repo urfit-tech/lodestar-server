@@ -37,7 +37,7 @@ export class OrderController {
   ) {}
 
   @Put('transfer-received-order')
-  async transferOrder(@Body() dto: TransferReceivedOrderBodyDTO) {
+  async transferOrder(@Local('member') member: JwtMember, @Body() dto: TransferReceivedOrderBodyDTO) {
     const { token, memberId } = dto;
     let transferOrderToken;
 
@@ -49,7 +49,7 @@ export class OrderController {
 
     const { orderLogId } = transferOrderToken;
     const transferOrderDTO: TransferReceivedOrderDTO = { memberId, orderId: orderLogId };
-    const updateResult = await this.orderService.transferReceivedOrder(transferOrderDTO);
+    const updateResult = await this.orderService.transferReceivedOrder(transferOrderDTO, member?.memberId);
 
     return { code: 'SUCCESS', message: 'transfer order successfully', result: updateResult };
   }
