@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Post, Put, UseGuards, Request } from '@nestjs/common';
+import { InjectEntityManager } from '@nestjs/typeorm';
 import { InjectQueue } from '@nestjs/bull';
+import { EntityManager } from 'typeorm';
 import { AuthGuard } from '~/auth/auth.guard';
 import { AuthService } from '~/auth/auth.service';
 import { APIException } from '~/api.excetion';
@@ -34,6 +36,7 @@ export class OrderController {
     private authService: AuthService,
     private orderService: OrderService,
     @InjectQueue(ExporterTasker.name) private readonly exportQueue: Queue,
+    @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
 
   @Put('transfer-received-order')
@@ -49,7 +52,7 @@ export class OrderController {
 
     const { orderLogId } = transferOrderToken;
     const transferOrderDTO: TransferReceivedOrderDTO = { memberId, orderId: orderLogId };
-    const updateResult = await this.orderService.transferReceivedOrder(transferOrderDTO, member?.memberId);
+    const updateResult = await this.orderService.transferReceivedOrder(transferOrderDTO, this.entityManager, member?.memberId);
 
     return { code: 'SUCCESS', message: 'transfer order successfully', result: updateResult };
   }

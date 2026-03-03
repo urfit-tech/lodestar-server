@@ -40,7 +40,7 @@ export class OrderService {
     private readonly paymentInfra: PaymentInfrastructure,
     @InjectEntityManager() private readonly entityManager: EntityManager,
   ) {}
-  async transferReceivedOrder(dto: TransferReceivedOrderDTO, executorMemberId?: string) {
+  async transferReceivedOrder(dto: TransferReceivedOrderDTO, manager: EntityManager, executorMemberId?: string) {
     const { orderId, memberId } = dto;
     if (!memberId) {
       throw new APIException({ code: 'E_NULL_MEMBER', message: 'memberId is null or undefined' });
@@ -49,19 +49,15 @@ export class OrderService {
       throw new APIException({ code: 'E_NULL_ORDER', message: 'orderId is null or undefined' });
     }
     try {
-      if (executorMemberId) {
-        return await this.entityManager.transaction(async (txManager) => {
+      return await manager.transaction(async txManager => {
+        if (executorMemberId) {
           const sessionUser = JSON.stringify({ 'x-hasura-user-id': executorMemberId });
           await txManager.query(`SET LOCAL "hasura.user" = '${sessionUser}'`);
-          return await txManager.getRepository(OrderLog).update(orderId, {
-            memberId: memberId,
-            transferredAt: new Date(),
-          });
+        }
+        return await txManager.getRepository(OrderLog).update(orderId, {
+          memberId: memberId,
+          transferredAt: new Date(),
         });
-      }
-      return await this.entityManager.getRepository(OrderLog).update(orderId, {
-        memberId: memberId,
-        transferredAt: new Date(),
       });
     } catch {
       throw new APIException({ code: 'E_DB_UPDATE', message: 'data update failed' });
