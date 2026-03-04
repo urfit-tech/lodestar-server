@@ -168,7 +168,11 @@ export class MemberService {
     return cb(this.entityManager);
   }
 
-  async processImportFromFile(appId: string, rawRows: Array<Record<string, any>>): Promise<MemberImportResultDTO> {
+  async processImportFromFile(
+    appId: string,
+    rawRows: Array<Record<string, any>>,
+    invokerMemberId?: string,
+  ): Promise<MemberImportResultDTO> {
     const [headerInfos, headerErrors] = new MemberCsvHeaderMapping().deserializeFromRaw(rawRows.shift());
     if (headerErrors.length > 0) {
       return {
@@ -186,6 +190,11 @@ export class MemberService {
       membersToImport.map(([member]) => {
         return this.entityManager.transaction(async manager => {
           try {
+            if (invokerMemberId) {
+              const sessionUser = JSON.stringify({ 'x-hasura-user-id': invokerMemberId });
+              await manager.query(`SET LOCAL "hasura.user" = '${sessionUser}'`);
+            }
+
             const memberRepo = manager.getRepository(Member);
             const memberPropertyRepo = manager.getRepository(MemberProperty);
             const memberCategoryRepo = manager.getRepository(MemberCategory);
@@ -399,8 +408,8 @@ export class MemberService {
     await this.memberInfra.updateMemberLoginDate(memberId, loginedAt, entityManager);
   }
 
-  async deleteMemberByEmail(appId: string, email: string): Promise<DeleteResult> {
-    return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager);
+  async deleteMemberByEmail(appId: string, email: string, executorMemberId?: string): Promise<DeleteResult> {
+    return this.memberInfra.deleteMemberByEmail(appId, email, this.entityManager, executorMemberId);
   }
 
   async logMemberDeletionEventInfo(

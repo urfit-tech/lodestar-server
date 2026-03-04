@@ -70,6 +70,24 @@ export class InvoiceService {
     invoiceGatewayId: string,
     invoiceInfo: InvoiceInfo,
     manager: EntityManager,
+    options?: { paymentNo?: string; executorMemberId?: string },
+  ) {
+    const { paymentNo, executorMemberId } = options || {};
+    return manager.transaction(async txManager => {
+      if (executorMemberId) {
+        const sessionUser = JSON.stringify({ 'x-hasura-user-id': executorMemberId });
+        await txManager.query(`SET LOCAL "hasura.user" = '${sessionUser}'`);
+      }
+      return this._issueInvoiceDirectly(appId, orderId, invoiceGatewayId, invoiceInfo, txManager, paymentNo);
+    });
+  }
+
+  private async _issueInvoiceDirectly(
+    appId: string,
+    orderId: string,
+    invoiceGatewayId: string,
+    invoiceInfo: InvoiceInfo,
+    manager: EntityManager,
     paymentNo?: string,
   ) {
     try {
@@ -320,13 +338,20 @@ export class InvoiceService {
     invoiceNumber: string,
     invalidReason: string,
     manager: EntityManager,
+    executorMemberId?: string,
   ) {
     const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
 
     const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
     const result = await this.ezpayClient.revoke(ezpayCredentials, { invoiceNumber, invalidReason });
     if (result.Status === 'SUCCESS') {
-      await this.updateInvoiceRevokedAt(invoiceNumber, manager);
+      await manager.transaction(async txManager => {
+        if (executorMemberId) {
+          const sessionUser = JSON.stringify({ 'x-hasura-user-id': executorMemberId });
+          await txManager.query(`SET LOCAL "hasura.user" = '${sessionUser}'`);
+        }
+        await this.updateInvoiceRevokedAt(invoiceNumber, txManager);
+      });
     }
 
     return result;

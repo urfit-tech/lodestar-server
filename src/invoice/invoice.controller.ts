@@ -2,6 +2,8 @@ import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { AuthGuard } from '~/auth/auth.guard';
+import { JwtMember } from '~/auth/auth.dto';
+import { Local } from '~/decorator';
 import { IssueInvoiceBodyDTO, RevokeInvoiceBodyDTO, SearchInvoiceBodyDTO } from './invoice.dto';
 import { InvoiceService } from './invoice.service';
 
@@ -17,7 +19,7 @@ export class InvoiceController {
   ) {}
 
   @Post('issue')
-  async issueInvoice(@Body() dto: IssueInvoiceBodyDTO) {
+  async issueInvoice(@Local('member') member: JwtMember, @Body() dto: IssueInvoiceBodyDTO) {
     const { invoiceGatewayId, invoiceInfo, appId, orderId } = dto;
 
     const result = await this.invoiceService.issueInvoiceDirectly(
@@ -26,6 +28,7 @@ export class InvoiceController {
       invoiceGatewayId,
       invoiceInfo,
       this.entityManager,
+      { executorMemberId: member?.memberId },
     );
     return { code: 'SUCCESS', message: 'issue invoice successfully', result };
   }
@@ -45,7 +48,7 @@ export class InvoiceController {
   }
 
   @Post('revoke')
-  async revokeInvoice(@Body() dto: RevokeInvoiceBodyDTO) {
+  async revokeInvoice(@Local('member') member: JwtMember, @Body() dto: RevokeInvoiceBodyDTO) {
     const { invoiceNumber, invoiceGatewayId, appId, invalidReason } = dto;
 
     const result = await this.invoiceService.revokeInvoice(
@@ -54,6 +57,7 @@ export class InvoiceController {
       invoiceNumber,
       invalidReason,
       this.entityManager,
+      member?.memberId,
     );
     return { code: 'SUCCESS', message: 'revoke invoice successfully', result };
   }
