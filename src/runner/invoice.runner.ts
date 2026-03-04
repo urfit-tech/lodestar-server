@@ -55,7 +55,7 @@ export class InvoiceRunner extends Runner {
                 paymentLog.invoiceGatewayId,
                 invoice,
                 this.entityManager,
-                paymentNo,
+                { paymentNo },
               );
             } catch (error) {
               errors.push({ error: error.message });
