@@ -28,8 +28,7 @@ export class InvoiceController {
       invoiceGatewayId,
       invoiceInfo,
       this.entityManager,
-      undefined,
-      member?.memberId,
+      { executorMemberId: member?.memberId },
     );
     return { code: 'SUCCESS', message: 'issue invoice successfully', result };
   }

@@ -70,9 +70,9 @@ export class InvoiceService {
     invoiceGatewayId: string,
     invoiceInfo: InvoiceInfo,
     manager: EntityManager,
-    paymentNo?: string,
-    executorMemberId?: string,
+    options?: { paymentNo?: string; executorMemberId?: string },
   ) {
+    const { paymentNo, executorMemberId } = options || {};
     return manager.transaction(async txManager => {
       if (executorMemberId) {
         const sessionUser = JSON.stringify({ 'x-hasura-user-id': executorMemberId });
