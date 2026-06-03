@@ -14,6 +14,7 @@ import {
   UploadPartCommand,
   CompleteMultipartUploadCommand,
   CompletedMultipartUpload,
+  HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
@@ -94,7 +95,31 @@ export class StorageService {
       UploadId,
       MultipartUpload,
     });
-    return this.s3(this.awsS3RegionStorage).send(command);
+    try {
+      return await this.s3(this.awsS3RegionStorage).send(command);
+    } catch (error) {
+      // S3 deletes the UploadId once a complete succeeds, so a retried request
+      // (e.g. the client never received the first response) throws NoSuchUpload
+      // even though the object is already assembled. Treat that as success
+      // instead of surfacing a misleading 500 that the caller retries forever.
+      if ((error as { name?: string })?.name === 'NoSuchUpload' && (await this.objectExistsInStorage(Key))) {
+        return {
+          Bucket: this.awsS3BucketStorage,
+          Key,
+          Location: `https://${this.awsS3BucketStorage}.s3.${this.awsS3RegionStorage}.amazonaws.com/${Key}`,
+        };
+      }
+      throw error;
+    }
+  }
+
+  private async objectExistsInStorage(Key: string): Promise<boolean> {
+    try {
+      await this.s3(this.awsS3RegionStorage).send(new HeadObjectCommand({ Bucket: this.awsS3BucketStorage, Key }));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   getSignedUrlForUploadPartStorage(
