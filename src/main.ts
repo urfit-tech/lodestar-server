@@ -13,6 +13,7 @@ import { RunnerModule } from './runner/runner.module';
 import { RunnerType } from './runner/runner.type';
 import { TaskerModule } from './tasker/tasker.module';
 import { TaskerType } from './tasker/tasker.type';
+import { startTaskerWatchdog } from './tasker/watchdog';
 import { ApiExceptionFilter } from './api.filter';
 import { ApplicationModule } from './application.module';
 import { ShutdownService } from './utility/shutdown/shutdown.service';
@@ -48,6 +49,7 @@ async function bootstrap() {
         }),
         { bufferLogs: true },
       );
+      startTaskerWatchdog();
     } else {
       throw new Error(`Unknown WORKER_NAME env: ${workerName}`);
     }
