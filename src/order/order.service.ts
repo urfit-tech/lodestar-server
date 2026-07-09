@@ -27,6 +27,7 @@ import { ProductOwner } from '~/product/product.type';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
 import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { PaymentMethod } from '~/payment/payment_method.entity';
+import { buildPaymentMethodDisplayMap, resolvePaymentMethodDisplay } from './order.export.helper';
 
 dayjs.extend(timezone);
 @Injectable()
@@ -348,6 +349,8 @@ export class OrderService {
       };
     };
 
+    const paymentMethodDisplayMap = buildPaymentMethodDisplayMap(paymentMethods);
+
     return orderLogs
       .map(each => {
         const csvRawOrderLog = new CsvRawOrderLog();
@@ -360,28 +363,7 @@ export class OrderService {
         csvRawOrderLog.orderLogStatus = each.status;
         csvRawOrderLog.paymentLogGateway = getValue(each.paymentModel, 'gateway');
         csvRawOrderLog.paymentLogDetails = each.paymentLogs
-          .map(payment => {
-            const methodName = payment.method;
-            if (typeof methodName !== 'string') {
-              return methodName ?? '';
-            }
-            console.log('[DEBUG] RAW payment.method:', {
-              no: payment.no,
-              method: methodName,
-              type: typeof methodName,
-              length: methodName?.length,
-              charCodes: methodName ? Array.from(methodName).map(c => c.charCodeAt(0)) : [],
-            });
-            const paymentMethod = paymentMethods.find(
-              pm => typeof pm.name === 'string' && pm.name.toLowerCase() === methodName.toLowerCase(),
-            );
-            console.log('[DEBUG] Matching result:', {
-              methodName,
-              found: !!paymentMethod,
-              displayName: paymentMethod?.displayName,
-            });
-            return paymentMethod ? paymentMethod.displayName : methodName || payment.method;
-          })
+          .map(payment => resolvePaymentMethodDisplay(payment.method, paymentMethodDisplayMap))
           .join('\n');
         csvRawOrderLog.orderCountry = `${getValue(each.options, 'country')} ${getValue(each.options, 'countryCode')}`;
         csvRawOrderLog.orderLogCreatedAt = dateFormatter(each.createdAt);
