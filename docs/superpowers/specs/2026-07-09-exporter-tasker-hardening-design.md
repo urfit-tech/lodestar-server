@@ -61,7 +61,7 @@ Branch: fix/exporter-tasker-hang-hardening
 ## 風險 / 回滾
 
 - A 為純效能重構，行為不變，風險低；以單元測試把關輸出一致性。
-- B2 誤殺風險由 120s 門檻與 env 可調降低；若上線後發現誤殺，調高 `TASKER_WATCHDOG_TIMEOUT_MS` 即可，或以 env 關閉。
+- B2 誤殺風險由 120s 門檻與 env 可調降低；若上線後發現誤殺，調高 `TASKER_WATCHDOG_TIMEOUT_MS`（例如設一個很大的值即可實質停用 watchdog）。注意：目前 `Number(env) || 120000` 的解析會把 `0` 視為未設而落回預設，**設 `0` 無法關閉** watchdog——要停用請改設很大的值。
 - 皆為 lodestar-server 單一 repo，透過既有 deploy pipeline 上線；無 infra/terraform 變更。
 
 ## 不做（YAGNI）
