@@ -16,4 +16,4 @@ RUN yarn build
 
 EXPOSE 8081
 
-CMD ["yarn", "start"]
+CMD ["node", "dist/src/main"]
