@@ -27,7 +27,7 @@ import { ProductOwner } from '~/product/product.type';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
 import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { PaymentMethod } from '~/payment/payment_method.entity';
-import { buildPaymentMethodDisplayMap, resolvePaymentMethodDisplay } from './order.export.helper';
+import { buildPaymentMethodDisplayMap, firstMatchMap, resolvePaymentMethodDisplay } from './order.export.helper';
 
 dayjs.extend(timezone);
 @Injectable()
@@ -293,6 +293,10 @@ export class OrderService {
       return defaultTo(get(object, key), '');
     };
 
+    const couponById = new Map(coupons.map(c => [c.id, c]));
+    const sharingCodeByPath = firstMatchMap(sharingCodes, sc => sc.path);
+    const productOwnerByProductId = firstMatchMap(productOwners, o => o.productId);
+
     const orderProductAggregator = (orderProducts: Array<OrderProduct>) => {
       let orderProductCount = 0;
       let orderProductTotalPrice = 0;
@@ -302,8 +306,7 @@ export class OrderService {
       const sharingNote: Array<string> = [];
 
       for (const orderProduct of orderProducts) {
-        const productOwner =
-          productOwners.find(owner => owner.productId === orderProduct.product.target)?.memberName || '';
+        const productOwner = productOwnerByProductId.get(orderProduct.product?.target)?.memberName || '';
         orderProductCount += (getValue(orderProduct.options, 'quantity') as number) || 0;
         orderProductTotalPrice += parseFloat(orderProduct.price as any);
         name.push(
@@ -312,9 +315,7 @@ export class OrderService {
           )}`,
         );
         sharingCode.push(getValue(orderProduct.options, 'sharingCode'));
-        sharingNote.push(
-          sharingCodes.find(sharingCode => sharingCode.path === getValue(orderProduct.options, 'from'))?.note,
-        );
+        sharingNote.push(sharingCodeByPath.get(getValue(orderProduct.options, 'from') as string)?.note);
         if (getValue(orderProduct.options, 'type') === 'gift') {
           gift.push(orderProduct.name);
         }
@@ -335,7 +336,7 @@ export class OrderService {
 
       for (const orderDiscount of orderDiscounts) {
         orderDiscountTotalPrice += parseFloat(orderDiscount.price as any);
-        const coupon = coupons.find(coupon => coupon.id === orderDiscount.target);
+        const coupon = couponById.get(orderDiscount.target);
         if (coupon) {
           name.push(`${orderDiscount.name} $${orderDiscount.price} - ${coupon.couponCode.code}`);
         } else {
@@ -450,6 +451,7 @@ export class OrderService {
     const getValue = (object: object, key: string) => {
       return defaultTo(get(object, key), '');
     };
+    const productOwnerByProductId = firstMatchMap(productOwners, o => o.productId);
     return orderProducts
       .map(each => {
         const csvRawOrderProduct = new CsvRawOrderProduct();
@@ -460,8 +462,7 @@ export class OrderService {
         )}`;
         csvRawOrderProduct.orderLogCreatedAt = dateFormatter(each.order.createdAt);
         csvRawOrderProduct.paymentLogPaidAt = each.order.lastPaidAt ? dateFormatter(each.order.lastPaidAt) : '';
-        csvRawOrderProduct.productOwner =
-          productOwners.find(owner => owner.productId === each.product.target)?.memberName || '';
+        csvRawOrderProduct.productOwner = productOwnerByProductId.get(each.product.target)?.memberName || '';
         csvRawOrderProduct.productType = each.product.type;
         csvRawOrderProduct.orderProductId = each.productId;
         csvRawOrderProduct.orderProductName = each.name;
@@ -520,13 +521,6 @@ export class OrderService {
       this.entityManager,
     );
     const paymentMethods = await this.paymentInfra.getAllPaymentMethods(this.entityManager);
-    console.log(
-      '[DEBUG] PaymentMethods loaded:',
-      JSON.stringify({
-        count: paymentMethods.length,
-        methods: paymentMethods,
-      }),
-    );
 
     const headerInfos = await new OrderLogCsvHeaderMapping().createHeader();
     return [

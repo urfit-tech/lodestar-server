@@ -109,6 +109,7 @@ describe('OrderService', () => {
         member.email = 'test@mail.com';
         orderProduct.name = 'product';
         orderProduct.price = 100;
+        orderProduct.product = new Product();
         orderLog.id = 'testOrderId';
         orderLog.status = 'SUCCESS';
         orderLog.createdAt = new Date();

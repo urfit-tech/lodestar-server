@@ -1,4 +1,30 @@
-import { buildPaymentMethodDisplayMap, resolvePaymentMethodDisplay } from './order.export.helper';
+import { buildPaymentMethodDisplayMap, firstMatchMap, resolvePaymentMethodDisplay } from './order.export.helper';
+
+describe('firstMatchMap', () => {
+  it('keeps the FIRST entry on duplicate keys (matches Array.find first-match semantics)', () => {
+    const first = { id: 'a', v: 1 };
+    const second = { id: 'a', v: 2 };
+    const map = firstMatchMap([first, second], x => x.id);
+    expect(map.get('a')).toBe(first);
+    expect(map.get('a')?.v).toBe(1);
+    expect(map.size).toBe(1);
+  });
+
+  it('indexes distinct keys normally', () => {
+    const a = { id: 'a', v: 1 };
+    const b = { id: 'b', v: 2 };
+    const map = firstMatchMap([a, b], x => x.id);
+    expect(map.get('a')).toBe(a);
+    expect(map.get('b')).toBe(b);
+    expect(map.size).toBe(2);
+  });
+
+  it('returns undefined for a missing key and an empty map for empty input', () => {
+    const map = firstMatchMap([{ id: 'a', v: 1 }], x => x.id);
+    expect(map.get('missing')).toBeUndefined();
+    expect(firstMatchMap([] as Array<{ id: string }>, x => x.id).size).toBe(0);
+  });
+});
 
 describe('order export payment method helpers', () => {
   const methods = [

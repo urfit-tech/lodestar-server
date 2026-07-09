@@ -1,3 +1,14 @@
+export function firstMatchMap<T, K>(items: Array<T>, keyOf: (item: T) => K): Map<K, T> {
+  const map = new Map<K, T>();
+  for (const item of items) {
+    const key = keyOf(item);
+    if (!map.has(key)) {
+      map.set(key, item);
+    }
+  }
+  return map;
+}
+
 export function buildPaymentMethodDisplayMap(
   paymentMethods: Array<{ name: unknown; displayName?: string }>,
 ): Map<string, string | undefined> {
