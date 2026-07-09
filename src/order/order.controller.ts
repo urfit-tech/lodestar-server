@@ -20,6 +20,7 @@ import { JwtMember } from '~/auth/auth.dto';
 import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { PermissionGuard } from '~/auth/permission.guard';
+import { EXPORT_JOB_TIMEOUT_MS } from './order.export.constants';
 
 const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SALES_RECORDS_NORMAL,
@@ -80,7 +81,11 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
+    await this.exportQueue.add(exportJob, {
+      removeOnComplete: true,
+      removeOnFail: true,
+      timeout: EXPORT_JOB_TIMEOUT_MS,
+    });
   }
 
   @Post('export/products')
@@ -98,7 +103,11 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
+    await this.exportQueue.add(exportJob, {
+      removeOnComplete: true,
+      removeOnFail: true,
+      timeout: EXPORT_JOB_TIMEOUT_MS,
+    });
   }
 
   @Post('export/discounts')
@@ -116,6 +125,10 @@ export class OrderController {
       conditions,
       exportMime,
     };
-    await this.exportQueue.add(exportJob, { removeOnComplete: true, removeOnFail: true });
+    await this.exportQueue.add(exportJob, {
+      removeOnComplete: true,
+      removeOnFail: true,
+      timeout: EXPORT_JOB_TIMEOUT_MS,
+    });
   }
 }
