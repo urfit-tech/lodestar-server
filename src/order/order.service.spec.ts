@@ -12,6 +12,7 @@ import { CouponInfrastructure } from '~/coupon/coupon.infra';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
 import { SharingCodeInfrastructure } from '~/sharingCode/sharingCode.infra';
 import { ProductInfrastructure } from '~/product/product.infra';
+import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { OrderLog } from './entity/order_log.entity';
 import { OrderProduct } from './entity/order_product.entity';
 import { PaymentLog } from '~/payment/payment_log.entity';
@@ -51,6 +52,10 @@ describe('OrderService', () => {
     getProductOwnerByProducts: jest.fn(),
   };
 
+  const mockPaymentInfra = {
+    getAllPaymentMethods: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
@@ -75,6 +80,10 @@ describe('OrderService', () => {
         {
           provide: ProductInfrastructure,
           useValue: mockProductInfra,
+        },
+        {
+          provide: PaymentInfrastructure,
+          useValue: mockPaymentInfra,
         },
         {
           provide: getEntityManagerToken(),
@@ -110,7 +119,7 @@ describe('OrderService', () => {
         orderLog.member = member;
         mockMemberInfra.getMembersByConditions.mockReturnValueOnce([]);
         const headerInfos = await new OrderLogCsvHeaderMapping().createHeader();
-        const exportedRawRows = await service.orderLogToRawCsv(headerInfos, [orderLog], [], [], []);
+        const exportedRawRows = await service.orderLogToRawCsv(headerInfos, [orderLog], [], [], [], []);
         expect(exportedRawRows.length).toBe(1);
       });
     });

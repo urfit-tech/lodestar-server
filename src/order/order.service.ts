@@ -27,6 +27,7 @@ import { ProductOwner } from '~/product/product.type';
 import { VoucherInfrastructure } from '~/voucher/voucher.infra';
 import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { PaymentMethod } from '~/payment/payment_method.entity';
+import { buildPaymentMethodDisplayMap, resolvePaymentMethodDisplay } from './order.export.helper';
 
 dayjs.extend(timezone);
 @Injectable()
@@ -348,6 +349,8 @@ export class OrderService {
       };
     };
 
+    const paymentMethodDisplayMap = buildPaymentMethodDisplayMap(paymentMethods);
+
     return orderLogs
       .map(each => {
         const csvRawOrderLog = new CsvRawOrderLog();
@@ -360,11 +363,7 @@ export class OrderService {
         csvRawOrderLog.orderLogStatus = each.status;
         csvRawOrderLog.paymentLogGateway = getValue(each.paymentModel, 'gateway');
         csvRawOrderLog.paymentLogDetails = each.paymentLogs
-          .map(payment => {
-            const methodName = payment.method;
-            const paymentMethod = paymentMethods.find(pm => pm.name === methodName);
-            return paymentMethod ? paymentMethod.displayName : methodName || '';
-          })
+          .map(payment => resolvePaymentMethodDisplay(payment.method, paymentMethodDisplayMap))
           .join('\n');
         csvRawOrderLog.orderCountry = `${getValue(each.options, 'country')} ${getValue(each.options, 'countryCode')}`;
         csvRawOrderLog.orderLogCreatedAt = dateFormatter(each.createdAt);
@@ -521,6 +520,13 @@ export class OrderService {
       this.entityManager,
     );
     const paymentMethods = await this.paymentInfra.getAllPaymentMethods(this.entityManager);
+    console.log(
+      '[DEBUG] PaymentMethods loaded:',
+      JSON.stringify({
+        count: paymentMethods.length,
+        methods: paymentMethods,
+      }),
+    );
 
     const headerInfos = await new OrderLogCsvHeaderMapping().createHeader();
     return [
