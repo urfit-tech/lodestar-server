@@ -23,7 +23,10 @@ describe('VideoService', () => {
       providers: [
         VideoService,
         StorageService,
-        { provide: ConfigService, useValue: { getOrThrow: jest.fn(key => mockConfigValues[key]) } },
+        {
+          provide: ConfigService,
+          useValue: { getOrThrow: jest.fn(key => mockConfigValues[key]), get: jest.fn(key => mockConfigValues[key]) },
+        },
         { provide: MediaInfrastructure, useValue: {} },
         { provide: AuthService, useValue: {} },
         { provide: ProgramService, useValue: {} },

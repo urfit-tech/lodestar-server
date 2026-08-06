@@ -22,7 +22,7 @@ import { StorageService } from '~/utility/storage/storage.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { APIException } from '~/api.excetion';
 import { validate as isValidUUID } from 'uuid';
-import { Response } from 'express';
+import { Request as ExpressRequest, Response } from 'express';
 
 @Controller({
   path: 'videos',
@@ -126,6 +126,8 @@ export class VideoController {
     try {
       const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
       const sanitizeSignature = sanitizeHtml(signature).replace(/&amp;/g, '&');
+      // storage keys look like vod/{appId}/... — used to decide same-origin emission
+      const sameOrigin = await this.videoService.isSameOriginMediaApp(key.split('/')[1]);
       const manifest = await this.storageService.getFileFromBucketStorage({
         Key: key,
       });
@@ -133,6 +135,7 @@ export class VideoController {
         await manifest.Body.transformToString(),
         key,
         sanitizeSignature,
+        sameOrigin,
       );
 
       response.setHeader('Content-Type', 'application/x-mpegUR');
@@ -140,6 +143,23 @@ export class VideoController {
     } catch (err) {
       throw new APIException({
         code: 'E_GET_M3U8',
+        message: err.message,
+        result: null,
+      });
+    }
+  }
+
+  // segment/caption pass-through for cdn.same_origin tenants; the media CDN still
+  // validates the signed query, this route only relays bytes on the site's domain
+  @Get(['*.ts', '*.vtt', '*.mp4'])
+  async streamMediaFile(@Req() request: ExpressRequest, @Res() response: Response) {
+    try {
+      const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
+      const sanitizeSignature = sanitizeHtml(signature || '').replace(/&amp;/g, '&');
+      await this.videoService.proxyMediaFile(key, sanitizeSignature, request.headers.range, response);
+    } catch (err) {
+      throw new APIException({
+        code: 'E_GET_MEDIA',
         message: err.message,
         result: null,
       });
