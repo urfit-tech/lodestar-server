@@ -126,8 +126,6 @@ export class VideoController {
     try {
       const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
       const sanitizeSignature = sanitizeHtml(signature).replace(/&amp;/g, '&');
-      // storage keys look like vod/{appId}/... — used to decide same-origin emission
-      const sameOrigin = await this.videoService.isSameOriginMediaApp(key.split('/')[1]);
       const manifest = await this.storageService.getFileFromBucketStorage({
         Key: key,
       });
@@ -135,7 +133,6 @@ export class VideoController {
         await manifest.Body.transformToString(),
         key,
         sanitizeSignature,
-        sameOrigin,
       );
 
       response.setHeader('Content-Type', 'application/x-mpegUR');
