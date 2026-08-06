@@ -14,6 +14,12 @@ import { UtilityService } from '~/utility/utility.service';
 
 import { MediaInfrastructure } from '../media.infra';
 import { CfVideoStreamOptions, CloudfrontVideoOptions } from './video.type';
+
+// proxyMediaFile only relays segment/caption files; constrain the
+// user-controlled key/query to those shapes (CodeQL js/request-forgery)
+const MEDIA_KEY_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N} ()._/-]*\.(ts|vtt|mp4)$/u;
+const MEDIA_SIGNATURE_PATTERN = /^[A-Za-z0-9~_.&=-]*$/;
+const MEDIA_RANGE_PATTERN = /^bytes=[0-9,-]+$/;
 import { AuthService } from '~/auth/auth.service';
 import { StorageService } from '~/utility/storage/storage.service';
 import { getSignedUrl } from 'aws-cloudfront-sign';
@@ -360,9 +366,17 @@ export class VideoService {
   // with the original signed query (the CDN still validates the signature) and
   // pipe it back on this domain
   public proxyMediaFile(key: string, signature: string, range: string | undefined, response: Response): Promise<void> {
-    const upstreamUrl = `${this.awsStorageCloudFrontUrl}/${key}${signature ? `?${signature}` : ''}`;
+    if (!MEDIA_KEY_PATTERN.test(key) || key.split('/').includes('..') || !MEDIA_SIGNATURE_PATTERN.test(signature)) {
+      throw new APIException({ code: 'E_MEDIA_KEY', message: 'invalid media path' });
+    }
+    const base = new URL(this.awsStorageCloudFrontUrl);
+    const upstreamUrl = new URL(`${this.awsStorageCloudFrontUrl}/${key}${signature ? `?${signature}` : ''}`);
+    if (upstreamUrl.origin !== base.origin) {
+      throw new APIException({ code: 'E_MEDIA_KEY', message: 'invalid media path' });
+    }
+    const safeRange = range && MEDIA_RANGE_PATTERN.test(range) ? range : undefined;
     return new Promise((resolve, reject) => {
-      const upstream = https.get(upstreamUrl, { headers: range ? { range } : {} }, upstreamRes => {
+      const upstream = https.get(upstreamUrl, { headers: safeRange ? { range: safeRange } : {} }, upstreamRes => {
         response.status(upstreamRes.statusCode || 502);
         for (const header of ['content-type', 'content-length', 'accept-ranges', 'content-range', 'cache-control']) {
           const value = upstreamRes.headers[header];
