@@ -1,8 +1,12 @@
 import { subtle } from 'crypto';
+import https from 'https';
+import { Response } from 'express';
 import { EntityManager } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
+
+import { AppSetting } from '~/app/entity/app_setting.entity';
 
 import { APIException } from '~/api.excetion';
 import { ProgramService } from '~/program/program.service';
@@ -22,6 +26,7 @@ export class VideoService {
   private readonly awsStorageCloudFrontUrl: string;
   private readonly awsCloudfrontKeyPairId: string;
   private readonly awsCloudfrontPrivateKey: string;
+  private readonly sameOriginMediaPublicPath: string;
   constructor(
     private readonly configService: ConfigService<{
       CF_STREAMING_KEY_ID: string;
@@ -30,6 +35,7 @@ export class VideoService {
       AWS_STORAGE_CLOUDFRONT_URL: string;
       AWS_CLOUDFRONT_KEY_PAIR_ID: string;
       AWS_CLOUDFRONT_PRIVATE_KEY: string;
+      SAME_ORIGIN_MEDIA_PUBLIC_PATH: string;
     }>,
     private readonly mediaInfra: MediaInfrastructure,
     private readonly authService: AuthService,
@@ -44,6 +50,20 @@ export class VideoService {
     this.awsStorageCloudFrontUrl = configService.getOrThrow('AWS_STORAGE_CLOUDFRONT_URL');
     this.awsCloudfrontKeyPairId = configService.getOrThrow('AWS_CLOUDFRONT_KEY_PAIR_ID');
     this.awsCloudfrontPrivateKey = configService.getOrThrow('AWS_CLOUDFRONT_PRIVATE_KEY');
+    this.sameOriginMediaPublicPath = configService.get('SAME_ORIGIN_MEDIA_PUBLIC_PATH') || '/api/v2/videos';
+  }
+
+  // cdn.same_origin: the tenant's audience cannot reach the media CDN host directly
+  // (e.g. blocked by the GFW), so manifests/captions must emit same-origin URLs and
+  // segments are streamed through this API instead
+  public async isSameOriginMediaApp(appId: string | undefined): Promise<boolean> {
+    if (!appId) {
+      return false;
+    }
+    const setting = await this.entityManager
+      .getRepository(AppSetting)
+      .findOneBy({ appId, key: 'cdn.same_origin' });
+    return setting?.value === '1';
   }
 
   async generateCfVideoToken(videoId: string, authToken?: string) {
@@ -203,7 +223,12 @@ export class VideoService {
     return keysNeedToDelete;
   }
 
-  public async parseManifestWithSignUrl(manifest: string, key: string, signature: string): Promise<string> {
+  public async parseManifestWithSignUrl(
+    manifest: string,
+    key: string,
+    signature: string,
+    sameOrigin = false,
+  ): Promise<string> {
     const host = this.awsStorageCloudFrontUrl;
     const path = key.split('/').slice(0, -1).join('/');
 
@@ -219,6 +244,11 @@ export class VideoService {
           return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
         } else if (row.includes('.ts')) {
           // hls segments
+          if (sameOrigin) {
+            // emit the bare segment name so the player resolves it against this
+            // manifest's URL and the request comes back through this API
+            return `${row.split('?')[0]}?${signature}`;
+          }
           const baseUrl = `${host}/${path}/${row.split('?')[0]}`;
 
           const formatBaseUrl = this.storageService.s3UrlFormatter(baseUrl);
@@ -228,6 +258,10 @@ export class VideoService {
           return new URL(fullUrl).toString();
         } else if (row.includes('.mp4')) {
           // dash segments
+          if (sameOrigin) {
+            // relative BaseURL resolves against the mpd's URL, keeping segments same-origin
+            return row.replace('</BaseURL>', `?${signature}</BaseURL>`);
+          }
           const baseUrlWithSignature = row
             .replace('<BaseURL>', `<BaseURL>${host}/${path}/`)
             .replace('</BaseURL>', `?${signature}</BaseURL>`);
@@ -275,6 +309,9 @@ export class VideoService {
       });
     }
 
+    const attachment = await this.mediaInfra.getById(videoId, this.entityManager);
+    const sameOrigin = await this.isSameOriginMediaApp(attachment?.appId);
+
     const videoUrl = playPaths?.hls ? `${playPaths.hls.split('hls')[0]}*` : `${path.split('manifest')[0]}*`;
     const captionUrl = playPaths?.hls
       ? `${playPaths.hls.split('output')[0]}captions/*`
@@ -282,7 +319,11 @@ export class VideoService {
     const videoUrlSignature = this.signCloudfrontUrl(videoUrl);
     const captionUrlSignature = this.signCloudfrontUrl(captionUrl);
     const captionPaths = await this.getCaptions(videoId);
-    const captionSignedUrls = captionPaths.map(captionUrl => `${new URL(captionUrl)}${captionUrlSignature}`);
+    const captionSignedUrls = captionPaths.map(captionUrl =>
+      sameOrigin
+        ? `${this.sameOriginMediaPublicPath}${new URL(captionUrl).pathname}${captionUrlSignature}`
+        : `${new URL(captionUrl)}${captionUrlSignature}`,
+    );
 
     const hlsPath = cloudfrontOptions?.playPaths
       ? `${new URL(cloudfrontOptions.playPaths.hls).pathname}${videoUrlSignature}`
@@ -313,5 +354,25 @@ export class VideoService {
     const signedUrl = getSignedUrl(url, options);
     const signature = new URL(signedUrl).search;
     return signature;
+  }
+
+  // pass-through for cdn.same_origin tenants: fetch the file from the media CDN
+  // with the original signed query (the CDN still validates the signature) and
+  // pipe it back on this domain
+  public proxyMediaFile(key: string, signature: string, range: string | undefined, response: Response): Promise<void> {
+    const upstreamUrl = `${this.awsStorageCloudFrontUrl}/${key}${signature ? `?${signature}` : ''}`;
+    return new Promise((resolve, reject) => {
+      const upstream = https.get(upstreamUrl, { headers: range ? { range } : {} }, upstreamRes => {
+        response.status(upstreamRes.statusCode || 502);
+        for (const header of ['content-type', 'content-length', 'accept-ranges', 'content-range', 'cache-control']) {
+          const value = upstreamRes.headers[header];
+          value && response.setHeader(header, value as string);
+        }
+        upstreamRes.pipe(response);
+        upstreamRes.on('end', resolve);
+        upstreamRes.on('error', reject);
+      });
+      upstream.on('error', reject);
+    });
   }
 }
