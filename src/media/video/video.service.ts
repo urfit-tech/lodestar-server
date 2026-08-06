@@ -6,7 +6,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
-import { AppSetting } from '~/app/entity/app_setting.entity';
 
 import { APIException } from '~/api.excetion';
 import { ProgramService } from '~/program/program.service';
@@ -57,19 +56,6 @@ export class VideoService {
     this.awsCloudfrontKeyPairId = configService.getOrThrow('AWS_CLOUDFRONT_KEY_PAIR_ID');
     this.awsCloudfrontPrivateKey = configService.getOrThrow('AWS_CLOUDFRONT_PRIVATE_KEY');
     this.sameOriginMediaPublicPath = configService.get('SAME_ORIGIN_MEDIA_PUBLIC_PATH') || '/api/v2/videos';
-  }
-
-  // cdn.same_origin: the tenant's audience cannot reach the media CDN host directly
-  // (e.g. blocked by the GFW), so manifests/captions must emit same-origin URLs and
-  // segments are streamed through this API instead
-  public async isSameOriginMediaApp(appId: string | undefined): Promise<boolean> {
-    if (!appId) {
-      return false;
-    }
-    const setting = await this.entityManager
-      .getRepository(AppSetting)
-      .findOneBy({ appId, key: 'cdn.same_origin' });
-    return setting?.value === '1';
   }
 
   async generateCfVideoToken(videoId: string, authToken?: string) {
@@ -229,15 +215,7 @@ export class VideoService {
     return keysNeedToDelete;
   }
 
-  public async parseManifestWithSignUrl(
-    manifest: string,
-    key: string,
-    signature: string,
-    sameOrigin = false,
-  ): Promise<string> {
-    const host = this.awsStorageCloudFrontUrl;
-    const path = key.split('/').slice(0, -1).join('/');
-
+  public async parseManifestWithSignUrl(manifest: string, key: string, signature: string): Promise<string> {
     const signedManifest = manifest
       .split('\n')
       .filter(row => !row.includes('#EXT-X-MEDIA:TYPE=SUBTITLES')) // remove caption in m3u8, we will get vtt in frontend
@@ -249,29 +227,14 @@ export class VideoService {
           }
           return `${row.split('?')[0].split('.m3u8')[0]}.m3u8?${signature}`;
         } else if (row.includes('.ts')) {
-          // hls segments
-          if (sameOrigin) {
-            // emit the bare segment name so the player resolves it against this
-            // manifest's URL and the request comes back through this API
-            return `${row.split('?')[0]}?${signature}`;
-          }
-          const baseUrl = `${host}/${path}/${row.split('?')[0]}`;
-
-          const formatBaseUrl = this.storageService.s3UrlFormatter(baseUrl);
-
-          const fullUrl = `${formatBaseUrl}?${signature}`;
-
-          return new URL(fullUrl).toString();
+          // hls segments: emit the bare segment name so the player resolves it
+          // against this manifest's URL and the request comes back through this
+          // API (single-domain policy)
+          return `${row.split('?')[0]}?${signature}`;
         } else if (row.includes('.mp4')) {
-          // dash segments
-          if (sameOrigin) {
-            // relative BaseURL resolves against the mpd's URL, keeping segments same-origin
-            return row.replace('</BaseURL>', `?${signature}</BaseURL>`);
-          }
-          const baseUrlWithSignature = row
-            .replace('<BaseURL>', `<BaseURL>${host}/${path}/`)
-            .replace('</BaseURL>', `?${signature}</BaseURL>`);
-          return baseUrlWithSignature;
+          // dash segments: relative BaseURL resolves against the mpd's URL,
+          // keeping segments same-origin
+          return row.replace('</BaseURL>', `?${signature}</BaseURL>`);
         } else {
           return row;
         }
@@ -315,9 +278,6 @@ export class VideoService {
       });
     }
 
-    const attachment = await this.mediaInfra.getById(videoId, this.entityManager);
-    const sameOrigin = await this.isSameOriginMediaApp(attachment?.appId);
-
     const videoUrl = playPaths?.hls ? `${playPaths.hls.split('hls')[0]}*` : `${path.split('manifest')[0]}*`;
     const captionUrl = playPaths?.hls
       ? `${playPaths.hls.split('output')[0]}captions/*`
@@ -325,10 +285,9 @@ export class VideoService {
     const videoUrlSignature = this.signCloudfrontUrl(videoUrl);
     const captionUrlSignature = this.signCloudfrontUrl(captionUrl);
     const captionPaths = await this.getCaptions(videoId);
-    const captionSignedUrls = captionPaths.map(captionUrl =>
-      sameOrigin
-        ? `${this.sameOriginMediaPublicPath}${new URL(captionUrl).pathname}${captionUrlSignature}`
-        : `${new URL(captionUrl)}${captionUrlSignature}`,
+    // single-domain policy: captions are served through this API's public path
+    const captionSignedUrls = captionPaths.map(
+      captionUrl => `${this.sameOriginMediaPublicPath}${new URL(captionUrl).pathname}${captionUrlSignature}`,
     );
 
     const hlsPath = cloudfrontOptions?.playPaths
