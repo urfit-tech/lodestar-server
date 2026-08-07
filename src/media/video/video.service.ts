@@ -19,6 +19,8 @@ import { CfVideoStreamOptions, CloudfrontVideoOptions } from './video.type';
 const MEDIA_KEY_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N} ()._/-]*\.(ts|vtt|mp4)$/u;
 const MEDIA_SIGNATURE_PATTERN = /^[A-Za-z0-9~_.&=-]*$/;
 const MEDIA_RANGE_PATTERN = /^bytes=[0-9,-]+$/;
+// printable ASCII only — keeps CRLF and other header-injection input out
+const MEDIA_USER_AGENT_PATTERN = /^[\x20-\x7E]{1,256}$/;
 import { AuthService } from '~/auth/auth.service';
 import { StorageService } from '~/utility/storage/storage.service';
 import { getSignedUrl } from 'aws-cloudfront-sign';
@@ -324,7 +326,13 @@ export class VideoService {
   // pass-through for cdn.same_origin tenants: fetch the file from the media CDN
   // with the original signed query (the CDN still validates the signature) and
   // pipe it back on this domain
-  public proxyMediaFile(key: string, signature: string, range: string | undefined, response: Response): Promise<void> {
+  public proxyMediaFile(
+    key: string,
+    signature: string,
+    range: string | undefined,
+    response: Response,
+    userAgent?: string,
+  ): Promise<void> {
     if (!MEDIA_KEY_PATTERN.test(key) || key.split('/').includes('..') || !MEDIA_SIGNATURE_PATTERN.test(signature)) {
       throw new APIException({ code: 'E_MEDIA_KEY', message: 'invalid media path' });
     }
@@ -334,8 +342,16 @@ export class VideoService {
       throw new APIException({ code: 'E_MEDIA_KEY', message: 'invalid media path' });
     }
     const safeRange = range && MEDIA_RANGE_PATTERN.test(range) ? range : undefined;
+    // the CDN rejects requests without a User-Agent (403), and node's https.get
+    // sends none by default — forward the viewer's, with a fallback
+    const headers: Record<string, string> = {
+      'user-agent': userAgent && MEDIA_USER_AGENT_PATTERN.test(userAgent) ? userAgent : 'lodestar-server',
+    };
+    if (safeRange) {
+      headers.range = safeRange;
+    }
     return new Promise((resolve, reject) => {
-      const upstream = https.get(upstreamUrl, { headers: safeRange ? { range: safeRange } : {} }, upstreamRes => {
+      const upstream = https.get(upstreamUrl, { headers }, upstreamRes => {
         response.status(upstreamRes.statusCode || 502);
         for (const header of ['content-type', 'content-length', 'accept-ranges', 'content-range', 'cache-control']) {
           const value = upstreamRes.headers[header];

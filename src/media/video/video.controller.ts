@@ -153,7 +153,13 @@ export class VideoController {
     try {
       const [key, signature] = decodeURI(request.url).split('videos/')[1].split('?');
       const sanitizeSignature = sanitizeHtml(signature || '').replace(/&amp;/g, '&');
-      await this.videoService.proxyMediaFile(key, sanitizeSignature, request.headers.range, response);
+      await this.videoService.proxyMediaFile(
+        key,
+        sanitizeSignature,
+        request.headers.range,
+        response,
+        request.headers['user-agent'],
+      );
     } catch (err) {
       throw new APIException({
         code: 'E_GET_MEDIA',
