@@ -29,9 +29,6 @@ export type InvoiceInfo = {
 };
 export class IssueInvoiceBodyDTO {
   @IsString()
-  appId: string;
-
-  @IsString()
   invoiceGatewayId: string;
 
   @IsObject()
@@ -49,9 +46,6 @@ export class SearchInvoiceBodyDTO {
   invoiceNumber: string;
 
   @IsString()
-  appId: string;
-
-  @IsString()
   invoiceRandomNumber: string;
 }
 export class RevokeInvoiceBodyDTO {
@@ -60,9 +54,6 @@ export class RevokeInvoiceBodyDTO {
 
   @IsString()
   invoiceNumber: string;
-
-  @IsString()
-  appId: string;
 
   @IsString()
   invalidReason: string;

@@ -1,6 +1,7 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
+import { APIException } from '~/api.excetion';
 import { AuthGuard } from '~/auth/auth.guard';
 import { JwtMember } from '~/auth/auth.dto';
 import { Local } from '~/decorator';
@@ -20,7 +21,8 @@ export class InvoiceController {
 
   @Post('issue')
   async issueInvoice(@Local('member') member: JwtMember, @Body() dto: IssueInvoiceBodyDTO) {
-    const { invoiceGatewayId, invoiceInfo, appId, orderId } = dto;
+    const appId = this.getAppId(member);
+    const { invoiceGatewayId, invoiceInfo, orderId } = dto;
 
     const result = await this.invoiceService.issueInvoiceDirectly(
       appId,
@@ -34,8 +36,9 @@ export class InvoiceController {
   }
 
   @Post('search')
-  async searchInvoice(@Body() dto: SearchInvoiceBodyDTO) {
-    const { invoiceNumber, invoiceGatewayId, appId, invoiceRandomNumber } = dto;
+  async searchInvoice(@Local('member') member: JwtMember, @Body() dto: SearchInvoiceBodyDTO) {
+    const appId = this.getAppId(member);
+    const { invoiceNumber, invoiceGatewayId, invoiceRandomNumber } = dto;
 
     const result = await this.invoiceService.searchInvoice(
       appId,
@@ -49,7 +52,8 @@ export class InvoiceController {
 
   @Post('revoke')
   async revokeInvoice(@Local('member') member: JwtMember, @Body() dto: RevokeInvoiceBodyDTO) {
-    const { invoiceNumber, invoiceGatewayId, appId, invalidReason } = dto;
+    const appId = this.getAppId(member);
+    const { invoiceNumber, invoiceGatewayId, invalidReason } = dto;
 
     const result = await this.invoiceService.revokeInvoice(
       appId,
@@ -60,5 +64,12 @@ export class InvoiceController {
       member?.memberId,
     );
     return { code: 'SUCCESS', message: 'revoke invoice successfully', result };
+  }
+
+  private getAppId(member: JwtMember): string {
+    if (!member?.appId) {
+      throw new APIException({ code: 'E_NO_APP_ID', message: 'appId is missing from the authenticated token' }, 403);
+    }
+    return member.appId;
   }
 }
