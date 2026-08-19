@@ -253,6 +253,23 @@ describe('InvoiceController', () => {
       );
     });
 
+    // The five sales permissions gate the sales menu (AdminMenu), CHECK_MEMBER_ORDER
+    // gates the member page's order tab. Either route reaches manual invoicing.
+    it.each([
+      PermissionSet.SALES_RECORDS_ADMIN,
+      PermissionSet.SALES_RECORDS_NORMAL,
+      PermissionSet.SALES_RECORDS_DETAILS,
+      PermissionSet.GROSS_SALES_ADMIN,
+      PermissionSet.GROSS_SALES_NORMAL,
+      PermissionSet.CHECK_MEMBER_ORDER,
+    ])('Should let a member holding %s through', async permission => {
+      const holder: JwtMember = { ...member, role: 'general-member', permissions: [permission] };
+
+      await controller.issueInvoice(holder, issueDto);
+
+      expect(invoiceService.issueInvoiceDirectly).toHaveBeenCalled();
+    });
+
     it('Should reject a general member on issue', async () => {
       await expect(controller.issueInvoice(generalMember, issueDto)).rejects.toThrow(APIException);
       expect(invoiceService.issueInvoiceDirectly).not.toHaveBeenCalled();
@@ -279,14 +296,17 @@ describe('InvoiceController', () => {
       }
     });
 
-    it('Should reject a permission that is not an invoice admin permission', async () => {
-      const unrelated: JwtMember = {
+    // Backstage access on its own is not enough: the sales menu stays hidden for
+    // these members, they only reach /sales because the route's allowedUserRole is
+    // declared but never enforced (AdminRouter). The API does not honour that gap.
+    it('Should reject a member who only holds BACKSTAGE_ENTER', async () => {
+      const backstageOnly: JwtMember = {
         ...member,
         role: 'general-member',
-        permissions: [PermissionSet.SALES_RECORDS_NORMAL],
+        permissions: [PermissionSet.BACKSTAGE_ENTER],
       };
 
-      await expect(controller.issueInvoice(unrelated, issueDto)).rejects.toThrow(APIException);
+      await expect(controller.issueInvoice(backstageOnly, issueDto)).rejects.toThrow(APIException);
       expect(invoiceService.issueInvoiceDirectly).not.toHaveBeenCalled();
     });
   });

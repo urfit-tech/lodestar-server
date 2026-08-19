@@ -9,9 +9,18 @@ import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { IssueInvoiceBodyDTO, RevokeInvoiceBodyDTO, SearchInvoiceBodyDTO } from './invoice.dto';
 import { InvoiceService } from './invoice.service';
 
-// The admin UI only surfaces manual invoicing behind SALES_RECORDS_ADMIN
-// (SalesPage, MemberAdminPage), so that is what these endpoints require.
-const INVOICE_ADMIN_PERMISSIONS: Array<string> = [PermissionSet.SALES_RECORDS_ADMIN];
+// Manual invoicing lives on the sale collection card, which the admin UI reaches
+// two ways: the sales menu (any of the five sales permissions below) and the
+// member page's order tab (SALES_RECORDS_ADMIN or CHECK_MEMBER_ORDER). These
+// endpoints mirror that union so the API allows exactly what the UI offers.
+const INVOICE_ADMIN_PERMISSIONS: Array<string> = [
+  PermissionSet.SALES_RECORDS_ADMIN,
+  PermissionSet.SALES_RECORDS_NORMAL,
+  PermissionSet.SALES_RECORDS_DETAILS,
+  PermissionSet.GROSS_SALES_ADMIN,
+  PermissionSet.GROSS_SALES_NORMAL,
+  PermissionSet.CHECK_MEMBER_ORDER,
+];
 
 @UseGuards(AuthGuard)
 @Controller({
