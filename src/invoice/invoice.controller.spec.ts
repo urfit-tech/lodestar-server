@@ -5,6 +5,7 @@ import { getEntityManagerToken } from '@nestjs/typeorm';
 import { APIException } from '~/api.excetion';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
 
 import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
@@ -206,6 +207,87 @@ describe('InvoiceController', () => {
         expect((error as APIException).getStatus()).toBe(403);
         expect((error as APIException).code).toBe('E_NO_APP_ID');
       }
+    });
+  });
+
+  describe('admin permission', () => {
+    const issueDto: IssueInvoiceBodyDTO = {
+      invoiceGatewayId: 'gateway-id',
+      invoiceInfo,
+      orderId: 'order-id',
+    };
+    const searchDto: SearchInvoiceBodyDTO = {
+      invoiceGatewayId: 'gateway-id',
+      invoiceNumber: 'invoice-number',
+      invoiceRandomNumber: 'random-number',
+    };
+    const revokeDto: RevokeInvoiceBodyDTO = {
+      invoiceGatewayId: 'gateway-id',
+      invoiceNumber: 'invoice-number',
+      invalidReason: 'invalid-reason',
+    };
+
+    const generalMember: JwtMember = { ...member, role: 'general-member', permissions: [] };
+    const salesAdmin: JwtMember = {
+      ...member,
+      role: 'general-member',
+      permissions: [PermissionSet.SALES_RECORDS_ADMIN],
+    };
+
+    it('Should let an app-owner through', async () => {
+      await controller.issueInvoice(member, issueDto);
+
+      expect(invoiceService.issueInvoiceDirectly).toHaveBeenCalled();
+    });
+
+    it('Should let a member holding SALES_RECORDS_ADMIN through', async () => {
+      await controller.issueInvoice(salesAdmin, issueDto);
+
+      expect(invoiceService.issueInvoiceDirectly).toHaveBeenCalledWith(
+        TOKEN_APP_ID,
+        issueDto.orderId,
+        issueDto.invoiceGatewayId,
+        issueDto.invoiceInfo,
+        entityManager,
+        { executorMemberId: salesAdmin.memberId },
+      );
+    });
+
+    it('Should reject a general member on issue', async () => {
+      await expect(controller.issueInvoice(generalMember, issueDto)).rejects.toThrow(APIException);
+      expect(invoiceService.issueInvoiceDirectly).not.toHaveBeenCalled();
+    });
+
+    it('Should reject a general member on search', async () => {
+      await expect(controller.searchInvoice(generalMember, searchDto)).rejects.toThrow(APIException);
+      expect(invoiceService.searchInvoice).not.toHaveBeenCalled();
+    });
+
+    it('Should reject a general member on revoke', async () => {
+      await expect(controller.revokeInvoice(generalMember, revokeDto)).rejects.toThrow(APIException);
+      expect(invoiceService.revokeInvoice).not.toHaveBeenCalled();
+    });
+
+    it('Should reject with a 403 carrying E_NO_PERMISSION', async () => {
+      expect.assertions(3);
+      try {
+        await controller.issueInvoice(generalMember, issueDto);
+      } catch (error) {
+        expect(error).toBeInstanceOf(APIException);
+        expect((error as APIException).getStatus()).toBe(403);
+        expect((error as APIException).code).toBe('E_NO_PERMISSION');
+      }
+    });
+
+    it('Should reject a permission that is not an invoice admin permission', async () => {
+      const unrelated: JwtMember = {
+        ...member,
+        role: 'general-member',
+        permissions: [PermissionSet.SALES_RECORDS_NORMAL],
+      };
+
+      await expect(controller.issueInvoice(unrelated, issueDto)).rejects.toThrow(APIException);
+      expect(invoiceService.issueInvoiceDirectly).not.toHaveBeenCalled();
     });
   });
 });

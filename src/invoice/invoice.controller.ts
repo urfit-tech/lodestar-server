@@ -5,8 +5,13 @@ import { APIException } from '~/api.excetion';
 import { AuthGuard } from '~/auth/auth.guard';
 import { JwtMember } from '~/auth/auth.dto';
 import { Local } from '~/decorator';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { IssueInvoiceBodyDTO, RevokeInvoiceBodyDTO, SearchInvoiceBodyDTO } from './invoice.dto';
 import { InvoiceService } from './invoice.service';
+
+// The admin UI only surfaces manual invoicing behind SALES_RECORDS_ADMIN
+// (SalesPage, MemberAdminPage), so that is what these endpoints require.
+const INVOICE_ADMIN_PERMISSIONS: Array<string> = [PermissionSet.SALES_RECORDS_ADMIN];
 
 @UseGuards(AuthGuard)
 @Controller({
@@ -21,6 +26,7 @@ export class InvoiceController {
 
   @Post('issue')
   async issueInvoice(@Local('member') member: JwtMember, @Body() dto: IssueInvoiceBodyDTO) {
+    this.assertInvoiceAdmin(member);
     const appId = this.getAppId(member);
     const { invoiceGatewayId, invoiceInfo, orderId } = dto;
 
@@ -37,6 +43,7 @@ export class InvoiceController {
 
   @Post('search')
   async searchInvoice(@Local('member') member: JwtMember, @Body() dto: SearchInvoiceBodyDTO) {
+    this.assertInvoiceAdmin(member);
     const appId = this.getAppId(member);
     const { invoiceNumber, invoiceGatewayId, invoiceRandomNumber } = dto;
 
@@ -52,6 +59,7 @@ export class InvoiceController {
 
   @Post('revoke')
   async revokeInvoice(@Local('member') member: JwtMember, @Body() dto: RevokeInvoiceBodyDTO) {
+    this.assertInvoiceAdmin(member);
     const appId = this.getAppId(member);
     const { invoiceNumber, invoiceGatewayId, invalidReason } = dto;
 
@@ -64,6 +72,17 @@ export class InvoiceController {
       member?.memberId,
     );
     return { code: 'SUCCESS', message: 'revoke invoice successfully', result };
+  }
+
+  private assertInvoiceAdmin(member: JwtMember): void {
+    const isAppOwner = member?.role === 'app-owner';
+    const hasInvoicePermission = (member?.permissions || []).some(permission =>
+      INVOICE_ADMIN_PERMISSIONS.includes(permission),
+    );
+
+    if (!isAppOwner && !hasInvoicePermission) {
+      throw new APIException({ code: 'E_NO_PERMISSION', message: 'no permission to operate invoices' }, 403);
+    }
   }
 
   private getAppId(member: JwtMember): string {
