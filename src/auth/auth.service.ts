@@ -26,11 +26,14 @@ import { JwtDTO } from './auth.dto';
 import { CrossServerTokenDTO, LoginStatus, RefreshStatus } from './auth.type';
 import { AuthInfrastructure } from './auth.infra';
 import DeviceService from './device/device.service';
+import { generateAuthToken, issueResetPasswordAppToken, TokenGenerator } from './auth-token';
 
 @Injectable()
 export class AuthService {
   private readonly nodeEnv: string;
   private readonly hasuraJwtSecret: string;
+  // overridable in tests only; production always uses 32 random bytes
+  resetPasswordTokenGenerator: TokenGenerator = generateAuthToken;
 
   constructor(
     private readonly logger: Logger,
@@ -260,11 +263,17 @@ export class AuthService {
   }
 
   private async sendResetPasswordEmail(appCache: AppCache, member: Member, manager: EntityManager) {
-    const { id: appId, name: appName, host: appHost } = appCache;
+    const { id: appId, name: appName } = appCache;
 
-    // create reset password token
-    const currentTimePer30min = Math.floor(Date.now() / 3000 / 600);
-    const resetPasswordToken = this.utilityService.generateMD5Hash(`${currentTimePer30min}${member.id}`);
+    // the link must point at the member's own app: only reuse the request host when it belongs to that app
+    const appHost = await this.resolveAppLinkHost(appCache, member.appId, manager);
+
+    // create single-use reset password token (stored hashed in redis, one per member; verified by lodestar-app-backend)
+    const resetPasswordToken = await issueResetPasswordAppToken(
+      this.cacheService.getClient(),
+      { memberId: member.id, appId: member.appId },
+      this.resetPasswordTokenGenerator,
+    );
 
     const subject = `[${appName}] 重設您的密碼 ${this.nodeEnv !== 'production' ? '(測試)' : ''}`;
     const partials = {
@@ -280,6 +289,17 @@ export class AuthService {
       subject,
       manager,
     });
+  }
+
+  private async resolveAppLinkHost(appCache: AppCache, targetAppId: string, manager: EntityManager) {
+    if (appCache.id === targetAppId && appCache.host) {
+      return appCache.host;
+    }
+    const appHost = await this.appService.getFirstMatchedAppHost(targetAppId, manager);
+    if (!appHost?.host) {
+      throw new APIException({ code: 'E_NO_APP_HOST', message: 'host has not been set' });
+    }
+    return appHost.host;
   }
 
   private async insertLastLoginJobIntoQueue(memberId: string) {
