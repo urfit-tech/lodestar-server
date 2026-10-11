@@ -8,6 +8,7 @@ import DeviceService from '~/auth/device/device.service';
 import { DeviceInfrastructure } from '~/auth/device/device.infra';
 import { MemberInfrastructure } from '~/member/member.infra';
 import { MailVerificationCodeController } from './mailVerificationCode.controller';
+import { CacheService } from '~/utility/cache/cache.service';
 
 @Module({
   controllers: [MailVerificationCodeController],
@@ -20,6 +21,7 @@ import { MailVerificationCodeController } from './mailVerificationCode.controlle
     DeviceService,
     MemberInfrastructure,
     DeviceInfrastructure,
+    CacheService,
   ],
   exports: [MailVerificationCodeService, MailVerificationCodeInfrastructure],
 })

@@ -74,7 +74,7 @@ describeWithRedis('reset-password issuance against a real Redis (A2R)', () => {
     );
 
     expect(result.status).toBe(LoginStatus.I_RESET_PASSWORD);
-    expect(await redis.keys('auth:*')).toEqual([VECTOR.key]);
+    expect(await redis.keys('auth:reset-password:*')).toEqual([VECTOR.key]);
     expect(await redis.get(VECTOR.key)).toBe(VECTOR.value);
     const ttl = await redis.ttl(VECTOR.key);
     expect(ttl).toBeGreaterThan(VECTOR.ttl - 5);

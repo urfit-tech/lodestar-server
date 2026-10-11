@@ -7,6 +7,18 @@ import { EmailService } from '~/mailer/email/email.service';
 import { AppCache } from '~/app/app.type';
 import { AppService } from '~/app/app.service';
 import { DeviceInfrastructure } from '~/auth/device/device.infra';
+import { CacheService } from '~/utility/cache/cache.service';
+import {
+  allowDeviceBindSend,
+  authKeys,
+  clearDeviceBindChallenge,
+  decrementIfExists,
+  incrementWithTtl,
+  isDeviceBindLocked,
+  LIMITS,
+  readDeviceBindChallenge,
+} from '~/auth/auth-limits';
+import { EventType } from './mailVerificationCode.type';
 
 @Injectable()
 export default class MailVerificationCodeService {
@@ -15,8 +27,72 @@ export default class MailVerificationCodeService {
     private readonly memberDeviceInfra: DeviceInfrastructure,
     private readonly emailService: EmailService,
     private readonly appService: AppService,
+    private readonly cacheService: CacheService,
     @InjectEntityManager() private entityManager: EntityManager,
   ) {}
+
+  /**
+   * Sends a device bind code only to a member who has just signed in and reached the bind limit (the device bind
+   * challenge exists for this email), at most once per minute and five times per hour. Returns whether a mail was queued.
+   */
+  async sendDeviceBindCode(
+    appId: string,
+    email: string,
+    type: string,
+    userAgent: string,
+    ip: string | null,
+  ): Promise<boolean> {
+    if (type !== EventType.BIND_DEVICE_LIMIT) {
+      return false;
+    }
+    const redis = this.cacheService.getClient();
+    const memberId = await readDeviceBindChallenge(redis, appId, email);
+    if (!memberId || !(await allowDeviceBindSend(redis, appId, memberId))) {
+      return false;
+    }
+    await this.expireOldAndSendVerificationCode(appId, email, type, userAgent, ip);
+    return true;
+  }
+
+  /**
+   * Checks a device bind code for the member who holds the device bind challenge of this email.
+   * Wrong codes are counted per member (never reset by signing in); at the cap the challenge and the
+   * outstanding codes are dropped. On success the oldest device is removed and the challenge is cleared.
+   */
+  async verifyDeviceBindCode(appId: string, email: string, memberId: string, type: string, code: string) {
+    if (type !== EventType.BIND_DEVICE_LIMIT || !memberId) {
+      return false;
+    }
+    const redis = this.cacheService.getClient();
+    if (await isDeviceBindLocked(redis, appId, memberId)) {
+      return false;
+    }
+    const challengeMemberId = await readDeviceBindChallenge(redis, appId, email);
+    if (!challengeMemberId || challengeMemberId !== memberId) {
+      return false;
+    }
+
+    // count this attempt before comparing so that concurrent requests cannot exceed the cap;
+    // the count is given back when the code turns out to be correct
+    const failKey = authKeys.deviceBindFail(appId, memberId);
+    const [attempts] = await incrementWithTtl(redis, [{ key: failKey, ttlSeconds: LIMITS.deviceBindFail.ttlSeconds }]);
+    if (attempts > LIMITS.deviceBindFail.cap) {
+      return false;
+    }
+
+    const verified = await this.verifyMailVerificationCode(appId, email, memberId, type, code);
+    if (verified) {
+      await decrementIfExists(redis, failKey);
+      await clearDeviceBindChallenge(redis, appId, email);
+      return true;
+    }
+
+    if (attempts >= LIMITS.deviceBindFail.cap) {
+      await clearDeviceBindChallenge(redis, appId, email);
+      await this.expireOldVerificationCodesByEmail(appId, email, type);
+    }
+    return false;
+  }
 
   async checkMailVerificationCodeExpired(
     appId: string,
@@ -39,7 +115,7 @@ export default class MailVerificationCodeService {
     }
   }
 
-  async verifyMailVerificationCode(appId: string, email: string, memberId: string, type: string, code: string) {
+  private async verifyMailVerificationCode(appId: string, email: string, memberId: string, type: string, code: string) {
     try {
       const expirationTimeMs = 1000 * 60 * 30;
       const isVerify = await this.checkMailVerificationCodeExpired(appId, email, type, code, expirationTimeMs);
@@ -72,7 +148,7 @@ export default class MailVerificationCodeService {
         return false;
       }
     } catch (error) {
-      console.error(`Failed to verify the code,appId: ${appId},email:${email},type: ${type},error: ${error}`);
+      console.error(`Failed to verify the code, appId: ${appId}, type: ${type}, error: ${error}`);
     }
   }
 
@@ -97,7 +173,7 @@ export default class MailVerificationCodeService {
     }
   }
 
-  async expireOldAndSendVerificationCode(
+  private async expireOldAndSendVerificationCode(
     appId: string,
     email: string,
     type: string,
@@ -154,7 +230,7 @@ export default class MailVerificationCodeService {
         this.entityManager,
       );
     } catch (error) {
-      console.error(`Check and upsert verification code failed,appId:${appId},email:${email}, error:${error}`);
+      console.error(`Check and upsert verification code failed, appId: ${appId}, error: ${error}`);
     }
   }
 

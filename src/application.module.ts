@@ -1,5 +1,6 @@
 import { cwd, env } from 'process';
 import { LoggerModule } from 'nestjs-pino';
+import { buildLoggerParams } from './utility/logger/logger.params';
 import { Logger, MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -42,18 +43,7 @@ import { MetaModule } from './meta/meta.module';
       providers: [ConfigService],
       useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
         const nodeEnv = configService.getOrThrow('NODE_ENV');
-        return ['production', 'staging'].includes(nodeEnv)
-          ? {}
-          : {
-              pinoHttp: {
-                transport: {
-                  target: 'pino-pretty',
-                  options: {
-                    ignore: 'pid,context,hostname',
-                  },
-                },
-              },
-            };
+        return buildLoggerParams(nodeEnv);
       },
       inject: [ConfigService],
     }),
