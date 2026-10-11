@@ -35,12 +35,6 @@ export class GeneralLoginDTO {
   geoLocation: GeoLocation;
 }
 
-export interface CrossServerTokenDTO {
-  clientId: string;
-  key: string;
-  permissions: Array<string>;
-}
-
 export interface GenerateTmpPasswordDTO {
   appId: string;
   applicant: string;
