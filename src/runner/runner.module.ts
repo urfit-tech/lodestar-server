@@ -2,6 +2,7 @@ import { cwd } from 'process';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { LoggerModule } from 'nestjs-pino';
+import { buildLoggerParams } from '~/utility/logger/logger.params';
 import { DynamicModule, Logger, Module, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -40,18 +41,7 @@ export class RunnerModule {
           providers: [ConfigService],
           useFactory: (configService: ConfigService<{ NODE_ENV: string }>) => {
             const nodeEnv = configService.getOrThrow('NODE_ENV');
-            return ['production', 'staging'].includes(nodeEnv)
-              ? {}
-              : {
-                  pinoHttp: {
-                    transport: {
-                      target: 'pino-pretty',
-                      options: {
-                        ignore: 'pid,context,hostname',
-                      },
-                    },
-                  },
-                };
+            return buildLoggerParams(nodeEnv);
           },
           inject: [ConfigService],
         }),

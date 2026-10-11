@@ -23,6 +23,7 @@ import { MemberModule } from './member/member.module';
 import { AuthModule } from './auth/auth.module';
 import { legacyTokenEndpointMiddleware } from './auth/legacy-token-endpoint.middleware';
 import { SwaggerConfigService } from './swagger-config/swagger-config.service';
+import { requireSessionSecret } from './session-secret';
 
 dayjs.extend(utc);
 
@@ -75,7 +76,7 @@ async function bootstrap() {
     );
     const cacheService = app.get(CacheService);
     const nodeEnv = configService.getOrThrow('NODE_ENV');
-    const sessionSecret = configService.getOrThrow('SESSION_SECRET');
+    const sessionSecret = requireSessionSecret(configService.getOrThrow('SESSION_SECRET'));
 
     app = app
       .useGlobalPipes(new ValidationPipe())
@@ -88,7 +89,7 @@ async function bootstrap() {
       .use(urlencoded({ extended: true, limit: '10mb' }))
       .use(
         session({
-          secret: sessionSecret || 'kolable',
+          secret: sessionSecret,
           store: new RedisStore({ client: cacheService.getClient() }),
           resave: false,
           saveUninitialized: false,
@@ -117,4 +118,8 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   await app.listen(port || 8081);
 }
-bootstrap();
+bootstrap().catch(error => {
+  // fail fast on invalid configuration (for example an empty SESSION_SECRET)
+  console.error(error);
+  process.exit(1);
+});

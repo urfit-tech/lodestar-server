@@ -12,9 +12,10 @@ import { AuthService } from './auth.service';
 import DeviceService from './device/device.service';
 import MailVerificationCodeService from '~/mailVerificationCode/mailVerificationCode.service';
 import { LoginDeviceStatus } from './device/device.type';
+import { CacheService } from '~/utility/cache/cache.service';
 
 // No DB, Redis or native modules: the real controller and AuthService run against in-memory fakes.
-jest.mock('bcrypt', () => ({ compareSync: (password: string, hash: string) => hash === `hash:${password}` }));
+jest.mock('bcrypt', () => ({ compare: async (password: string, hash: string) => hash === `hash:${password}` }));
 jest.mock('~/member/member.infra', () => ({ MemberInfrastructure: class MemberInfrastructure {} }));
 jest.mock('~/member/member.service', () => ({ MemberService: class MemberService {} }));
 jest.mock('~/app/app.service', () => ({ AppService: class AppService {} }));
@@ -89,7 +90,12 @@ const memberInfra = {
   ]),
   getMemberPropertiesByIds: jest.fn(async () => []),
 };
-const redis = { get: jest.fn(async () => null), set: jest.fn(async () => 'OK') };
+const redis = {
+  get: jest.fn(async () => null),
+  set: jest.fn(async () => 'OK'),
+  del: jest.fn(async () => 0),
+  eval: jest.fn(async (_script: string, numKeys: number) => Array(numKeys).fill(1)),
+};
 const deviceService = {
   getFingerPrintFromUa: jest.fn(() => 'fp-sample'),
   checkAndBindDevices: jest.fn(async () => LoginDeviceStatus.UNSUPPORTED),
@@ -129,6 +135,7 @@ const sessionProvider = (req: any, _res: any, next: () => void) => {
     { provide: DeviceService, useValue: deviceService },
     { provide: MailVerificationCodeService, useValue: mailVerificationCodeService },
     { provide: Logger, useValue: new Logger() },
+    { provide: CacheService, useValue: { getClient: () => redis } },
   ],
 })
 class TestModule {
@@ -185,6 +192,7 @@ describe('general-login request host binding', () => {
     expect(deviceService.getFingerPrintFromUa).not.toHaveBeenCalled();
     expect(redis.get).not.toHaveBeenCalled();
     expect(redis.set).not.toHaveBeenCalled();
+    expect(redis.eval).not.toHaveBeenCalled();
     expect(sessionStore).toEqual({});
   });
 

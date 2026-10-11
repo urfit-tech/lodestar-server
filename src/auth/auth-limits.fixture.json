@@ -1,0 +1,78 @@
+{
+  "description": "Shared Redis key contract between lodestar-app-backend and lodestar-server (auth limits and device challenges). Both services must produce and accept exactly these shapes. norm(x) = lowercase hex sha256 of x.trim().toLowerCase(). fpHash(x) = lowercase hex sha256 of the computed fingerprint id string (the same value each service already derives from the fingerPrintId cookie, or from body fingerPrintId + User-Agent).",
+  "normalize": {
+    "input": "  Alice@Example.COM ",
+    "norm": "ff8d9819fc0e12bf0d24892e45987e249a28dce836a85cad60e28eaaa8c6d976"
+  },
+  "keys": {
+    "deviceLoginLimit": {
+      "key": "auth:device-login-limit:<appId>:<memberId>",
+      "value": "{\"fp\":\"<fpHash>\"}",
+      "ttlSeconds": 600,
+      "writtenBy": "backend checkAndBindDevices / oauth2 / social-login and server general-login, only after the identity was verified, right before returning E_LOGIN_DEVICE or redirecting to /over-login-device",
+      "consumedBy": "server POST /api/v2/device/manage-logged-in-limit (delete on success)"
+    },
+    "deviceBind": {
+      "key": "auth:device-bind:<appId>:<norm(email)>",
+      "value": "{\"memberId\":\"<memberId>\"}",
+      "ttlSeconds": 1800,
+      "writtenBy": "backend checkAndBindDevices (before its server-to-server call to /mail-verification-code/send) and server general-login, right before E_BIND_DEVICE; NOT written while deviceBindFail >= 10",
+      "consumedBy": "server /mail-verification-code/send (must exist) and /verify (must exist, memberId must equal body memberId; delete on success)"
+    },
+    "deviceBindFail": {
+      "key": "auth:device-bind-fail:<appId>:<memberId>",
+      "value": "integer counter",
+      "ttlSeconds": 3600,
+      "cap": 10,
+      "note": "INCR on each wrong code (EXPIRE set when the counter is created); verify checks it BEFORE comparing the code; never reset by login"
+    },
+    "deviceBindSendCooldown": {
+      "key": "auth:device-bind-send-cooldown:<appId>:<memberId>",
+      "value": "1",
+      "ttlSeconds": 60,
+      "note": "SET NX EX 60 before each send"
+    },
+    "deviceBindSendCount": {
+      "key": "auth:device-bind-send-count:<appId>:<memberId>",
+      "value": "integer counter",
+      "ttlSeconds": 3600,
+      "cap": 5
+    },
+    "loginFailAccountIp": {
+      "key": "auth:login-fail:<app|org>:<appId|orgId>:<norm(account)>:<ip>",
+      "ttlSeconds": 900,
+      "cap": 10
+    },
+    "loginFailAccount": {
+      "key": "auth:login-fail:<app|org>:<appId|orgId>:<norm(account)>",
+      "ttlSeconds": 900,
+      "cap": 50
+    },
+    "loginFailIp": {
+      "key": "auth:login-fail:ip:<ip>",
+      "ttlSeconds": 900,
+      "cap": 200
+    },
+    "issueCooldown": {
+      "key": "auth:issue-cooldown:<kind>:<memberId>",
+      "kinds": ["reset-password:app", "reset-password:org", "verify-email"],
+      "ttlSeconds": 60,
+      "note": "SET NX EX 60 before issuing a token / sending the mail"
+    },
+    "issueCount": {
+      "key": "auth:issue-count:<kind>:<memberId>",
+      "ttlSeconds": 3600,
+      "cap": 5
+    },
+    "forgotPasswordIp": {
+      "key": "auth:forgot-password:ip:<ip>",
+      "ttlSeconds": 3600,
+      "cap": 20
+    }
+  },
+  "counterSemantics": "Counters are incremented atomically together with setting the TTL on first creation (Lua: local n = redis.call('INCR', KEYS[1]); if n == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end; return n). A login attempt increments loginFailAccountIp, loginFailAccount and loginFailIp BEFORE the password is compared; if any returned value exceeds its cap the attempt is rejected without comparing. On a successful login loginFailAccountIp and loginFailAccount are deleted (loginFailIp is kept).",
+  "tooManyAttemptsResponse": {
+    "httpStatus": 429,
+    "body": {"code": "E_TOO_MANY_ATTEMPTS", "message": "嘗試次數過多，請稍後再試", "result": null}
+  }
+}
