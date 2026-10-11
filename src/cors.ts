@@ -28,12 +28,12 @@ const corsOptionDelegate = async (
     originParseResult.type === ParseResultType.Listed &&
     `${originParseResult.icann.domain}.${originParseResult.icann.topLevelDomains.join('.')}`;
 
-  if (
-    new URL(origin).hostname === 'localhost' ||
-    new URL(origin).hostname.includes('ngrok') ||
-    host.startsWith('localhost') ||
-    hostDomain === originDomain
-  ) {
+  // Local and tunnel origins are a development convenience and are not granted in production.
+  const isProduction = process.env.NODE_ENV === 'production';
+  const originHostname = new URL(origin).hostname;
+  const isDevOrigin = originHostname === 'localhost' || originHostname.includes('ngrok');
+
+  if ((!isProduction && isDevOrigin) || host.startsWith('localhost') || hostDomain === originDomain) {
     console.log('[CORS-INFO] CORS allowed: localhost or matching domain.', { host, origin });
     callback(null, { credentials: true, origin: true });
     return;

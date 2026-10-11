@@ -10,7 +10,7 @@ import { InjectEntityManager } from '@nestjs/typeorm';
 
 import { SignupProperty } from '~/entity/SignupProperty';
 import { MemberInfrastructure } from '~/member/member.infra';
-import { MemberRole, PublicMember } from '~/member/member.type';
+import { PublicMember } from '~/member/member.type';
 import { MemberService } from '~/member/member.service';
 import { Member } from '~/member/entity/member.entity';
 import { MemberDevice } from '~/member/entity/member_device.entity';
@@ -23,9 +23,10 @@ import { AppCache } from '~/app/app.type';
 
 import { AuthAuditLog } from './entity/auth_audit_log.entity';
 import { JwtDTO } from './auth.dto';
-import { CrossServerTokenDTO, LoginStatus, RefreshStatus } from './auth.type';
+import { LoginStatus, RefreshStatus } from './auth.type';
 import { AuthInfrastructure } from './auth.infra';
 import DeviceService from './device/device.service';
+import { retiredTokenEndpointBody } from './legacy-token-endpoint.middleware';
 import { generateAuthToken, issueResetPasswordAppToken, TokenGenerator } from './auth-token';
 
 @Injectable()
@@ -138,33 +139,9 @@ export class AuthService {
     return cb(manager ? manager : this.entityManager);
   }
 
-  async generateCrossServerToken(appCache: AppCache, dto: CrossServerTokenDTO) {
-    return this.entityManager.transaction(async manager => {
-      const { clientId, key, permissions } = dto;
-
-      const app = await this.appService.getAppByClientId(clientId, manager);
-      if (!app) {
-        throw new APIException({ code: 'E_NOT_FOUND', message: "client ID doesn't exist" });
-      }
-
-      const { id: appId, appSecrets } = app;
-      const authServiceKeySecret = appSecrets.find(({ key }) => key === 'auth.service.key');
-      if (!authServiceKeySecret || authServiceKeySecret.value !== key) {
-        throw new APIException({ code: 'E_AUTH_TOKEN', message: 'key is not authenticated' });
-      }
-
-      return this.signJWT(
-        appCache,
-        {
-          sub: clientId,
-          appId,
-          role: MemberRole.APP_OWNER,
-          permissions,
-        },
-        '12 hours',
-        manager,
-      );
-    });
+  async generateCrossServerToken(): Promise<never> {
+    // The token endpoint is retired; any remaining in-process caller gets the same response.
+    throw new APIException(retiredTokenEndpointBody, 503);
   }
 
   verify(token: string): Record<string, any> {
