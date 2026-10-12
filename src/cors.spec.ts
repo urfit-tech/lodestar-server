@@ -89,6 +89,46 @@ describe('corsOptionDelegate', () => {
     });
   });
 
+  describe.each(['production', 'development', 'test', 'staging'])('in %s', env => {
+    beforeEach(() => {
+      process.env.NODE_ENV = env;
+    });
+
+    it.each(['null', 'not a url', 'https://', ''])('denies Origin %j without throwing', async origin => {
+      const options = await evaluate('api.kolable.com', origin);
+      expect(options).toEqual({ credentials: false, origin: false });
+      expect(getAppInfoByHost).not.toHaveBeenCalled();
+    });
+
+    it('denies an unparseable Origin even when the Host starts with localhost', async () => {
+      const options = await evaluate('localhost:8081', 'null');
+      expect(options).toEqual({ credentials: false, origin: false });
+    });
+  });
+
+  it('denies instead of rejecting when an unexpected error occurs', async () => {
+    app.get.mockImplementationOnce(() => {
+      throw new Error('unexpected');
+    });
+    const options = await evaluate('api.kolable.com', 'https://www.example.org');
+    expect(options).toEqual({ credentials: false, origin: false });
+  });
+
+  it('denies an unrelated origin when the app lookup fails', async () => {
+    process.env.NODE_ENV = 'production';
+    getAppInfoByHost.mockRejectedValue(new Error('no app'));
+    const options = await evaluate('api.kolable.com', 'https://www.example.org');
+    expect(options).toEqual({ credentials: false, origin: false });
+  });
+
+  it('looks up the allowed domains by the Origin hostname', async () => {
+    process.env.NODE_ENV = 'production';
+    getAppInfoByHost.mockResolvedValue({ settings: { cors_allowed_domains: JSON.stringify(['www.example.org']) } });
+    const options = await evaluate('api.kolable.com', 'https://www.example.org:8443');
+    expect(options).toEqual({ credentials: true, origin: true });
+    expect(getAppInfoByHost).toHaveBeenCalledWith('www.example.org');
+  });
+
   it('does not grant when Origin is absent', async () => {
     const options = await evaluate('api.kolable.com', '');
     expect(options).toEqual({ credentials: false, origin: false });

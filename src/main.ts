@@ -62,7 +62,12 @@ async function bootstrap() {
   } else {
     app = await NestFactory.create<NestExpressApplication>(ApplicationModule, {
       bufferLogs: true,
-      cors: async (req, callback) => await corsOptionDelegate(req, callback, app),
+      // CORS evaluation errors deny the origin instead of becoming unhandled rejections.
+      cors: (req, callback) => {
+        Promise.resolve()
+          .then(() => corsOptionDelegate(req, callback, app))
+          .catch(() => callback(null, { credentials: false, origin: false }));
+      },
     });
     // Registered before body parsing, session and Nest's CORS, logging and tenant middleware.
     app.use(legacyTokenEndpointMiddleware);
