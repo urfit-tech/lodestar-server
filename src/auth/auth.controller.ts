@@ -16,6 +16,7 @@ import { AuthGuard } from './auth.guard';
 import { PermissionGuard } from './permission.guard';
 import MailVerificationCodeService from '~/mailVerificationCode/mailVerificationCode.service';
 import { EventType } from '~/mailVerificationCode/mailVerificationCode.type';
+import { APIException } from '~/api.excetion';
 
 @ApiTags('Auth')
 @Controller({
@@ -42,6 +43,11 @@ export class AuthController {
   ) {
     if (!session) {
       return { code: 'E_SESSION', message: 'cannot get session', result: null };
+    }
+
+    // members may only sign in through their own app's host: settings, org and default permissions come from it
+    if (!appCache?.id || body.appId !== appCache.id) {
+      throw new APIException({ code: 'E_APP_MISMATCH', message: 'app mismatch', result: null }, 403);
     }
 
     const { cookies } = request;
