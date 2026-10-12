@@ -174,6 +174,36 @@ export class AppService {
     return cb(entityManager ? entityManager : this.entityManager);
   }
 
+  // Every host bound to the app. Cached for five minutes; read from the database when the cache is
+  // empty or unavailable. Database errors propagate to the caller.
+  async getAppHostNames(appId: string): Promise<Array<string>> {
+    const key = `app:${appId}:hosts`;
+    try {
+      const cached = await this.cacheService.getClient().smembers(key);
+      if (cached.length > 0) {
+        return cached;
+      }
+    } catch (error) {
+      this.logger.error(`cannot read ${key} cache: ${error}`);
+    }
+
+    const hosts = (await this.appInfra.getAppHosts(appId, this.entityManager)).map(({ host }) => host);
+    if (hosts.length > 0) {
+      try {
+        await this.cacheService
+          .getClient()
+          .multi()
+          .del(key)
+          .sadd(key, ...hosts)
+          .expire(key, 5 * 60)
+          .exec();
+      } catch (error) {
+        this.logger.error(`cannot set ${key} cache: ${error}`);
+      }
+    }
+    return hosts;
+  }
+
   async getFirstMatchedAppHost(appId: string, entityManager?: EntityManager): Promise<AppHost | null> {
     const cb = async (manager: EntityManager) => {
       const founds = await this.appInfra.getAppHosts(appId, manager);

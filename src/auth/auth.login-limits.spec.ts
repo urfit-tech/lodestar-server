@@ -17,6 +17,7 @@ import DeviceService from './device/device.service';
 import { LoginDeviceStatus } from './device/device.type';
 import { fingerprintHash, matchDeviceLoginChallenge, normalizeIdentifier } from './auth-limits';
 import { FakeRedis } from './testing/fake-redis';
+import { AppService } from '~/app/app.service';
 
 // No DB or native modules: the real controller and AuthService run against in-memory fakes.
 jest.mock('bcrypt', () => ({
@@ -101,6 +102,8 @@ const authService = new AuthService(
     { provide: DeviceService, useValue: deviceService },
     { provide: MailVerificationCodeService, useValue: mailVerificationCodeService },
     { provide: CacheService, useValue: cacheService },
+    // requests here carry no Origin, so the same-site guard never looks up the request host app
+    { provide: AppService, useValue: { getAppInfoByHost: jest.fn(), getAppHostNames: jest.fn() } },
     { provide: Logger, useValue: new Logger() },
   ],
 })
