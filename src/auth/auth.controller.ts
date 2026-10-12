@@ -14,6 +14,7 @@ import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { AuthGuard } from './auth.guard';
 import { PermissionGuard } from './permission.guard';
+import { SameSiteRequestGuard } from './same-site.guard';
 import MailVerificationCodeService from '~/mailVerificationCode/mailVerificationCode.service';
 import { EventType } from '~/mailVerificationCode/mailVerificationCode.type';
 import { APIException } from '~/api.excetion';
@@ -26,6 +27,7 @@ import {
 } from './auth-limits';
 
 @ApiTags('Auth')
+@UseGuards(SameSiteRequestGuard)
 @Controller({
   path: 'auth',
   version: ['1', '2'],
