@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import { AuthService } from './auth.service';
 import { LoginStatus } from './auth.type';
 import { generateAuthToken, hashAuthToken, issueResetPasswordAppToken, ResetTokenRedis } from './auth-token';
+import { FakeRedis as SharedFakeRedis } from './testing/fake-redis';
 
 // Shared fixed vector — identical in lodestar-app-backend src/helpers/authToken.spec.ts
 const VECTOR = {
@@ -15,16 +16,10 @@ const VECTOR = {
   ttl: 3600,
 };
 
-class FakeRedis implements ResetTokenRedis {
-  store = new Map<string, { value: string; ttl: number }>();
-  async set(key: string, value: string, mode: 'EX', ttl: number) {
-    if (mode !== 'EX') throw new Error('unexpected mode');
-    this.store.set(key, { value, ttl });
-    return 'OK';
-  }
-  async get() {
-    // tmpPass lookup in generalLogin
-    return null;
+class FakeRedis extends SharedFakeRedis implements ResetTokenRedis {
+  entry(key: string) {
+    const stored = this.store.get(key);
+    return stored && { value: stored.value, ttl: stored.ttlSeconds };
   }
 }
 
@@ -90,7 +85,7 @@ describe('reset-password token issuance (lodestar-server)', () => {
     );
     expect(token).toBe(VECTOR.token);
     expect([...redis.store.keys()]).toEqual([VECTOR.key]);
-    expect(redis.store.get(VECTOR.key)).toEqual({ value: VECTOR.value, ttl: VECTOR.ttl });
+    expect(redis.entry(VECTOR.key)).toEqual({ value: VECTOR.value, ttl: VECTOR.ttl });
   });
 
   it('generates 64-char lowercase hex tokens that differ per call', () => {
@@ -116,7 +111,7 @@ describe('reset-password token issuance (lodestar-server)', () => {
       loggedInMembers: [],
     });
     expect(result.status).toBe(LoginStatus.I_RESET_PASSWORD);
-    expect(redis.store.get(VECTOR.key)).toEqual({ value: VECTOR.value, ttl: VECTOR.ttl });
+    expect(redis.entry(VECTOR.key)).toEqual({ value: VECTOR.value, ttl: VECTOR.ttl });
     const { partials } = insertEmailJobIntoQueue.mock.calls[0][0];
     expect(partials.url).toBe(
       `https://alias.vector.example.com/reset-password?token=${VECTOR.token}&member=${VECTOR.memberId}`,
@@ -142,9 +137,7 @@ describe('reset-password token issuance (lodestar-server)', () => {
     expect(url.host).toBe('app-b.primary.example.com');
     const token = url.searchParams.get('token') as string;
     expect(token).toMatch(/^[0-9a-f]{64}$/);
-    expect(redis.store.get(VECTOR.key)?.value).toBe(
-      JSON.stringify({ tokenHash: hashAuthToken(token), appId: 'app-b' }),
-    );
+    expect(redis.entry(VECTOR.key)?.value).toBe(JSON.stringify({ tokenHash: hashAuthToken(token), appId: 'app-b' }));
   });
 
   it('general-login I_RESET path: no host for the target app -> no mail, no token', async () => {
@@ -164,6 +157,7 @@ describe('reset-password token issuance (lodestar-server)', () => {
       }),
     ).rejects.toMatchObject({ code: 'E_NO_APP_HOST' });
     expect(insertEmailJobIntoQueue).not.toHaveBeenCalled();
-    expect(redis.store.size).toBe(0);
+    expect(redis.keys('auth:reset-password:')).toEqual([]);
+    expect(redis.keys('auth:issue-')).toEqual([]);
   });
 });

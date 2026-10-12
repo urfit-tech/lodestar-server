@@ -28,6 +28,14 @@ import { AuthInfrastructure } from './auth.infra';
 import DeviceService from './device/device.service';
 import { retiredTokenEndpointBody } from './legacy-token-endpoint.middleware';
 import { generateAuthToken, issueResetPasswordAppToken, TokenGenerator } from './auth-token';
+import {
+  allowTokenIssue,
+  clearLoginAttempts,
+  registerLoginAttempt,
+  safeEqual,
+  TOO_MANY_ATTEMPTS_BODY,
+  TOO_MANY_ATTEMPTS_STATUS,
+} from './auth-limits';
 
 @Injectable()
 export class AuthService {
@@ -63,6 +71,7 @@ export class AuthService {
       account: string;
       password: string;
       loggedInMembers: PublicMember[];
+      ip?: string;
     },
     manager?: EntityManager,
   ): Promise<{ status: LoginStatus; authToken?: string; member?: any }> {
@@ -70,25 +79,35 @@ export class AuthService {
       const { orgId } = appCache;
       // get possible members
       const { appId, account: usernameOrEmail, password, loggedInMembers } = options;
+      const ip = options.ip || 'unknown';
+      const redis = this.cacheService.getClient();
+
+      // every attempt is counted before the member lookup and the password check
+      if (!(await registerLoginAttempt(redis, 'app', appId, usernameOrEmail, ip))) {
+        throw new APIException(TOO_MANY_ATTEMPTS_BODY, TOO_MANY_ATTEMPTS_STATUS);
+      }
+
       const member = await this.memberInfra.getGeneralLoginMemberByUsernameOrEmail(appId, usernameOrEmail, manager);
       if (!member) {
         return { status: LoginStatus.E_NO_MEMBER };
       }
 
-      const temporaryPassword = await this.cacheService.getClient().get(`tmpPass:${appId}:${usernameOrEmail}`);
+      const temporaryPassword = await redis.get(`tmpPass:${appId}:${usernameOrEmail}`);
 
-      if (temporaryPassword !== password) {
+      if (!safeEqual(temporaryPassword, password)) {
         // migrated/3rd account with no password
         if (!member.passhash) {
           await this.sendResetPasswordEmail(appCache, member, manager);
           return { status: LoginStatus.I_RESET_PASSWORD };
         }
         // check password
-        if (!bcrypt.compareSync(password, member.passhash)) {
+        if (!(await bcrypt.compare(password, member.passhash))) {
           return { status: LoginStatus.E_PASSWORD };
         }
         await this.insertLastLoginJobIntoQueue(member.id);
       }
+
+      await clearLoginAttempts(redis, 'app', appId, usernameOrEmail, ip);
 
       const jwtPayload = await this.buildJwtPayload(orgId, member, loggedInMembers, manager);
       const authToken = await this.signJWT(appCache, jwtPayload, '1 day', manager);
@@ -244,6 +263,11 @@ export class AuthService {
 
     // the link must point at the member's own app: only reuse the request host when it belongs to that app
     const appHost = await this.resolveAppLinkHost(appCache, member.appId, manager);
+
+    // at most one reset mail per minute and five per hour for each member; otherwise nothing is issued or sent
+    if (!(await allowTokenIssue(this.cacheService.getClient(), 'reset-password:app', member.id))) {
+      return;
+    }
 
     // create single-use reset password token (stored hashed in redis, one per member; verified by lodestar-app-backend)
     const resetPasswordToken = await issueResetPasswordAppToken(

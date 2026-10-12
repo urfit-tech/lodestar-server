@@ -17,6 +17,13 @@ import { PermissionGuard } from './permission.guard';
 import MailVerificationCodeService from '~/mailVerificationCode/mailVerificationCode.service';
 import { EventType } from '~/mailVerificationCode/mailVerificationCode.type';
 import { APIException } from '~/api.excetion';
+import { CacheService } from '~/utility/cache/cache.service';
+import {
+  isDeviceBindLocked,
+  TOO_MANY_ATTEMPTS_STATUS,
+  writeDeviceBindChallenge,
+  writeDeviceLoginChallenge,
+} from './auth-limits';
 
 @ApiTags('Auth')
 @Controller({
@@ -29,6 +36,7 @@ export class AuthController {
     private readonly deviceService: DeviceService,
     private readonly logger: Logger,
     private readonly mailVerificationCodeService: MailVerificationCodeService,
+    private readonly cacheService: CacheService,
   ) {}
 
   @Post('general-login')
@@ -68,6 +76,7 @@ export class AuthController {
         account,
         password,
         loggedInMembers,
+        ip: request.ip,
       });
 
       switch (status) {
@@ -95,19 +104,24 @@ export class AuthController {
         : LoginDeviceStatus.UNSUPPORTED;
       switch (deviceStatus) {
         case LoginDeviceStatus.LOGIN_LIMIT_EXCEED:
+          // the device limit page may sign out older devices only from this browser and only shortly after this login
+          await writeDeviceLoginChallenge(this.cacheService.getClient(), appId, member.id, fingerPrintId);
           return {
             code: 'E_LOGIN_DEVICE',
             message: 'The number of device login for this member reach limit.',
             result: null,
           };
         case LoginDeviceStatus.BIND_LIMIT_EXCEED:
-          await this.mailVerificationCodeService.expireOldAndSendVerificationCode(
-            appId,
-            member.email,
-            EventType.BIND_DEVICE_LIMIT,
-            userAgent,
-            geoLocation?.ip,
-          );
+          if (member.email && !(await isDeviceBindLocked(this.cacheService.getClient(), appId, member.id))) {
+            await writeDeviceBindChallenge(this.cacheService.getClient(), appId, member.email, member.id);
+            await this.mailVerificationCodeService.sendDeviceBindCode(
+              appId,
+              member.email,
+              EventType.BIND_DEVICE_LIMIT,
+              userAgent,
+              geoLocation?.ip,
+            );
+          }
           response.cookie('member', encodeURIComponent(JSON.stringify({ id: member.id, email: member.email })), {
             maxAge: 600 * 1000,
           });
@@ -143,6 +157,9 @@ export class AuthController {
         result: { authToken, deviceStatus },
       };
     } catch (error) {
+      if (error instanceof APIException && error.getStatus() === TOO_MANY_ATTEMPTS_STATUS) {
+        throw error;
+      }
       this.logger.error(error);
       return { code: error.name, message: error.message };
     }
