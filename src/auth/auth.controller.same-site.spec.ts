@@ -5,6 +5,7 @@ import 'reflect-metadata';
 import request from 'supertest';
 
 import { ApiExceptionFilter } from '~/api.filter';
+import { AppService } from '~/app/app.service';
 import MailVerificationCodeService from '~/mailVerificationCode/mailVerificationCode.service';
 import { CacheService } from '~/utility/cache/cache.service';
 import { AuthController } from './auth.controller';
@@ -12,6 +13,7 @@ import { AuthService } from './auth.service';
 import { LoginStatus, RefreshStatus } from './auth.type';
 import { DeviceController } from './device/device.controller';
 import DeviceService from './device/device.service';
+import { createFakeAppLookup, FakeAppLookup } from './testing/fake-app-lookup';
 import { FakeRedis } from './testing/fake-redis';
 
 jest.mock('./auth.service', () => ({ AuthService: class AuthService {} }));
@@ -21,6 +23,7 @@ jest.mock('~/mailVerificationCode/mailVerificationCode.service', () => ({
   __esModule: true,
   default: class MailVerificationCodeService {},
 }));
+jest.mock('~/app/app.service', () => ({ AppService: class AppService {} }));
 jest.mock('./permission.guard', () => ({ PermissionGuard: class PermissionGuard {} }));
 
 const APP_ID = 'sample-app';
@@ -38,6 +41,7 @@ const deviceService = {
 };
 const logger = { log: jest.fn(), error: jest.fn(), warn: jest.fn() };
 let redis: FakeRedis;
+let appLookup: FakeAppLookup;
 let sessionStore: Record<string, any>;
 const sessionReads = jest.fn();
 
@@ -49,6 +53,13 @@ const sessionReads = jest.fn();
     { provide: MailVerificationCodeService, useValue: {} },
     { provide: Logger, useValue: logger },
     { provide: CacheService, useValue: { getClient: () => redis } },
+    {
+      provide: AppService,
+      useValue: {
+        getAppInfoByHost: (host: string) => appLookup.getAppInfoByHost(host),
+        getAppHostNames: (appId: string) => appLookup.getAppHostNames(appId),
+      },
+    },
   ],
 })
 class TestModule {
@@ -132,6 +143,7 @@ describe('session endpoints accept only same-site requests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     redis = new FakeRedis();
+    appLookup = createFakeAppLookup();
     sessionStore = {};
     warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
@@ -142,13 +154,51 @@ describe('session endpoints accept only same-site requests', () => {
 
   describe.each(routes)('%s', (_label, path, body) => {
     it.each([
-      ['Sec-Fetch-Site cross-site', { 'Sec-Fetch-Site': 'cross-site' }, 'origin_site=- sfs=cross-site'],
-      ['an Origin on another domain', { Origin: 'https://www.other-site.com' }, 'origin_site=other-site.com sfs=-'],
-      ['Origin null', { Origin: 'null' }, 'origin_site=null sfs=-'],
-      ['an unparseable Origin', { Origin: '%%garbage%%' }, 'origin_site=invalid sfs=-'],
-      ['an IP Origin', { Origin: 'https://54.249.157.218' }, 'origin_site=invalid sfs=-'],
-    ])('rejects %s before the handler runs', async (_case, headers, logged) => {
-      const response = await post(path, 'course.taotaoxi.net', headers, body).type('form');
+      [
+        'Sec-Fetch-Site cross-site',
+        'course.taotaoxi.net',
+        { 'Sec-Fetch-Site': 'cross-site' },
+        'origin_site=- host=course.taotaoxi.net sfs=cross-site',
+      ],
+      [
+        'an Origin on another domain',
+        'course.taotaoxi.net',
+        { Origin: 'https://www.other-site.com' },
+        'origin_site=other-site.com host=course.taotaoxi.net sfs=-',
+      ],
+      ['Origin null', 'course.taotaoxi.net', { Origin: 'null' }, 'origin_site=null host=course.taotaoxi.net sfs=-'],
+      [
+        'an unparseable Origin',
+        'course.taotaoxi.net',
+        { Origin: '%%garbage%%' },
+        'origin_site=invalid host=course.taotaoxi.net sfs=-',
+      ],
+      [
+        'an IP Origin',
+        'course.taotaoxi.net',
+        { Origin: 'https://54.249.157.218' },
+        'origin_site=invalid host=course.taotaoxi.net sfs=-',
+      ],
+      [
+        'an http Origin for the same host',
+        'course.taotaoxi.net',
+        { Origin: 'http://course.taotaoxi.net' },
+        'origin_site=taotaoxi.net host=course.taotaoxi.net sfs=-',
+      ],
+      [
+        'another app on the same registrable domain',
+        'b.kolable.app',
+        { Origin: 'https://a.kolable.app', 'Sec-Fetch-Site': 'same-site' },
+        'origin_site=kolable.app host=b.kolable.app sfs=same-site',
+      ],
+      [
+        'a host the Origin app lists in its own setting',
+        'b.kolable.app',
+        { Origin: 'https://www.tenant-c-site.com' },
+        'origin_site=tenant-c-site.com host=b.kolable.app sfs=-',
+      ],
+    ])('rejects %s before the handler runs', async (_case, host, headers, logged) => {
+      const response = await post(path, host, headers, body).type('form');
 
       expect(response.status).toBe(403);
       expect(response.body).toEqual({ code: 'E_CROSS_SITE', message: 'cross-site request rejected', result: null });
@@ -179,6 +229,7 @@ describe('session endpoints accept only same-site requests', () => {
         'course.commonhealth.com.tw',
         { Origin: 'https://www.commonhealth.com.tw' },
       ],
+      ['a host the request host app lists', 'b.kolable.app', { Origin: 'https://partner.example.org' }],
       ['no Origin', 'course.taotaoxi.net', {}],
     ])('accepts %s', async (_case, host, headers) => {
       const response = await post(path, host, headers, body);
@@ -216,6 +267,36 @@ describe('session endpoints accept only same-site requests', () => {
     expect(response.status).toBe(403);
     expect(response.body.code).toBe('E_CROSS_SITE');
     expect(authService.generateTmpPassword).not.toHaveBeenCalled();
+    expectNoHandlerEffects();
+  });
+
+  it.each(['/api/v1/auth/refresh-token', '/api/v2/auth/general-login', '/api/v2/device/manage-logged-in-limit'])(
+    'rejects a POST %s from another app on the same registrable domain',
+    async path => {
+      const response = await post(
+        path,
+        'b.kolable.app',
+        { Origin: 'https://a.kolable.app', 'Sec-Fetch-Site': 'same-site' },
+        { ...refreshBody, memberId: 'member-sample' },
+      );
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ code: 'E_CROSS_SITE', message: 'cross-site request rejected', result: null });
+      expectNoHandlerEffects();
+    },
+  );
+
+  it('rejects a POST from another host of the same app when the lookup fails', async () => {
+    appLookup.getAppHostNames.mockRejectedValue(new Error('unavailable'));
+    const response = await post(
+      '/api/v1/auth/refresh-token',
+      'course.taotaoxi.net',
+      { Origin: 'https://www.taotaoxi.net' },
+      refreshBody,
+    );
+
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('E_CROSS_SITE');
     expectNoHandlerEffects();
   });
 

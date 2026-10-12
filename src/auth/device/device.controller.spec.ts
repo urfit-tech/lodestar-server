@@ -12,7 +12,9 @@ import { DeviceController } from './device.controller';
 import DeviceService from './device.service';
 import { fingerprintHash } from '../auth-limits';
 import { FakeRedis } from '../testing/fake-redis';
+import { AppService } from '~/app/app.service';
 
+jest.mock('~/app/app.service', () => ({ AppService: class AppService {} }));
 jest.mock('./device.service', () => ({ __esModule: true, default: class DeviceService {} }));
 jest.mock('~/utility/cache/cache.service', () => ({ CacheService: class CacheService {} }));
 
@@ -48,6 +50,8 @@ const writeChallengeLikeOtherService = (fingerPrintId: string) =>
   providers: [
     { provide: DeviceService, useValue: deviceService },
     { provide: CacheService, useValue: { getClient: () => redis } },
+    // requests here carry no Origin, so the same-site guard never looks up the request host app
+    { provide: AppService, useValue: { getAppInfoByHost: jest.fn(), getAppHostNames: jest.fn() } },
     { provide: Logger, useValue: logger },
   ],
 })

@@ -1,7 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { Request } from 'express';
-import { parseDomain, ParseResultType } from 'parse-domain';
 import { APIException } from '~/api.excetion';
+import { AppService } from '~/app/app.service';
+import { describeOriginSite, describeRequestHost, evaluateOrigin, RequestHostAppLookup } from '~/cors';
 
 type RequestHeaders = Record<string, string | string[] | undefined>;
 
@@ -12,74 +13,25 @@ const headerValue = (headers: RequestHeaders, name: string): string | undefined 
   return Array.isArray(value) ? value.join(', ') : value;
 };
 
-// Registrable domain (for example `taotaoxi.net` or `example.com.tw`), using the same
-// parse-domain rules as the CORS configuration. Undefined when the hostname is not Listed.
-const registrableDomain = (hostname: string): string | undefined => {
-  const result = parseDomain(hostname);
-  if (result.type !== ParseResultType.Listed || !result.icann.domain) {
-    return undefined;
-  }
-  return `${result.icann.domain}.${result.icann.topLevelDomains.join('.')}`;
-};
-
-const hostnameOf = (value: string): string | undefined => {
-  try {
-    return new URL(value).hostname;
-  } catch {
-    return undefined;
-  }
-};
-
-// Local and tunnel origins, and local hosts, as in the CORS configuration (src/cors.ts); never in production.
-const isDevelopmentException = (originHostname: string | undefined, host: string | undefined) => {
-  if (process.env.NODE_ENV === 'production') {
-    return false;
-  }
-  if (originHostname !== undefined && (originHostname === 'localhost' || originHostname.includes('ngrok'))) {
-    return true;
-  }
-  return !!host && host.startsWith('localhost');
-};
-
 const fetchSiteValues = (headers: RequestHeaders) =>
   (headerValue(headers, 'sec-fetch-site') || '')
     .split(',')
     .map(value => value.trim().toLowerCase())
     .filter(Boolean);
 
-export const isCrossSiteRequest = (headers: RequestHeaders): boolean => {
-  const origin = headerValue(headers, 'origin');
-  const host = headerValue(headers, 'host');
-
+// A request is accepted when it carries no Origin (server to server, native apps) and is not marked
+// `Sec-Fetch-Site: cross-site`, or when its Origin is trusted by the request host under the same rules as
+// credentialed CORS (src/cors.ts). Lookup failures count as cross-site.
+export const isCrossSiteRequest = async (headers: RequestHeaders, lookup: RequestHostAppLookup): Promise<boolean> => {
   if (fetchSiteValues(headers).includes('cross-site')) {
     return true;
   }
-
+  const origin = headerValue(headers, 'origin');
   if (origin === undefined) {
     return false;
   }
-  const originHostname = hostnameOf(origin);
-  if (isDevelopmentException(originHostname, host)) {
-    return false;
-  }
-  if (origin === 'null' || originHostname === undefined) {
-    return true;
-  }
-  const originSite = registrableDomain(originHostname);
-  const hostHostname = host ? hostnameOf(`http://${host}`) : undefined;
-  const hostSite = hostHostname !== undefined ? registrableDomain(hostHostname) : undefined;
-  return originSite === undefined || hostSite === undefined || originSite !== hostSite;
-};
-
-const describeOriginSite = (origin: string | undefined) => {
-  if (origin === undefined) {
-    return '-';
-  }
-  if (origin === 'null') {
-    return 'null';
-  }
-  const hostname = hostnameOf(origin);
-  return (hostname !== undefined && registrableDomain(hostname)) || 'invalid';
+  const { trusted } = await evaluateOrigin(origin, headerValue(headers, 'host'), lookup);
+  return !trusted;
 };
 
 const describeFetchSite = (headers: RequestHeaders) => {
@@ -93,16 +45,25 @@ export const crossSiteRejectedBody = {
   result: null,
 };
 
-// Session endpoints accept state-changing requests only from the same registrable domain as the
-// request host. Requests without Origin and without `Sec-Fetch-Site: cross-site` (server to
-// server, native apps) are accepted.
+// Session endpoints accept state-changing requests only from origins the request host trusts.
 @Injectable()
 export class SameSiteRequestGuard implements CanActivate {
   private readonly logger = new Logger(SameSiteRequestGuard.name);
 
-  canActivate(context: ExecutionContext): boolean {
+  constructor(private readonly appService: AppService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    if (SAFE_METHODS.includes(request.method) || !isCrossSiteRequest(request.headers)) {
+    if (SAFE_METHODS.includes(request.method)) {
+      return true;
+    }
+    let crossSite = true;
+    try {
+      crossSite = await isCrossSiteRequest(request.headers, this.appService);
+    } catch {
+      crossSite = true;
+    }
+    if (!crossSite) {
       return true;
     }
 
@@ -110,7 +71,7 @@ export class SameSiteRequestGuard implements CanActivate {
     this.logger.warn(
       `cross-site-auth-reject route=${route} origin_site=${describeOriginSite(
         headerValue(request.headers, 'origin'),
-      )} sfs=${describeFetchSite(request.headers)}`,
+      )} host=${describeRequestHost(headerValue(request.headers, 'host'))} sfs=${describeFetchSite(request.headers)}`,
     );
     throw new APIException(crossSiteRejectedBody, 403);
   }

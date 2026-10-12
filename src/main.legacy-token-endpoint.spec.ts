@@ -6,6 +6,7 @@ import { NestApplication } from '@nestjs/core/nest-application';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { LoggerModule } from 'nestjs-pino';
 import request from 'supertest';
+import { AppService } from './app/app.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import DeviceService from './auth/device/device.service';
@@ -107,6 +108,7 @@ class HealthController {
     { provide: NestLogger, useValue: new NestLogger() },
     { provide: ConfigService, useValue: config },
     { provide: CacheService, useValue: { getClient: () => ({}) } },
+    { provide: AppService, useValue: {} },
   ],
 })
 class TestApplicationModule {
