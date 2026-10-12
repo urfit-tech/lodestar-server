@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Body, Controller, Headers, Logger, Post, Req } from '@nestjs/common';
+import { Body, Controller, Headers, Logger, Post, Req, UseGuards } from '@nestjs/common';
 import DeviceService from './device.service';
 import { ManageLoggedInLimitDTO } from './device.dto';
 import { Local } from '~/decorator';
@@ -7,7 +7,9 @@ import { AppCache } from '~/app/app.type';
 import { APIException } from '~/api.excetion';
 import { CacheService } from '~/utility/cache/cache.service';
 import { clearDeviceLoginChallenge, matchDeviceLoginChallenge } from '../auth-limits';
+import { SameSiteRequestGuard } from '../same-site.guard';
 
+@UseGuards(SameSiteRequestGuard)
 @Controller({
   path: 'device',
   version: '2',
