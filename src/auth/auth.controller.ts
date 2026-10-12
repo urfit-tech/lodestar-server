@@ -5,11 +5,11 @@ import { AppCache } from '~/app/app.type';
 import { Local } from '~/decorator';
 import { AuthService } from './auth.service';
 import { RefreshTokenDTO } from './auth.dto';
-import { CrossServerTokenDTO, GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus, RefreshStatus } from './auth.type';
+import { GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus, RefreshStatus } from './auth.type';
 import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
-import { ApiTags, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import CrossServerTokenDTOProperty from './api_property/cross_server_token_dto';
+import { ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { sendRetiredTokenEndpoint } from './legacy-token-endpoint.middleware';
 import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { AuthGuard } from './auth.guard';
@@ -200,16 +200,9 @@ export class AuthController {
   }
 
   @Post('token')
-  @ApiOperation({ summary: 'Generate Cross Server Token' })
-  @ApiResponse({ status: 201, description: 'Token generated successfully.' })
-  @ApiBody({ type: CrossServerTokenDTOProperty })
-  async generateCrossServerToken(@Local('appCache') appCache: AppCache, @Body() body: CrossServerTokenDTO) {
-    const authToken = await this.authService.generateCrossServerToken(appCache, body);
-    return {
-      code: 'SUCCESS',
-      message: 'get auth token successfully',
-      result: { authToken },
-    };
+  @ApiExcludeEndpoint()
+  retiredTokenEndpoint(@Res() response: Response) {
+    return sendRetiredTokenEndpoint(response);
   }
   @Permissions(PermissionSet.APP_TMP_PASSWORD_ADMIN)
   @UseGuards(AuthGuard, PermissionGuard)

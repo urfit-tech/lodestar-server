@@ -21,6 +21,7 @@ import { CacheService } from './utility/cache/cache.service';
 import corsOptionDelegate from './cors';
 import { MemberModule } from './member/member.module';
 import { AuthModule } from './auth/auth.module';
+import { legacyTokenEndpointMiddleware } from './auth/legacy-token-endpoint.middleware';
 import { SwaggerConfigService } from './swagger-config/swagger-config.service';
 
 dayjs.extend(utc);
@@ -62,6 +63,8 @@ async function bootstrap() {
       bufferLogs: true,
       cors: async (req, callback) => await corsOptionDelegate(req, callback, app),
     });
+    // Registered before body parsing, session and Nest's CORS, logging and tenant middleware.
+    app.use(legacyTokenEndpointMiddleware);
     app.set('trust proxy', 1);
 
     const configService = app.get(
