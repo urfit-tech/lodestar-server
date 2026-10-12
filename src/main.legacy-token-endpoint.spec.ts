@@ -177,6 +177,14 @@ describe('main bootstrap legacy token endpoint', () => {
     expect(mockPinoWrite).toHaveBeenCalled();
   });
 
+  it('keeps serving when the CORS delegate rejects', async () => {
+    mockCors.mockImplementationOnce(() => Promise.reject(new TypeError('Invalid URL')));
+    const response = await request(app.getHttpServer()).get('/healthz').set('Origin', 'null');
+    expect(response.status).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+    expect((await request(app.getHttpServer()).get('/healthz')).status).toBe(200);
+  });
+
   it.each(['1', '2'])('answers v%s with 503 before body parsing, session, CORS, tenant and pino', async version => {
     const variants = [
       `/api/v${version}/auth/token`,
