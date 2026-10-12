@@ -13,6 +13,7 @@ import DeviceService from './device/device.service';
 import MailVerificationCodeService from '~/mailVerificationCode/mailVerificationCode.service';
 import { LoginDeviceStatus } from './device/device.type';
 import { CacheService } from '~/utility/cache/cache.service';
+import { AppService } from '~/app/app.service';
 
 // No DB, Redis or native modules: the real controller and AuthService run against in-memory fakes.
 jest.mock('bcrypt', () => ({ compare: async (password: string, hash: string) => hash === `hash:${password}` }));
@@ -136,6 +137,8 @@ const sessionProvider = (req: any, _res: any, next: () => void) => {
     { provide: MailVerificationCodeService, useValue: mailVerificationCodeService },
     { provide: Logger, useValue: new Logger() },
     { provide: CacheService, useValue: { getClient: () => redis } },
+    // requests here carry no Origin, so the same-site guard never looks up the request host app
+    { provide: AppService, useValue: { getAppInfoByHost: jest.fn(), getAppHostNames: jest.fn() } },
   ],
 })
 class TestModule {
