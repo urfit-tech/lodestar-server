@@ -20,6 +20,7 @@ import { UtilityService } from '~/utility/utility.service';
 import { CacheService } from '~/utility/cache/cache.service';
 import { APIException } from '~/api.excetion';
 import { AppCache } from '~/app/app.type';
+import { PermissionSet } from '~/enums/PermissionSet.enum';
 
 import { AuthAuditLog } from './entity/auth_audit_log.entity';
 import { JwtDTO } from './auth.dto';
@@ -36,6 +37,8 @@ import {
   TOO_MANY_ATTEMPTS_BODY,
   TOO_MANY_ATTEMPTS_STATUS,
 } from './auth-limits';
+
+export const TMP_PASSWORD_FORBIDDEN_BODY = { code: 'E_FORBIDDEN', message: 'forbidden', result: null };
 
 @Injectable()
 export class AuthService {
@@ -307,9 +310,20 @@ export class AuthService {
     return this.cacheService.getClient().set(`last-logged-in:${memberId}`, new Date().toISOString(), 'EX', 7 * 86400);
   }
 
-  async generateTmpPassword(appId: string, email: string, applicant: string, purpose: string) {
-    const { data: memberData } = await this.memberService.getMembersByCondition(appId, { limit: 1 }, { email });
-    if (memberData.length === 0) {
+  // appId and applicantId come from the verified token and the request host, never from the request body
+  async generateTmpPassword(appId: string, applicantId: string, email: unknown, purpose: string) {
+    const applicant = await this.authInfra.getAppMemberWithPermission(
+      applicantId,
+      appId,
+      PermissionSet.APP_TMP_PASSWORD_ADMIN,
+      this.entityManager,
+    );
+    if (!applicant || !applicant.hasPermission) {
+      throw new APIException(TMP_PASSWORD_FORBIDDEN_BODY, 403);
+    }
+
+    const target = await this.findTmpPasswordTarget(appId, email);
+    if (!target) {
       throw new APIException({
         code: 'E_NO_MEMBER',
         message: 'member not found',
@@ -317,15 +331,36 @@ export class AuthService {
       });
     }
 
+    if (target.role === 'app-owner' && applicant.role !== 'app-owner') {
+      throw new APIException(TMP_PASSWORD_FORBIDDEN_BODY, 403);
+    }
+
     const redisCli = this.cacheService.getClient();
     const password = this.generateRandomHash();
-    const key = `tmpPass:${appId}:${email}`;
+    const key = `tmpPass:${appId}:${target.email}`;
     const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
     const expiredAt = dayjs().add(THREE_DAYS, 'millisecond').toDate();
     await redisCli.set(key, password, 'PX', THREE_DAYS);
 
-    await this.insertAuthAuditLog(applicant, memberData[0].id, purpose);
+    await this.insertAuthAuditLog(applicantId, target.id, purpose, appId);
     return { password, expiredAt };
+  }
+
+  // exact match first; otherwise a case-insensitive match is used only when it is unambiguous within the app
+  private async findTmpPasswordTarget(appId: string, email: unknown) {
+    if (typeof email !== 'string' || email.trim() === '') {
+      return null;
+    }
+    const input = email.trim();
+    const exact = await this.authInfra.getAppMembersByExactEmail(appId, input, this.entityManager);
+    if (exact.length === 1) {
+      return exact[0];
+    }
+    if (exact.length > 1) {
+      return null;
+    }
+    const caseInsensitive = await this.authInfra.getAppMembersByEmailIgnoringCase(appId, input, this.entityManager);
+    return caseInsensitive.length === 1 ? caseInsensitive[0] : null;
   }
 
   private generateRandomHash() {
@@ -340,12 +375,17 @@ export class AuthService {
     return password;
   }
 
-  private async insertAuthAuditLog(applicant: string, userMemberId: string, purpose: string): Promise<void> {
+  private async insertAuthAuditLog(
+    applicant: string,
+    userMemberId: string,
+    purpose: string,
+    appId: string,
+  ): Promise<void> {
     const authAuditLog = new AuthAuditLog();
     authAuditLog.action = 'apply_temporary_password';
     authAuditLog.memberId = applicant;
     authAuditLog.target = userMemberId;
-    authAuditLog.metadata = { reason: purpose };
+    authAuditLog.metadata = { reason: purpose, appId };
     await this.authInfra.insertAuthAuditLog(authAuditLog, this.entityManager);
   }
 }

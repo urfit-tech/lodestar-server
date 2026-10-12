@@ -3,8 +3,8 @@ import { Body, Controller, Headers, Logger, Post, Req, Res, Session, UseGuards }
 import { PublicMember } from '~/member/member.type';
 import { AppCache } from '~/app/app.type';
 import { Local } from '~/decorator';
-import { AuthService } from './auth.service';
-import { RefreshTokenDTO } from './auth.dto';
+import { AuthService, TMP_PASSWORD_FORBIDDEN_BODY } from './auth.service';
+import { JwtMember, RefreshTokenDTO } from './auth.dto';
 import { GenerateTmpPasswordDTO, GeneralLoginDTO, LoginStatus, RefreshStatus } from './auth.type';
 import { LoginDeviceStatus } from './device/device.type';
 import DeviceService from './device/device.service';
@@ -233,17 +233,40 @@ export class AuthController {
   @UseGuards(AuthGuard, PermissionGuard)
   @Post('password/temporary')
   @ApiExcludeEndpoint()
-  async generateTmpPassword(@Body() body: GenerateTmpPasswordDTO) {
-    try {
-      const { appId, applicant, email, purpose } = body;
+  async generateTmpPassword(
+    @Local('appCache') appCache: AppCache,
+    @Local('member') member: JwtMember | undefined,
+    @Body() body: Partial<GenerateTmpPasswordDTO> | undefined,
+  ) {
+    // the app and the applicant come from the signed-in session and the request host
+    const appId = member?.appId;
+    const applicantId = member?.sub;
+    if (typeof appId !== 'string' || appId === '' || typeof applicantId !== 'string' || applicantId === '') {
+      throw new APIException(TMP_PASSWORD_FORBIDDEN_BODY, 403);
+    }
+    if (!appCache?.id || appId !== appCache.id) {
+      throw new APIException({ code: 'E_APP_MISMATCH', message: 'app mismatch', result: null }, 403);
+    }
+    const { appId: bodyAppId, applicant: bodyApplicant, email, purpose } = body ?? {};
+    if (bodyAppId !== undefined && bodyAppId !== appId) {
+      this.logger.warn(`temporary password request app differs from session app ${appId} on host app ${appCache.id}`);
+      throw new APIException({ code: 'E_APP_MISMATCH', message: 'app mismatch', result: null }, 403);
+    }
+    if (bodyApplicant !== undefined && bodyApplicant !== applicantId) {
+      throw new APIException(TMP_PASSWORD_FORBIDDEN_BODY, 403);
+    }
 
-      const result = await this.authService.generateTmpPassword(appId, email, applicant, purpose);
+    try {
+      const result = await this.authService.generateTmpPassword(appId, applicantId, email, purpose);
       return {
         code: 'SUCCESS',
         message: 'get temporary password successfully',
         result,
       };
     } catch (err) {
+      if (err instanceof APIException && err.getStatus() === 403) {
+        throw err;
+      }
       this.logger.error(err);
       return {
         code: 'E_TMP_PASSWORD',
