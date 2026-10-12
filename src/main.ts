@@ -2,8 +2,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Logger } from 'nestjs-pino';
 import { json, urlencoded } from 'express';
-import session from 'express-session';
-import RedisStore from 'connect-redis';
+import { createSessionMiddleware } from './session';
 import cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
@@ -92,20 +91,7 @@ async function bootstrap() {
       .enableVersioning({ type: VersioningType.URI })
       .use(json({ limit: '10mb' }))
       .use(urlencoded({ extended: true, limit: '10mb' }))
-      .use(
-        session({
-          secret: sessionSecret,
-          store: new RedisStore({ client: cacheService.getClient() }),
-          resave: false,
-          saveUninitialized: false,
-          cookie: {
-            httpOnly: true,
-            sameSite: nodeEnv === 'development' ? 'strict' : 'none',
-            secure: nodeEnv === 'development' ? false : true,
-            maxAge: 30 * 86400 * 1000, // 30 days
-          },
-        }),
-      )
+      .use(createSessionMiddleware(cacheService.getClient(), sessionSecret, nodeEnv))
       .use(cookieParser());
 
     SwaggerConfigService.setupSwagger(app, {
