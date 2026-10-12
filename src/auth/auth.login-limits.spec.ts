@@ -1,3 +1,30 @@
+// Model express-session replacing the request session object during regeneration.
+const withSessionLifecycle = (req: any) => {
+  const attach = (value: any): any => {
+    if (!value) return value;
+    Object.defineProperties(value, {
+      regenerate: {
+        configurable: true,
+        value: (cb: any) => {
+          req.session = attach({});
+          cb();
+        },
+      },
+      save: { configurable: true, value: (cb: any) => cb() },
+      destroy: {
+        configurable: true,
+        value: (cb: any) => {
+          delete req.session;
+          cb();
+        },
+      },
+    });
+    return value;
+  };
+  req.session = attach(req.session);
+  return req;
+};
+
 import 'reflect-metadata';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -112,6 +139,7 @@ class TestModule {
     consumer
       .apply((req: any, res: any, next: () => void) => {
         req.session = {};
+        withSessionLifecycle(req);
         req.cookies = {};
         res.locals.appCache = appCache;
         next();

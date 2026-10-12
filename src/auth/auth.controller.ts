@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { rotateSessionIdentity } from '../session';
 import { Body, Controller, Headers, Logger, Post, Req, Res, Session, UseGuards } from '@nestjs/common';
 import { PublicMember } from '~/member/member.type';
 import { AppCache } from '~/app/app.type';
@@ -136,7 +137,7 @@ export class AuthController {
           break;
       }
 
-      session[appId] = {
+      await rotateSessionIdentity(request, appId, {
         currentMemberId: member.id,
         members: [
           ...loggedInMembers.filter(loggedInMember => loggedInMember.id !== member.id),
@@ -151,7 +152,7 @@ export class AuthController {
             isBusiness: member.isBusiness,
           },
         ],
-      };
+      });
 
       return {
         code: 'SUCCESS',
@@ -163,6 +164,7 @@ export class AuthController {
         throw error;
       }
       this.logger.error(error);
+      if (error.name === 'E_SESSION') return { code: 'E_SESSION', message: 'cannot save session', result: null };
       return { code: error.name, message: error.message };
     }
   }
