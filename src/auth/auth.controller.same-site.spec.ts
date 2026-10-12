@@ -73,6 +73,28 @@ class TestModule {
             return Reflect.get(target, key);
           },
         });
+        const attach = (value: any): any => {
+          Object.defineProperties(value, {
+            regenerate: {
+              configurable: true,
+              value: (cb: any) => {
+                sessionStore = {};
+                req.session = attach(sessionStore);
+                cb();
+              },
+            },
+            save: { configurable: true, value: (cb: any) => cb() },
+            destroy: {
+              configurable: true,
+              value: (cb: any) => {
+                delete req.session;
+                cb();
+              },
+            },
+          });
+          return value;
+        };
+        attach(req.session);
         req.cookies = {};
         next();
       })

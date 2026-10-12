@@ -123,8 +123,37 @@ const hostResolver = (req: any, res: any, next: () => void) => {
   res.locals.appCache = apps[String(req.headers.host)];
   next();
 };
+// Model express-session replacing the request session object during regeneration.
+const withSessionLifecycle = (req: any) => {
+  const attach = (value: any): any => {
+    if (!value) return value;
+    Object.defineProperties(value, {
+      regenerate: {
+        configurable: true,
+        value: (cb: any) => {
+          req.session = attach({});
+          sessionStore = req.session;
+          cb();
+        },
+      },
+      save: { configurable: true, value: (cb: any) => cb() },
+      destroy: {
+        configurable: true,
+        value: (cb: any) => {
+          delete req.session;
+          cb();
+        },
+      },
+    });
+    return value;
+  };
+  req.session = attach(req.session);
+  return req;
+};
+
 const sessionProvider = (req: any, _res: any, next: () => void) => {
   req.session = sessionStore;
+  withSessionLifecycle(req);
   req.cookies = {};
   next();
 };
