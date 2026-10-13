@@ -95,19 +95,21 @@ describe('reset-password token issuance (lodestar-server)', () => {
   });
 
   it('a second issue keeps the first token key and adds the new one; the legacy key holds the newest', async () => {
-    const first = await issueResetPasswordAppToken(redis, { memberId: VECTOR.memberId, appId: VECTOR.appId });
-    const second = await issueResetPasswordAppToken(redis, { memberId: VECTOR.memberId, appId: VECTOR.appId });
-    expect(first).not.toBe(second);
-    for (const token of [first, second]) {
+    // fixed tokens so the expectations hash literals, not the issued values
+    const FIRST = 'a'.repeat(64);
+    const SECOND = 'b'.repeat(64);
+    await issueResetPasswordAppToken(redis, { memberId: VECTOR.memberId, appId: VECTOR.appId }, () => FIRST);
+    await issueResetPasswordAppToken(redis, { memberId: VECTOR.memberId, appId: VECTOR.appId }, () => SECOND);
+    for (const token of [FIRST, SECOND]) {
       expect(redis.entry(`${VECTOR.key}:${hashAuthToken(token)}`)?.value).toBe(
         JSON.stringify({ tokenHash: hashAuthToken(token), appId: VECTOR.appId }),
       );
     }
     expect((await redis.smembers(VECTOR.indexKey)).sort()).toEqual(
-      [hashAuthToken(first), hashAuthToken(second)].sort(),
+      [hashAuthToken(FIRST), hashAuthToken(SECOND)].sort(),
     );
     expect(redis.entry(VECTOR.key)?.value).toBe(
-      JSON.stringify({ tokenHash: hashAuthToken(second), appId: VECTOR.appId }),
+      JSON.stringify({ tokenHash: hashAuthToken(SECOND), appId: VECTOR.appId }),
     );
   });
 
