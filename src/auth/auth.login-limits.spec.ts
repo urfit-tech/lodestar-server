@@ -43,6 +43,7 @@ import { AuthService } from './auth.service';
 import DeviceService from './device/device.service';
 import { LoginDeviceStatus } from './device/device.type';
 import { fingerprintHash, matchDeviceLoginChallenge, normalizeIdentifier } from './auth-limits';
+import { hashAuthToken } from './auth-token';
 import { FakeRedis } from './testing/fake-redis';
 import { AppService } from '~/app/app.service';
 
@@ -275,7 +276,14 @@ describe('general-login attempt limits and device challenges', () => {
       expect((await login('any')).body.code).toBe('I_RESET_PASSWORD');
 
       expect(mailService.insertEmailJobIntoQueue).toHaveBeenCalledTimes(1);
-      expect(redis.keys('auth:reset-password:')).toEqual([`auth:reset-password:app:${member.id}`]);
+      // one key per token plus the per-member index and the legacy single key (see auth-token.ts)
+      const url = new URL((mailService.insertEmailJobIntoQueue.mock.calls[0] as any[])[0].partials.url);
+      const tokenHash = hashAuthToken(url.searchParams.get('token') as string);
+      expect(redis.keys('auth:reset-password:')).toEqual([
+        `auth:reset-password:app-tokens:${member.id}`,
+        `auth:reset-password:app:${member.id}`,
+        `auth:reset-password:app:${member.id}:${tokenHash}`,
+      ]);
       const kindValues = { ...keyValues, kind: 'reset-password:app' };
       expect(redis.ttl(fill(fixture.keys.issueCooldown.key, kindValues))).toBe(fixture.keys.issueCooldown.ttlSeconds);
       expect(await redis.get(fill(fixture.keys.issueCount.key, kindValues))).toBe('1');
