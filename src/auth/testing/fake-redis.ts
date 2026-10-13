@@ -7,6 +7,7 @@ import { DECR_IF_EXISTS_SCRIPT, INCR_WITH_TTL_SCRIPT } from '../auth-limits';
 export class FakeRedis {
   readonly store = new Map<string, { value: string; ttlSeconds: number | null }>();
   readonly calls: Array<{ command: string; args: unknown[] }> = [];
+  readonly sets = new Map<string, { members: Set<string>; ttlSeconds: number | null }>();
 
   async get(key: string) {
     this.calls.push({ command: 'get', args: [key] });
@@ -34,9 +35,32 @@ export class FakeRedis {
     this.calls.push({ command: 'del', args: keys });
     let removed = 0;
     for (const key of keys) {
-      if (this.store.delete(key)) removed++;
+      const deleted = [this.store.delete(key), this.sets.delete(key)];
+      if (deleted.some(Boolean)) removed++;
     }
     return removed;
+  }
+
+  async sadd(key: string, ...members: string[]) {
+    this.calls.push({ command: 'sadd', args: [key, ...members] });
+    const entry = this.sets.get(key) ?? { members: new Set<string>(), ttlSeconds: null };
+    members.forEach(member => entry.members.add(member));
+    this.sets.set(key, entry);
+    return members.length;
+  }
+
+  async expire(key: string, seconds: number) {
+    this.calls.push({ command: 'expire', args: [key, seconds] });
+    const set = this.sets.get(key);
+    if (set) set.ttlSeconds = seconds;
+    const entry = this.store.get(key);
+    if (entry) entry.ttlSeconds = seconds;
+    return set || entry ? 1 : 0;
+  }
+
+  async smembers(key: string) {
+    this.calls.push({ command: 'smembers', args: [key] });
+    return [...(this.sets.get(key)?.members ?? [])];
   }
 
   async eval(script: string, numKeys: number, ...args: Array<string | number>) {
@@ -62,11 +86,11 @@ export class FakeRedis {
   }
 
   ttl(key: string) {
-    return this.store.get(key)?.ttlSeconds ?? null;
+    return this.store.get(key)?.ttlSeconds ?? this.sets.get(key)?.ttlSeconds ?? null;
   }
 
   keys(prefix = '') {
-    return [...this.store.keys()].filter(key => key.startsWith(prefix)).sort();
+    return [...this.store.keys(), ...this.sets.keys()].filter(key => key.startsWith(prefix)).sort();
   }
 
   commandsFor(command: string) {
