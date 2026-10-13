@@ -18,6 +18,10 @@ const VECTOR = {
   memberId: '00000000-0000-4000-8000-000000000001',
   appId: 'p0-vector-app',
   key: 'auth:reset-password:app:00000000-0000-4000-8000-000000000001',
+  tokenKey:
+    'auth:reset-password:app:00000000-0000-4000-8000-000000000001:a8ae6e6ee929abea3afcfc5258c8ccd6f85273e0d4626d26c7279f3250f77c8e',
+  indexKey: 'auth:reset-password:app-tokens:00000000-0000-4000-8000-000000000001',
+  tokenHash: 'a8ae6e6ee929abea3afcfc5258c8ccd6f85273e0d4626d26c7279f3250f77c8e',
   value: '{"tokenHash":"a8ae6e6ee929abea3afcfc5258c8ccd6f85273e0d4626d26c7279f3250f77c8e","appId":"p0-vector-app"}',
   ttl: 3600,
 };
@@ -74,11 +78,15 @@ describeWithRedis('reset-password issuance against a real Redis (A2R)', () => {
     );
 
     expect(result.status).toBe(LoginStatus.I_RESET_PASSWORD);
-    expect(await redis.keys('auth:reset-password:*')).toEqual([VECTOR.key]);
+    expect((await redis.keys('auth:reset-password:*')).sort()).toEqual([VECTOR.indexKey, VECTOR.key, VECTOR.tokenKey]);
+    expect(await redis.get(VECTOR.tokenKey)).toBe(VECTOR.value);
     expect(await redis.get(VECTOR.key)).toBe(VECTOR.value);
-    const ttl = await redis.ttl(VECTOR.key);
-    expect(ttl).toBeGreaterThan(VECTOR.ttl - 5);
-    expect(ttl).toBeLessThanOrEqual(VECTOR.ttl);
+    expect(await redis.smembers(VECTOR.indexKey)).toEqual([VECTOR.tokenHash]);
+    for (const key of [VECTOR.tokenKey, VECTOR.indexKey, VECTOR.key]) {
+      const ttl = await redis.ttl(key);
+      expect(ttl).toBeGreaterThan(VECTOR.ttl - 5);
+      expect(ttl).toBeLessThanOrEqual(VECTOR.ttl);
+    }
     expect((insertEmailJobIntoQueue.mock.calls[0] as any[])[0].partials.url).toBe(
       `https://vector.example.com/reset-password?token=${VECTOR.token}&member=${VECTOR.memberId}`,
     );

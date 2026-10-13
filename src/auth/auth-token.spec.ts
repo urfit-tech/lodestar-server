@@ -12,6 +12,9 @@ const VECTOR = {
   appId: 'p0-vector-app',
   tokenHash: 'a8ae6e6ee929abea3afcfc5258c8ccd6f85273e0d4626d26c7279f3250f77c8e',
   key: 'auth:reset-password:app:00000000-0000-4000-8000-000000000001',
+  tokenKey:
+    'auth:reset-password:app:00000000-0000-4000-8000-000000000001:a8ae6e6ee929abea3afcfc5258c8ccd6f85273e0d4626d26c7279f3250f77c8e',
+  indexKey: 'auth:reset-password:app-tokens:00000000-0000-4000-8000-000000000001',
   value: '{"tokenHash":"a8ae6e6ee929abea3afcfc5258c8ccd6f85273e0d4626d26c7279f3250f77c8e","appId":"p0-vector-app"}',
   ttl: 3600,
 };
@@ -77,15 +80,35 @@ describe('reset-password token issuance (lodestar-server)', () => {
     expect(hashAuthToken(VECTOR.token)).toBe(VECTOR.tokenHash);
   });
 
-  it('writes the exact shared vector key, value and ttl', async () => {
+  it('writes the exact shared vector keys (per-token, index, legacy), value and ttl', async () => {
     const token = await issueResetPasswordAppToken(
       redis,
       { memberId: VECTOR.memberId, appId: VECTOR.appId },
       () => VECTOR.token,
     );
     expect(token).toBe(VECTOR.token);
-    expect([...redis.store.keys()]).toEqual([VECTOR.key]);
+    expect(redis.keys()).toEqual([VECTOR.indexKey, VECTOR.key, VECTOR.tokenKey]);
+    expect(redis.entry(VECTOR.tokenKey)).toEqual({ value: VECTOR.value, ttl: VECTOR.ttl });
     expect(redis.entry(VECTOR.key)).toEqual({ value: VECTOR.value, ttl: VECTOR.ttl });
+    expect(await redis.smembers(VECTOR.indexKey)).toEqual([VECTOR.tokenHash]);
+    expect(redis.ttl(VECTOR.indexKey)).toBe(VECTOR.ttl);
+  });
+
+  it('a second issue keeps the first token key and adds the new one; the legacy key holds the newest', async () => {
+    const first = await issueResetPasswordAppToken(redis, { memberId: VECTOR.memberId, appId: VECTOR.appId });
+    const second = await issueResetPasswordAppToken(redis, { memberId: VECTOR.memberId, appId: VECTOR.appId });
+    expect(first).not.toBe(second);
+    for (const token of [first, second]) {
+      expect(redis.entry(`${VECTOR.key}:${hashAuthToken(token)}`)?.value).toBe(
+        JSON.stringify({ tokenHash: hashAuthToken(token), appId: VECTOR.appId }),
+      );
+    }
+    expect((await redis.smembers(VECTOR.indexKey)).sort()).toEqual(
+      [hashAuthToken(first), hashAuthToken(second)].sort(),
+    );
+    expect(redis.entry(VECTOR.key)?.value).toBe(
+      JSON.stringify({ tokenHash: hashAuthToken(second), appId: VECTOR.appId }),
+    );
   });
 
   it('generates 64-char lowercase hex tokens that differ per call', () => {
@@ -111,6 +134,7 @@ describe('reset-password token issuance (lodestar-server)', () => {
       loggedInMembers: [],
     });
     expect(result.status).toBe(LoginStatus.I_RESET_PASSWORD);
+    expect(redis.entry(VECTOR.tokenKey)).toEqual({ value: VECTOR.value, ttl: VECTOR.ttl });
     expect(redis.entry(VECTOR.key)).toEqual({ value: VECTOR.value, ttl: VECTOR.ttl });
     const { partials } = insertEmailJobIntoQueue.mock.calls[0][0];
     expect(partials.url).toBe(
