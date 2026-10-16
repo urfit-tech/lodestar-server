@@ -5,6 +5,7 @@ import { AuthGuard } from '~/auth/auth.guard';
 import { JwtMember } from '~/auth/auth.dto';
 import { Local } from '~/decorator';
 import { IssueInvoiceBodyDTO, RevokeInvoiceBodyDTO, SearchInvoiceBodyDTO } from './invoice.dto';
+import { InvoiceExceedsOrderAmountError } from './invoice.error';
 import { InvoiceService } from './invoice.service';
 
 @UseGuards(AuthGuard)
@@ -22,15 +23,24 @@ export class InvoiceController {
   async issueInvoice(@Local('member') member: JwtMember, @Body() dto: IssueInvoiceBodyDTO) {
     const { invoiceGatewayId, invoiceInfo, appId, orderId } = dto;
 
-    const result = await this.invoiceService.issueInvoiceDirectly(
-      appId,
-      orderId,
-      invoiceGatewayId,
-      invoiceInfo,
-      this.entityManager,
-      { executorMemberId: member?.memberId },
-    );
-    return { code: 'SUCCESS', message: 'issue invoice successfully', result };
+    try {
+      const result = await this.invoiceService.issueInvoiceDirectly(
+        appId,
+        orderId,
+        invoiceGatewayId,
+        invoiceInfo,
+        this.entityManager,
+        { executorMemberId: member?.memberId, limitToOrderAmount: true },
+      );
+      return { code: 'SUCCESS', message: 'issue invoice successfully', result };
+    } catch (error) {
+      if (error instanceof InvoiceExceedsOrderAmountError) {
+        // same shape as an ezPay rejection, so the admin's 手動開立發票結果 modal shows the reason
+        const code = InvoiceExceedsOrderAmountError.code;
+        return { code, message: error.message, result: { Status: code, Message: error.message } };
+      }
+      throw error;
+    }
   }
 
   @Post('search')

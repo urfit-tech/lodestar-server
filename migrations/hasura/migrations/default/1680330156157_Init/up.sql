@@ -3180,7 +3180,20 @@ CREATE TABLE public.invoice (
     price numeric,
     options jsonb,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    executor_id uuid
+    executor_id uuid,
+    revoked_at timestamp with time zone
+);
+CREATE TABLE public.invoice_log (
+    merchant_order_no text NOT NULL,
+    status text NOT NULL,
+    message text NOT NULL,
+    app_invoice_gateway_id uuid NOT NULL,
+    order_id text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    invoice_number text,
+    invoice_trans_no text,
+    invoice_random_number text,
+    options jsonb
 );
 CREATE TABLE public.invoice_gateway (
     id uuid DEFAULT public.gen_random_uuid() NOT NULL,
@@ -6947,9 +6960,11 @@ ALTER TABLE ONLY public.identity
 ALTER TABLE ONLY public.invoice_gateway
     ADD CONSTRAINT invoice_gateway_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.invoice
-    ADD CONSTRAINT invoice_order_id_key UNIQUE (order_id);
+    ADD CONSTRAINT invoice_order_id_no_key UNIQUE (order_id, no);
 ALTER TABLE ONLY public.invoice
     ADD CONSTRAINT invoice_pkey PRIMARY KEY (no);
+ALTER TABLE ONLY public.invoice_log
+    ADD CONSTRAINT invoice_log_pkey PRIMARY KEY (merchant_order_no);
 ALTER TABLE ONLY public.issue
     ADD CONSTRAINT issue_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.issue_reaction
@@ -8090,6 +8105,10 @@ ALTER TABLE ONLY public.gift_plan_product
     ADD CONSTRAINT gift_plan_product_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.product(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.invoice
     ADD CONSTRAINT invoice_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.order_log(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.invoice_log
+    ADD CONSTRAINT invoice_log_app_invoice_gateway_id_fkey FOREIGN KEY (app_invoice_gateway_id) REFERENCES public.app_invoice_gateway(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.invoice_log
+    ADD CONSTRAINT invoice_log_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.order_log(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.issue
     ADD CONSTRAINT issue_app_id_fkey FOREIGN KEY (app_id) REFERENCES public.app(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.issue

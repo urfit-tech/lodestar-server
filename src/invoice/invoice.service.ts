@@ -1,9 +1,10 @@
 import dayjs from 'dayjs';
-import { EntityManager } from 'typeorm';
+import { EntityManager, Equal } from 'typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 
 import { AppService } from '~/app/app.service';
+import { OrderLog } from '~/order/entity/order_log.entity';
 import { OrderInfrastructure } from '~/order/order.infra';
 import { PaymentInfrastructure } from '~/payment/payment.infra';
 import { PaymentLog } from '~/payment/payment_log.entity';
@@ -12,6 +13,7 @@ import { Invoice } from '~/invoice/invoice.entity';
 import { EzpayClient, EzpayClientResponse } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
 import { InvoiceInfo } from './invoice.dto';
+import { InvoiceExceedsOrderAmountError } from './invoice.error';
 import { getRoundedListWithCompensation, parseStringSplitValue, RoundMethodsForCompensation } from '~/utils';
 import {
   always,
@@ -70,16 +72,64 @@ export class InvoiceService {
     invoiceGatewayId: string,
     invoiceInfo: InvoiceInfo,
     manager: EntityManager,
-    options?: { paymentNo?: string; executorMemberId?: string },
+    options?: { paymentNo?: string; executorMemberId?: string; limitToOrderAmount?: boolean },
   ) {
-    const { paymentNo, executorMemberId } = options || {};
+    const { paymentNo, executorMemberId, limitToOrderAmount } = options || {};
     return manager.transaction(async txManager => {
       if (executorMemberId) {
         const sessionUser = JSON.stringify({ 'x-hasura-user-id': executorMemberId });
         await txManager.query(`SET LOCAL "hasura.user" = '${sessionUser}'`);
       }
+      if (limitToOrderAmount) {
+        await this.assertWithinOrderAmount(orderId, invoiceInfo.TotalAmt, txManager);
+      }
       return this._issueInvoiceDirectly(appId, orderId, invoiceGatewayId, invoiceInfo, txManager, paymentNo);
     });
+  }
+
+  /**
+   * Refuses an invoice that would take the order's unrevoked invoices past the order amount: the larger of the
+   * order total (products - discounts + shipping) and what has been paid, since some contract orders store product
+   * prices below the paid amount. The order row is locked first, so requests issued in parallel for the same order
+   * (the admin sends each invoice of a multi-invoice order at once) are checked one after another.
+   */
+  private async assertWithinOrderAmount(orderId: string, totalAmt: number, manager: EntityManager) {
+    await manager.query('SELECT id FROM order_log WHERE id = $1 FOR UPDATE', [orderId]);
+    const orderLog = await manager.getRepository(OrderLog).findOne({
+      where: { id: Equal(orderId) },
+      relations: { orderProducts: true, orderDiscounts: true, paymentLogs: true },
+    });
+    if (!orderLog) {
+      throw new Error(`Order ${orderId} not found.`);
+    }
+
+    const amountOf = (value: unknown) => Number(value) || 0;
+    const orderTotal =
+      sum(orderLog.orderProducts.map(({ price }) => amountOf(price))) -
+      sum(orderLog.orderDiscounts.map(({ price }) => amountOf(price))) +
+      amountOf(orderLog.shipping?.fee);
+    const paidTotal = sum(
+      orderLog.paymentLogs.filter(({ status }) => status === 'SUCCESS').map(({ price }) => amountOf(price)),
+    );
+    const orderAmount = Math.round(Math.max(orderTotal, paidTotal));
+
+    const issuedInvoices = (await this.invoiceInfra.getInvoicesByOrderIds([orderId], manager)).filter(
+      ({ revokedAt }) => !revokedAt,
+    );
+    const issuedAmount = Math.round(sum(issuedInvoices.map(({ price }) => amountOf(price))));
+    const requestedAmount = Math.round(amountOf(totalAmt));
+
+    if (issuedAmount + requestedAmount > orderAmount) {
+      const issued = issuedInvoices.length
+        ? `已開立未作廢的發票 ${issuedInvoices.map(({ no }) => no).join('、')}，共 ${issuedAmount} 元；再開`
+        : '本次開立';
+      this.logger.warn(
+        `[OrderId: ${orderId}] refused invoice of ${requestedAmount}: issued ${issuedAmount}, order amount ${orderAmount}`,
+      );
+      throw new InvoiceExceedsOrderAmountError(
+        `訂單 ${orderId} ${issued} ${requestedAmount} 元會超過訂單金額 ${orderAmount} 元，已拒絕開立。如需重開，請先作廢原發票。`,
+      );
+    }
   }
 
   private async _issueInvoiceDirectly(
