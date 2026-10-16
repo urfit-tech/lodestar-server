@@ -7,6 +7,7 @@ import { AccessControlService } from '~/auth/access-control.service';
 import { Logger } from '@nestjs/common';
 import { AuthGuard } from '~/auth/auth.guard';
 import { PermissionGuard } from '~/auth/permission.guard';
+import { AppService } from '~/app/app.service';
 
 describe('ActivityController', () => {
   let controller: ActivityController;
@@ -16,6 +17,12 @@ describe('ActivityController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ActivityController],
       providers: [
+        {
+          provide: AppService,
+          useValue: {
+            getAppInfoByHost: jest.fn(),
+          },
+        },
         {
           provide: ActivityService,
           useValue: {

@@ -32,6 +32,7 @@ describe('ActivityService', () => {
     const activityId = 'some-activity-id';
     const memberId = 'some-member-id';
     const includeDeleted = false;
+    const appId = 'some-app-id';
 
     mockActivityInfra.getPublishedActivity = jest.fn().mockResolvedValue({
       id: activityId,
@@ -63,11 +64,11 @@ describe('ActivityService', () => {
       .fn()
       .mockResolvedValue([{ activityTicketId: 'ticket-1', participants: 10 }]);
 
-    const result = await service.getActivityByMemberId(activityId, memberId, includeDeleted);
+    const result = await service.getActivityByMemberId(activityId, memberId, includeDeleted, appId);
 
     expect(result).toHaveProperty('id', activityId);
     expect(result.activityTickets).toHaveLength(1);
     expect(result.activityTickets[0]).toHaveProperty('participants', 10);
-    expect(mockActivityInfra.getPublishedActivity).toHaveBeenCalledWith(expect.anything(), activityId);
+    expect(mockActivityInfra.getPublishedActivity).toHaveBeenCalledWith(expect.anything(), activityId, appId);
   });
 });
