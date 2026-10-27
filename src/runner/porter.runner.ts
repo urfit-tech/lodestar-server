@@ -20,6 +20,7 @@ import { PorterCommand } from '~/runner/porter-command/porterCommandInterface';
 import { PortPlayerEventCommand } from './porter-command/portPlayerEventCommand';
 import { ProgramService } from '~/program/program.service';
 import { RunnerInfrastructure } from './runner.infra';
+import axios from 'axios';
 import ZabbixHeartBeater from './helper/ZabbixHeartBeater';
 
 @Injectable()
@@ -43,6 +44,23 @@ export class PorterRunner extends Runner {
 
   async checkAndCallHeartbeat(): Promise<void> {
     new ZabbixHeartBeater().beat();
+
+    const heartbeatUrl = process.env.PORTER_RUNNER_HEARTBEAT_URL;
+    if (!heartbeatUrl) return;
+
+    try {
+      new URL(heartbeatUrl);
+    } catch (_) {
+      console.log('Invalid heartbeat URL set, skipping call');
+      return;
+    }
+
+    try {
+      await axios.get(heartbeatUrl, { timeout: 10000 });
+      console.log('Heartbeat URL called');
+    } catch (error) {
+      console.error('Heartbeat URL call failed:', error?.message);
+    }
   }
 
   public async execute(entityManager?: EntityManager): Promise<void> {
