@@ -115,21 +115,25 @@ class PortPhoneServiceInsertEventCommand implements PorterCommand {
                         const memberNote = new MemberNote();
 
                         const getAuthorIdByExtension = async () => {
-                          const { appId } = await manager.findOne(Member, {
+                          const source = note?.metadata?.['source'];
+                          if (!note?.memberId || !source) return '';
+
+                          const member = await manager.findOne(Member, {
                             select: { appId: true },
                             where: { id: note.memberId },
                           });
+                          if (!member) return '';
 
-                          const { id } = await manager.findOne(Member, {
+                          const author = await manager.findOne(Member, {
                             select: { id: true },
                             relations: { memberProperties: { property: true } },
                             where: {
-                              memberProperties: { value: note.metadata['source'], property: { name: '分機號碼' } },
-                              appId: appId,
+                              memberProperties: { value: source, property: { name: '分機號碼' } },
+                              appId: member.appId,
                             },
                           });
 
-                          return id;
+                          return author?.id || '';
                         };
                         memberNote.authorId = note?.authorId || (await getAuthorIdByExtension());
                         memberNote.metadata = note?.metadata || null;
