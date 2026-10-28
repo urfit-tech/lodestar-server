@@ -122,5 +122,10 @@
       "prettier --write",
       "git add"
     ]
+  },
+  "resolutions": {
+    "@nestjs/platform-express/express": "^4.22.1",
+    "@nestjs/platform-express/body-parser": "^1.20.9",
+    "@nestjs/core/path-to-regexp": "3.3.0"
   }
 }
