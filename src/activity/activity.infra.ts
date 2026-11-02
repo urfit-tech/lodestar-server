@@ -397,18 +397,23 @@ export class ActivityInfrastructure {
       return {
         id: activitySession.id,
         title: activitySession.title,
-        participants: activitySession.activityEnrollments.map(enrollment => ({
-          id: enrollment.memberId,
-          name: enrollment.memberName || enrollment.member.name,
-          phone:
-            enrollment.memberPhone ||
-            enrollment.member.memberPhones.find(phone => phone.isValid)?.phone ||
-            enrollment.member.memberPhones.find(phone => phone.isPrimary)?.phone,
-          email: enrollment.memberEmail || enrollment.member.email,
-          orderLogId: enrollment.orderLogId,
-          attended: enrollment.attended,
-          activityTicketTitle: enrollment.activityTicket.title,
-        })),
+        // activity_enrollment is a view without a primary key. Since typeorm 0.3.21 a session with no
+        // enrollments comes back with one all-null enrollment instead of an empty array, so keep only
+        // rows that belong to an order (order_log_id is never null for a real enrollment).
+        participants: (activitySession.activityEnrollments || [])
+          .filter(enrollment => enrollment.orderLogId)
+          .map(enrollment => ({
+            id: enrollment.memberId,
+            name: enrollment.memberName || enrollment.member?.name,
+            phone:
+              enrollment.memberPhone ||
+              enrollment.member?.memberPhones?.find(phone => phone.isValid)?.phone ||
+              enrollment.member?.memberPhones?.find(phone => phone.isPrimary)?.phone,
+            email: enrollment.memberEmail || enrollment.member?.email,
+            orderLogId: enrollment.orderLogId,
+            attended: enrollment.attended,
+            activityTicketTitle: enrollment.activityTicket?.title,
+          })),
       };
     };
 
