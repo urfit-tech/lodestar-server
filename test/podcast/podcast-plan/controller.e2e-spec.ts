@@ -112,22 +112,22 @@ describe('PodcastPlanController (e2e)', () => {
     podcastProgramRoleRepo = manager.getRepository(PodcastProgramRole);
     podcastAlbumPodcastProgramRepo = manager.getRepository(PodcastAlbumPodcastProgram);
 
-    await orderProductRepo.delete({});
-    await orderLogRepo.delete({});
-    await productRepo.delete({});
-    await currencyRepo.delete({});
-    await podcastAlbumPodcastProgramRepo.delete({});
-    await podcastProgramRoleRepo.delete({});
-    await podcastPlanRepo.delete({});
-    await podcastAlbumRepo.delete({});
-    await podcastProgramRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await podcastAlbumPodcastProgramRepo.createQueryBuilder().delete().execute();
+    await podcastProgramRoleRepo.createQueryBuilder().delete().execute();
+    await podcastPlanRepo.createQueryBuilder().delete().execute();
+    await podcastAlbumRepo.createQueryBuilder().delete().execute();
+    await podcastProgramRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await currencyRepo.save(currency);
     await roleRepo.save(role);
@@ -153,22 +153,22 @@ describe('PodcastPlanController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await orderProductRepo.delete({});
-    await orderLogRepo.delete({});
-    await productRepo.delete({});
-    await currencyRepo.delete({});
-    await podcastAlbumPodcastProgramRepo.delete({});
-    await podcastProgramRoleRepo.delete({});
-    await podcastPlanRepo.delete({});
-    await podcastAlbumRepo.delete({});
-    await podcastProgramRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await podcastAlbumPodcastProgramRepo.createQueryBuilder().delete().execute();
+    await podcastProgramRoleRepo.createQueryBuilder().delete().execute();
+    await podcastPlanRepo.createQueryBuilder().delete().execute();
+    await podcastAlbumRepo.createQueryBuilder().delete().execute();
+    await podcastProgramRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });

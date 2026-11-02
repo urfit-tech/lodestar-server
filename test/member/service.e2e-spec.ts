@@ -59,17 +59,17 @@ describe('MemberService (e2e)', () => {
     propertyRepo = manager.getRepository(Property);
     tagRepo = manager.getRepository(Tag);
 
-    await memberPhoneRepo.delete({});
-    await memberCategoryRepo.delete({});
-    await memberPropertyRepo.delete({});
-    await memberTagRepo.delete({});
-    await memberTaskRepo.delete({});
-    await memberRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await categoryRepo.delete({});
-    await propertyRepo.delete({});
-    await tagRepo.delete({});
+    await memberPhoneRepo.createQueryBuilder().delete().execute();
+    await memberCategoryRepo.createQueryBuilder().delete().execute();
+    await memberPropertyRepo.createQueryBuilder().delete().execute();
+    await memberTagRepo.createQueryBuilder().delete().execute();
+    await memberTaskRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await categoryRepo.createQueryBuilder().delete().execute();
+    await propertyRepo.createQueryBuilder().delete().execute();
+    await tagRepo.createQueryBuilder().delete().execute();
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -83,18 +83,18 @@ describe('MemberService (e2e)', () => {
   });
 
   afterEach(async () => {
-    await memberPhoneRepo.delete({});
-    await memberCategoryRepo.delete({});
-    await memberPropertyRepo.delete({});
-    await memberTagRepo.delete({});
-    await memberTaskRepo.delete({});
-    await memberRepo.delete({});
-    await categoryRepo.delete({});
-    await propertyRepo.delete({});
-    await tagRepo.delete({});
-    await memberRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await memberPhoneRepo.createQueryBuilder().delete().execute();
+    await memberCategoryRepo.createQueryBuilder().delete().execute();
+    await memberPropertyRepo.createQueryBuilder().delete().execute();
+    await memberTagRepo.createQueryBuilder().delete().execute();
+    await memberTaskRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await categoryRepo.createQueryBuilder().delete().execute();
+    await propertyRepo.createQueryBuilder().delete().execute();
+    await tagRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });

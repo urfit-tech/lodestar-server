@@ -77,7 +77,7 @@ describe('EquityController (e2e)', () => {
     for (const repoKey in repositories) {
       if (repositories.hasOwnProperty(repoKey)) {
         const repo = repositories[repoKey];
-        await repo.delete({});
+        await repo.createQueryBuilder().delete().execute();
       }
     }
   }
@@ -98,10 +98,10 @@ describe('EquityController (e2e)', () => {
     repositories = await initializeRepositories(manager);
     await clearRepositories(repositories);
 
-    await repositories.orderProductRepo.delete({});
-    await repositories.orderLogRepo.delete({});
-    await repositories.programPlanRepo.delete({});
-    await repositories.currencyRepo.delete({});
+    await repositories.orderProductRepo.createQueryBuilder().delete().execute();
+    await repositories.orderLogRepo.createQueryBuilder().delete().execute();
+    await repositories.programPlanRepo.createQueryBuilder().delete().execute();
+    await repositories.currencyRepo.createQueryBuilder().delete().execute();
 
     await repositories.roleRepo.save(role);
     await repositories.appPlanRepo.save(appPlan);
@@ -114,10 +114,10 @@ describe('EquityController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await repositories.orderProductRepo.delete({});
-    await repositories.orderLogRepo.delete({});
-    await repositories.programPlanRepo.delete({});
-    await repositories.currencyRepo.delete({});
+    await repositories.orderProductRepo.createQueryBuilder().delete().execute();
+    await repositories.orderLogRepo.createQueryBuilder().delete().execute();
+    await repositories.programPlanRepo.createQueryBuilder().delete().execute();
+    await repositories.currencyRepo.createQueryBuilder().delete().execute();
 
     await clearRepositories(repositories);
 

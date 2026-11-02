@@ -34,10 +34,10 @@ describe('CoinService (e2e)', () => {
     coinLogRepo = manager.getRepository(CoinLog);
     memberRepo = manager.getRepository(Member);
 
-    await coinLogRepo.delete({});
-    await memberRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await coinLogRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -47,10 +47,10 @@ describe('CoinService (e2e)', () => {
   });
 
   afterEach(async () => {
-    await coinLogRepo.delete({});
-    await memberRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await coinLogRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });

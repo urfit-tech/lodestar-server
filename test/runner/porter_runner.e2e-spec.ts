@@ -115,25 +115,25 @@ describe('PorterRunner (e2e)', () => {
 
     await cacheService.getClient().flushdb();
 
-    await podcastProgramProgressRepo.delete({});
-    await podcastProgramRepo.delete({});
-    await programContentProgressRepo.delete({});
-    await programContentLogRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programPlanRepo.delete({});
-    await programRepo.delete({});
-    await podcastAlbumRepo.delete({});
-    await currencyRepo.delete({});
-    await memberNoteRepo.delete({});
-    await memberRepo.delete({});
-    await appHostRepo.delete({});
-    await appSecretRepo.delete({});
-    await appSettingRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await podcastProgramProgressRepo.createQueryBuilder().delete().execute();
+    await podcastProgramRepo.createQueryBuilder().delete().execute();
+    await programContentProgressRepo.createQueryBuilder().delete().execute();
+    await programContentLogRepo.createQueryBuilder().delete().execute();
+    await programContentRepo.createQueryBuilder().delete().execute();
+    await programContentSectionRepo.createQueryBuilder().delete().execute();
+    await programContentBodyRepo.createQueryBuilder().delete().execute();
+    await programPlanRepo.createQueryBuilder().delete().execute();
+    await programRepo.createQueryBuilder().delete().execute();
+    await podcastAlbumRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await memberNoteRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await roleRepo.save(role);
     await appPlanRepo.save(appPlan);
@@ -179,25 +179,25 @@ describe('PorterRunner (e2e)', () => {
 
   afterEach(async () => {
     await cacheService.getClient().flushall();
-    await podcastProgramProgressRepo.delete({});
-    await podcastProgramRepo.delete({});
-    await programContentProgressRepo.delete({});
-    await programContentLogRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programPlanRepo.delete({});
-    await programRepo.delete({});
-    await podcastAlbumRepo.delete({});
-    await currencyRepo.delete({});
-    await memberNoteRepo.delete({});
-    await memberRepo.delete({});
-    await appHostRepo.delete({});
-    await appSecretRepo.delete({});
-    await appSettingRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await podcastProgramProgressRepo.createQueryBuilder().delete().execute();
+    await podcastProgramRepo.createQueryBuilder().delete().execute();
+    await programContentProgressRepo.createQueryBuilder().delete().execute();
+    await programContentLogRepo.createQueryBuilder().delete().execute();
+    await programContentRepo.createQueryBuilder().delete().execute();
+    await programContentSectionRepo.createQueryBuilder().delete().execute();
+    await programContentBodyRepo.createQueryBuilder().delete().execute();
+    await programPlanRepo.createQueryBuilder().delete().execute();
+    await programRepo.createQueryBuilder().delete().execute();
+    await podcastAlbumRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await memberNoteRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });
@@ -397,7 +397,7 @@ describe('PorterRunner (e2e)', () => {
     });
 
     it('should default to the current date for invalid timestamp', async () => {
-      await programContentLogRepo.delete({});
+      await programContentLogRepo.createQueryBuilder().delete().execute();
       await cacheService.getClient().flushall();
 
       const invalidTimestamp = 'invalid-timestamp';
@@ -424,7 +424,7 @@ describe('PorterRunner (e2e)', () => {
 
     describe('portPlayerEvent with batchSize 20', () => {
       it('Assess the handling and accurate processing of 80 program content log records in batches', async () => {
-        await programContentLogRepo.delete({});
+        await programContentLogRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
 
         for (let i = 0; i < 80; i++) {
@@ -451,7 +451,7 @@ describe('PorterRunner (e2e)', () => {
         });
       });
       it('should process and save 79 out of 80 records and delete all Redis keys , when memberId did not exist', async () => {
-        await programContentLogRepo.delete({});
+        await programContentLogRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
 
         const nonExistentMemberId = 'non-existent-member-id';
@@ -491,7 +491,7 @@ describe('PorterRunner (e2e)', () => {
         consoleSpy.mockRestore();
       });
       it('should process and save 79 out of 80 records and delete all Redis keys, when startAt format error', async () => {
-        await programContentLogRepo.delete({});
+        await programContentLogRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
 
         for (let i = 0; i < 80; i++) {
@@ -526,7 +526,7 @@ describe('PorterRunner (e2e)', () => {
 
     describe('portPlayerEvent with no Redis data', () => {
       it('Ensure proper handling and no errors when no Redis data is available for processing player events', async () => {
-        await programContentLogRepo.delete({});
+        await programContentLogRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
 
         const porterRunner = application.get<PorterRunner>(Runner);
@@ -551,7 +551,7 @@ describe('PorterRunner (e2e)', () => {
   //         7 * 86400,
   //       );
 
-  //     await programContentProgressRepo.delete({});
+  //     await programContentProgressRepo.createQueryBuilder().delete().execute();
 
   //     // Act
   //     const porterRunner = application.get<PorterRunner>(Runner);
@@ -582,7 +582,7 @@ describe('PorterRunner (e2e)', () => {
   //         7 * 86400,
   //       );
 
-  //     await programContentProgressRepo.delete({});
+  //     await programContentProgressRepo.createQueryBuilder().delete().execute();
   //     await programContentProgressRepo.save({
   //       id: v4(),
   //       memberId: member.id,
@@ -621,7 +621,7 @@ describe('PorterRunner (e2e)', () => {
   //         7 * 86400,
   //       );
 
-  //     await programContentProgressRepo.delete({});
+  //     await programContentProgressRepo.createQueryBuilder().delete().execute();
   //     await programContentProgressRepo.save({
   //       id: v4(),
   //       memberId: member.id,
@@ -693,7 +693,7 @@ describe('PorterRunner (e2e)', () => {
   //         7 * 86400,
   //       );
 
-  //     await programContentProgressRepo.delete({});
+  //     await programContentProgressRepo.createQueryBuilder().delete().execute();
   //     await programContentProgressRepo.save({
   //       id: v4(),
   //       memberId: member.id,
@@ -782,7 +782,7 @@ describe('PorterRunner (e2e)', () => {
       });
 
       it('Verify deduplication, ensuring only one record is saved in the database for duplicate entries , and should save the last create record', async () => {
-        await podcastProgramProgressRepo.delete({});
+        await podcastProgramProgressRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
 
         for (let i = 0; i < 4; i++) {
@@ -811,7 +811,7 @@ describe('PorterRunner (e2e)', () => {
       });
 
       it('when batch size is 20, 80 records in Redis, 2 member podcast programs, 1 member has an error', async () => {
-        await podcastProgramProgressRepo.delete({});
+        await podcastProgramProgressRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
         const nonExistentMemberId = 'nonExistMemberId';
 
@@ -870,7 +870,7 @@ describe('PorterRunner (e2e)', () => {
         consoleSpy.mockRestore();
       });
       it('should assign default values for empty progress and lastProgress, and ignore empty podcastAlbumId', async () => {
-        await podcastProgramProgressRepo.delete({});
+        await podcastProgramProgressRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
 
         await cacheService
@@ -901,7 +901,7 @@ describe('PorterRunner (e2e)', () => {
 
     describe('Failure scenarios', () => {
       it('when redis is empty , should not save any data and not throw errors', async () => {
-        await podcastProgramProgressRepo.delete({});
+        await podcastProgramProgressRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
 
         const porterRunner = application.get<PorterRunner>(Runner);
@@ -917,7 +917,7 @@ describe('PorterRunner (e2e)', () => {
       });
 
       it('Evaluate error handling when processing podcast progress records with a non-existent member ID', async () => {
-        await podcastProgramProgressRepo.delete({});
+        await podcastProgramProgressRepo.createQueryBuilder().delete().execute();
         await cacheService.getClient().flushall();
 
         const memberId = v4();

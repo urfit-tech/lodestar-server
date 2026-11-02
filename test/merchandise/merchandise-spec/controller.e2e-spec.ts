@@ -74,7 +74,7 @@ describe('MerchandiseSpecController (e2e)', () => {
     for (const repoKey in repositories) {
       if (repositories.hasOwnProperty(repoKey)) {
         const repo = repositories[repoKey];
-        await repo.delete({});
+        await repo.createQueryBuilder().delete().execute();
       }
     }
   }
