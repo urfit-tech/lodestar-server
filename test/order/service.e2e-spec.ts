@@ -52,15 +52,15 @@ describe('OrderService (e2e)', () => {
     productRepo = manager.getRepository(Product);
     roleRepo = manager.getRepository(Role);
 
-    await appointmentPlanRepo.delete({});
-    await orderProductRepo.delete({});
-    await orderLogRepo.delete({});
-    await productRepo.delete({});
-    await memberRepo.delete({});
-    await roleRepo.delete({});
-    await currencyRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await appointmentPlanRepo.createQueryBuilder().delete().execute();
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -70,15 +70,15 @@ describe('OrderService (e2e)', () => {
   });
 
   afterEach(async () => {
-    await appointmentPlanRepo.delete({});
-    await orderProductRepo.delete({});
-    await orderLogRepo.delete({});
-    await productRepo.delete({});
-    await memberRepo.delete({});
-    await roleRepo.delete({});
-    await currencyRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await appointmentPlanRepo.createQueryBuilder().delete().execute();
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
     await application.close();
   });
 

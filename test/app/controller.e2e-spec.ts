@@ -34,9 +34,9 @@ describe('AppController (e2e)', () => {
     appRepo = manager.getRepository(App);
     appHostRepo = manager.getRepository(AppHost);
 
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
     
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -46,9 +46,9 @@ describe('AppController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });

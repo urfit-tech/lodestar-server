@@ -54,10 +54,10 @@ describe('TriggerRunner (e2e)', () => {
     tableLogRepo = manager.getRepository(TableLog);
     triggerLogRepo = manager.getRepository(TriggerLog);
 
-    await triggerLogRepo.delete({});
-    await tableLogRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await triggerLogRepo.createQueryBuilder().delete().execute();
+    await tableLogRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await appPlanRepo.save(appPlan);
 
@@ -66,10 +66,10 @@ describe('TriggerRunner (e2e)', () => {
   });
 
   afterAll(async () => {
-    await triggerLogRepo.delete({});
-    await tableLogRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await triggerLogRepo.createQueryBuilder().delete().execute();
+    await tableLogRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });
