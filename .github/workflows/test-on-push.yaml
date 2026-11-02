@@ -9,7 +9,7 @@ jobs:
     name: Testing
     strategy:
       matrix:
-        node-version: ['24.22.1']
+        node-version: ['lts/hydrogen']
         os: [ubuntu-latest]
         typescript-version: [4.2]
     runs-on: ${{ matrix.os }}
