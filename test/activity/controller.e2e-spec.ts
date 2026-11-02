@@ -78,7 +78,8 @@ describe('ActivityController (e2e)', () => {
     for (const repoKey in repositories) {
       if (repositories.hasOwnProperty(repoKey)) {
         const repo = repositories[repoKey];
-        await repo.delete({});
+        // typeorm >= 0.3.23 rejects delete({}); delete every row through the query builder instead
+        await repo.createQueryBuilder().delete().execute();
       }
     }
   }
@@ -1350,6 +1351,38 @@ describe('ActivityController (e2e)', () => {
             }),
           ]),
         });
+      });
+
+      // Scenario 4: a session nobody is enrolled in (no ticket linked yet, or a deleted session)
+      it('session without participants', async () => {
+        const emptySession = await createTestActivitySession(manager, {
+          activity: insertedActivity,
+          startedAt: new Date('2020-01-03T00:00:00Z'),
+          endedAt: new Date('2020-01-04T00:00:00Z'),
+        });
+
+        const jwtSecret = application
+          .get<ConfigService<{ HASURA_JWT_SECRET: string }>>(ConfigService)
+          .getOrThrow('HASURA_JWT_SECRET');
+
+        const token = jwt.sign(
+          {
+            memberId: insertedMember.id,
+            permissions: ['ACTIVITY_ADMIN'],
+          },
+          jwtSecret,
+        );
+
+        const response = await request(application.getHttpServer())
+          .get(`/activity/${insertedActivity.id}/participants`)
+          .set('host', appHost.host)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200);
+
+        const sessions = response.body.activitySessions;
+        expect(sessions).toHaveLength(2);
+        expect(sessions.find(session => session.id === insertedActivitySession1.id).participants).toHaveLength(3);
+        expect(sessions.find(session => session.id === emptySession.id).participants).toEqual([]);
       });
     });
 
