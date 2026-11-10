@@ -750,9 +750,56 @@ export class MemberInfrastructure {
 
       const member = await memberRepo.findOneByOrFail([{ email: email, appId: appId }]);
 
+      // tables referencing member(id) that have no TypeORM entity here; keep in sync with hasura migrations
+      const [{ hasCallRecord }] = await manager.query(
+        `SELECT to_regclass('phone.call_record') IS NOT NULL AS "hasCallRecord"`,
+      );
+      if (hasCallRecord) {
+        await manager.query(`DELETE FROM phone.call_record WHERE member_id = $1`, [member.id]);
+      }
+      const [{ hasVotingVote }] = await manager.query(
+        `SELECT to_regclass('xuemi.voting_campain_opinion_vote') IS NOT NULL AS "hasVotingVote"`,
+      );
+      if (hasVotingVote) {
+        await manager.query(`DELETE FROM xuemi.voting_campain_opinion_vote WHERE voter_id = $1`, [member.id]);
+      }
+      await manager.query(`DELETE FROM public.member_permission_group WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.member_social WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.member_speciality WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.member_shop WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.point_log WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.coin_log_audit_log WHERE member_id = $1`, [member.id]);
+      await manager.query(
+        `DELETE FROM public.playlist_podcast_program WHERE playlist_id IN (SELECT id FROM public.playlist WHERE member_id = $1)`,
+        [member.id],
+      );
+      await manager.query(`DELETE FROM public.playlist WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.program_content_ebook_bookmark WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.program_content_ebook_highlight WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.podcast_program_role WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.program_role WHERE member_id = $1`, [member.id]);
+      await manager.query(`DELETE FROM public.project_role WHERE member_id = $1`, [member.id]);
+
+      // rows owned by other members / the app where this member is only referenced as staff: detach, do not delete
+      await manager.query(`UPDATE public.member SET manager_id = NULL WHERE manager_id = $1`, [member.id]);
+      await manager.query(`UPDATE public.member_phone SET manager_id = NULL WHERE manager_id = $1`, [member.id]);
+      await manager.query(`UPDATE public.member_task SET executor_id = NULL WHERE executor_id = $1`, [member.id]);
+      await manager.query(`UPDATE public.member_task SET author_id = NULL WHERE author_id = $1`, [member.id]);
+      await manager.query(`UPDATE public.attachment SET author_id = NULL WHERE author_id = $1`, [member.id]);
+      await manager.query(`UPDATE public.app_page SET editor_id = NULL WHERE editor_id = $1`, [member.id]);
+
       await notificationRepo.delete({ targetMember: { id: member.id } });
       await notificationRepo.delete({ sourceMember: { id: member.id } });
 
+      // order_contact / order_executor rows created by other members on this member's orders
+      await manager.query(
+        `DELETE FROM public.order_contact WHERE order_id IN (SELECT id FROM public.order_log WHERE member_id = $1)`,
+        [member.id],
+      );
+      await manager.query(
+        `DELETE FROM public.order_executor WHERE order_id IN (SELECT id FROM public.order_log WHERE member_id = $1)`,
+        [member.id],
+      );
       await orderContractRepo.delete({ memberId: member.id });
       await orderExecutorRepo.delete({ memberId: member.id });
 
