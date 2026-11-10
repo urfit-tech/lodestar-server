@@ -25,7 +25,7 @@ const sendToEzpay = async (items: Partial<InvoiceInfo>) => {
   jest.spyOn(EzpayClient, 'formCredentials').mockReturnValue({} as any);
 
   await service.issueInvoiceDirectly(
-    'tli1956',
+    'app-id',
     'order-id',
     'gateway-id',
     { MerchantOrderNo: 'order-no', ...items } as InvoiceInfo,
