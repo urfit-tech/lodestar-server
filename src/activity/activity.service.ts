@@ -50,11 +50,10 @@ export class ActivityService {
     // ...
 
     const activity = await this.activityInfra.getPublishedActivity(this.entityManager, activityId, appId);
-    const activityTickets = await this.activityInfra.getActivityTicketEnrollment(
-      activityId,
-      memberId,
-      this.entityManager,
-    );
+    // Anonymous callers get no enrollment data.
+    const activityTickets = memberId
+      ? await this.activityInfra.getActivityTicketEnrollment(activityId, memberId, this.entityManager)
+      : [];
 
     const participants = await this.activityInfra.getActivityTicketEnrollmentCount(activityId, this.entityManager);
 
@@ -83,11 +82,8 @@ export class ActivityService {
     };
   }
 
-  public async getAllActivityTicketEnrollment(memberId: string) {
-    // Todo: check permission
-    // ...
-
-    return await this.activityInfra.getAllActivityTicketEnrollment(memberId, this.entityManager);
+  public async getAllActivityTicketEnrollment(memberId: string, appId?: string) {
+    return await this.activityInfra.getAllActivityTicketEnrollment(memberId, this.entityManager, appId);
   }
 
   public async getActivityParticipants(activityId: string): Promise<ActivityParticipantResponse> {
