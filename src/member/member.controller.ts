@@ -40,6 +40,7 @@ import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { PermissionGuard } from '~/auth/permission.guard';
 import { EXPORT_JOB_TIMEOUT_MS } from '~/order/order.export.constants';
+import { isAppOwnerOrHasAnyPermission } from '~/auth/authorization.helper';
 
 const MEMBER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.MEMBER_ADMIN,
@@ -59,6 +60,14 @@ const MEMBER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SALES_LEAD_ADMIN,
   PermissionSet.SALES_LEAD_NORMAL,
   PermissionSet.MATERIAL_AUDIT_LOG_ADMIN,
+];
+
+// Admin SalesLeadPage gate (lodestar-app-admin / lodestar-app-admin-xuemi src/pages/SalesLeadPage.tsx).
+const SALE_LEAD_DATA_PERMISSIONS: string[] = [PermissionSet.SALES_LEAD_ADMIN, PermissionSet.SALES_LEAD_NORMAL];
+// May read another manager's leads.
+const SALE_LEAD_DATA_ANY_MANAGER_PERMISSIONS: string[] = [
+  PermissionSet.SALES_LEAD_ADMIN,
+  PermissionSet.SALES_LEAD_SELECTOR_ADMIN,
 ];
 
 const MEMBER_DOWNLOAD_PERMISSION_GROUP: PermissionSet[] = [
@@ -174,23 +183,27 @@ export class MemberController {
   }
   @Post('saleLeadMemberData')
   public async getSaleLeadMemberData(
+    @Local('member') member: JwtMember,
     @Body() requestDto: SaleLeadMemberDataResquestDTO,
   ): Promise<SaleLeadMemberDataResponseDTO> {
-    const errors = [];
-
-    if (!requestDto.appId || typeof requestDto.appId !== 'string' || requestDto.appId.trim() === '') {
-      errors.push('appId must be a string and cannot be empty');
+    // The body appId is ignored; leads are always read from the caller's app.
+    const { appId, memberId } = member;
+    if (!appId || !memberId) {
+      throw new UnauthorizedException();
     }
-
-    if (errors.length > 0) {
+    if (!isAppOwnerOrHasAnyPermission(member, SALE_LEAD_DATA_PERMISSIONS)) {
+      throw new APIException({ code: 'E_SALE_LEAD_FORBIDDEN', message: 'no permission to read sale lead data' }, 403);
+    }
+    const managerId = requestDto.managerId || memberId;
+    if (managerId !== memberId && !isAppOwnerOrHasAnyPermission(member, SALE_LEAD_DATA_ANY_MANAGER_PERMISSIONS)) {
       throw new APIException(
-        { code: 'SaleLeadMemberData_Error', message: 'Invalid request parameters', result: errors },
-        400,
+        { code: 'E_SALE_LEAD_FORBIDDEN', message: 'no permission to read sale lead data of another manager' },
+        403,
       );
     }
 
     try {
-      return await this.memberService.getSaleLeadMemberData(requestDto.managerId, requestDto.appId);
+      return await this.memberService.getSaleLeadMemberData(managerId, appId);
     } catch (error) {
       console.error('Error fetching sale lead member data:', error);
 
