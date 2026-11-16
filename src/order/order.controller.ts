@@ -20,12 +20,27 @@ import { JwtMember } from '~/auth/auth.dto';
 import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { PermissionGuard } from '~/auth/permission.guard';
+import { isAppOwnerOrHasAnyPermission } from '~/auth/authorization.helper';
 import { EXPORT_JOB_TIMEOUT_MS } from './order.export.constants';
 
 const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SALES_RECORDS_NORMAL,
   PermissionSet.SALES_RECORDS_ADMIN,
 ];
+
+// An order is readable by its buyer, or by the same app's owner / sales-records staff.
+export const canReadOrder = (
+  member: JwtMember | undefined,
+  order: { appId?: string | null; memberId?: string | null } | undefined | null,
+): boolean => {
+  if (!member || !order || !member.appId || order.appId !== member.appId) {
+    return false;
+  }
+  if (member.memberId && order.memberId === member.memberId) {
+    return true;
+  }
+  return isAppOwnerOrHasAnyPermission(member, ORDER_PERMISSION_GROUP_ADMIN);
+};
 
 @UseGuards(AuthGuard, PermissionGuard)
 @Controller({
@@ -59,12 +74,16 @@ export class OrderController {
   }
 
   @Get(':orderId')
-  async getOrderById(@Param('orderId') orderId: string) {
+  async getOrderById(@Local('member') member: JwtMember, @Param('orderId') orderId: string) {
     if (!orderId) {
       throw new APIException({ code: 'E_NULL_ORDER', message: 'orderId is null or undefined' });
     }
 
     const order = await this.orderService.getOrderById(orderId);
+    // Same response as a missing order, so callers cannot probe other members' or tenants' order ids.
+    if (!canReadOrder(member, order)) {
+      throw new APIException({ code: 'E_DB_GET_ORDER_NOT_FOUND', message: 'order not found.' });
+    }
     return { code: 'SUCCESS', message: 'Get order successfully.', result: order };
   }
 
