@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { APIException } from '~/api.excetion';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { Attachment } from './attachment.entity';
@@ -13,6 +14,11 @@ export class MediaService {
 
   async upsertMediaVideoAttachment(attachment: Attachment, s3Bucket?: string, key?: string) {
     const existAttachment = await this.mediaInfra.getById(attachment.id, this.entityManager);
+
+    // Never overwrite (or move) an attachment row that belongs to another app.
+    if (existAttachment && existAttachment.appId !== attachment.appId) {
+      throw new APIException({ code: 'E_ATTACHMENT_FORBIDDEN', message: 'attachment belongs to another app' }, 403);
+    }
 
     if (existAttachment?.options?.source?.s3?.video) {
       existAttachment.options.source.s3.video = `s3://${s3Bucket}/${key}`;

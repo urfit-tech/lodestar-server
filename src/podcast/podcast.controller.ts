@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
+import { MEMBER_PAGE_PODCAST_STAFF_PERMISSIONS, resolveTargetMemberId } from '~/auth/authorization.helper';
 import { PodcastService } from './podcast.service';
 
 @UseGuards(AuthGuard)
@@ -17,6 +18,9 @@ export class PodcastController {
   async getPodcastByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
     const { memberId } = request.query;
 
-    return this.podcastService.getPodcastByMemberId(member.appId, String(memberId || member.memberId));
+    return this.podcastService.getPodcastByMemberId(
+      member.appId,
+      resolveTargetMemberId(member, memberId, MEMBER_PAGE_PODCAST_STAFF_PERMISSIONS),
+    );
   }
 }

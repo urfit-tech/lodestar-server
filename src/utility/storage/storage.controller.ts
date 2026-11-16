@@ -13,6 +13,7 @@ import { Attachment } from '~/media/attachment.entity';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
+import { assertStorageKeyInApp, assertStoragePrefixAndFileName } from './storage.access';
 @Controller({
   path: 'storage',
   version: ['1', '2'],
@@ -33,14 +34,16 @@ export class StorageController {
   }
 
   @Post('storage/upload')
-  uploadFileToStorageBucket(@Body() body: UploadDTO, @Local('member') member: JwtMember) {
+  async uploadFileToStorageBucket(@Body() body: UploadDTO, @Local('member') member: JwtMember) {
     const { fileName, prefix } = body;
+    assertStoragePrefixAndFileName(prefix, fileName, member);
     return this.storageService.getSignedUrlForUploadStorage(member.appId, fileName, prefix, 60);
   }
 
   @Post('storage/download')
   async getDownloadUrlFromStorageBucket(@Body() body: UploadDTO, @Local('member') member: JwtMember) {
     const { fileName, prefix } = body;
+    assertStoragePrefixAndFileName(prefix, fileName, member);
     return this.storageService.getSignedUrlForDownloadStorage(`${prefix}/${member.appId}/${fileName}`, 60);
   }
 
@@ -48,8 +51,10 @@ export class StorageController {
   async createMultipartUpload(
     @Body()
     body: CreateMultipartUploadDTO,
+    @Local('member') member: JwtMember,
   ) {
     const { Key, ContentType } = body.params;
+    assertStorageKeyInApp(Key, member);
     const { UploadId: uploadId } = await this.storageService.createMultipartUpload(Key, ContentType);
     return {
       uploadId,
@@ -60,10 +65,12 @@ export class StorageController {
   async getSignedUrl(
     @Body()
     body: MultipartUploadSignUrlDTO,
+    @Local('member') member: JwtMember,
   ) {
     const {
       params: { Key, UploadId, PartNumber },
     } = body;
+    assertStorageKeyInApp(Key, member);
     const presignedUrl = await this.storageService.getSignedUrlForUploadPartStorage(Key, UploadId, PartNumber, 60);
     return { presignedUrl };
   }
@@ -72,20 +79,21 @@ export class StorageController {
   async completeMultipartUpload(
     @Body()
     body: CompleteMultipartUploadDTO,
+    @Local('member') member: JwtMember,
   ) {
     const {
       params: { Key, UploadId, MultipartUpload },
       file: { name: fileName, type, size },
-      appId,
-      authorId,
       attachmentId,
       attachmentName,
       duration,
     } = body;
+    assertStorageKeyInApp(Key, member);
     const status = 'QUEUED';
     const attachment = new Attachment();
-    attachment.appId = appId;
-    attachment.authorId = authorId;
+    // The body appId / authorId are ignored; the attachment belongs to the caller's app and the caller.
+    attachment.appId = member.appId;
+    attachment.authorId = member.memberId;
     attachment.name = attachmentName;
     attachment.filename = fileName;
     attachment.size = size;

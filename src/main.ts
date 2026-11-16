@@ -23,6 +23,7 @@ import { AuthModule } from './auth/auth.module';
 import { legacyTokenEndpointMiddleware } from './auth/legacy-token-endpoint.middleware';
 import { SwaggerConfigService } from './swagger-config/swagger-config.service';
 import { requireSessionSecret } from './session-secret';
+import { keepRawBodyForWebhooks } from './webhooks/webhook-signature';
 
 dayjs.extend(utc);
 
@@ -89,7 +90,8 @@ async function bootstrap() {
         exclude: [{ path: 'healthz', method: RequestMethod.GET }],
       })
       .enableVersioning({ type: VersioningType.URI })
-      .use(json({ limit: '10mb' }))
+      // verify keeps the raw bytes of /api/v*/webhooks/* bodies for signature checks.
+      .use(json({ limit: '10mb', verify: keepRawBodyForWebhooks }))
       .use(urlencoded({ extended: true, limit: '10mb' }))
       .use(createSessionMiddleware(cacheService.getClient(), sessionSecret, nodeEnv))
       .use(cookieParser());

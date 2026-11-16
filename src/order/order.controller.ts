@@ -20,12 +20,53 @@ import { JwtMember } from '~/auth/auth.dto';
 import { Permissions } from '~/decorators/permissions.decorator';
 import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { PermissionGuard } from '~/auth/permission.guard';
+import { isAppOwnerOrHasAnyPermission } from '~/auth/authorization.helper';
 import { EXPORT_JOB_TIMEOUT_MS } from './order.export.constants';
 
 const ORDER_PERMISSION_GROUP_ADMIN: PermissionSet[] = [
   PermissionSet.SALES_RECORDS_NORMAL,
   PermissionSet.SALES_RECORDS_ADMIN,
 ];
+
+// An order is readable by its buyer, or by the same app's owner / sales-records staff.
+export const canReadOrder = (
+  member: JwtMember | undefined,
+  order: { appId?: string | null; memberId?: string | null } | undefined | null,
+): boolean => {
+  if (!member || !order || !member.appId || order.appId !== member.appId) {
+    return false;
+  }
+  if (member.memberId && order.memberId === member.memberId) {
+    return true;
+  }
+  return isAppOwnerOrHasAnyPermission(member, ORDER_PERMISSION_GROUP_ADMIN);
+};
+
+// Group-buying gift: the sub order's options.emailedNonSiteMemberEmail.email is the address the buyer invited
+// (storefront GroupBuyingCollectionPage reads it from order_group_buying_log.options = the sub order's options).
+export const isInvitedGroupBuyingReceiver = (
+  member: JwtMember | undefined,
+  order: { appId?: string | null; options?: unknown } | undefined | null,
+): boolean => {
+  if (!member || !order || !member.appId || order.appId !== member.appId) {
+    return false;
+  }
+  const invitedEmail = (order.options as { emailedNonSiteMemberEmail?: { email?: unknown } } | null)
+    ?.emailedNonSiteMemberEmail?.email;
+  const callerEmail = member.email;
+  if (typeof invitedEmail !== 'string' || typeof callerEmail !== 'string') {
+    return false;
+  }
+  const normalized = invitedEmail.trim().toLowerCase();
+  return normalized !== '' && normalized === callerEmail.trim().toLowerCase();
+};
+
+// What the invited receiver gets: only the fields GroupBuyingReceivedPage uses (transferredAt; memberId is
+// compared with the caller, and once the gift is claimed the receiver is the order member and reads it in full).
+export const toGroupBuyingReceiverView = (order: { id: string; transferredAt?: Date | null }) => ({
+  id: order.id,
+  transferredAt: order.transferredAt ?? null,
+});
 
 @UseGuards(AuthGuard, PermissionGuard)
 @Controller({
@@ -42,7 +83,8 @@ export class OrderController {
 
   @Put('transfer-received-order')
   async transferOrder(@Local('member') member: JwtMember, @Body() dto: TransferReceivedOrderBodyDTO) {
-    const { token, memberId } = dto;
+    // The body memberId is ignored: the gift always goes to the caller.
+    const { token } = dto;
     let transferOrderToken;
 
     try {
@@ -52,20 +94,42 @@ export class OrderController {
     }
 
     const { orderLogId } = transferOrderToken;
-    const transferOrderDTO: TransferReceivedOrderDTO = { memberId, orderId: orderLogId };
-    const updateResult = await this.orderService.transferReceivedOrder(transferOrderDTO, this.entityManager, member?.memberId);
+    if (!orderLogId || typeof orderLogId !== 'string') {
+      throw new APIException({ code: 'E_TOKEN_INVALID', message: 'transferOrderToken is invalid' });
+    }
+    // Only within the caller's app, and only once (the receiver page used to hide the button after a transfer).
+    const order = await this.orderService.getOrderById(orderLogId);
+    if (!member?.memberId || order.appId !== member.appId) {
+      throw new APIException({ code: 'E_DB_GET_ORDER_NOT_FOUND', message: 'order not found.' });
+    }
+    if (order.transferredAt) {
+      throw new APIException({ code: 'E_ORDER_ALREADY_TRANSFERRED', message: 'order has already been transferred' });
+    }
+    const transferOrderDTO: TransferReceivedOrderDTO = { memberId: member.memberId, orderId: orderLogId };
+    const updateResult = await this.orderService.transferReceivedOrder(
+      transferOrderDTO,
+      this.entityManager,
+      member.memberId,
+    );
 
     return { code: 'SUCCESS', message: 'transfer order successfully', result: updateResult };
   }
 
   @Get(':orderId')
-  async getOrderById(@Param('orderId') orderId: string) {
+  async getOrderById(@Local('member') member: JwtMember, @Param('orderId') orderId: string) {
     if (!orderId) {
       throw new APIException({ code: 'E_NULL_ORDER', message: 'orderId is null or undefined' });
     }
 
     const order = await this.orderService.getOrderById(orderId);
-    return { code: 'SUCCESS', message: 'Get order successfully.', result: order };
+    if (canReadOrder(member, order)) {
+      return { code: 'SUCCESS', message: 'Get order successfully.', result: order };
+    }
+    if (isInvitedGroupBuyingReceiver(member, order)) {
+      return { code: 'SUCCESS', message: 'Get order successfully.', result: toGroupBuyingReceiverView(order) };
+    }
+    // Same response as a missing order, so callers cannot probe other members' or tenants' order ids.
+    throw new APIException({ code: 'E_DB_GET_ORDER_NOT_FOUND', message: 'order not found.' });
   }
 
   @Post('export')

@@ -29,6 +29,16 @@ export class ReportService {
     } as GetReportDTO;
   }
 
+  // Permission groups the report is limited to (report_permission_group); empty means no group restriction.
+  // A query error is rethrown so the caller fails closed.
+  async getReportPermissionGroupIds(reportId: string): Promise<string[]> {
+    const rows: Array<{ permission_group_id: string }> = await this.entityManager.query(
+      `SELECT rpg.permission_group_id FROM report_permission_group rpg WHERE rpg.report_id = $1`,
+      [reportId],
+    );
+    return rows.map(row => row.permission_group_id);
+  }
+
   generateMetabaseSignedUrl(payload: MetabasePayload) {
     const secretKey = this.configService.get('METABASE_SECRET_KEY');
     const siteUrl = this.configService.get('METABASE_SITE_URL');
