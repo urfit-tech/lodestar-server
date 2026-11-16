@@ -3,6 +3,7 @@ import { APIException } from '~/api.excetion';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
+import { MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS, resolveTargetMemberId } from '~/auth/authorization.helper';
 import {
   FetchMemberRightActivityTicketDTO,
   FetchMemberRightActivityTicketQuery,
@@ -53,6 +54,9 @@ export class EquityController {
 
   @Get('/programs')
   async getProgramsByMemberId(@Local('member') member: JwtMember, @Query('memberId') memberId: string) {
-    return this.programService.getProgramsByMemberId(member.appId, String(memberId || member.memberId));
+    return this.programService.getProgramsByMemberId(
+      member.appId,
+      resolveTargetMemberId(member, memberId, MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS),
+    );
   }
 }

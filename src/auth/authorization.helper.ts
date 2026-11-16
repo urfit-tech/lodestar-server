@@ -28,3 +28,18 @@ export const resolveTargetMemberId = (
   }
   return isAppOwnerOrHasAnyPermission(member, staffPermissions) ? requested : member.memberId;
 };
+
+// Staff permissions that may read another member's equity (same app only).
+// Storefront member page /members/:memberId (lodestar-app, -xuemi, -commonhealth src/pages/MemberPage/index.tsx).
+export const MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS: ReadonlyArray<string> = ['CHECK_MEMBER_PAGE_PROGRAM_INFO'];
+export const MEMBER_PAGE_PODCAST_STAFF_PERMISSIONS: ReadonlyArray<string> = ['CHECK_MEMBER_PAGE_PODCAST_INFO'];
+export const MEMBER_PAGE_ACTIVITY_STAFF_PERMISSIONS: ReadonlyArray<string> = ['CHECK_MEMBER_PAGE_ACTIVITY_INFO'];
+// Admin member page coupon tab, and the admin appointment modal that lists the chosen member's coupons
+// (lodestar-app-admin, -xuemi MemberAdminPage.tsx / AppointmentPlanCollectionAdminPage.tsx).
+export const MEMBER_COUPON_STAFF_PERMISSIONS: ReadonlyArray<string> = [
+  'MEMBER_COUPON_PLAN_VIEW',
+  'APPOINTMENT_PLAN_ADMIN',
+  'APPOINTMENT_PLAN_NORMAL',
+];
+// Admin member page voucher tab (lodestar-app-admin, -xuemi MemberAdminPage.tsx).
+export const MEMBER_VOUCHER_STAFF_PERMISSIONS: ReadonlyArray<string> = ['MEMBER_VOUCHER_PLAN_VIEW'];
