@@ -13,6 +13,7 @@ import { Attachment } from '~/media/attachment.entity';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
+import { assertStorageKeyInApp } from './storage.access';
 @Controller({
   path: 'storage',
   version: ['1', '2'],
@@ -48,8 +49,10 @@ export class StorageController {
   async createMultipartUpload(
     @Body()
     body: CreateMultipartUploadDTO,
+    @Local('member') member: JwtMember,
   ) {
     const { Key, ContentType } = body.params;
+    assertStorageKeyInApp(Key, member.appId);
     const { UploadId: uploadId } = await this.storageService.createMultipartUpload(Key, ContentType);
     return {
       uploadId,
@@ -60,10 +63,12 @@ export class StorageController {
   async getSignedUrl(
     @Body()
     body: MultipartUploadSignUrlDTO,
+    @Local('member') member: JwtMember,
   ) {
     const {
       params: { Key, UploadId, PartNumber },
     } = body;
+    assertStorageKeyInApp(Key, member.appId);
     const presignedUrl = await this.storageService.getSignedUrlForUploadPartStorage(Key, UploadId, PartNumber, 60);
     return { presignedUrl };
   }
@@ -72,20 +77,21 @@ export class StorageController {
   async completeMultipartUpload(
     @Body()
     body: CompleteMultipartUploadDTO,
+    @Local('member') member: JwtMember,
   ) {
     const {
       params: { Key, UploadId, MultipartUpload },
       file: { name: fileName, type, size },
-      appId,
-      authorId,
       attachmentId,
       attachmentName,
       duration,
     } = body;
+    assertStorageKeyInApp(Key, member.appId);
     const status = 'QUEUED';
     const attachment = new Attachment();
-    attachment.appId = appId;
-    attachment.authorId = authorId;
+    // The body appId / authorId are ignored; the attachment belongs to the caller's app and the caller.
+    attachment.appId = member.appId;
+    attachment.authorId = member.memberId;
     attachment.name = attachmentName;
     attachment.filename = fileName;
     attachment.size = size;
