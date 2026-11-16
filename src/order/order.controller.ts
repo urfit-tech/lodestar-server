@@ -83,7 +83,8 @@ export class OrderController {
 
   @Put('transfer-received-order')
   async transferOrder(@Local('member') member: JwtMember, @Body() dto: TransferReceivedOrderBodyDTO) {
-    const { token, memberId } = dto;
+    // The body memberId is ignored: the gift always goes to the caller.
+    const { token } = dto;
     let transferOrderToken;
 
     try {
@@ -93,8 +94,23 @@ export class OrderController {
     }
 
     const { orderLogId } = transferOrderToken;
-    const transferOrderDTO: TransferReceivedOrderDTO = { memberId, orderId: orderLogId };
-    const updateResult = await this.orderService.transferReceivedOrder(transferOrderDTO, this.entityManager, member?.memberId);
+    if (!orderLogId || typeof orderLogId !== 'string') {
+      throw new APIException({ code: 'E_TOKEN_INVALID', message: 'transferOrderToken is invalid' });
+    }
+    // Only within the caller's app, and only once (the receiver page used to hide the button after a transfer).
+    const order = await this.orderService.getOrderById(orderLogId);
+    if (!member?.memberId || order.appId !== member.appId) {
+      throw new APIException({ code: 'E_DB_GET_ORDER_NOT_FOUND', message: 'order not found.' });
+    }
+    if (order.transferredAt) {
+      throw new APIException({ code: 'E_ORDER_ALREADY_TRANSFERRED', message: 'order has already been transferred' });
+    }
+    const transferOrderDTO: TransferReceivedOrderDTO = { memberId: member.memberId, orderId: orderLogId };
+    const updateResult = await this.orderService.transferReceivedOrder(
+      transferOrderDTO,
+      this.entityManager,
+      member.memberId,
+    );
 
     return { code: 'SUCCESS', message: 'transfer order successfully', result: updateResult };
   }
