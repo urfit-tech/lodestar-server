@@ -295,6 +295,8 @@ export class SaleLeadMemberDataResquestDTO {
   @IsString()
   managerId: string;
 
+  // Ignored: the app comes from the caller's token.
+  @IsOptional()
   @IsString()
-  appId: string;
+  appId?: string;
 }
