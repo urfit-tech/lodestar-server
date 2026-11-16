@@ -42,6 +42,32 @@ export const canReadOrder = (
   return isAppOwnerOrHasAnyPermission(member, ORDER_PERMISSION_GROUP_ADMIN);
 };
 
+// Group-buying gift: the sub order's options.emailedNonSiteMemberEmail.email is the address the buyer invited
+// (storefront GroupBuyingCollectionPage reads it from order_group_buying_log.options = the sub order's options).
+export const isInvitedGroupBuyingReceiver = (
+  member: JwtMember | undefined,
+  order: { appId?: string | null; options?: unknown } | undefined | null,
+): boolean => {
+  if (!member || !order || !member.appId || order.appId !== member.appId) {
+    return false;
+  }
+  const invitedEmail = (order.options as { emailedNonSiteMemberEmail?: { email?: unknown } } | null)
+    ?.emailedNonSiteMemberEmail?.email;
+  const callerEmail = member.email;
+  if (typeof invitedEmail !== 'string' || typeof callerEmail !== 'string') {
+    return false;
+  }
+  const normalized = invitedEmail.trim().toLowerCase();
+  return normalized !== '' && normalized === callerEmail.trim().toLowerCase();
+};
+
+// What the invited receiver gets: only the fields GroupBuyingReceivedPage uses (transferredAt; memberId is
+// compared with the caller, and once the gift is claimed the receiver is the order member and reads it in full).
+export const toGroupBuyingReceiverView = (order: { id: string; transferredAt?: Date | null }) => ({
+  id: order.id,
+  transferredAt: order.transferredAt ?? null,
+});
+
 @UseGuards(AuthGuard, PermissionGuard)
 @Controller({
   path: 'orders',
@@ -80,11 +106,14 @@ export class OrderController {
     }
 
     const order = await this.orderService.getOrderById(orderId);
-    // Same response as a missing order, so callers cannot probe other members' or tenants' order ids.
-    if (!canReadOrder(member, order)) {
-      throw new APIException({ code: 'E_DB_GET_ORDER_NOT_FOUND', message: 'order not found.' });
+    if (canReadOrder(member, order)) {
+      return { code: 'SUCCESS', message: 'Get order successfully.', result: order };
     }
-    return { code: 'SUCCESS', message: 'Get order successfully.', result: order };
+    if (isInvitedGroupBuyingReceiver(member, order)) {
+      return { code: 'SUCCESS', message: 'Get order successfully.', result: toGroupBuyingReceiverView(order) };
+    }
+    // Same response as a missing order, so callers cannot probe other members' or tenants' order ids.
+    throw new APIException({ code: 'E_DB_GET_ORDER_NOT_FOUND', message: 'order not found.' });
   }
 
   @Post('export')
