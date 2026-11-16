@@ -1,4 +1,15 @@
-import { Controller, Get, Logger, Param, ParseIntPipe, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Headers,
+  Logger,
+  Param,
+  ParseIntPipe,
+  Query,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ActivityService } from './activity.service';
 import { ActivityCollectionDTO, ActivityParticipantResponse, FetchActivitiesResponseDto } from './dto/activity.dto';
@@ -10,6 +21,10 @@ import { PermissionSet } from '~/enums/PermissionSet.enum';
 import { Permissions } from '~/decorators/permissions.decorator';
 import { AppService } from '~/app/app.service';
 import { AppCache } from '~/app/app.type';
+import { AuthService } from '~/auth/auth.service';
+import { JwtMember } from '~/auth/auth.dto';
+import { Local } from '~/decorator';
+import { MEMBER_PAGE_ACTIVITY_STAFF_PERMISSIONS, resolveTargetMemberId } from '~/auth/authorization.helper';
 
 const ACTIVITY_ADMIN_PERMISSION_GROUP: PermissionSet[] = [
   PermissionSet.ACTIVITY_ADMIN,
@@ -33,6 +48,7 @@ export class ActivityController {
     private readonly appService: AppService,
     private readonly activityService: ActivityService,
     private logger: Logger,
+    private readonly authService: AuthService,
   ) {}
 
   @Get('activity_collection')
@@ -63,17 +79,27 @@ export class ActivityController {
     }
   }
 
+  // Public activity page. Member-specific data (the caller's tickets and attendance) needs a token; without
+  // one ?memberId is ignored. With a token the activity is looked up in the token's app.
   @Get(':activity_id')
-  async getActivityByMemberId(@Req() request: Request, @Param('activity_id') activityId: string): Promise<any> {
+  async getActivityByMemberId(
+    @Req() request: Request,
+    @Param('activity_id') activityId: string,
+    @Headers('authorization') authorization?: string,
+  ): Promise<any> {
     const { memberId, includeDeleted } = request.query;
     const host = request.headers.host;
+    const caller = this.verifyOptionalToken(authorization);
     try {
-      const appCache = await this.appService.getAppInfoByHost(host);
+      const appId = caller ? caller.appId : (await this.appService.getAppInfoByHost(host)).id;
+      const targetMemberId = caller
+        ? resolveTargetMemberId(caller, memberId, MEMBER_PAGE_ACTIVITY_STAFF_PERMISSIONS)
+        : undefined;
       const res = await this.activityService.getActivityByMemberId(
         activityId,
-        String(memberId),
+        targetMemberId,
         includeDeleted && String(includeDeleted) === 'true',
-        appCache.id,
+        appId,
       );
       if (!res.id) throw new Error();
       return res;
@@ -98,10 +124,35 @@ export class ActivityController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Get()
-  async getAllActivityByMemberId(@Req() request: Request): Promise<any> {
+  async getAllActivityByMemberId(@Local('member') member: JwtMember, @Req() request: Request): Promise<any> {
     const { memberId } = request.query;
 
-    return this.activityService.getAllActivityTicketEnrollment(String(memberId));
+    return this.activityService.getAllActivityTicketEnrollment(
+      resolveTargetMemberId(member, memberId, MEMBER_PAGE_ACTIVITY_STAFF_PERMISSIONS),
+      member.appId,
+    );
+  }
+
+  // undefined without an Authorization header; 401 for a header that is not a valid Bearer token.
+  private verifyOptionalToken(authorization?: string): JwtMember | undefined {
+    if (!authorization) {
+      return undefined;
+    }
+    const [type, token] = authorization.split(' ');
+    if (type !== 'Bearer' || !token) {
+      throw new UnauthorizedException();
+    }
+    let member: JwtMember;
+    try {
+      member = this.authService.verify(token) as JwtMember;
+    } catch {
+      throw new UnauthorizedException();
+    }
+    if (!member?.appId || !member?.memberId) {
+      throw new UnauthorizedException();
+    }
+    return member;
   }
 }

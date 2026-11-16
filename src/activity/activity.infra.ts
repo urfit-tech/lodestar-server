@@ -244,8 +244,8 @@ export class ActivityInfrastructure {
     return this.utilityService.convertObjectKeysToCamelCase(activity);
   }
 
-  async getAllActivityTicketEnrollment(memberId: string, manager: EntityManager) {
-    const activityTickets = await manager
+  async getAllActivityTicketEnrollment(memberId: string, manager: EntityManager, appId?: string) {
+    const query = manager
       .getRepository(OrderLog)
       .createQueryBuilder('order_log')
       .select([
@@ -280,8 +280,11 @@ export class ActivityInfrastructure {
       )
       .groupBy('activity_ticket.id')
       .addGroupBy('order_log.id')
-      .addGroupBy('order_product.id')
-      .getRawMany();
+      .addGroupBy('order_product.id');
+    if (appId) {
+      query.andWhere('order_log.app_id = :appId', { appId });
+    }
+    const activityTickets = await query.getRawMany();
 
     return this.utilityService.convertObjectKeysToCamelCase(activityTickets);
   }
