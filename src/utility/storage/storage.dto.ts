@@ -1,5 +1,14 @@
 import { CompletedMultipartUpload } from '@aws-sdk/client-s3';
-import { IsDefined, IsNotEmpty, IsNotEmptyObject, IsNumber, IsObject, IsString, ValidateNested } from 'class-validator';
+import {
+  IsDefined,
+  IsNotEmpty,
+  IsNotEmptyObject,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UploadDTO {
@@ -106,13 +115,15 @@ export class CompleteMultipartUploadDTO {
   @Type(() => CompleteMultipartUploadFile)
   file: CompleteMultipartUploadFile;
 
-  @IsNotEmpty()
+  // Ignored: taken from the caller's token.
+  @IsOptional()
   @IsString()
-  appId: string;
+  appId?: string;
 
-  @IsNotEmpty()
+  // Ignored: taken from the caller's token.
+  @IsOptional()
   @IsString()
-  authorId: string;
+  authorId?: string;
 
   @IsNotEmpty()
   @IsString()
