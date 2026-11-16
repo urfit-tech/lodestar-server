@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
+import { MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS, resolveTargetMemberId } from '~/auth/authorization.helper';
 import { ProgramPackageService } from './program-package.service';
 
 @UseGuards(AuthGuard)
@@ -17,7 +18,10 @@ export class ProgramPackageController {
   async getProgramPackageByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
     const { memberId } = request.query;
 
-    return this.programPackageService.getProgramPackageByMemberId(member.appId, String(memberId || member.memberId));
+    return this.programPackageService.getProgramPackageByMemberId(
+      member.appId,
+      resolveTargetMemberId(member, memberId, MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS),
+    );
   }
 
   @Get('/expired')
@@ -26,7 +30,7 @@ export class ProgramPackageController {
 
     return this.programPackageService.getExpiredProgramPackageByMemberId(
       member.appId,
-      String(memberId || member.memberId),
+      resolveTargetMemberId(member, memberId, MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS),
     );
   }
 
@@ -40,7 +44,7 @@ export class ProgramPackageController {
 
     return this.programPackageService.getEnrolledProgramPackageById(
       member.appId,
-      String(memberId || member.memberId),
+      resolveTargetMemberId(member, memberId, MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS),
       programPackageId,
     );
   }

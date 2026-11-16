@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
+import { MEMBER_COUPON_STAFF_PERMISSIONS, resolveTargetMemberId } from '~/auth/authorization.helper';
 import { CouponService } from './coupon.service';
 
 @UseGuards(AuthGuard)
@@ -19,7 +20,7 @@ export class CouponController {
 
     return this.couponService.getCouponByMemberId(
       member.appId,
-      String(memberId || member.memberId),
+      resolveTargetMemberId(member, memberId, MEMBER_COUPON_STAFF_PERMISSIONS),
       includeDeleted && String(includeDeleted) === 'true',
     );
   }
