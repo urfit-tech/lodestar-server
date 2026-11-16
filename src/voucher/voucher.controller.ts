@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
+import { MEMBER_VOUCHER_STAFF_PERMISSIONS, resolveTargetMemberId } from '~/auth/authorization.helper';
 import { VoucherService } from './voucher.service';
 
 @UseGuards(AuthGuard)
@@ -19,7 +20,7 @@ export class VoucherController {
 
     return this.voucherService.getVoucherByMemberId(
       member.appId,
-      String(memberId || member.memberId),
+      resolveTargetMemberId(member, memberId, MEMBER_VOUCHER_STAFF_PERMISSIONS),
       includeDeleted && String(includeDeleted) === 'true',
     );
   }

@@ -17,6 +17,7 @@ import { JwtMember } from '~/auth/auth.dto';
 import { AuthGuard } from '~/auth/auth.guard';
 import { AuthService } from '~/auth/auth.service';
 import { Local } from '~/decorator';
+import { MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS, resolveTargetMemberId } from '~/auth/authorization.helper';
 import {
   MaterialsResponseDto,
   ProgramContentResponseDTO,
@@ -38,7 +39,10 @@ export class ProgramController {
   async getExpiredProgramByMemberId(@Local('member') member: JwtMember, @Req() request: Request) {
     const { memberId } = request.query;
 
-    return this.programService.getExpiredProgramByMemberId(member.appId, String(memberId || member.memberId));
+    return this.programService.getExpiredProgramByMemberId(
+      member.appId,
+      resolveTargetMemberId(member, memberId, MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS),
+    );
   }
 
   @UseGuards(AuthGuard)
@@ -108,7 +112,7 @@ export class ProgramController {
       ? this.programService.getProgramContentsByProgramId(member.appId, programId)
       : this.programService.getEnrolledProgramContentsByProgramId(
           member.appId,
-          String(memberId || member.memberId),
+          resolveTargetMemberId(member, memberId, MEMBER_PAGE_PROGRAM_STAFF_PERMISSIONS),
           programId,
           extraAllowPermission,
         );
