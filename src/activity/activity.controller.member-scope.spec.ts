@@ -37,9 +37,21 @@ describe('ActivityController member scoping', () => {
   });
 
   describe('GET /activity/:activity_id', () => {
-    it('stays public without a token, using the host app and ignoring ?memberId', async () => {
-      await controller.getActivityByMemberId(req({ memberId: 'victim' }), 'activity1');
-      expect(activityService.getActivityByMemberId).toHaveBeenCalledWith('activity1', undefined, undefined, 'appB');
+    it('without a token keeps the legacy ?memberId enrollment lookup, scoped to the host app', async () => {
+      await controller.getActivityByMemberId(req({ memberId: 'storefrontMember' }), 'activity1');
+      expect(appService.getAppInfoByHost).toHaveBeenCalledWith('shop.appB.example');
+      expect(activityService.getActivityByMemberId).toHaveBeenCalledWith(
+        'activity1',
+        'storefrontMember',
+        undefined,
+        'appB',
+      );
+    });
+
+    it('without a token and without memberId (logged-out visitor) returns no enrollment', async () => {
+      await controller.getActivityByMemberId(req({}), 'activity1');
+      await controller.getActivityByMemberId(req({ memberId: ['a', 'b'] }), 'activity1');
+      expect(activityService.getActivityByMemberId.mock.calls.map(call => call[1])).toEqual([undefined, undefined]);
     });
 
     it("returns the caller's own enrollment with a token, scoped to the token app", async () => {

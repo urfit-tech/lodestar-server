@@ -79,8 +79,10 @@ export class ActivityController {
     }
   }
 
-  // Public activity page. Member-specific data (the caller's tickets and attendance) needs a token; without
-  // one ?memberId is ignored. With a token the activity is looked up in the token's app.
+  // Public activity page.
+  // - With a Bearer token: the token's member (or, for staff / app owner, ?memberId) in the token's app.
+  // - Without a token: legacy behavior kept for the deployed storefront (useEnrolledActivity sends ?memberId
+  //   without a token): enrollment of ?memberId as given, activity scoped to the Host app.
   @Get(':activity_id')
   async getActivityByMemberId(
     @Req() request: Request,
@@ -94,6 +96,8 @@ export class ActivityController {
       const appId = caller ? caller.appId : (await this.appService.getAppInfoByHost(host)).id;
       const targetMemberId = caller
         ? resolveTargetMemberId(caller, memberId, MEMBER_PAGE_ACTIVITY_STAFF_PERMISSIONS)
+        : typeof memberId === 'string'
+        ? memberId
         : undefined;
       const res = await this.activityService.getActivityByMemberId(
         activityId,
