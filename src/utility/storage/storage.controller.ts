@@ -13,7 +13,7 @@ import { Attachment } from '~/media/attachment.entity';
 import { AuthGuard } from '~/auth/auth.guard';
 import { Local } from '~/decorator';
 import { JwtMember } from '~/auth/auth.dto';
-import { assertStorageKeyInApp } from './storage.access';
+import { assertStorageKeyInApp, assertStoragePrefixAndFileName } from './storage.access';
 @Controller({
   path: 'storage',
   version: ['1', '2'],
@@ -34,14 +34,16 @@ export class StorageController {
   }
 
   @Post('storage/upload')
-  uploadFileToStorageBucket(@Body() body: UploadDTO, @Local('member') member: JwtMember) {
+  async uploadFileToStorageBucket(@Body() body: UploadDTO, @Local('member') member: JwtMember) {
     const { fileName, prefix } = body;
+    assertStoragePrefixAndFileName(prefix, fileName, member);
     return this.storageService.getSignedUrlForUploadStorage(member.appId, fileName, prefix, 60);
   }
 
   @Post('storage/download')
   async getDownloadUrlFromStorageBucket(@Body() body: UploadDTO, @Local('member') member: JwtMember) {
     const { fileName, prefix } = body;
+    assertStoragePrefixAndFileName(prefix, fileName, member);
     return this.storageService.getSignedUrlForDownloadStorage(`${prefix}/${member.appId}/${fileName}`, 60);
   }
 
@@ -52,7 +54,7 @@ export class StorageController {
     @Local('member') member: JwtMember,
   ) {
     const { Key, ContentType } = body.params;
-    assertStorageKeyInApp(Key, member.appId);
+    assertStorageKeyInApp(Key, member);
     const { UploadId: uploadId } = await this.storageService.createMultipartUpload(Key, ContentType);
     return {
       uploadId,
@@ -68,7 +70,7 @@ export class StorageController {
     const {
       params: { Key, UploadId, PartNumber },
     } = body;
-    assertStorageKeyInApp(Key, member.appId);
+    assertStorageKeyInApp(Key, member);
     const presignedUrl = await this.storageService.getSignedUrlForUploadPartStorage(Key, UploadId, PartNumber, 60);
     return { presignedUrl };
   }
@@ -86,7 +88,7 @@ export class StorageController {
       attachmentName,
       duration,
     } = body;
-    assertStorageKeyInApp(Key, member.appId);
+    assertStorageKeyInApp(Key, member);
     const status = 'QUEUED';
     const attachment = new Attachment();
     // The body appId / authorId are ignored; the attachment belongs to the caller's app and the caller.
