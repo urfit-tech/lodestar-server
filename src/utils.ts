@@ -123,6 +123,36 @@ export const getRoundedListWithCompensation: <T extends Record<string, any>, K e
     };
   };
 
+type InvoiceLineNumbers = { ItemCount: number; ItemPrice: number; ItemAmt: number };
+
+/**
+ * Rewrites an invoice line in whole numbers without changing its rounded total.
+ * A decimal unit price keeps its quantity by splitting: 9 x 533.33 becomes 6 x 533 + 3 x 534.
+ * A fractional quantity has no whole-number form, so 23.5 x 1020 becomes 1 x 23970.
+ */
+export const splitIntoWholeNumberLines = <T extends InvoiceLineNumbers>(line: T): T[] => {
+  const { ItemCount: count, ItemPrice: price } = line;
+  const toLine = (itemCount: number, itemPrice: number): T => ({
+    ...line,
+    ItemCount: itemCount,
+    ItemPrice: itemPrice,
+    ItemAmt: itemCount * itemPrice,
+  });
+
+  if (Number.isInteger(count) && Number.isInteger(price)) {
+    return [toLine(count, price)];
+  }
+
+  const lineTotal = Math.round(count * price);
+  const quantity = Number.isInteger(count) && count > 0 ? count : 1;
+  const lowerPrice = Math.floor(lineTotal / quantity);
+  const higherPriceCount = lineTotal - lowerPrice * quantity;
+
+  return higherPriceCount > 0
+    ? [toLine(quantity - higherPriceCount, lowerPrice), toLine(higherPriceCount, lowerPrice + 1)]
+    : [toLine(quantity, lowerPrice)];
+};
+
 export const parseStringSplitValue = (splittingChar: string) => (data: string[]) => {
   const rawArrays = map(split(splittingChar))(data);
   const keys = head(rawArrays);

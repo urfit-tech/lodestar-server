@@ -12,9 +12,15 @@ import { Invoice } from '~/invoice/invoice.entity';
 import { EzpayClient, EzpayClientResponse } from './ezpay_client';
 import { InvoiceInfrastructure } from './invoice.infra';
 import { InvoiceInfo } from './invoice.dto';
-import { getRoundedListWithCompensation, parseStringSplitValue, RoundMethodsForCompensation } from '~/utils';
+import {
+  getRoundedListWithCompensation,
+  parseStringSplitValue,
+  RoundMethodsForCompensation,
+  splitIntoWholeNumberLines,
+} from '~/utils';
 import {
   always,
+  chain,
   converge,
   evolve,
   flip,
@@ -93,11 +99,6 @@ export class InvoiceService {
     try {
       const appInvoiceGateway = await this.checkInvoiceGatewayConfig(appId, invoiceGatewayId, manager);
       const ezpayCredentials = EzpayClient.formCredentials(appInvoiceGateway.options);
-      const keyMap = {
-        number: 'ItemPrice',
-        quantity: 'ItemCount',
-        amount: 'ItemAmt',
-      };
       const orderLog = await this.orderInfra.getOneByOrderId(orderId, manager);
       const merchantOrderNo = orderLog.invoiceOptions['retry']
         ? invoiceInfo.MerchantOrderNo.replace(/-/g, '').substring(0, 20).slice(0, -1) +
@@ -108,7 +109,7 @@ export class InvoiceService {
         identity,
         pipe(
           InvoiceService.getProductItemsFromInvoiceString,
-          InvoiceService.roundProductList({ name: 'ItemName', unit: 'ItemUnit' })(keyMap),
+          chain(splitIntoWholeNumberLines) as any,
           InvoiceService.generateInvoiceStringFromProductItems,
         ),
       ])({ ...invoiceInfo, MerchantOrderNo: merchantOrderNo });
@@ -357,12 +358,21 @@ export class InvoiceService {
     return result;
   }
 
+  private static getInvoiceItemKeys = (hasItemTaxType: boolean) => [
+    'ItemName',
+    'ItemCount',
+    'ItemPrice',
+    'ItemAmt',
+    'ItemUnit',
+    ...(hasItemTaxType ? ['ItemTaxType'] : []),
+  ];
+
   private static getProductItemsFromInvoiceString = (invoiceInfo: InvoiceInfo) => {
-    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit', 'ItemTaxType'];
+    const keys = InvoiceService.getInvoiceItemKeys(Boolean(invoiceInfo.ItemTaxType));
     return pipe(
       converge(prepend, [always(join('|')(keys)), props(keys)]),
       parseStringSplitValue('|'),
-      (evolve as any)({ ItemCount: Number, ItemPrice: Number, ItemAmt: Number }),
+      (map as any)((evolve as any)({ ItemCount: Number, ItemPrice: Number, ItemAmt: Number })),
     )(invoiceInfo);
   };
 
@@ -400,7 +410,7 @@ export class InvoiceService {
   };
 
   private static generateInvoiceStringFromProductItems = products => {
-    const keys = ['ItemName', 'ItemCount', 'ItemPrice', 'ItemAmt', 'ItemUnit', 'ItemTaxType'];
+    const keys = InvoiceService.getInvoiceItemKeys('ItemTaxType' in products[0]);
     return mergeAll(map(converge(objOf, [identity, pipe(flip(pluck as any)(products), join('|'))]))(keys));
   };
 
