@@ -84,18 +84,18 @@ describe('VideoController (e2e)', () => {
     programContentSectionRepo = manager.getRepository(ProgramContentSection);
     programRepo = manager.getRepository(Program);
 
-    await programContentVideoRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programRepo.delete({});
-    await attachmentRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await programContentVideoRepo.createQueryBuilder().delete().execute();
+    await programContentRepo.createQueryBuilder().delete().execute();
+    await programContentBodyRepo.createQueryBuilder().delete().execute();
+    await programContentSectionRepo.createQueryBuilder().delete().execute();
+    await programRepo.createQueryBuilder().delete().execute();
+    await attachmentRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await roleRepo.save(role);
     await appPlanRepo.save(appPlan);
@@ -109,18 +109,18 @@ describe('VideoController (e2e)', () => {
 
   afterEach(async () => {
     jest.clearAllMocks();
-    await programContentVideoRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programRepo.delete({});
-    await attachmentRepo.delete({});
-    await appHostRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await programContentVideoRepo.createQueryBuilder().delete().execute();
+    await programContentRepo.createQueryBuilder().delete().execute();
+    await programContentBodyRepo.createQueryBuilder().delete().execute();
+    await programContentSectionRepo.createQueryBuilder().delete().execute();
+    await programRepo.createQueryBuilder().delete().execute();
+    await attachmentRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
     await application.close();
   });
 

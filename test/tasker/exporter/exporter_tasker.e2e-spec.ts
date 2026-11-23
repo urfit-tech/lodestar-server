@@ -91,21 +91,21 @@ describe('ExporterTasker', () => {
     productRepo = manager.getRepository(Product);
     currencyRepo = manager.getRepository(Currency);
 
-    await orderProductRepo.delete({});
-    await orderRepo.delete({});
-    await memberPhoneRepo.delete({});
-    await memberCategoryRepo.delete({});
-    await memberPropertyRepo.delete({});
-    await memberTagRepo.delete({});
-    await memberRepo.delete({});
-    await memberAuditLogRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await categoryRepo.delete({});
-    await propertyRepo.delete({});
-    await currencyRepo.delete({});
-    await productRepo.delete({});
-    await tagRepo.delete({});
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderRepo.createQueryBuilder().delete().execute();
+    await memberPhoneRepo.createQueryBuilder().delete().execute();
+    await memberCategoryRepo.createQueryBuilder().delete().execute();
+    await memberPropertyRepo.createQueryBuilder().delete().execute();
+    await memberTagRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await memberAuditLogRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await categoryRepo.createQueryBuilder().delete().execute();
+    await propertyRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await tagRepo.createQueryBuilder().delete().execute();
     await cacheService.getClient().flushall();
 
     await appPlanRepo.save(appPlan);
@@ -118,21 +118,21 @@ describe('ExporterTasker', () => {
   });
 
   afterEach(async () => {
-    await orderProductRepo.delete({});
-    await orderRepo.delete({});
-    await memberPhoneRepo.delete({});
-    await memberCategoryRepo.delete({});
-    await memberPropertyRepo.delete({});
-    await memberTagRepo.delete({});
-    await memberRepo.delete({});
-    await memberAuditLogRepo.delete({});
-    await categoryRepo.delete({});
-    await propertyRepo.delete({});
-    await currencyRepo.delete({});
-    await productRepo.delete({});
-    await tagRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderRepo.createQueryBuilder().delete().execute();
+    await memberPhoneRepo.createQueryBuilder().delete().execute();
+    await memberCategoryRepo.createQueryBuilder().delete().execute();
+    await memberPropertyRepo.createQueryBuilder().delete().execute();
+    await memberTagRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await memberAuditLogRepo.createQueryBuilder().delete().execute();
+    await categoryRepo.createQueryBuilder().delete().execute();
+    await propertyRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await tagRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
     await cacheService.getClient().flushall();
 
     await application.close();

@@ -40,10 +40,10 @@ describe('CoinController(e2e)', () => {
     appRepo = manager.getRepository(App);
     appHostRepo = manager.getRepository(AppHost);
 
-    await coinLogRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await coinLogRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -53,10 +53,10 @@ describe('CoinController(e2e)', () => {
   });
 
   afterEach(async () => {
-    await coinLogRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await coinLogRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });

@@ -45,14 +45,14 @@ describe('ReportController (e2e)', () => {
     memberRepo = manager.getRepository(Member);
     reportRepo = manager.getRepository(Report);
 
-    await reportRepo.delete({});
-    await memberRepo.delete({});
-    await appHostRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await reportRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await roleRepo.save(role);
     await appPlanRepo.save(appPlan);
@@ -65,14 +65,14 @@ describe('ReportController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await reportRepo.delete({});
-    await memberRepo.delete({});
-    await appHostRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await reportRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
     await application.close();
   });
 

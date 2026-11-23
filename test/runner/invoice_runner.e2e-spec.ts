@@ -78,15 +78,15 @@ describe('InvoiceRunner (e2e)', () => {
     paymentLogRepo = manager.getRepository(PaymentLog);
     invoiceRepo = manager.getRepository(Invoice);
 
-    await invoiceRepo.delete({});
-    await paymentLogRepo.delete({});
-    await orderLogRepo.delete({});
-    await memberRepo.delete({});
-    await appSecretRepo.delete({});
-    await appExtendedModuleRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await invoiceRepo.createQueryBuilder().delete().execute();
+    await paymentLogRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appExtendedModuleRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await roleRepo.save(role);
     await appPlanRepo.save(appPlan);
@@ -97,15 +97,15 @@ describe('InvoiceRunner (e2e)', () => {
   });
 
   afterAll(async () => {
-    await invoiceRepo.delete({});
-    await paymentLogRepo.delete({});
-    await orderLogRepo.delete({});
-    await memberRepo.delete({});
-    await appSecretRepo.delete({});
-    await appExtendedModuleRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await invoiceRepo.createQueryBuilder().delete().execute();
+    await paymentLogRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appExtendedModuleRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });

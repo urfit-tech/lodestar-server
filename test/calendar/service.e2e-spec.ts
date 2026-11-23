@@ -59,16 +59,16 @@ describe('CalendarService (e2e)', () => {
     appPlanRepo = manager.getRepository(AppPlan);
     appRepo = manager.getRepository(App);
 
-    await roleRepo.delete({});
-    await appointmentPlanRepo.delete({});
-    await orderProductRepo.delete({});
-    await orderLogRepo.delete({});
-    await productRepo.delete({});
-    await memberTaskRepo.delete({});
-    await memberRepo.delete({});
-    await currencyRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await roleRepo.createQueryBuilder().delete().execute();
+    await appointmentPlanRepo.createQueryBuilder().delete().execute();
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await memberTaskRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
     await cacheService.getClient().flushall();
 
     await appPlanRepo.save(appPlan);
@@ -79,17 +79,17 @@ describe('CalendarService (e2e)', () => {
   });
 
   afterEach(async () => {
-    await roleRepo.delete({});
-    await appointmentPlanRepo.delete({});
-    await orderProductRepo.delete({});
-    await orderLogRepo.delete({});
-    await productRepo.delete({});
-    await memberTaskRepo.delete({});
-    await memberRepo.delete({});
-    await currencyRepo.delete({});
+    await roleRepo.createQueryBuilder().delete().execute();
+    await appointmentPlanRepo.createQueryBuilder().delete().execute();
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await memberTaskRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
     await cacheService.getClient().flushall();
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
     await application.close();
   });
 

@@ -65,14 +65,14 @@ describe('StorageController (e2e)', () => {
     memberRepo = manager.getRepository(Member);
     attachmentRepo = manager.getRepository(Attachment);
 
-    await attachmentRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await attachmentRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await roleRepo.save(role);
     await appPlanRepo.save(appPlan);
@@ -86,14 +86,14 @@ describe('StorageController (e2e)', () => {
 
   afterEach(async () => {
     jest.clearAllMocks();
-    await attachmentRepo.delete({});
-    await memberRepo.delete({});
-    await appHostRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await attachmentRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
     await application.close();
   });
 

@@ -108,21 +108,21 @@ describe('ProgramController (e2e)', () => {
     programRepo = manager.getRepository(Program);
     programPlanRepo = manager.getRepository(ProgramPlan);
 
-    await voucherPlanProductRepo.delete({});
-    await productRepo.delete({});
-    await programPlanRepo.delete({});
-    await programRepo.delete({});
-    await voucherRepo.delete({});
-    await voucherCodeRepo.delete({});
-    await voucherPlanRepo.delete({});
-    await currencyRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await voucherPlanProductRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await programPlanRepo.createQueryBuilder().delete().execute();
+    await programRepo.createQueryBuilder().delete().execute();
+    await voucherRepo.createQueryBuilder().delete().execute();
+    await voucherCodeRepo.createQueryBuilder().delete().execute();
+    await voucherPlanRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await currencyRepo.save(currency);
     await roleRepo.save(role);
@@ -144,21 +144,21 @@ describe('ProgramController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await voucherPlanProductRepo.delete({});
-    await productRepo.delete({});
-    await programPlanRepo.delete({});
-    await programRepo.delete({});
-    await voucherRepo.delete({});
-    await voucherCodeRepo.delete({});
-    await voucherPlanRepo.delete({});
-    await currencyRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
+    await voucherPlanProductRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await programPlanRepo.createQueryBuilder().delete().execute();
+    await programRepo.createQueryBuilder().delete().execute();
+    await voucherRepo.createQueryBuilder().delete().execute();
+    await voucherCodeRepo.createQueryBuilder().delete().execute();
+    await voucherPlanRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });

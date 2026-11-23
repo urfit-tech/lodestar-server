@@ -83,14 +83,14 @@ describe('AuthController (e2e)', () => {
     memberDeviceRepo = manager.getRepository(MemberDevice);
     authAuditLogRepo = manager.getRepository(AuthAuditLog);
 
-    await authAuditLogRepo.delete({});
-    await memberDeviceRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appExtendedModuleRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await authAuditLogRepo.createQueryBuilder().delete().execute();
+    await memberDeviceRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appExtendedModuleRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await appPlanRepo.save(appPlan);
     await appRepo.save(app);
@@ -101,14 +101,14 @@ describe('AuthController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await authAuditLogRepo.delete({});
-    await memberDeviceRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appExtendedModuleRepo.delete({});
-    await appHostRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
+    await authAuditLogRepo.createQueryBuilder().delete().execute();
+    await memberDeviceRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appExtendedModuleRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });

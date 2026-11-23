@@ -166,34 +166,34 @@ describe('ProgramController (e2e)', () => {
     tagRepo = manager.getRepository(Tag);
     programTagRepo = manager.getRepository(ProgramTag);
 
-    await orderProductRepo.delete({});
-    await orderLogRepo.delete({});
-    await productRepo.delete({});
-    await programContentPlanRepo.delete({});
-    await cardProductRepo.delete({});
-    await programPlanRepo.delete({});
-    await programTempoDeliveryRepo.delete({});
-    await programPackageProgramRepo.delete({});
-    await programPackagePlanRepo.delete({});
-    await programPackageRepo.delete({});
-    await currencyRepo.delete({});
-    await programContentProgressRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programRoleRepo.delete({});
-    await programRepo.delete({});
-    await memberPermissionExtraRepo.delete({});
-    await permissionRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appHostRepo.delete({});
-    await cardRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
-    await tagRepo.delete({});
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await programContentPlanRepo.createQueryBuilder().delete().execute();
+    await cardProductRepo.createQueryBuilder().delete().execute();
+    await programPlanRepo.createQueryBuilder().delete().execute();
+    await programTempoDeliveryRepo.createQueryBuilder().delete().execute();
+    await programPackageProgramRepo.createQueryBuilder().delete().execute();
+    await programPackagePlanRepo.createQueryBuilder().delete().execute();
+    await programPackageRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await programContentProgressRepo.createQueryBuilder().delete().execute();
+    await programContentRepo.createQueryBuilder().delete().execute();
+    await programContentSectionRepo.createQueryBuilder().delete().execute();
+    await programContentBodyRepo.createQueryBuilder().delete().execute();
+    await programRoleRepo.createQueryBuilder().delete().execute();
+    await programRepo.createQueryBuilder().delete().execute();
+    await memberPermissionExtraRepo.createQueryBuilder().delete().execute();
+    await permissionRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await cardRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
+    await tagRepo.createQueryBuilder().delete().execute();
 
     await currencyRepo.save(currency);
     await roleRepo.save(role);
@@ -229,36 +229,36 @@ describe('ProgramController (e2e)', () => {
   });
 
   afterEach(async () => {
-    await orderProductRepo.delete({});
-    await orderLogRepo.delete({});
-    await productRepo.delete({});
-    await programContentPlanRepo.delete({});
-    await cardProductRepo.delete({});
-    await programPlanRepo.delete({});
-    await currencyRepo.delete({});
-    await programContentProgressRepo.delete({});
-    await programContentRepo.delete({});
-    await programContentSectionRepo.delete({});
-    await programContentBodyRepo.delete({});
-    await programRoleRepo.delete({});
-    await programTempoDeliveryRepo.delete({});
-    await programPackageProgramRepo.delete({});
-    await programPackagePlanRepo.delete({});
-    await programPackageRepo.delete({});
-    await programTagRepo.delete({});
-    await programRepo.delete({});
-    await memberPermissionExtraRepo.delete({});
-    await permissionRepo.delete({});
-    await memberRepo.delete({});
-    await appSettingRepo.delete({});
-    await appSecretRepo.delete({});
-    await appHostRepo.delete({});
-    await cardRepo.delete({});
-    await appRepo.delete({});
-    await appPlanRepo.delete({});
-    await roleRepo.delete({});
-    await tagRepo.delete({});
-    await programTagRepo.delete({});
+    await orderProductRepo.createQueryBuilder().delete().execute();
+    await orderLogRepo.createQueryBuilder().delete().execute();
+    await productRepo.createQueryBuilder().delete().execute();
+    await programContentPlanRepo.createQueryBuilder().delete().execute();
+    await cardProductRepo.createQueryBuilder().delete().execute();
+    await programPlanRepo.createQueryBuilder().delete().execute();
+    await currencyRepo.createQueryBuilder().delete().execute();
+    await programContentProgressRepo.createQueryBuilder().delete().execute();
+    await programContentRepo.createQueryBuilder().delete().execute();
+    await programContentSectionRepo.createQueryBuilder().delete().execute();
+    await programContentBodyRepo.createQueryBuilder().delete().execute();
+    await programRoleRepo.createQueryBuilder().delete().execute();
+    await programTempoDeliveryRepo.createQueryBuilder().delete().execute();
+    await programPackageProgramRepo.createQueryBuilder().delete().execute();
+    await programPackagePlanRepo.createQueryBuilder().delete().execute();
+    await programPackageRepo.createQueryBuilder().delete().execute();
+    await programTagRepo.createQueryBuilder().delete().execute();
+    await programRepo.createQueryBuilder().delete().execute();
+    await memberPermissionExtraRepo.createQueryBuilder().delete().execute();
+    await permissionRepo.createQueryBuilder().delete().execute();
+    await memberRepo.createQueryBuilder().delete().execute();
+    await appSettingRepo.createQueryBuilder().delete().execute();
+    await appSecretRepo.createQueryBuilder().delete().execute();
+    await appHostRepo.createQueryBuilder().delete().execute();
+    await cardRepo.createQueryBuilder().delete().execute();
+    await appRepo.createQueryBuilder().delete().execute();
+    await appPlanRepo.createQueryBuilder().delete().execute();
+    await roleRepo.createQueryBuilder().delete().execute();
+    await tagRepo.createQueryBuilder().delete().execute();
+    await programTagRepo.createQueryBuilder().delete().execute();
 
     await application.close();
   });
@@ -2129,7 +2129,7 @@ describe('ProgramController (e2e)', () => {
 
   describe('POST /:programId/content/:contentId/track-process', () => {
     beforeEach(async () => {
-      await programContentProgressRepo.delete({});
+      await programContentProgressRepo.createQueryBuilder().delete().execute();
     });
     describe('happy path', () => {
       it('When a member watches a new content unit for the first time, the system can create a corresponding progress record in the database.', async () => {
