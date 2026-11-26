@@ -71,4 +71,20 @@ describe('ActivityService', () => {
     expect(result.activityTickets[0]).toHaveProperty('participants', 10);
     expect(mockActivityInfra.getPublishedActivity).toHaveBeenCalledWith(expect.anything(), activityId, appId);
   });
+
+  it('keeps the activity deletedAt so the storefront can treat a deleted activity as not found', async () => {
+    const deletedAt = new Date('2025-01-16T03:10:00Z');
+    mockActivityInfra.getPublishedActivity = jest.fn().mockResolvedValue({
+      id: 'deleted-activity',
+      publishedAt: new Date('2025-01-16T03:04:00Z'),
+      deletedAt,
+      activityTickets: [],
+    });
+    mockActivityInfra.getActivityTicketEnrollmentCount = jest.fn().mockResolvedValue([]);
+
+    const result = await service.getActivityByMemberId('deleted-activity', undefined, false, 'some-app-id');
+
+    expect(result).toHaveProperty('id', 'deleted-activity');
+    expect(result).toHaveProperty('deletedAt', deletedAt);
+  });
 });

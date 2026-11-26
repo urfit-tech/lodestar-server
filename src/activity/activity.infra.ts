@@ -195,6 +195,9 @@ export class ActivityInfrastructure {
         title: true,
         description: true,
         publishedAt: true,
+        // returned so the storefront activity page can treat a deleted activity as not found;
+        // the row itself is still returned, because a ticket holder's ticket page reads it too
+        deletedAt: true,
         isParticipantsVisible: true,
         supportLocales: true,
         activityTags: {
